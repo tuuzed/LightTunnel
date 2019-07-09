@@ -1,0 +1,51 @@
+apply plugin: "java"
+apply plugin: "maven"
+
+group rootProject.group
+version rootProject.version
+
+targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_7
+
+def netty_version = '4.1.37.Final'
+
+ext.deps = [
+        "netty_buffer"   : "io.netty:netty-buffer:$netty_version",
+        "netty_codec"    : "io.netty:netty-codec:$netty_version",
+        "netty_common"   : "io.netty:netty-common:$netty_version",
+        "netty_handler"  : "io.netty:netty-handler:$netty_version",
+        "netty_resolver" : "io.netty:netty-resolver:$netty_version",
+        "netty_transport": "io.netty:netty-transport:$netty_version",
+        "annotations"    : "org.jetbrains:annotations:13.0",
+
+        "junit"          : "junit:junit:4.12",
+]
+
+dependencies {
+    compile deps.annotations
+    compile deps.netty_buffer
+    compile deps.netty_codec
+    compile deps.netty_common
+    compile deps.netty_handler
+    compile deps.netty_resolver
+    compile deps.netty_transport
+    // 单元测试
+    testImplementation deps.junit
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file://" + rootProject.file(".repo"))
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}

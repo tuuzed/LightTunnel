@@ -1,0 +1,28 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.tuuzed.gradle.plugin:gitvc:0.1.2'
+    }
+
+    allprojects {
+        repositories {
+            maven { url 'https://maven.aliyun.com/repository/public' }
+            maven { url 'https://dl.bintray.com/tuuzed/maven' }
+            jcenter()
+            mavenCentral()
+        }
+        tasks.withType(JavaCompile) {
+            options.encoding = "UTF-8"
+        }
+    }
+}
+
+group = 'com.tuuzed.com.tuuzed.tunnel'
+version = '0.1.0'
+
+
+

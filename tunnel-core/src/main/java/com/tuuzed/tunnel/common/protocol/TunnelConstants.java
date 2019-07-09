@@ -1,0 +1,46 @@
+package com.tuuzed.tunnel.common.protocol;
+
+import io.netty.channel.Channel;
+import io.netty.util.AttributeKey;
+
+
+public final class TunnelConstants {
+    /**
+     * 消息帧域长度
+     */
+    public static final int MESSAGE_FRAME_FIELD_SIZE = 4;
+    /**
+     * 消息类型域长度
+     */
+    public static final int MESSAGE_TYPE_FIELD_SIZE = 1;
+    /**
+     * 消息头部域长度
+     */
+    public static final int MESSAGE_HEAD_FIELD_SIZE = 4;
+    /**
+     * 空的字节数组
+     */
+    public static final byte[] EMPTY_BYTES = new byte[0];
+
+
+    /**
+     * 心跳消息
+     */
+    public static final byte MESSAGE_TYPE_HEARTBEAT = 1;
+    /**
+     * 请求建立隧道
+     */
+    public static final byte MESSAGE_TYPE_REQUEST_OPEN_TUNNEL = 2;
+    /**
+     * 透传消息
+     */
+    public static final byte MESSAGE_TYPE_TRANSFER = 3;
+
+
+    public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");
+    public static final AttributeKey<String> ATTR_MAPPING = AttributeKey.newInstance("mapping");
+    public static final AttributeKey<String> ATTR_LOCAL_NETWORK = AttributeKey.newInstance("local_network");
+    public static final AttributeKey<Integer> ATTR_REMOTE_PORT = AttributeKey.newInstance("remote_port");
+
+
+}
