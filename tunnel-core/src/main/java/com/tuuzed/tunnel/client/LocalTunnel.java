@@ -51,12 +51,38 @@ public class LocalTunnel {
                 });
     }
 
+    public void getLocalTunnelChannel(@NotNull final String localAddr,
+                                      final int localPort,
+                                      final long tunnelToken,
+                                      final long sessionToken,
+                                      @NotNull final Callback<Channel> callback) {
+        final String channelKey = localAddr + ":" + localPort + "#" + tunnelToken + "," + sessionToken;
+        Channel channel = channels.get(channelKey);
+        if (channel != null && channel.isActive()) {
+            callback.invoke(channel);
+        } else {
+            channels.remove(channelKey);
+            bootstrap.connect(localAddr, localPort).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if (future.isSuccess()) {
+                        Channel channel = future.channel();
+                        channels.put(channelKey, channel);
+                        callback.invoke(channel);
+                    }
+                }
+            });
+        }
+    }
 
     public void writeAndFlush(
-            final String localAddr, final int localPort,
+            final String localAddr,
+            final int localPort,
+            final long tunnelToken,
+            final long sessionToken,
             @NotNull final byte[] data,
             @NotNull final Channel clientChannel) {
-        final String channelKey = localAddr + ":" + localPort;
+        final String channelKey = localAddr + ":" + localPort + "#" + tunnelToken + "," + sessionToken;
         Channel channel = channels.get(channelKey);
         if (channel != null && channel.isActive()) {
             channel.writeAndFlush(Unpooled.wrappedBuffer(data));
@@ -74,6 +100,10 @@ public class LocalTunnel {
                 }
             });
         }
+    }
+
+    public interface Callback<T> {
+        void invoke(T t);
     }
 
 }

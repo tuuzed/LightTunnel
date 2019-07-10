@@ -3,6 +3,9 @@ package com.tuuzed.tunnel.client;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -48,31 +51,35 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理建立隧道请求消息
      */
-    @SuppressWarnings("Duplicates")
     private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-
+        byte[] head = msg.getHead();
+        long tunnelToken = Unpooled.wrappedBuffer(head).readLong();
+        ctx.channel().attr(ATTR_TUNNEL_TOKNE).set(tunnelToken);
     }
 
     /**
      * 处理数据透传消息
      * 数据流向: UserTunnel -> LocalTunnel
      */
-    @SuppressWarnings("Duplicates")
-    private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        byte[] head = msg.getHead();
-        String mapping = new String(head);
-        logger.info("mapping: {}", mapping);
-        String[] mappingTuple = mapping.split("<-");
-        if (mappingTuple.length != 2) {
-            ctx.close();
-            return;
-        }
-        String localNetwork = mappingTuple[0];
-
+    private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
+        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        long tunnelToken = head.readLong();
+        long sessionToken = head.readLong();
+        ctx.channel().attr(ATTR_TUNNEL_TOKNE).set(tunnelToken);
+        ctx.channel().attr(ATTR_SESSION_TOKNE).set(sessionToken);
+        String localNetwork = ctx.channel().attr(ATTR_LOCAL_NETWORK).get();
         String[] localNetworkTuple = localNetwork.split(":");
         String localAddr = localNetworkTuple[0];
         int localPort = Integer.parseInt(localNetworkTuple[1]);
-        LocalTunnel.getInstance().writeAndFlush(localAddr, localPort, msg.getData(), ctx.channel());
+        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
+                new LocalTunnel.Callback<Channel>() {
+                    @Override
+                    public void invoke(Channel channel) {
+                        channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
+                        channel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                    }
+                }
+        );
     }
 
 }

@@ -45,6 +45,8 @@ public final class TunnelConstants {
     public static final AttributeKey<String> ATTR_MAPPING = AttributeKey.newInstance("mapping");
     public static final AttributeKey<String> ATTR_LOCAL_NETWORK = AttributeKey.newInstance("local_network");
     public static final AttributeKey<Integer> ATTR_REMOTE_PORT = AttributeKey.newInstance("remote_port");
+    public static final AttributeKey<Long> ATTR_TUNNEL_TOKNE = AttributeKey.newInstance("tunnel_token");
+    public static final AttributeKey<Long> ATTR_SESSION_TOKNE = AttributeKey.newInstance("session_token");
 
 
 }

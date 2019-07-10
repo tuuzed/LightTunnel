@@ -4,6 +4,7 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -21,12 +22,13 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
-        // nextChannel is TunnelClientChannel
-        Channel nextChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
-        logger.info("nextChannel: {}", nextChannel);
-        nextChannel.writeAndFlush(
+        Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
+        long tunnelToken = tunnelClientChannel.attr(ATTR_TUNNEL_TOKNE).get();
+        long sessionToken = tunnelClientChannel.attr(ATTR_SESSION_TOKNE).get();
+        logger.info("nextChannel: {}", tunnelClientChannel);
+        tunnelClientChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)
-                        .setHead(nextChannel.attr(ATTR_MAPPING).get().getBytes())
+                        .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
                         .setData(data)
         );
     }

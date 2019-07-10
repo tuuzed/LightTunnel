@@ -3,7 +3,6 @@ package com.tuuzed.tunnel.client;
 import com.tuuzed.tunnel.common.handler.TunnelHeartbeatHandler;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.TunnelConstants;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageDecoder;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
@@ -55,17 +54,14 @@ public class TunnelClient {
     }
 
     public void start() {
-        connectTunnelServerAndRequestOpenTunnel(bootstrap, serverAddr, serverPort);
+        connectTunnelServerAndRequestOpenTunnel();
     }
 
     public void stop() {
         workerGroup.shutdownGracefully();
     }
 
-    private void connectTunnelServerAndRequestOpenTunnel(
-            @NotNull final Bootstrap bootstrap,
-            @NotNull final String serverAddr, final int serverPort
-    ) {
+    private void connectTunnelServerAndRequestOpenTunnel() {
         bootstrap.connect(serverAddr, serverPort).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
@@ -83,9 +79,9 @@ public class TunnelClient {
                     logger.info("connect tunnel server success, {}", future.channel());
                 } else {
                     logger.warn("connect tunnel server failed {}", future.channel(), future.cause());
-                    // 连接失败，发起重连
+                    // 连接失败，3秒后发起重连
                     TimeUnit.SECONDS.sleep(3000);
-                    connectTunnelServerAndRequestOpenTunnel(bootstrap, serverAddr, serverPort);
+                    connectTunnelServerAndRequestOpenTunnel();
                 }
             }
         });

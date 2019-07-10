@@ -3,7 +3,9 @@ package com.tuuzed.tunnel.server;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -13,7 +15,6 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
  * JProxy服务数据通道处理器
  */
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
-
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
 
     @Override
@@ -41,7 +42,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-
     /**
      * 处理心跳消息
      */
@@ -52,7 +52,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理建立隧道请求消息
      */
-    @SuppressWarnings("Duplicates")
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         byte[] head = msg.getHead();
         String mapping = new String(head);
@@ -64,13 +63,14 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
         String localNetwork = mappingTuple[0];
         int remotePort = Integer.parseInt(mappingTuple[1]);
+
         ctx.channel().attr(ATTR_MAPPING).set(mapping);
         ctx.channel().attr(ATTR_LOCAL_NETWORK).set(localNetwork);
         ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
-        UserTunnel.getManager().openUserTunnel(remotePort, ctx.channel());
+        long tunnelToken = UserTunnel.getManager().openUserTunnel(remotePort, ctx.channel());
         ctx.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
-                        .setHead(mapping.getBytes())
+                        .setHead(Unpooled.copyLong(tunnelToken).array())
         );
     }
 
@@ -78,20 +78,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理数据透传消息
      * 数据流向: TunnelClient  ->  UserTunnel
      */
-    @SuppressWarnings("Duplicates")
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        byte[] head = msg.getHead();
-        String mapping = new String(head);
-        logger.info("mapping: {}", mapping);
-        String[] mappingTuple = mapping.split("<-");
-        if (mappingTuple.length != 2) {
-            ctx.close();
-            return;
-        }
-        int remotePort = Integer.parseInt(mappingTuple[1]);
-        UserTunnel tunnel = UserTunnel.getManager().getUserTunnel(remotePort);
+        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        long tunnelToken = head.readLong();
+        long sessionToken = head.readLong();
+        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
-            tunnel.serverChannel().attr(ATTR_NEXT_CHANNEL).get().writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+            Channel userTunnelChannel = tunnel.getUserTunnelChannel(sessionToken);
+            if (userTunnelChannel != null) {
+                userTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+            }
         }
     }
 

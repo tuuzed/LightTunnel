@@ -14,8 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.net.BindException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_MAPPING;
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_TUNNEL_TOKNE;
 
 public class UserTunnel {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnel.class);
@@ -30,6 +32,8 @@ public class UserTunnel {
     private final int bindPort;
     @NotNull
     private final Channel serverChannel;
+    @NotNull
+    private final Map<Long, Channel> sessionTokenUserTunnelChannels = new ConcurrentHashMap<>();
 
     private UserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) {
         this.bossGroup = new NioEventLoopGroup();
@@ -76,6 +80,17 @@ public class UserTunnel {
     private void close() {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
+        sessionTokenUserTunnelChannels.clear();
+    }
+
+
+    public void putUserTunnelChannel(long sessionToken, @NotNull Channel channel) {
+        sessionTokenUserTunnelChannels.put(sessionToken, channel);
+    }
+
+    @Nullable
+    public Channel getUserTunnelChannel(long sessionToken) {
+        return sessionTokenUserTunnelChannels.get(sessionToken);
     }
 
     @Override
@@ -94,9 +109,15 @@ public class UserTunnel {
 
     public static class Manager {
         private static final Logger logger = LoggerFactory.getLogger(Manager.class);
+        /**
+         * 隧道ID生成器
+         */
+        private static final AtomicLong tunnelTokenGenerator = new AtomicLong();
 
         private final Map<Channel, UserTunnel> serverChannelUserTunnels = new ConcurrentHashMap<>();
         private final Map<Integer, UserTunnel> bindPortUserTunnels = new ConcurrentHashMap<>();
+        private final Map<Long, UserTunnel> tunnelTokenUserTunnels = new ConcurrentHashMap<>();
+
 
         private Manager() {
         }
@@ -105,24 +126,33 @@ public class UserTunnel {
             return bindPortUserTunnels.containsKey(bindPort);
         }
 
+        @Nullable
+        public UserTunnel getUserTunnelByTunnelToken(long tunnelToken) {
+            return tunnelTokenUserTunnels.get(tunnelToken);
+        }
 
         @Nullable
-        public UserTunnel getUserTunnel(int bindPort) {
+        public UserTunnel getUserTunnelByBindPort(int bindPort) {
             return bindPortUserTunnels.get(bindPort);
         }
 
         @Nullable
-        public UserTunnel getUserTunnel(@NotNull Channel serverChannel) {
+        public UserTunnel getUserTunnelByServerChannel(@NotNull Channel serverChannel) {
             return serverChannelUserTunnels.get(serverChannel);
         }
 
-        @NotNull
-        public UserTunnel openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
+        public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
             return openUserTunnel(null, bindPort, serverChannel);
         }
 
-        @NotNull
-        public UserTunnel openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws BindException {
+        /**
+         * @param bindAddr
+         * @param bindPort
+         * @param serverChannel
+         * @return
+         * @throws BindException
+         */
+        public long openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws BindException {
             if (hasBandedPort(bindPort)) {
                 throw new BindException("bindPort: " + bindPort);
             }
@@ -130,7 +160,10 @@ public class UserTunnel {
             tunnel.open();
             bindPortUserTunnels.put(bindPort, tunnel);
             serverChannelUserTunnels.put(serverChannel, tunnel);
-            return tunnel;
+            long tunnelToken = tunnelTokenGenerator.incrementAndGet();
+            serverChannel.attr(ATTR_TUNNEL_TOKNE).set(tunnelToken);
+            tunnelTokenUserTunnels.put(tunnelToken, tunnel);
+            return tunnelToken;
         }
 
 
@@ -138,6 +171,7 @@ public class UserTunnel {
             UserTunnel tunnel = serverChannelUserTunnels.remove(serverChannel);
             if (tunnel != null) {
                 bindPortUserTunnels.remove(tunnel.bindPort());
+                tunnelTokenUserTunnels.remove(serverChannel.attr(ATTR_TUNNEL_TOKNE).get());
                 tunnel.close();
                 logger.info("Close Tunnel: {}", tunnel);
             }
