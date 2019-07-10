@@ -1,12 +1,12 @@
 package com.tuuzed.tunnel.client;
 
+import com.tuuzed.tunnel.common.logging.Logger;
+import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -21,6 +21,7 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
+        // nextChannel is TunnelClientChannel
         Channel nextChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
         logger.info("nextChannel: {}", nextChannel);
         nextChannel.writeAndFlush(
@@ -28,6 +29,11 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
                         .setHead(nextChannel.attr(ATTR_MAPPING).get().getBytes())
                         .setData(data)
         );
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
 
     }
 

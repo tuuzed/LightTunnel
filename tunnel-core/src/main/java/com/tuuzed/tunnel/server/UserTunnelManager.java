@@ -26,7 +26,7 @@ public final class UserTunnelManager {
         return InstanceHolder.instance;
     }
 
-    private final Map<Channel, UserTunnel> tunnels = new ConcurrentHashMap<>();
+    private final Map<Channel, UserTunnel> channelTunnels = new ConcurrentHashMap<>();
     private final Map<Integer, UserTunnel> portTunnels = new ConcurrentHashMap<>();
 
 
@@ -36,7 +36,7 @@ public final class UserTunnelManager {
 
     @Nullable
     public UserTunnel getTunnel(@NotNull Channel channel) {
-        return tunnels.get(channel);
+        return channelTunnels.get(channel);
     }
 
     @Nullable
@@ -45,16 +45,16 @@ public final class UserTunnelManager {
     }
 
     public void openTunnel(@NotNull UserTunnel tunnel) {
-        if (tunnels.containsKey(tunnel.serverChannel())) {
+        if (channelTunnels.containsKey(tunnel.serverChannel())) {
             throw new IllegalArgumentException("containsKey: " + tunnel.serverChannel());
         }
         tunnel.open();
-        tunnels.put(tunnel.serverChannel(), tunnel);
+        channelTunnels.put(tunnel.serverChannel(), tunnel);
         portTunnels.put(tunnel.serverChannel().attr(ATTR_REMOTE_PORT).get(), tunnel);
     }
 
     public void closeTunnel(@NotNull Channel channel) {
-        UserTunnel tunnel = tunnels.remove(channel);
+        UserTunnel tunnel = channelTunnels.remove(channel);
         portTunnels.remove(channel.attr(ATTR_REMOTE_PORT).get());
         if (tunnel != null) {
             tunnel.close();

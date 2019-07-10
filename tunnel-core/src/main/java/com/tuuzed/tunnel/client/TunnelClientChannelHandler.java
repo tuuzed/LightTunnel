@@ -28,7 +28,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     @SuppressWarnings("Duplicates")
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        logger.info("Recv message: {}", msg);
+        logger.info("Recv : {}", msg);
         switch (msg.getType()) {
             case MESSAGE_TYPE_HEARTBEAT:
                 handleHeartbeatMessage(ctx, msg);

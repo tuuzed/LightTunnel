@@ -23,22 +23,22 @@ public class TunnelClientChannelManager {
         return InstanceHolder.instance;
     }
 
-    private final Map<String, Channel> channels = new ConcurrentHashMap<>();
+    private final Map<String, Channel> mappingChannels = new ConcurrentHashMap<>();
 
     @Nullable
     public Channel getChannel(@NotNull String mapping) {
-        return channels.get(mapping);
+        return mappingChannels.get(mapping);
     }
 
     public void addChannel(@NotNull String mapping, @NotNull Channel channel) {
-        if (channels.containsKey(mapping)) {
+        if (mappingChannels.containsKey(mapping)) {
             throw new IllegalArgumentException("containsKey: " + mapping);
         }
-        channels.put(mapping, channel);
+        mappingChannels.put(mapping, channel);
     }
 
     public void removeChannel(@NotNull String mapping) {
-        channels.remove(mapping);
+        mappingChannels.remove(mapping);
     }
 
 

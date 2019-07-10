@@ -29,10 +29,9 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         if (tunnel == null) {
             ctx.close();
             return;
-
         }
-        tunnel.serverChannel().attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
         Channel serverChannel = tunnel.serverChannel();
+        serverChannel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
         logger.info("inboundPort: {}, serverChannel: {}", inboundPort, serverChannel);
         serverChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)

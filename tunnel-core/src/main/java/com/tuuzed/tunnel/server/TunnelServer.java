@@ -12,6 +12,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TunnelServer {
 
@@ -22,12 +23,22 @@ public class TunnelServer {
     @NotNull
     private final NioEventLoopGroup workerGroup;
 
-    public TunnelServer() {
-        this.bossGroup = new NioEventLoopGroup();
-        this.workerGroup = new NioEventLoopGroup();
+    @Nullable
+    private String bindAddr;
+    private int bindPort;
+
+    public TunnelServer(int bindPort) {
+        this(null, bindPort);
     }
 
-    public void start(@NotNull String bindAddr, int bindPort) throws Exception {
+    public TunnelServer(@Nullable String bindAddr, int bindPort) {
+        this.bossGroup = new NioEventLoopGroup();
+        this.workerGroup = new NioEventLoopGroup();
+        this.bindAddr = bindAddr;
+        this.bindPort = bindPort;
+    }
+
+    public void start() throws Exception {
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)
@@ -44,8 +55,14 @@ public class TunnelServer {
                         }
                     });
 
-            ChannelFuture f = bootstrap.bind(bindAddr, bindPort).sync();
-            logger.info("Serving Tunnel on {} port {}", bindAddr, bindPort);
+            ChannelFuture f;
+            if (bindAddr == null) {
+                f = bootstrap.bind(bindPort).sync();
+                logger.info("Serving Tunnel on any address port {}", bindPort);
+            } else {
+                f = bootstrap.bind(bindAddr, bindPort).sync();
+                logger.info("Serving Tunnel on {} port {}", bindAddr, bindPort);
+            }
             f.channel().closeFuture().sync();
         } finally {
             stop();
