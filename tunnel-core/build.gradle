@@ -1,5 +1,6 @@
 apply plugin: "java"
 apply plugin: "maven"
+apply plugin: 'gitvc-gradle-plugin'
 
 group rootProject.group
 version rootProject.version
@@ -48,4 +49,16 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives sourcesJar
+}
+
+jar {
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Main-Class': ''
+        attributes 'Version-Code': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'Version-Name': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'Last-Commit-SHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'Last-Commit-Date': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'Build-Date': String.valueOf(new Date())
+    }
 }

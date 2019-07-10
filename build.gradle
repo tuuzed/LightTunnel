@@ -21,7 +21,7 @@ buildscript {
     }
 }
 
-group = 'com.tuuzed.com.tuuzed.tunnel'
+group = 'com.tuuzed.tunnel'
 version = '0.1.0'
 
 
