@@ -8,6 +8,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import org.jetbrains.annotations.NotNull;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -72,14 +73,18 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         String localAddr = localNetworkTuple[0];
         int localPort = Integer.parseInt(localNetworkTuple[1]);
         LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
-                new LocalTunnel.Callback<Channel>() {
+                new LocalTunnel.GetLocalTunnelChannelCallback() {
                     @Override
-                    public void invoke(Channel channel) {
+                    public void success(@NotNull Channel channel) {
                         channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
                         channel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
-                }
-        );
+
+                    @Override
+                    public void error(Throwable cause) {
+
+                    }
+                });
     }
 
 }

@@ -136,22 +136,11 @@ public class UserTunnel {
             return bindPortUserTunnels.get(bindPort);
         }
 
-        @Nullable
-        public UserTunnel getUserTunnelByServerChannel(@NotNull Channel serverChannel) {
-            return serverChannelUserTunnels.get(serverChannel);
-        }
 
         public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
             return openUserTunnel(null, bindPort, serverChannel);
         }
 
-        /**
-         * @param bindAddr
-         * @param bindPort
-         * @param serverChannel
-         * @return
-         * @throws BindException
-         */
         public long openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws BindException {
             if (hasBandedPort(bindPort)) {
                 throw new BindException("bindPort: " + bindPort);

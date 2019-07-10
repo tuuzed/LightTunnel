@@ -6,7 +6,7 @@ public class TunnelClientTest {
 
     @Test
     public void start() throws Exception {
-        new TunnelClient("127.0.0.1", 4000, "192.168.1.1:80", 10080).start();
+        new TunnelClient("127.0.0.1", 4000, "192.168.1.33:8080", 10080).start();
         new TunnelClient("127.0.0.1", 4000, "192.168.1.10:22", 10022).start();
         System.in.read();
     }

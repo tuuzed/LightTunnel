@@ -7,6 +7,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.net.InetSocketAddress;
@@ -51,6 +52,18 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
                         .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
                         .setData(data)
         );
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        int inboundPort = ((InetSocketAddress) ctx.channel().localAddress()).getPort();
+        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByBindPort(inboundPort);
+        if (tunnel == null) {
+            return;
+        }
+        Channel serverChannel = tunnel.serverChannel();
+        serverChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
+        super.channelWritabilityChanged(ctx);
     }
 
 }
