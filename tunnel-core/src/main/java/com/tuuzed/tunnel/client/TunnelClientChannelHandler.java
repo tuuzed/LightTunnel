@@ -21,6 +21,8 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
+        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        LocalTunnel.getInstance().removeLocalTunnelChannel(sessionToken);
         super.channelInactive(ctx);
     }
 
@@ -53,9 +55,9 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理建立隧道请求消息
      */
     private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        byte[] head = msg.getHead();
-        long tunnelToken = Unpooled.wrappedBuffer(head).readLong();
-        ctx.channel().attr(ATTR_TUNNEL_TOKNE).set(tunnelToken);
+        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        long tunnelToken = head.readLong();
+        ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
     }
 
     /**
@@ -64,19 +66,21 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        long tunnelToken = head.readLong();
-        long sessionToken = head.readLong();
-        ctx.channel().attr(ATTR_TUNNEL_TOKNE).set(tunnelToken);
-        ctx.channel().attr(ATTR_SESSION_TOKNE).set(sessionToken);
-        String localNetwork = ctx.channel().attr(ATTR_LOCAL_NETWORK).get();
-        String[] localNetworkTuple = localNetwork.split(":");
-        String localAddr = localNetworkTuple[0];
-        int localPort = Integer.parseInt(localNetworkTuple[1]);
-        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+        ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
+
+        String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
+        int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
+
+        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, sessionToken,
                 new LocalTunnel.GetLocalTunnelChannelCallback() {
                     @Override
                     public void success(@NotNull Channel channel) {
                         channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
+                        channel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+                        channel.attr(ATTR_SESSION_TOKEN).set(sessionToken);
                         channel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
 

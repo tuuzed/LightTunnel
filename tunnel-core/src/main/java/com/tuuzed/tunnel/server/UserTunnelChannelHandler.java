@@ -37,13 +37,13 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             return;
         }
         Channel serverChannel = tunnel.serverChannel();
-        long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKNE).get();
+        long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
         long sessionToken;
-        if (ctx.channel().hasAttr(ATTR_SESSION_TOKNE)) {
-            sessionToken = ctx.channel().attr(ATTR_SESSION_TOKNE).get();
+        if (ctx.channel().hasAttr(ATTR_SESSION_TOKEN)) {
+            sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         } else {
             sessionToken = sessionTokenGenerator.incrementAndGet();
-            ctx.channel().attr(ATTR_SESSION_TOKNE).set(sessionToken);
+            ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
         }
         tunnel.putUserTunnelChannel(sessionToken, ctx.channel());
         // 将数据转发至TunnelClient

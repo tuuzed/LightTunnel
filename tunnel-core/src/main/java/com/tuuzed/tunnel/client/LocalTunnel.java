@@ -29,7 +29,7 @@ public class LocalTunnel {
         return InstanceHolder.instance;
     }
 
-    private final Map<String, Channel> channels = new ConcurrentHashMap<>();
+    private final Map<Long, Channel> sessionTokenChannels = new ConcurrentHashMap<>();
 
     private final Bootstrap bootstrap;
 
@@ -48,24 +48,32 @@ public class LocalTunnel {
                 });
     }
 
+
+    public void removeLocalTunnelChannel(final long sessionToken) {
+        Channel channel = sessionTokenChannels.remove(sessionToken);
+        if (channel != null && channel.isOpen()) {
+            channel.closeFuture();
+        }
+    }
+
     public void getLocalTunnelChannel(
             @NotNull final String localAddr,
             final int localPort,
-            final long tunnelToken,
             final long sessionToken,
             @NotNull final GetLocalTunnelChannelCallback callback) {
-        final String channelKey = localAddr + ":" + localPort + "#" + tunnelToken + "," + sessionToken;
-        Channel channel = channels.get(channelKey);
+        logger.info("localAddr: {}, localPort: {}, sessionToken: {}", localAddr, localAddr, sessionToken);
+        logger.info("sessionTokenChannels: {}", sessionTokenChannels);
+        Channel channel = sessionTokenChannels.get(sessionToken);
         if (channel != null && channel.isActive()) {
             callback.success(channel);
         } else {
-            channels.remove(channelKey);
+            removeLocalTunnelChannel(sessionToken);
             bootstrap.connect(localAddr, localPort).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         Channel channel = future.channel();
-                        channels.put(channelKey, channel);
+                        sessionTokenChannels.put(sessionToken, channel);
                         callback.success(channel);
                     } else {
                         callback.error(future.cause());

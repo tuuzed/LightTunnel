@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_MAPPING;
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_TUNNEL_TOKNE;
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_TUNNEL_TOKEN;
 
 public class UserTunnel {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnel.class);
@@ -150,7 +150,7 @@ public class UserTunnel {
             bindPortUserTunnels.put(bindPort, tunnel);
             serverChannelUserTunnels.put(serverChannel, tunnel);
             long tunnelToken = tunnelTokenGenerator.incrementAndGet();
-            serverChannel.attr(ATTR_TUNNEL_TOKNE).set(tunnelToken);
+            serverChannel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             tunnelTokenUserTunnels.put(tunnelToken, tunnel);
             return tunnelToken;
         }
@@ -160,7 +160,7 @@ public class UserTunnel {
             UserTunnel tunnel = serverChannelUserTunnels.remove(serverChannel);
             if (tunnel != null) {
                 bindPortUserTunnels.remove(tunnel.bindPort());
-                tunnelTokenUserTunnels.remove(serverChannel.attr(ATTR_TUNNEL_TOKNE).get());
+                tunnelTokenUserTunnels.remove(serverChannel.attr(ATTR_TUNNEL_TOKEN).get());
                 tunnel.close();
                 logger.info("Close Tunnel: {}", tunnel);
             }

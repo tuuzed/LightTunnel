@@ -19,13 +19,20 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(LocalTunnelHandler.class);
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        LocalTunnel.getInstance().removeLocalTunnelChannel(sessionToken);
+        super.channelInactive(ctx);
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
-        Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
-        long tunnelToken = tunnelClientChannel.attr(ATTR_TUNNEL_TOKNE).get();
-        long sessionToken = tunnelClientChannel.attr(ATTR_SESSION_TOKNE).get();
+        final Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
+        final long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
+        final long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         logger.info("nextChannel: {}", tunnelClientChannel);
         tunnelClientChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)
@@ -36,7 +43,7 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
+        final Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
         tunnelClientChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
         super.channelWritabilityChanged(ctx);
     }

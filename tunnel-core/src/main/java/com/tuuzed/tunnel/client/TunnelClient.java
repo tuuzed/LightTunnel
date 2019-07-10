@@ -28,15 +28,17 @@ public class TunnelClient {
 
     private final String serverAddr;
     private final int serverPort;
-    private final String localNetwork;
+    private final String localAddr;
+    private final int localPort;
     private final int remotePort;
 
-    public TunnelClient(@NotNull String serverAddr, int serverPort, @NotNull String localNetwork, int remotePort) {
+    public TunnelClient(@NotNull String serverAddr, int serverPort, @NotNull String localAddr, int localPort, int remotePort) {
         this.bootstrap = new Bootstrap();
         this.workerGroup = new NioEventLoopGroup();
         this.serverAddr = serverAddr;
         this.serverPort = serverPort;
-        this.localNetwork = localNetwork;
+        this.localAddr = localAddr;
+        this.localPort = localPort;
         this.remotePort = remotePort;
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
@@ -66,11 +68,14 @@ public class TunnelClient {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    String mapping = localNetwork + "<-" + remotePort;
+                    String mapping = localAddr + ":" + localPort + "<-" + remotePort;
                     // 连接成功，向服务器发送请求建立隧道消息
+
                     future.channel().attr(ATTR_MAPPING).set(mapping);
-                    future.channel().attr(ATTR_LOCAL_NETWORK).set(localNetwork);
+                    future.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
+                    future.channel().attr(ATTR_LOCAL_PORT).set(localPort);
                     future.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
+
                     future.channel().writeAndFlush(
                             TunnelMessage
                                     .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)

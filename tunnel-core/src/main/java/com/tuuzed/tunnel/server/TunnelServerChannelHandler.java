@@ -61,12 +61,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             ctx.close();
             return;
         }
-        String localNetwork = mappingTuple[0];
+        String[] localAddrAndPortTuple = mappingTuple[0].split(":");
+        String localAddr = localAddrAndPortTuple[0];
+        int localPort = Integer.parseInt(localAddrAndPortTuple[1]);
         int remotePort = Integer.parseInt(mappingTuple[1]);
 
         ctx.channel().attr(ATTR_MAPPING).set(mapping);
-        ctx.channel().attr(ATTR_LOCAL_NETWORK).set(localNetwork);
+        ctx.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
+        ctx.channel().attr(ATTR_LOCAL_PORT).set(localPort);
         ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
+
         long tunnelToken = UserTunnel.getManager().openUserTunnel(remotePort, ctx.channel());
         ctx.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
