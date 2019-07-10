@@ -28,13 +28,17 @@ public final class TunnelConstants {
      */
     public static final byte MESSAGE_TYPE_HEARTBEAT = 1;
     /**
-     * 请求建立隧道
+     * 建立隧道请求
      */
-    public static final byte MESSAGE_TYPE_REQUEST_OPEN_TUNNEL = 2;
+    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_REQUEST = 2;
+    /**
+     * 建立隧道响应
+     */
+    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE = 3;
     /**
      * 透传消息
      */
-    public static final byte MESSAGE_TYPE_TRANSFER = 3;
+    public static final byte MESSAGE_TYPE_TRANSFER = 4;
 
 
     public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");

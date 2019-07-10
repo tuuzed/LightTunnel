@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.BindException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_MAPPING;
 
@@ -29,11 +31,7 @@ public class UserTunnel {
     @NotNull
     private final Channel serverChannel;
 
-    public UserTunnel(int bindPort, @NotNull Channel serverChannel) {
-        this(null, bindPort, serverChannel);
-    }
-
-    public UserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) {
+    private UserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) {
         this.bossGroup = new NioEventLoopGroup();
         this.workerGroup = new NioEventLoopGroup();
         this.bindAddr = bindAddr;
@@ -46,8 +44,11 @@ public class UserTunnel {
         return serverChannel;
     }
 
+    public int bindPort() {
+        return bindPort;
+    }
 
-    public void open() {
+    private void open() {
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
@@ -72,8 +73,76 @@ public class UserTunnel {
         }
     }
 
-    public void close() {
+    private void close() {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
     }
+
+    @Override
+    public String toString() {
+        return "UserTunnel(" + bindPort + ")";
+    }
+
+    @NotNull
+    public static Manager getManager() {
+        return ManagerInstanceHolder.instance;
+    }
+
+    private static class ManagerInstanceHolder {
+        private static final Manager instance = new Manager();
+    }
+
+    public static class Manager {
+        private static final Logger logger = LoggerFactory.getLogger(Manager.class);
+
+        private final Map<Channel, UserTunnel> serverChannelUserTunnels = new ConcurrentHashMap<>();
+        private final Map<Integer, UserTunnel> bindPortUserTunnels = new ConcurrentHashMap<>();
+
+        private Manager() {
+        }
+
+        public boolean hasBandedPort(int bindPort) {
+            return bindPortUserTunnels.containsKey(bindPort);
+        }
+
+
+        @Nullable
+        public UserTunnel getUserTunnel(int bindPort) {
+            return bindPortUserTunnels.get(bindPort);
+        }
+
+        @Nullable
+        public UserTunnel getUserTunnel(@NotNull Channel serverChannel) {
+            return serverChannelUserTunnels.get(serverChannel);
+        }
+
+        @NotNull
+        public UserTunnel openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
+            return openUserTunnel(null, bindPort, serverChannel);
+        }
+
+        @NotNull
+        public UserTunnel openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws BindException {
+            if (hasBandedPort(bindPort)) {
+                throw new BindException("bindPort: " + bindPort);
+            }
+            UserTunnel tunnel = new UserTunnel(bindAddr, bindPort, serverChannel);
+            tunnel.open();
+            bindPortUserTunnels.put(bindPort, tunnel);
+            serverChannelUserTunnels.put(serverChannel, tunnel);
+            return tunnel;
+        }
+
+
+        public void closeUserTunnel(@NotNull Channel serverChannel) {
+            UserTunnel tunnel = serverChannelUserTunnels.remove(serverChannel);
+            if (tunnel != null) {
+                bindPortUserTunnels.remove(tunnel.bindPort());
+                tunnel.close();
+                logger.info("Close Tunnel: {}", tunnel);
+            }
+        }
+
+    }
+
 }

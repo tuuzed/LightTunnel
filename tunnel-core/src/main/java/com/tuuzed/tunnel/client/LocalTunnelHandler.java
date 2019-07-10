@@ -30,11 +30,4 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
                         .setData(data)
         );
     }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-
-    }
-
 }

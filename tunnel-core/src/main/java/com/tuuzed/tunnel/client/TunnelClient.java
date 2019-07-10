@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
+
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
 
@@ -68,11 +70,15 @@ public class TunnelClient {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
+                    String mapping = localNetwork + "<-" + remotePort;
                     // 连接成功，向服务器发送请求建立隧道消息
+                    future.channel().attr(ATTR_MAPPING).set(mapping);
+                    future.channel().attr(ATTR_LOCAL_NETWORK).set(localNetwork);
+                    future.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
                     future.channel().writeAndFlush(
-                            TunnelMessage.newInstance(TunnelConstants.MESSAGE_TYPE_REQUEST_OPEN_TUNNEL)
-                                    // localNetwork->remotePort
-                                    .setHead((localNetwork + "<-" + remotePort).getBytes())
+                            TunnelMessage
+                                    .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
+                                    .setHead(mapping.getBytes())
                     );
                     logger.info("connect tunnel server success, {}", future.channel());
                 } else {

@@ -55,16 +55,11 @@ public class LocalTunnel {
     public void writeAndFlush(
             final String localAddr, final int localPort,
             @NotNull final byte[] data,
-            @NotNull final Channel nextChannel) {
+            @NotNull final Channel clientChannel) {
         final String channelKey = localAddr + ":" + localPort;
         Channel channel = channels.get(channelKey);
         if (channel != null && channel.isActive()) {
-            channel.writeAndFlush(Unpooled.wrappedBuffer(data)).addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-
-                }
-            });
+            channel.writeAndFlush(Unpooled.wrappedBuffer(data));
         } else {
             channels.remove(channelKey);
             bootstrap.connect(localAddr, localPort).addListener(new ChannelFutureListener() {
@@ -72,14 +67,9 @@ public class LocalTunnel {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         Channel channel = future.channel();
-                        channel.attr(ATTR_NEXT_CHANNEL).set(nextChannel);
+                        channel.attr(ATTR_NEXT_CHANNEL).set(clientChannel);
                         channels.put(channelKey, channel);
-                        channel.writeAndFlush(Unpooled.wrappedBuffer(data)).addListener(new ChannelFutureListener() {
-                            @Override
-                            public void operationComplete(ChannelFuture future) throws Exception {
-
-                            }
-                        });
+                        channel.writeAndFlush(Unpooled.wrappedBuffer(data));
                     }
                 }
             });

@@ -62,13 +62,16 @@ public class TunnelMessage {
         String type;
         switch (this.type) {
             case TunnelConstants.MESSAGE_TYPE_HEARTBEAT:
-                type = "MESSAGE_TYPE_HEARTBEAT";
+                type = "HEARTBEAT";
                 break;
-            case TunnelConstants.MESSAGE_TYPE_REQUEST_OPEN_TUNNEL:
-                type = "MESSAGE_TYPE_REQUEST_OPEN_TUNNEL";
+            case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_REQUEST:
+                type = "OPEN_TUNNEL_REQUEST";
+                break;
+            case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
+                type = "OPEN_TUNNEL_RESPONSE";
                 break;
             case TunnelConstants.MESSAGE_TYPE_TRANSFER:
-                type = "MESSAGE_TYPE_TRANSFER";
+                type = "TRANSFER";
                 break;
             default:
                 type = String.valueOf(this.type);

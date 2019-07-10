@@ -24,18 +24,22 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
+        // 获取入站端口
         int inboundPort = ((InetSocketAddress) ctx.channel().localAddress()).getPort();
-        UserTunnel tunnel = UserTunnelManager.getInstance().getTunnel(inboundPort);
+        UserTunnel tunnel = UserTunnel.getManager().getUserTunnel(inboundPort);
         if (tunnel == null) {
             ctx.close();
             return;
         }
         Channel serverChannel = tunnel.serverChannel();
+        // TODO 导致多连接失效, 解决方案，新增sessionId
         serverChannel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
-        logger.info("inboundPort: {}, serverChannel: {}", inboundPort, serverChannel);
+        String mapping = serverChannel.attr(ATTR_MAPPING).get();
+        logger.info("mapping: {} , serverChannel: {}", mapping, serverChannel);
+        // 将数据转发至TunnelClient
         serverChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)
-                        .setHead(serverChannel.attr(ATTR_MAPPING).get().getBytes())
+                        .setHead(mapping.getBytes())
                         .setData(data)
         );
     }
