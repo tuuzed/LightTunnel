@@ -33,7 +33,9 @@ public class UserTunnel {
     @NotNull
     private final Channel serverChannel;
     @NotNull
-    private final Map<Long, Channel> sessionTokenUserTunnelChannels = new ConcurrentHashMap<>();
+    private final Map<String, Channel> tunnelTokenSessionTokenUserTunnelChannels = new ConcurrentHashMap<>();
+
+    private final AtomicLong sessionTokenGenerator = new AtomicLong();
 
     private UserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) {
         this.bossGroup = new NioEventLoopGroup();
@@ -80,17 +82,25 @@ public class UserTunnel {
     private void close() {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
-        sessionTokenUserTunnelChannels.clear();
+        tunnelTokenSessionTokenUserTunnelChannels.clear();
+    }
+
+    public long generateSessionToken() {
+        return sessionTokenGenerator.incrementAndGet();
     }
 
 
-    public void putUserTunnelChannel(long sessionToken, @NotNull Channel channel) {
-        sessionTokenUserTunnelChannels.put(sessionToken, channel);
+    public void putUserTunnelChannel(long tunnelToken, long sessionToken, @NotNull Channel channel) {
+        tunnelTokenSessionTokenUserTunnelChannels.put(tunnelToken + "@" + sessionToken, channel);
     }
 
     @Nullable
-    public Channel getUserTunnelChannel(long sessionToken) {
-        return sessionTokenUserTunnelChannels.get(sessionToken);
+    public Channel getUserTunnelChannel(long tunnelToken, long sessionToken) {
+        return tunnelTokenSessionTokenUserTunnelChannels.get(tunnelToken + "@" + sessionToken);
+    }
+
+    public void removeUserTunnelChannel(long tunnelToken, long sessionToken) {
+        tunnelTokenSessionTokenUserTunnelChannels.remove(tunnelToken + "@" + sessionToken);
     }
 
     @Override

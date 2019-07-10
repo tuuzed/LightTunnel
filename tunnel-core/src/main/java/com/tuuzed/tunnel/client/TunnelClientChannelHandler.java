@@ -21,8 +21,9 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
+        long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
         long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
-        LocalTunnel.getInstance().removeLocalTunnelChannel(sessionToken);
+        LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
         super.channelInactive(ctx);
     }
 
@@ -74,7 +75,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
         int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
 
-        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, sessionToken,
+        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
                 new LocalTunnel.GetLocalTunnelChannelCallback() {
                     @Override
                     public void success(@NotNull Channel channel) {

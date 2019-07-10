@@ -29,7 +29,7 @@ public class LocalTunnel {
         return InstanceHolder.instance;
     }
 
-    private final Map<Long, Channel> sessionTokenChannels = new ConcurrentHashMap<>();
+    private final Map<String, Channel> tunnelTokenSessionTokenChannels = new ConcurrentHashMap<>();
 
     private final Bootstrap bootstrap;
 
@@ -49,8 +49,8 @@ public class LocalTunnel {
     }
 
 
-    public void removeLocalTunnelChannel(final long sessionToken) {
-        Channel channel = sessionTokenChannels.remove(sessionToken);
+    public void removeLocalTunnelChannel(final long tunnelToken, final long sessionToken) {
+        Channel channel = tunnelTokenSessionTokenChannels.remove(tunnelToken + "@" + sessionToken);
         if (channel != null && channel.isOpen()) {
             channel.closeFuture();
         }
@@ -59,21 +59,22 @@ public class LocalTunnel {
     public void getLocalTunnelChannel(
             @NotNull final String localAddr,
             final int localPort,
+            final long tunnelToken,
             final long sessionToken,
             @NotNull final GetLocalTunnelChannelCallback callback) {
-        logger.info("localAddr: {}, localPort: {}, sessionToken: {}", localAddr, localAddr, sessionToken);
-        logger.info("sessionTokenChannels: {}", sessionTokenChannels);
-        Channel channel = sessionTokenChannels.get(sessionToken);
+        logger.info("localAddr: {}, localPort: {},tunnelToken:{}, sessionToken: {}", localAddr, localAddr, tunnelToken, sessionToken);
+        logger.info("tunnelTokenSessionTokenChannels: {}", tunnelTokenSessionTokenChannels);
+        Channel channel = tunnelTokenSessionTokenChannels.get(tunnelToken + "@" + sessionToken);
         if (channel != null && channel.isActive()) {
             callback.success(channel);
         } else {
-            removeLocalTunnelChannel(sessionToken);
+            removeLocalTunnelChannel(tunnelToken, sessionToken);
             bootstrap.connect(localAddr, localPort).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         Channel channel = future.channel();
-                        sessionTokenChannels.put(sessionToken, channel);
+                        tunnelTokenSessionTokenChannels.put(tunnelToken + "@" + sessionToken, channel);
                         callback.success(channel);
                     } else {
                         callback.error(future.cause());

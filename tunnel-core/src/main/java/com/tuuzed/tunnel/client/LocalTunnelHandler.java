@@ -20,8 +20,9 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
         long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
-        LocalTunnel.getInstance().removeLocalTunnelChannel(sessionToken);
+        LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
         super.channelInactive(ctx);
     }
 

@@ -17,6 +17,7 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
 
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
@@ -88,7 +89,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         long sessionToken = head.readLong();
         UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
-            Channel userTunnelChannel = tunnel.getUserTunnelChannel(sessionToken);
+            Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
                 userTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
             }
