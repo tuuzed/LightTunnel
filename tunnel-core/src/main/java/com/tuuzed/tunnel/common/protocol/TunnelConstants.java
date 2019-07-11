@@ -26,19 +26,23 @@ public final class TunnelConstants {
     /**
      * 心跳消息
      */
-    public static final byte MESSAGE_TYPE_HEARTBEAT = 1;
+    public static final byte MESSAGE_TYPE_HEARTBEAT = 0x01;
     /**
      * 建立隧道请求
      */
-    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_REQUEST = 2;
+    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_REQUEST = 0x02;
     /**
      * 建立隧道响应
      */
-    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE = 3;
+    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE = 0x03;
     /**
      * 透传消息
      */
-    public static final byte MESSAGE_TYPE_TRANSFER = 4;
+    public static final byte MESSAGE_TYPE_TRANSFER = 0x04;
+    /**
+     * 本地隧道断开连接
+     */
+    public static final byte MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT = 0x05;
 
 
     public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");

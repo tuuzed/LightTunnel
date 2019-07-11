@@ -23,6 +23,12 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
         long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
+        final Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
+        tunnelClientChannel.writeAndFlush(
+                TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT)
+                        .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+        );
+
         super.channelInactive(ctx);
     }
 
