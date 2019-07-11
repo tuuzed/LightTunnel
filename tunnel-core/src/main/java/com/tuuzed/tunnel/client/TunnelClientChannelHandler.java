@@ -59,6 +59,11 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         long tunnelToken = head.readLong();
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+
+        String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
+        int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        int remotePort = ctx.channel().attr(ATTR_REMOTE_PORT).get();
+        logger.info("Opened Tunnel: {}:{}<-{}", localAddr, localPort, remotePort);
     }
 
     /**

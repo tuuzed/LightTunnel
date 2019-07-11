@@ -1,6 +1,5 @@
 apply plugin: "java"
 apply plugin: "maven"
-apply plugin: 'gitvc-gradle-plugin'
 
 group rootProject.group
 version rootProject.version
@@ -8,30 +7,17 @@ version rootProject.version
 targetCompatibility = JavaVersion.VERSION_1_7
 sourceCompatibility = JavaVersion.VERSION_1_7
 
-def netty_version = '4.1.37.Final'
-
-ext.deps = [
-        "netty_buffer"   : "io.netty:netty-buffer:$netty_version",
-        "netty_codec"    : "io.netty:netty-codec:$netty_version",
-        "netty_common"   : "io.netty:netty-common:$netty_version",
-        "netty_handler"  : "io.netty:netty-handler:$netty_version",
-        "netty_resolver" : "io.netty:netty-resolver:$netty_version",
-        "netty_transport": "io.netty:netty-transport:$netty_version",
-        "annotations"    : "org.jetbrains:annotations:13.0",
-
-        "junit"          : "junit:junit:4.12",
-]
-
 dependencies {
-    compile deps.annotations
-    compile deps.netty_buffer
-    compile deps.netty_codec
-    compile deps.netty_common
-    compile deps.netty_handler
-    compile deps.netty_resolver
-    compile deps.netty_transport
+    def netty_version = '4.1.37.Final'
+    compile "org.jetbrains:annotations:13.0"
+    compile "io.netty:netty-buffer:$netty_version"
+    compile "io.netty:netty-codec:$netty_version"
+    compile "io.netty:netty-common:$netty_version"
+    compile "io.netty:netty-handler:$netty_version"
+    compile "io.netty:netty-resolver:$netty_version"
+    compile "io.netty:netty-transport:$netty_version"
     // 单元测试
-    testImplementation deps.junit
+    testImplementation "junit:junit:4.12"
 }
 
 uploadArchives {
@@ -49,16 +35,4 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives sourcesJar
-}
-
-jar {
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    manifest {
-        attributes 'Main-Class': ''
-        attributes 'Version-Code': String.valueOf(GitVC.VERSION_CODE)
-        attributes 'Version-Name': String.valueOf(GitVC.VERSION_NAME)
-        attributes 'Last-Commit-SHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
-        attributes 'Last-Commit-Date': String.valueOf(GitVC.LAST_COMMIT_DATE)
-        attributes 'Build-Date': String.valueOf(new Date())
-    }
 }

@@ -20,9 +20,10 @@ buildscript {
         }
     }
 }
+apply plugin: 'gitvc-gradle-plugin'
 
 group = 'com.tuuzed.tunnel'
-version = '0.1.0'
+version = String.valueOf(GitVC.VERSION_NAME)
 
 
 

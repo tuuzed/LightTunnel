@@ -1,0 +1,29 @@
+apply plugin: "java"
+apply plugin: 'gitvc-gradle-plugin'
+
+group rootProject.group
+version rootProject.version
+
+targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_7
+
+dependencies {
+    compile project(":tunnel-core")
+    compile "args4j:args4j:2.33"
+    // 单元测试
+    testImplementation "junit:junit:4.12"
+}
+
+jar {
+    exclude 'OSGI-OPT/'
+    exclude 'LICENSE'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Main-Class': 'com.tuuzed.tunnel.cli.Bootstrap'
+        attributes 'Version-Code': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'Version-Name': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'Last-Commit-SHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'Last-Commit-Date': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'Build-Date': String.valueOf(new Date())
+    }
+}

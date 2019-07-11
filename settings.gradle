@@ -1,3 +1,4 @@
 rootProject.name = 'tunnel'
 
 include 'tunnel-core'
+include 'tunnel-cli'

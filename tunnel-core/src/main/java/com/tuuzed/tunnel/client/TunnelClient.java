@@ -55,16 +55,17 @@ public class TunnelClient {
                 });
     }
 
-    public void start() {
-        connectTunnelServerAndRequestOpenTunnel();
+    public void start(boolean sync) throws InterruptedException {
+        connectTunnelServerAndRequestOpenTunnel(sync);
     }
 
     public void stop() {
         workerGroup.shutdownGracefully();
     }
 
-    private void connectTunnelServerAndRequestOpenTunnel() {
-        bootstrap.connect(serverAddr, serverPort).addListener(new ChannelFutureListener() {
+    private void connectTunnelServerAndRequestOpenTunnel(final boolean sync) throws InterruptedException {
+        ChannelFuture f = bootstrap.connect(serverAddr, serverPort);
+        f.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
@@ -86,10 +87,13 @@ public class TunnelClient {
                     logger.warn("connect tunnel server failed {}", future.channel(), future.cause());
                     // 连接失败，3秒后发起重连
                     TimeUnit.SECONDS.sleep(3000);
-                    connectTunnelServerAndRequestOpenTunnel();
+                    connectTunnelServerAndRequestOpenTunnel(sync);
                 }
             }
         });
+        if (sync) {
+            f.channel().closeFuture().sync();
+        }
     }
 
 }
