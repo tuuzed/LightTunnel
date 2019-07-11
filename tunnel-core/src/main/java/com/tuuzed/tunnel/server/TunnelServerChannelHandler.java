@@ -6,6 +6,7 @@ import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.BindException;
 
@@ -97,9 +98,12 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     @SuppressWarnings("Duplicates")
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        final long tunnelToken = head.readLong();
-        final long sessionToken = head.readLong();
+        long[] tunnelTokenAndSessionToken = getTunnelTokenAndSessionToken(msg);
+        if (tunnelTokenAndSessionToken == null) {
+            return;
+        }
+        final long tunnelToken = tunnelTokenAndSessionToken[0];
+        final long sessionToken = tunnelTokenAndSessionToken[1];
         final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
@@ -114,9 +118,12 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     @SuppressWarnings("Duplicates")
     private void handleLocalTunnelConnectedMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        final long tunnelToken = head.readLong();
-        final long sessionToken = head.readLong();
+        long[] tunnelTokenAndSessionToken = getTunnelTokenAndSessionToken(msg);
+        if (tunnelTokenAndSessionToken == null) {
+            return;
+        }
+        final long tunnelToken = tunnelTokenAndSessionToken[0];
+        final long sessionToken = tunnelTokenAndSessionToken[1];
         final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
@@ -141,6 +148,22 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
                 userTunnelChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             }
         }
+    }
+
+
+    @Nullable
+    private static long[] getTunnelTokenAndSessionToken(TunnelMessage msg) {
+        if (msg == null) {
+            return null;
+        }
+        if (msg.getHead().length < 16) {
+            return null;
+        }
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        head.release();
+        return new long[]{tunnelToken, sessionToken};
     }
 
 }
