@@ -35,14 +35,9 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         super.channelInactive(ctx);
     }
 
-
-    @SuppressWarnings("Duplicates")
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        int length = msg.readableBytes();
-        byte[] data = new byte[length];
-        msg.readBytes(data);
-        // 根据入站端口获取用户隧道,如果用户隧道不存在则直接关闭连接
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel == null) {
             return;
@@ -57,6 +52,26 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
         }
         tunnel.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
+        serverChannel.writeAndFlush(
+                TunnelMessage.newInstance(MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL)
+                        .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+        );
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        int length = msg.readableBytes();
+        byte[] data = new byte[length];
+        msg.readBytes(data);
+        // 根据入站端口获取用户隧道,如果用户隧道不存在则直接关闭连接
+        UserTunnel tunnel = getUserTunnel(ctx);
+        if (tunnel == null) {
+            return;
+        }
+        Channel serverChannel = tunnel.serverChannel();
+        long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         // 将数据转发至TunnelClient
         serverChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)

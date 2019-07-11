@@ -31,11 +31,14 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         logger.info("Recv : {}", msg);
         switch (msg.getType()) {
-            case MESSAGE_TYPE_HEARTBEAT:
-                handleHeartbeatMessage(ctx, msg);
+            case MESSAGE_TYPE_HEARTBEAT_PING:
+                handleHeartbeatPingMessage(ctx, msg);
                 break;
             case MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
                 handleOpenTunnelResponseMessage(ctx, msg);
+                break;
+            case MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL:
+                handleConnectLocalTunnelMessage(ctx, msg);
                 break;
             case MESSAGE_TYPE_TRANSFER:
                 handleTransferMessage(ctx, msg);
@@ -45,12 +48,14 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
+
     /**
      * 处理心跳数据
      */
-    private void handleHeartbeatMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        // TODO
+    private void handleHeartbeatPingMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+        ctx.channel().writeAndFlush(TunnelMessage.newInstance(MESSAGE_TYPE_HEARTBEAT_PONG));
     }
+
 
     /**
      * 处理建立隧道请求消息
@@ -66,6 +71,29 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         logger.info("Opened Tunnel: {}:{}<-{}", localAddr, localPort, remotePort);
     }
 
+    private void handleConnectLocalTunnelMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
+        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+        ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
+        final String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
+        final int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
+                new LocalTunnel.GetLocalTunnelChannelCallback() {
+                    @Override
+                    public void success(@NotNull Channel channel) {
+                        channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
+                        channel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+                        channel.attr(ATTR_SESSION_TOKEN).set(sessionToken);
+                    }
+
+                    @Override
+                    public void error(Throwable cause) {
+                    }
+                });
+    }
+
     /**
      * 处理数据透传消息
      * 数据流向: UserTunnelManager -> LocalTunnel
@@ -77,8 +105,8 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
 
-        String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
-        int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        final String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
+        final int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
 
         LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
                 new LocalTunnel.GetLocalTunnelChannelCallback() {

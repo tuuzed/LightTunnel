@@ -28,8 +28,8 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         logger.info("Recv: {}", msg);
         switch (msg.getType()) {
-            case MESSAGE_TYPE_HEARTBEAT:
-                handleHeartbeatMessage(ctx, msg);
+            case MESSAGE_TYPE_HEARTBEAT_PING:
+                handleHeartbeatPingMessage(ctx, msg);
                 break;
             case MESSAGE_TYPE_OPEN_TUNNEL_REQUEST:
                 handleOpenTunnelRequestMessage(ctx, msg);
@@ -52,8 +52,8 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理心跳消息
      */
-    private void handleHeartbeatMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        ctx.channel().writeAndFlush(TunnelMessage.newInstance(MESSAGE_TYPE_HEARTBEAT));
+    private void handleHeartbeatPingMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
+        ctx.channel().writeAndFlush(TunnelMessage.newInstance(MESSAGE_TYPE_HEARTBEAT_PONG));
     }
 
     /**

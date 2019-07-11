@@ -61,14 +61,20 @@ public class TunnelMessage {
     public String toString() {
         String type;
         switch (this.type) {
-            case TunnelConstants.MESSAGE_TYPE_HEARTBEAT:
-                type = "HEARTBEAT";
+            case TunnelConstants.MESSAGE_TYPE_HEARTBEAT_PING:
+                type = "HEARTBEAT_PING";
+                break;
+            case TunnelConstants.MESSAGE_TYPE_HEARTBEAT_PONG:
+                type = "HEARTBEAT_PONG";
                 break;
             case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_REQUEST:
                 type = "OPEN_TUNNEL_REQUEST";
                 break;
             case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
                 type = "OPEN_TUNNEL_RESPONSE";
+                break;
+            case TunnelConstants.MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL:
+                type = "CONNECT_LOCAL_TUNNEL";
                 break;
             case TunnelConstants.MESSAGE_TYPE_TRANSFER:
                 type = "TRANSFER";
