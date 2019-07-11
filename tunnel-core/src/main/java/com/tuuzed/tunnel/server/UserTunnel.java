@@ -124,10 +124,8 @@ public class UserTunnel {
          */
         private static final AtomicLong tunnelTokenGenerator = new AtomicLong();
 
-        private final Map<Channel, UserTunnel> serverChannelUserTunnels = new ConcurrentHashMap<>();
         private final Map<Integer, UserTunnel> bindPortUserTunnels = new ConcurrentHashMap<>();
         private final Map<Long, UserTunnel> tunnelTokenUserTunnels = new ConcurrentHashMap<>();
-
 
         private Manager() {
         }
@@ -158,7 +156,6 @@ public class UserTunnel {
             UserTunnel tunnel = new UserTunnel(bindAddr, bindPort, serverChannel);
             tunnel.open();
             bindPortUserTunnels.put(bindPort, tunnel);
-            serverChannelUserTunnels.put(serverChannel, tunnel);
             long tunnelToken = tunnelTokenGenerator.incrementAndGet();
             serverChannel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             tunnelTokenUserTunnels.put(tunnelToken, tunnel);
@@ -166,11 +163,10 @@ public class UserTunnel {
         }
 
 
-        public void closeUserTunnel(@NotNull Channel serverChannel) {
-            UserTunnel tunnel = serverChannelUserTunnels.remove(serverChannel);
+        public void closeUserTunnel(long tunnelToken) {
+            UserTunnel tunnel = tunnelTokenUserTunnels.remove(tunnelToken);
             if (tunnel != null) {
                 bindPortUserTunnels.remove(tunnel.bindPort());
-                tunnelTokenUserTunnels.remove(serverChannel.attr(ATTR_TUNNEL_TOKEN).get());
                 tunnel.close();
                 logger.info("Close Tunnel: {}", tunnel);
             }

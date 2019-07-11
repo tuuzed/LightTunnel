@@ -19,7 +19,8 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
-        UserTunnel.getManager().closeUserTunnel(ctx.channel());
+        long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
+        UserTunnel.getManager().closeUserTunnel(tunnelToken);
         super.channelInactive(ctx);
     }
 
