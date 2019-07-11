@@ -5,10 +5,7 @@ import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -38,6 +35,9 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
                 break;
             case MESSAGE_TYPE_TRANSFER:
                 handleTransferMessage(ctx, msg);
+                break;
+            case MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED:
+                handleLocalTunnelConnectedMessage(ctx, msg);
                 break;
             case MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT:
                 handleLocalTunnelDisconnectMessage(ctx, msg);
@@ -97,6 +97,20 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
                 userTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+            }
+        }
+    }
+
+    private void handleLocalTunnelConnectedMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        long tunnelToken = head.readLong();
+        long sessionToken = head.readLong();
+        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByTunnelToken(tunnelToken);
+        if (tunnel != null) {
+            Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
+            if (userTunnelChannel != null) {
+                // 解决 HTTP/1.x 数据传输问题
+                userTunnelChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
             }
         }
     }
