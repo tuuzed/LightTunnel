@@ -10,8 +10,9 @@ import io.netty.channel.*;
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
- * JProxy服务数据通道处理器
+ * Tunnel服务数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
 
@@ -60,18 +61,17 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理建立隧道请求消息
      */
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        byte[] head = msg.getHead();
-        String mapping = new String(head);
-        logger.info("mapping: {}", mapping);
-        String[] mappingTuple = mapping.split("<-");
+        final byte[] head = msg.getHead();
+        final String mapping = new String(head);
+        final String[] mappingTuple = mapping.split("<-");
         if (mappingTuple.length != 2) {
             ctx.close();
             return;
         }
-        String[] localAddrAndPortTuple = mappingTuple[0].split(":");
-        String localAddr = localAddrAndPortTuple[0];
-        int localPort = Integer.parseInt(localAddrAndPortTuple[1]);
-        int remotePort = Integer.parseInt(mappingTuple[1]);
+        final String[] localAddrAndPortTuple = mappingTuple[0].split(":");
+        final String localAddr = localAddrAndPortTuple[0];
+        final int localPort = Integer.parseInt(localAddrAndPortTuple[1]);
+        final int remotePort = Integer.parseInt(mappingTuple[1]);
 
         ctx.channel().attr(ATTR_MAPPING).set(mapping);
         ctx.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
@@ -90,10 +90,10 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 数据流向: TunnelClient  ->  UserTunnelManager
      */
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        long tunnelToken = head.readLong();
-        long sessionToken = head.readLong();
-        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
@@ -103,10 +103,10 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     }
 
     private void handleLocalTunnelConnectedMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        long tunnelToken = head.readLong();
-        long sessionToken = head.readLong();
-        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {

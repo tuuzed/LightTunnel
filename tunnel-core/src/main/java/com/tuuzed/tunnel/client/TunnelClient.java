@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
+@SuppressWarnings("Duplicates")
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
 

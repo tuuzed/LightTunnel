@@ -18,19 +18,19 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * 隧道数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelChannelHandler.class);
 
-    @SuppressWarnings("Duplicates")
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel == null) {
             return;
         }
-        Channel serverChannel = tunnel.serverChannel();
-        long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
-        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        final Channel serverChannel = tunnel.serverChannel();
+        final long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+        final long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
         super.channelInactive(ctx);
     }
@@ -42,9 +42,9 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         if (tunnel == null) {
             return;
         }
-        Channel serverChannel = tunnel.serverChannel();
-        long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
-        long sessionToken;
+        final Channel serverChannel = tunnel.serverChannel();
+        final long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+        final long sessionToken;
         if (ctx.channel().hasAttr(ATTR_SESSION_TOKEN)) {
             sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         } else {
@@ -58,7 +58,6 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         );
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         int length = msg.readableBytes();
@@ -69,9 +68,9 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         if (tunnel == null) {
             return;
         }
-        Channel serverChannel = tunnel.serverChannel();
-        long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
-        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        final Channel serverChannel = tunnel.serverChannel();
+        final long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+        final long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         // 将数据转发至TunnelClient
         serverChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)

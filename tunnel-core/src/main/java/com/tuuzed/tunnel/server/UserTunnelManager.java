@@ -158,18 +158,26 @@ public class UserTunnelManager {
 
         @Override
         public void putUserTunnelChannel(long tunnelToken, long sessionToken, @NotNull Channel channel) {
-            tunnelTokenSessionTokenUserTunnelChannels.put(tunnelToken + "@" + sessionToken, channel);
+            final String key = getKey(tunnelToken, sessionToken);
+            tunnelTokenSessionTokenUserTunnelChannels.put(key, channel);
         }
 
         @Nullable
         @Override
         public Channel getUserTunnelChannel(long tunnelToken, long sessionToken) {
-            return tunnelTokenSessionTokenUserTunnelChannels.get(tunnelToken + "@" + sessionToken);
+            final String key = getKey(tunnelToken, sessionToken);
+            return tunnelTokenSessionTokenUserTunnelChannels.get(key);
         }
 
         @Override
         public void removeUserTunnelChannel(long tunnelToken, long sessionToken) {
-            tunnelTokenSessionTokenUserTunnelChannels.remove(tunnelToken + "@" + sessionToken);
+            final String key = getKey(tunnelToken, sessionToken);
+            tunnelTokenSessionTokenUserTunnelChannels.remove(key);
+        }
+
+        @NotNull
+        private static String getKey(long tunnelToken, long sessionToken) {
+            return String.format("%d@%d", tunnelToken, sessionToken);
         }
 
         @Override

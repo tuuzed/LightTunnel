@@ -15,13 +15,14 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * 本地连接数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(LocalTunnelHandler.class);
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
-        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        final long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
+        final long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         final Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
         tunnelClientChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT)
@@ -33,8 +34,8 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
-        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        final long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
+        final long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         final Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
         tunnelClientChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED)
@@ -45,13 +46,12 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        int length = msg.readableBytes();
-        byte[] data = new byte[length];
+        final int length = msg.readableBytes();
+        final byte[] data = new byte[length];
         msg.readBytes(data);
         final Channel tunnelClientChannel = ctx.channel().attr(ATTR_NEXT_CHANNEL).get();
         final long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
         final long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
-        logger.info("nextChannel: {}", tunnelClientChannel);
         tunnelClientChannel.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)
                         .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
@@ -65,4 +65,5 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         tunnelClientChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
         super.channelWritabilityChanged(ctx);
     }
+
 }

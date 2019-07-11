@@ -15,6 +15,7 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * Tunnel客户端数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
 
@@ -72,7 +73,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     }
 
     private void handleConnectLocalTunnelMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
-        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);

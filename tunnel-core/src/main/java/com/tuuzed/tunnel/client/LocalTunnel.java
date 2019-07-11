@@ -50,7 +50,8 @@ public class LocalTunnel {
 
 
     public void removeLocalTunnelChannel(final long tunnelToken, final long sessionToken) {
-        Channel channel = tunnelTokenSessionTokenChannels.remove(tunnelToken + "@" + sessionToken);
+        final String key = getKey(tunnelToken, sessionToken);
+        Channel channel = tunnelTokenSessionTokenChannels.remove(key);
         if (channel != null && channel.isOpen()) {
             channel.closeFuture();
         }
@@ -64,7 +65,8 @@ public class LocalTunnel {
             @NotNull final GetLocalTunnelChannelCallback callback) {
         logger.info("localAddr: {}, localPort: {},tunnelToken:{}, sessionToken: {}", localAddr, localAddr, tunnelToken, sessionToken);
         logger.info("tunnelTokenSessionTokenChannels: {}", tunnelTokenSessionTokenChannels);
-        Channel channel = tunnelTokenSessionTokenChannels.get(tunnelToken + "@" + sessionToken);
+        final String key = getKey(tunnelToken, sessionToken);
+        Channel channel = tunnelTokenSessionTokenChannels.get(key);
         if (channel != null && channel.isActive()) {
             callback.success(channel);
         } else {
@@ -74,7 +76,7 @@ public class LocalTunnel {
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
                         Channel channel = future.channel();
-                        tunnelTokenSessionTokenChannels.put(tunnelToken + "@" + sessionToken, channel);
+                        tunnelTokenSessionTokenChannels.put(key, channel);
                         callback.success(channel);
                     } else {
                         callback.error(future.cause());
@@ -88,6 +90,11 @@ public class LocalTunnel {
         void success(@NotNull Channel channel);
 
         void error(Throwable cause);
+    }
+
+    @NotNull
+    private static String getKey(long tunnelToken, long sessionToken) {
+        return String.format("%d@%d", tunnelToken, sessionToken);
     }
 
 }
