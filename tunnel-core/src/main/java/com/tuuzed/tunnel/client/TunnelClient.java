@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
-@SuppressWarnings("Duplicates")
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
 
@@ -33,7 +32,10 @@ public class TunnelClient {
     private final int localPort;
     private final int remotePort;
 
-    public TunnelClient(@NotNull String serverAddr, int serverPort, @NotNull String localAddr, int localPort, int remotePort) {
+    public TunnelClient(
+            @NotNull String serverAddr, int serverPort,
+            @NotNull String localAddr, int localPort,
+            int remotePort) {
         this.bootstrap = new Bootstrap();
         this.workerGroup = new NioEventLoopGroup();
         this.serverAddr = serverAddr;
@@ -56,15 +58,18 @@ public class TunnelClient {
                 });
     }
 
-    public void start(boolean sync) throws InterruptedException {
-        connectTunnelServerAndRequestOpenTunnel(sync);
+    @NotNull
+    public ChannelFuture start() {
+        return connectTunnelServerAndRequestOpenTunnel();
     }
 
     public void stop() {
         workerGroup.shutdownGracefully();
     }
 
-    private void connectTunnelServerAndRequestOpenTunnel(final boolean sync) throws InterruptedException {
+    @NotNull
+    @SuppressWarnings("Duplicates")
+    private ChannelFuture connectTunnelServerAndRequestOpenTunnel() {
         ChannelFuture f = bootstrap.connect(serverAddr, serverPort);
         f.addListener(new ChannelFutureListener() {
             @Override
@@ -87,14 +92,12 @@ public class TunnelClient {
                 } else {
                     logger.warn("connect tunnel server failed {}", future.channel(), future.cause());
                     // 连接失败，3秒后发起重连
-                    TimeUnit.SECONDS.sleep(3000);
-                    connectTunnelServerAndRequestOpenTunnel(sync);
+                    TimeUnit.SECONDS.sleep(3);
+                    connectTunnelServerAndRequestOpenTunnel();
                 }
             }
         });
-        if (sync) {
-            f.channel().closeFuture().sync();
-        }
+        return f;
     }
 
 }

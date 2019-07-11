@@ -9,22 +9,25 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
  * Tunnel客户端数据通道处理器
  */
-@SuppressWarnings("Duplicates")
 public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
+
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
-        long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
-        long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
-        LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
+        final Long tunnelToken = getTunnelToken(ctx);
+        final Long sessionToken = getSessionToken(ctx);
+        if (tunnelToken != null && sessionToken != null) {
+            LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
+        }
         super.channelInactive(ctx);
     }
 
@@ -72,12 +75,17 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         logger.info("Opened Tunnel: {}:{}<-{}", localAddr, localPort, remotePort);
     }
 
+    /**
+     * 处理连接本地隧道消息
+     */
     private void handleConnectLocalTunnelMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
+
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
+
         final String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
         final int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
         LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
@@ -99,6 +107,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理数据透传消息
      * 数据流向: UserTunnelManager -> LocalTunnel
      */
+    @SuppressWarnings("Duplicates")
     private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
@@ -106,24 +115,74 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
 
-        final String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
-        final int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        final String localAddr = getLocalAddr(ctx);
+        final Integer localPort = getLocalPort(ctx);
+        if (localAddr != null && localPort != null) {
+            LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
+                    new LocalTunnel.GetLocalTunnelChannelCallback() {
+                        @Override
+                        public void success(@NotNull Channel channel) {
+                            channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
+                            channel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+                            channel.attr(ATTR_SESSION_TOKEN).set(sessionToken);
+                            channel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                        }
 
-        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
-                new LocalTunnel.GetLocalTunnelChannelCallback() {
-                    @Override
-                    public void success(@NotNull Channel channel) {
-                        channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
-                        channel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
-                        channel.attr(ATTR_SESSION_TOKEN).set(sessionToken);
-                        channel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
-                    }
+                        @Override
+                        public void error(Throwable cause) {
 
-                    @Override
-                    public void error(Throwable cause) {
+                        }
+                    });
+        }
 
-                    }
-                });
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Nullable
+    private static String getLocalAddr(ChannelHandlerContext ctx) {
+        if (ctx == null) {
+            return null;
+        }
+        if (ctx.channel().hasAttr(ATTR_LOCAL_ADDR)) {
+            return ctx.channel().attr(ATTR_LOCAL_ADDR).get();
+        }
+        return null;
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Nullable
+    private static Integer getLocalPort(ChannelHandlerContext ctx) {
+        if (ctx == null) {
+            return null;
+        }
+        if (ctx.channel().hasAttr(ATTR_LOCAL_PORT)) {
+            return ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        }
+        return null;
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Nullable
+    private static Long getTunnelToken(ChannelHandlerContext ctx) {
+        if (ctx == null) {
+            return null;
+        }
+        if (ctx.channel().hasAttr(ATTR_TUNNEL_TOKEN)) {
+            return ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
+        }
+        return null;
+    }
+
+    @SuppressWarnings("Duplicates")
+    @Nullable
+    private static Long getSessionToken(ChannelHandlerContext ctx) {
+        if (ctx == null) {
+            return null;
+        }
+        if (ctx.channel().hasAttr(ATTR_SESSION_TOKEN)) {
+            return ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+        }
+        return null;
     }
 
 }

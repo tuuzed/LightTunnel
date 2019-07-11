@@ -5,7 +5,7 @@ import org.junit.Test;
 public class TunnelServerTest {
     @Test
     public void start() throws Exception {
-        new TunnelServer(4000).start();
+        new TunnelServer(null, 4000).start();
     }
 
 }

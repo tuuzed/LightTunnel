@@ -7,15 +7,16 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 
+import java.net.BindException;
+
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
  * Tunnel服务数据通道处理器
  */
-@SuppressWarnings("Duplicates")
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
-    private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
 
+    private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -49,7 +50,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-
     /**
      * 处理心跳消息
      */
@@ -60,6 +60,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理建立隧道请求消息
      */
+    @SuppressWarnings("Duplicates")
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final byte[] head = msg.getHead();
         final String mapping = new String(head);
@@ -78,17 +79,23 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         ctx.channel().attr(ATTR_LOCAL_PORT).set(localPort);
         ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
 
-        long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
-        ctx.writeAndFlush(
-                TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
-                        .setHead(Unpooled.copyLong(tunnelToken).array())
-        );
+        try {
+            long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
+            ctx.writeAndFlush(
+                    TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
+                            .setHead(Unpooled.copyLong(tunnelToken).array())
+            );
+        } catch (BindException e) {
+            logger.error("openUserTunnel Error: {}", e.getMessage(), e);
+        }
+
     }
 
     /**
      * 处理数据透传消息
      * 数据流向: TunnelClient  ->  UserTunnelManager
      */
+    @SuppressWarnings("Duplicates")
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
@@ -102,6 +109,10 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
+    /**
+     * 处理本地隧道连接成功消息
+     */
+    @SuppressWarnings("Duplicates")
     private void handleLocalTunnelConnectedMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
@@ -110,7 +121,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
-                // 解决 HTTP/1.x 数据传输问题
                 userTunnelChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
             }
         }

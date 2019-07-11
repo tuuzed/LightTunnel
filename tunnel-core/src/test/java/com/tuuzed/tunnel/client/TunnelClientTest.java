@@ -10,17 +10,16 @@ public class TunnelClientTest {
                 "127.0.0.1", 4000,
                 "192.168.1.1", 80,
                 10080
-        ).start(false);
+        ).start();
         new TunnelClient(
                 "127.0.0.1", 4000,
                 "192.168.1.33", 5900,
                 15900
-        ).start(false);
+        ).start();
         new TunnelClient(
                 "127.0.0.1", 4000,
                 "192.168.1.10", 22,
                 10022
-        ).start(false);
-        System.in.read();
+        ).start().channel().closeFuture().sync();
     }
 }

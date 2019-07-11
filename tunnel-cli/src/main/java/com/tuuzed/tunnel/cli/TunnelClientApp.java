@@ -24,7 +24,7 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                     runOptions.localAddr,
                     runOptions.localPort,
                     runOptions.remotePort
-            ).start(true);
+            ).start().sync();
         } catch (Exception e) {
             logger.error("runApp Error: {}", e.getMessage(), e);
         }
