@@ -68,7 +68,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     /**
      * 处理数据透传消息
-     * 数据流向: UserTunnel -> LocalTunnel
+     * 数据流向: UserTunnelManager -> LocalTunnel
      */
     private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());

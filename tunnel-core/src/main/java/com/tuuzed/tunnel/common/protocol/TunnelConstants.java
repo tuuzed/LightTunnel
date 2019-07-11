@@ -39,13 +39,17 @@ public final class TunnelConstants {
      */
     public static final byte MESSAGE_TYPE_TRANSFER = 0x04;
     /**
+     * 连接本地隧道
+     */
+    public static final byte MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL = 0x05;
+    /**
      * 本地隧道已连接
      */
-    public static final byte MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED = 0x05;
+    public static final byte MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED = 0x06;
     /**
      * 本地隧道断开连接
      */
-    public static final byte MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT = 0x06;
+    public static final byte MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT = 0x07;
 
 
     public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");

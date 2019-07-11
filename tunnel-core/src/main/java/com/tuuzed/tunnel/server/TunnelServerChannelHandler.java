@@ -20,7 +20,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
         long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
-        UserTunnel.getManager().closeUserTunnel(tunnelToken);
+        UserTunnelManager.getInstance().closeUserTunnel(tunnelToken);
         super.channelInactive(ctx);
     }
 
@@ -78,7 +78,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         ctx.channel().attr(ATTR_LOCAL_PORT).set(localPort);
         ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
 
-        long tunnelToken = UserTunnel.getManager().openUserTunnel(remotePort, ctx.channel());
+        long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
         ctx.writeAndFlush(
                 TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
                         .setHead(Unpooled.copyLong(tunnelToken).array())
@@ -87,13 +87,13 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     /**
      * 处理数据透传消息
-     * 数据流向: TunnelClient  ->  UserTunnel
+     * 数据流向: TunnelClient  ->  UserTunnelManager
      */
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         long tunnelToken = head.readLong();
         long sessionToken = head.readLong();
-        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByTunnelToken(tunnelToken);
+        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
@@ -106,7 +106,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         long tunnelToken = head.readLong();
         long sessionToken = head.readLong();
-        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByTunnelToken(tunnelToken);
+        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
@@ -123,7 +123,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         long tunnelToken = head.readLong();
         long sessionToken = head.readLong();
-        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByTunnelToken(tunnelToken);
+        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {

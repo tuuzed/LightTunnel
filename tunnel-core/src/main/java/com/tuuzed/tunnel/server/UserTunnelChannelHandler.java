@@ -69,7 +69,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
         int inboundPort = ((InetSocketAddress) ctx.channel().localAddress()).getPort();
-        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByBindPort(inboundPort);
+        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
         if (tunnel == null) {
             return;
         }
@@ -81,7 +81,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
     @Nullable
     private UserTunnel getUserTunnel(ChannelHandlerContext ctx) {
         int inboundPort = ((InetSocketAddress) ctx.channel().localAddress()).getPort();
-        UserTunnel tunnel = UserTunnel.getManager().getUserTunnelByBindPort(inboundPort);
+        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
         if (tunnel == null) {
             ctx.close();
             return null;
