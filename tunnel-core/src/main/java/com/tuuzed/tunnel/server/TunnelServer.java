@@ -3,9 +3,9 @@ package com.tuuzed.tunnel.server;
 import com.tuuzed.tunnel.common.handler.TunnelHeartbeatHandler;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageDecoder;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
-import com.tuuzed.tunnel.common.protocol.TunnelUri;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -23,46 +23,46 @@ public class TunnelServer {
     private final NioEventLoopGroup bossGroup;
     @NotNull
     private final NioEventLoopGroup workerGroup;
+    @NotNull
+    private final ServerBootstrap bootstrap;
 
     @Nullable
     private String bindAddr;
     private int bindPort;
 
+
     public TunnelServer(int bindPort) {
-        this(null, bindPort);
+        this(null, bindPort, null);
     }
 
-    public TunnelServer(@Nullable String bindAddr, int bindPort) {
+    public TunnelServer(int bindPort, @Nullable Interceptor<OpenTunnelRequest> interceptor) {
+        this(null, bindPort, interceptor);
+    }
+
+    public TunnelServer(@Nullable String bindAddr, int bindPort,
+                        @Nullable final Interceptor<OpenTunnelRequest> interceptor) {
         this.bossGroup = new NioEventLoopGroup();
         this.workerGroup = new NioEventLoopGroup();
         this.bindAddr = bindAddr;
         this.bindPort = bindPort;
+        this.bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline()
+                                .addLast(new TunnelMessageDecoder())
+                                .addLast(new TunnelMessageEncoder())
+                                .addLast(new TunnelHeartbeatHandler())
+                                .addLast(new TunnelServerChannelHandler(interceptor))
+                        ;
+                    }
+                });
     }
 
     public void start() throws Exception {
         try {
-            ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline()
-                                    .addLast(new TunnelMessageDecoder())
-                                    .addLast(new TunnelMessageEncoder())
-                                    .addLast(new TunnelHeartbeatHandler())
-                                    .addLast(new TunnelServerChannelHandler()
-                                            .setOpenTunnelRequestInterceptor(new OpenTunnelRequestInterceptor() {
-                                                @Override
-                                                public void proceed(@NotNull TunnelUri tunnelUri) throws Exception {
-
-                                                }
-                                            })
-                                    )
-                            ;
-                        }
-                    });
-
             ChannelFuture f;
             if (bindAddr == null) {
                 f = bootstrap.bind(bindPort).sync();

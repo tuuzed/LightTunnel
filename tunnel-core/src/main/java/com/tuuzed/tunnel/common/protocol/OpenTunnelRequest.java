@@ -9,50 +9,62 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TunnelUri {
+public final class OpenTunnelRequest {
 
+    public static final String SCHEME_TCP = "tcp";
 
-    public static TunnelUri create(@NotNull String uri) {
+    public static OpenTunnelRequest create(@NotNull String uri) {
         URI uri0 = URI.create(uri);
+        int remotePort = Integer.parseInt(uri0.getFragment());
         Map<String, String> queryMap = parseQuery(uri0);
-        return new TunnelUri(uri0.getScheme(), uri0.getHost(), uri0.getPort(), queryMap);
+        return new OpenTunnelRequest(uri0.getScheme(), uri0.getHost(), uri0.getPort(), remotePort, queryMap);
     }
 
     public final String scheme;
-    public final String host;
-    public final int port;
-    public final Map<String, String> queryMap;
+    public final String localAddr;
+    public final int localPort;
+    public final int remotePort;
+    public final Map<String, String> options;
 
-    private TunnelUri(@NotNull String scheme, @NotNull String host, int port, @NotNull Map<String, String> queryMap) {
+    public OpenTunnelRequest(@NotNull String scheme,
+                             @NotNull String localAddr, int localPort,
+                             int remotePort,
+                             @NotNull Map<String, String> options) {
         this.scheme = scheme;
-        this.host = host;
-        this.port = port;
-        this.queryMap = queryMap;
+        this.localAddr = localAddr;
+        this.localPort = localPort;
+        this.remotePort = remotePort;
+        this.options = options;
     }
 
     @Override
     public String toString() {
         StringBuilder query = new StringBuilder();
-        Set<Map.Entry<String, String>> entries = queryMap.entrySet();
+        if (options.isEmpty()) {
+            return String.format("%s://%s:%d#%d", scheme, localAddr, localPort, remotePort);
+        }
+        Set<Map.Entry<String, String>> entries = options.entrySet();
         boolean first = true;
         for (Map.Entry<String, String> entry : entries) {
             String key = entry.getKey();
             String value = entry.getValue();
+
             if (key != null) {
+                if (!first) {
+                    query.append("&");
+                }
                 query.append(key);
+                if (value != null) {
+                    query.append("=");
+                    query.append(value);
+                }
             }
-            if (value != null) {
-                query.append("=");
-                query.append(value);
-            }
-            if (first) {
-                query.append("&");
-            }
+
+
             first = false;
         }
-        return scheme + "://" + host + ":" + port + "?" + query.toString();
+        return String.format("%s://%s:%d?%s#%d", scheme, localAddr, localPort, query.toString(), remotePort);
     }
-
 
     @NotNull
     private static Map<String, String> parseQuery(URI uri) {

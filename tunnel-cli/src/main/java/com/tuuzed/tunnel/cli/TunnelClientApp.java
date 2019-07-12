@@ -53,8 +53,7 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                     serverPort,
                     localAddr,
                     localPort,
-                    remotePort,
-                    ""
+                    remotePort
             ).start();
         }
     }
@@ -65,8 +64,7 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                 runOptions.serverPort,
                 runOptions.localAddr,
                 runOptions.localPort,
-                runOptions.remotePort,
-                ""
+                runOptions.remotePort
         ).start();
     }
 

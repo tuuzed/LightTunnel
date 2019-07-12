@@ -3,6 +3,7 @@ package com.tuuzed.tunnel.client;
 import com.tuuzed.tunnel.common.handler.TunnelHeartbeatHandler;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageDecoder;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
@@ -16,6 +17,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
@@ -32,13 +35,22 @@ public class TunnelClient {
     private final String localAddr;
     private final int localPort;
     private final int remotePort;
-    private final String token;
+    private final Map<String, String> options;
+
+
+    public TunnelClient(
+            @NotNull String serverAddr, int serverPort,
+            @NotNull String localAddr, int localPort,
+            int remotePort
+    ) {
+        this(serverAddr, serverPort, localAddr, localPort, remotePort, Collections.<String, String>emptyMap());
+    }
 
     public TunnelClient(
             @NotNull String serverAddr, int serverPort,
             @NotNull String localAddr, int localPort,
             int remotePort,
-            @NotNull String token
+            @NotNull Map<String, String> options
     ) {
         this.bootstrap = new Bootstrap();
         this.workerGroup = new NioEventLoopGroup();
@@ -47,7 +59,7 @@ public class TunnelClient {
         this.localAddr = localAddr;
         this.localPort = localPort;
         this.remotePort = remotePort;
-        this.token = token;
+        this.options = options;
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -89,9 +101,11 @@ public class TunnelClient {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    String uri = String.format("tcp://%s:%d?remotePort=%d&token=%s", localAddr, localPort, remotePort, token);
+                    OpenTunnelRequest openTunnelRequest = new OpenTunnelRequest(
+                            OpenTunnelRequest.SCHEME_TCP, localAddr, localPort, remotePort, options
+                    );
                     // 连接成功，向服务器发送请求建立隧道消息
-                    future.channel().attr(ATTR_URI).set(uri);
+                    future.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
                     future.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
                     future.channel().attr(ATTR_LOCAL_PORT).set(localPort);
                     future.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
@@ -99,7 +113,7 @@ public class TunnelClient {
                     future.channel().writeAndFlush(
                             TunnelMessage
                                     .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
-                                    .setHead(uri.getBytes())
+                                    .setHead(openTunnelRequest.toString().getBytes())
                     );
                     logger.info("connect tunnel server success, {}", future.channel());
                 } else {

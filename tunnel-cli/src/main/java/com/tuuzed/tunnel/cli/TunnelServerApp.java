@@ -13,7 +13,6 @@ import java.util.Map;
 public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerApp.class);
 
-
     @NotNull
     @Override
     RunOptions newRunOptions() {
@@ -41,14 +40,16 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         final int bindPort = Integer.parseInt(options.get("bind_port").toString());
         new TunnelServer(
                 bindAddr,
-                bindPort
+                bindPort,
+                null
         ).start();
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
         new TunnelServer(
                 runOptions.bindAddr.length() == 0 ? null : runOptions.bindAddr,
-                runOptions.bindPort
+                runOptions.bindPort,
+                null
         ).start();
     }
 
@@ -56,7 +57,7 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         @Option(name = "-c", aliases = {"--configFile"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
         public String configFile = "";
 
-        @Option(name = "-s", aliases = {"-bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
+        @Option(name = "-a", aliases = {"-bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
         public String bindAddr = "";
 
         @Option(name = "-p", aliases = {"-bindPort"}, help = true, metaVar = "<int>", usage = "绑定端口")

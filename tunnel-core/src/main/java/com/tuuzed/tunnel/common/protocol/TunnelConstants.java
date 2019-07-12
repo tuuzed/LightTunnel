@@ -58,7 +58,7 @@ public final class TunnelConstants {
 
     public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");
 
-    public static final AttributeKey<String> ATTR_URI = AttributeKey.newInstance("uri");
+    public static final AttributeKey<OpenTunnelRequest> ATTR_OPEN_TUNNEL_REQUEST = AttributeKey.newInstance("open_tunnel_request");
     public static final AttributeKey<String> ATTR_LOCAL_ADDR = AttributeKey.newInstance("local_addr");
     public static final AttributeKey<Integer> ATTR_LOCAL_PORT = AttributeKey.newInstance("local_port");
     public static final AttributeKey<Integer> ATTR_REMOTE_PORT = AttributeKey.newInstance("remote_port");

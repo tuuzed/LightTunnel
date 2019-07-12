@@ -2,7 +2,7 @@ package com.tuuzed.tunnel.common.protocol;
 
 import org.jetbrains.annotations.NotNull;
 
-public class TunnelMessage {
+public final class TunnelMessage {
     /**
      * 消息类型
      */
