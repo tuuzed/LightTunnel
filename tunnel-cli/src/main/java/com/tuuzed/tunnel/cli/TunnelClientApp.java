@@ -1,10 +1,17 @@
 package com.tuuzed.tunnel.cli;
 
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.client.TunnelClient;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.Option;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.List;
+import java.util.Map;
 
 public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientApp.class);
@@ -18,21 +25,54 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
     @Override
     void runApp(@NotNull RunOptions runOptions) {
         try {
-            new TunnelClient(
-                    runOptions.serverAddr,
-                    runOptions.serverPort,
-                    runOptions.localAddr,
-                    runOptions.localPort,
-                    runOptions.remotePort
-            ).start().sync();
+            if (runOptions.configFile.length() != 0) {
+                runAppAtCfg(runOptions);
+            } else {
+                runAppAtArgs(runOptions);
+            }
+            System.in.read();
         } catch (Exception e) {
-            logger.error("runApp Error: {}", e.getMessage(), e);
+            logger.error("runApp Error", e);
         }
-
     }
 
+    private void runAppAtCfg(@NotNull RunOptions runOptions) throws FileNotFoundException, YamlException {
+        YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
+        Map options = (Map) reader.read();
+        logger.info("options: {}", options);
+        final String serverAddr = options.get("server_addr").toString();
+        final int serverPort = Integer.parseInt(options.get("server_port").toString());
+        @SuppressWarnings("unchecked")
+        List<Map> tunnels = (List) options.get("tunnels");
+        for (Map tunnel : tunnels) {
+            final String localAddr = tunnel.get("local_addr").toString();
+            final int localPort = Integer.parseInt(tunnel.get("local_port").toString());
+            final int remotePort = Integer.parseInt(tunnel.get("remote_port").toString());
+            new TunnelClient(
+                    serverAddr,
+                    serverPort,
+                    localAddr,
+                    localPort,
+                    remotePort
+            ).start();
+        }
+    }
+
+    private void runAppAtArgs(@NotNull RunOptions runOptions) {
+        new TunnelClient(
+                runOptions.serverAddr,
+                runOptions.serverPort,
+                runOptions.localAddr,
+                runOptions.localPort,
+                runOptions.remotePort
+        ).start();
+    }
 
     static class RunOptions {
+
+        @Option(name = "-c", aliases = {"--configFile"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
+        public String configFile = "";
+
         @Option(name = "-h", aliases = {"--serverAddr"}, help = true, metaVar = "<string>", usage = "服务器地址")
         public String serverAddr = "127.0.0.1";
 
@@ -47,7 +87,5 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
 
         @Option(name = "-rp", aliases = {"--remotePort"}, help = true, metaVar = "<int>", usage = "映射外网端口")
         public int remotePort = 10080;
-
     }
-
 }

@@ -4,7 +4,11 @@
 -libraryjars  <java.home>/lib/rt.jar
 
 -target 1.7
+# 代码混淆压缩比，在0和7之间，默认为5
 -optimizationpasses 5
+
+# 混淆时不使用大小写混合，混淆后的类名为小写
+-dontusemixedcaseclassnames
 
 # Output a source map file
 -printmapping build/libs/proguard.map
@@ -16,6 +20,7 @@
 # Args4j
 -keep class org.kohsuke.args4j.** { *;}
 -dontwarn org.kohsuke.args4j.**
+
 
 -keepclassmembernames class * {
     java.lang.Class class$(java.lang.String);

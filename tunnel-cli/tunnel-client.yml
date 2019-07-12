@@ -1,0 +1,14 @@
+# 服务器地址
+server_addr: 127.0.0.1
+# 服务器端口
+server_port: 5000
+
+# 隧道列表
+tunnels:
+  - local_addr: 127.0.0.1
+    local_port: 80
+    remote_port: 10080
+
+  - local_addr: 127.0.0.1
+    local_port: 8080
+    remote_port: 18080
