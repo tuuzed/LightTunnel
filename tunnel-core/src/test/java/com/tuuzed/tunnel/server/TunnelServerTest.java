@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.server;
 
+import com.tuuzed.tunnel.common.Interceptor;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;

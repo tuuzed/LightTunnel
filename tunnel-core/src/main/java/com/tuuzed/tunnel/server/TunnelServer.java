@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.server;
 
+import com.tuuzed.tunnel.common.Interceptor;
 import com.tuuzed.tunnel.common.handler.TunnelHeartbeatHandler;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;

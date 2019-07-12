@@ -4,7 +4,7 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
-import com.tuuzed.tunnel.server.Interceptor;
+import com.tuuzed.tunnel.common.Interceptor;
 import com.tuuzed.tunnel.server.TunnelServer;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.Option;
