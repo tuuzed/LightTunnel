@@ -1,5 +1,5 @@
--injars tunnel-cli.jar
--outjars tunnel-cli.out.jar
+#-injars tunnel-cli.jar
+#-outjars tunnel-cli.out.jar
 
 -libraryjars  <java.home>/lib/rt.jar
 
@@ -7,7 +7,7 @@
 -optimizationpasses 5
 
 # Output a source map file
--printmapping proguard.map
+-printmapping build/libs/proguard.map
 
 # Netty
 -keep class io.netty.** { *;}
