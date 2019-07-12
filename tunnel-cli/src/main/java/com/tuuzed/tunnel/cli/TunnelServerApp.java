@@ -56,7 +56,7 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         @Option(name = "-c", aliases = {"--configFile"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
         public String configFile = "";
 
-        @Option(name = "-h", aliases = {"-bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
+        @Option(name = "-s", aliases = {"-bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
         public String bindAddr = "";
 
         @Option(name = "-p", aliases = {"-bindPort"}, help = true, metaVar = "<int>", usage = "绑定端口")

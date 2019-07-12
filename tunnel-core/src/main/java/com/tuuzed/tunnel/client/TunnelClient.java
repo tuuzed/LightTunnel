@@ -32,11 +32,14 @@ public class TunnelClient {
     private final String localAddr;
     private final int localPort;
     private final int remotePort;
+    private final String token;
 
     public TunnelClient(
             @NotNull String serverAddr, int serverPort,
             @NotNull String localAddr, int localPort,
-            int remotePort) {
+            int remotePort,
+            @NotNull String token
+    ) {
         this.bootstrap = new Bootstrap();
         this.workerGroup = new NioEventLoopGroup();
         this.serverAddr = serverAddr;
@@ -44,6 +47,7 @@ public class TunnelClient {
         this.localAddr = localAddr;
         this.localPort = localPort;
         this.remotePort = remotePort;
+        this.token = token;
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -85,10 +89,9 @@ public class TunnelClient {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    String mapping = localAddr + ":" + localPort + "<-" + remotePort;
+                    String uri = String.format("tcp://%s:%d?remotePort=%d&token=%s", localAddr, localPort, remotePort, token);
                     // 连接成功，向服务器发送请求建立隧道消息
-
-                    future.channel().attr(ATTR_MAPPING).set(mapping);
+                    future.channel().attr(ATTR_URI).set(uri);
                     future.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
                     future.channel().attr(ATTR_LOCAL_PORT).set(localPort);
                     future.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
@@ -96,7 +99,7 @@ public class TunnelClient {
                     future.channel().writeAndFlush(
                             TunnelMessage
                                     .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
-                                    .setHead(mapping.getBytes())
+                                    .setHead(uri.getBytes())
                     );
                     logger.info("connect tunnel server success, {}", future.channel());
                 } else {

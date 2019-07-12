@@ -53,7 +53,8 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                     serverPort,
                     localAddr,
                     localPort,
-                    remotePort
+                    remotePort,
+                    ""
             ).start();
         }
     }
@@ -64,7 +65,8 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                 runOptions.serverPort,
                 runOptions.localAddr,
                 runOptions.localPort,
-                runOptions.remotePort
+                runOptions.remotePort,
+                ""
         ).start();
     }
 
@@ -73,7 +75,7 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
         @Option(name = "-c", aliases = {"--configFile"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
         public String configFile = "";
 
-        @Option(name = "-h", aliases = {"--serverAddr"}, help = true, metaVar = "<string>", usage = "服务器地址")
+        @Option(name = "-s", aliases = {"--serverAddr"}, help = true, metaVar = "<string>", usage = "服务器地址")
         public String serverAddr = "127.0.0.1";
 
         @Option(name = "-p", aliases = {"--serverPort"}, help = true, metaVar = "<int>", usage = "服务器端口")

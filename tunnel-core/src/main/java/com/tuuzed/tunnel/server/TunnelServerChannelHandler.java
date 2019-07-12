@@ -3,12 +3,12 @@ package com.tuuzed.tunnel.server;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
+import com.tuuzed.tunnel.common.protocol.TunnelUri;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.net.BindException;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -18,6 +18,15 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
 
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
+
+    @Nullable
+    private OpenTunnelRequestInterceptor openTunnelRequestInterceptor;
+
+    @NotNull
+    public TunnelServerChannelHandler setOpenTunnelRequestInterceptor(OpenTunnelRequestInterceptor interceptor) {
+        this.openTunnelRequestInterceptor = interceptor;
+        return this;
+    }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -66,30 +75,31 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     @SuppressWarnings("Duplicates")
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final byte[] head = msg.getHead();
-        final String mapping = new String(head);
-        final String[] mappingTuple = mapping.split("<-");
-        if (mappingTuple.length != 2) {
-            ctx.close();
-            return;
-        }
-        final String[] localAddrAndPortTuple = mappingTuple[0].split(":");
-        final String localAddr = localAddrAndPortTuple[0];
-        final int localPort = Integer.parseInt(localAddrAndPortTuple[1]);
-        final int remotePort = Integer.parseInt(mappingTuple[1]);
-
-        ctx.channel().attr(ATTR_MAPPING).set(mapping);
-        ctx.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
-        ctx.channel().attr(ATTR_LOCAL_PORT).set(localPort);
-        ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
-
+        final String uri = new String(head);
         try {
+            TunnelUri tunnelUri = TunnelUri.create(uri);
+            logger.info("tunnelUri: {}", tunnelUri);
+
+            if (openTunnelRequestInterceptor != null) {
+                openTunnelRequestInterceptor.proceed(tunnelUri);
+            }
+
+            final String localAddr = tunnelUri.host;
+            final int localPort = tunnelUri.port;
+            final int remotePort = Integer.parseInt(tunnelUri.queryMap.get("remotePort"));
+
+            ctx.channel().attr(ATTR_URI).set(uri);
+            ctx.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
+            ctx.channel().attr(ATTR_LOCAL_PORT).set(localPort);
+            ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
+
             long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
             ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
                             .setHead(Unpooled.copyLong(tunnelToken).array())
             );
-        } catch (BindException e) {
+        } catch (Exception e) {
             logger.error("openUserTunnel Error: {}", e.getMessage(), e);
             // 开启隧道异常，关闭连接
             ctx.close();

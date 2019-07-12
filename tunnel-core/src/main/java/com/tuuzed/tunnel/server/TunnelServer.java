@@ -5,6 +5,7 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageDecoder;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
+import com.tuuzed.tunnel.common.protocol.TunnelUri;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -50,7 +51,14 @@ public class TunnelServer {
                                     .addLast(new TunnelMessageDecoder())
                                     .addLast(new TunnelMessageEncoder())
                                     .addLast(new TunnelHeartbeatHandler())
-                                    .addLast(new TunnelServerChannelHandler())
+                                    .addLast(new TunnelServerChannelHandler()
+                                            .setOpenTunnelRequestInterceptor(new OpenTunnelRequestInterceptor() {
+                                                @Override
+                                                public void proceed(@NotNull TunnelUri tunnelUri) throws Exception {
+
+                                                }
+                                            })
+                                    )
                             ;
                         }
                     });

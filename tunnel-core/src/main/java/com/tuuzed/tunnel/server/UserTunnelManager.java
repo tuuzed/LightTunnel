@@ -16,8 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_MAPPING;
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_TUNNEL_TOKEN;
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 public class UserTunnelManager {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelManager.class);
@@ -129,7 +128,7 @@ public class UserTunnelManager {
                 } else {
                     bootstrap.bind(bindAddr, bindPort).get();
                 }
-                logger.info("Open Tunnel: {}", serverChannel.attr(ATTR_MAPPING));
+                logger.info("Open Tunnel: {}", serverChannel.attr(ATTR_URI));
             } catch (Exception ex) {
                 // BindException表示该端口已经绑定过
                 if (!(ex.getCause() instanceof BindException)) {
