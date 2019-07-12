@@ -69,12 +69,16 @@ public class UserTunnelManager {
         tunnel.open();
         bindPortUserTunnels.put(bindPort, tunnel);
         long tunnelToken = tunnelTokenGenerator.incrementAndGet();
-        serverChannel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         tunnelTokenUserTunnels.put(tunnelToken, tunnel);
         return tunnelToken;
     }
 
 
+    /**
+     * 关闭隧道
+     *
+     * @param tunnelToken 隧道令牌
+     */
     public void closeUserTunnel(long tunnelToken) {
         UserTunnelImpl tunnel = tunnelTokenUserTunnels.remove(tunnelToken);
         if (tunnel != null) {

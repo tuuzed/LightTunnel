@@ -19,6 +19,21 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(LocalTunnelHandler.class);
 
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        final Long tunnelToken = getTunnelToken(ctx);
+        final Long sessionToken = getSessionToken(ctx);
+        final Channel tunnelClientChannel = getNextChannel(ctx);
+        if (tunnelToken != null && sessionToken != null && tunnelClientChannel != null) {
+            tunnelClientChannel.writeAndFlush(
+                    TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED)
+                            .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+            );
+        }
+        super.channelActive(ctx);
+    }
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         final Long tunnelToken = getTunnelToken(ctx);
@@ -36,17 +51,9 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        final Long tunnelToken = getTunnelToken(ctx);
-        final Long sessionToken = getSessionToken(ctx);
-        final Channel tunnelClientChannel = getNextChannel(ctx);
-        if (tunnelToken != null && sessionToken != null && tunnelClientChannel != null) {
-            tunnelClientChannel.writeAndFlush(
-                    TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED)
-                            .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
-            );
-        }
-        super.channelActive(ctx);
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        ctx.close();
     }
 
     @Override

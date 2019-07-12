@@ -12,6 +12,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -20,20 +21,6 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
  */
 public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelChannelHandler.class);
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        UserTunnel tunnel = getUserTunnel(ctx);
-        if (tunnel != null) {
-            final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = getTunnelToken(serverChannel);
-            final Long sessionToken = getSessionToken(ctx);
-            if (tunnelToken != null && sessionToken != null) {
-                tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
-            }
-        }
-        super.channelInactive(ctx);
-    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -56,7 +43,20 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             }
 
         }
+    }
 
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        UserTunnel tunnel = getUserTunnel(ctx);
+        if (tunnel != null) {
+            final Channel serverChannel = tunnel.serverChannel();
+            final Long tunnelToken = getTunnelToken(serverChannel);
+            final Long sessionToken = getSessionToken(ctx);
+            if (tunnelToken != null && sessionToken != null) {
+                tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
+            }
+        }
+        super.channelInactive(ctx);
     }
 
     @Override
@@ -82,8 +82,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        int inboundPort = ((InetSocketAddress) ctx.channel().localAddress()).getPort();
-        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
+        UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             Channel serverChannel = tunnel.serverChannel();
             serverChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
@@ -91,18 +90,33 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         super.channelWritabilityChanged(ctx);
     }
 
-    // =================================================
+
+    // ====================== 工具方法 =========================== //
+
+    /**
+     * 获取隧道对象
+     */
     @Nullable
     private static UserTunnel getUserTunnel(ChannelHandlerContext ctx) {
-        int inboundPort = ((InetSocketAddress) ctx.channel().localAddress()).getPort();
-        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
-        if (tunnel == null) {
-            ctx.close();
+        if (ctx == null) {
             return null;
         }
-        return tunnel;
+        SocketAddress socketAddress = ctx.channel().localAddress();
+        if (socketAddress instanceof InetSocketAddress) {
+            int inboundPort = ((InetSocketAddress) socketAddress).getPort();
+            UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
+            if (tunnel == null) {
+                ctx.close();
+                return null;
+            }
+            return tunnel;
+        }
+        return null;
     }
 
+    /**
+     * 获取隧道令牌
+     */
     @Nullable
     private static Long getTunnelToken(Channel serverChannel) {
         if (serverChannel == null) {
@@ -114,6 +128,9 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         return null;
     }
 
+    /**
+     * 获取会话令牌
+     */
     @SuppressWarnings("Duplicates")
     @Nullable
     private static Long getSessionToken(ChannelHandlerContext ctx) {

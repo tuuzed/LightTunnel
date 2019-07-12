@@ -32,6 +32,12 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     }
 
     @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        ctx.close();
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         logger.info("Recv : {}", msg);
         switch (msg.getType()) {
