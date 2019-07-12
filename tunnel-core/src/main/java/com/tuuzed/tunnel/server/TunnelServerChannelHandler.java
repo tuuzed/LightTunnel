@@ -91,6 +91,8 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             );
         } catch (BindException e) {
             logger.error("openUserTunnel Error: {}", e.getMessage(), e);
+            // 开启隧道异常，关闭连接
+            ctx.close();
         }
 
     }

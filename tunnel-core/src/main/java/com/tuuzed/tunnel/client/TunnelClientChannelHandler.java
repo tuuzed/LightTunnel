@@ -19,6 +19,14 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
 
+    @Nullable
+    private TunnelClientChannelListener tunnelClientChannelListener;
+
+    @NotNull
+    public TunnelClientChannelHandler setTunnelClientChannelListener(TunnelClientChannelListener listener) {
+        this.tunnelClientChannelListener = listener;
+        return this;
+    }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -29,6 +37,9 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
             LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
         }
         super.channelInactive(ctx);
+        if (tunnelClientChannelListener != null) {
+            tunnelClientChannelListener.channelInactive(ctx);
+        }
     }
 
     @Override

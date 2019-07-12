@@ -9,6 +9,7 @@ import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -52,7 +53,16 @@ public class TunnelClient {
                                 .addLast(new TunnelMessageDecoder())
                                 .addLast(new TunnelMessageEncoder())
                                 .addLast(new TunnelHeartbeatHandler())
-                                .addLast(new TunnelClientChannelHandler())
+                                .addLast(new TunnelClientChannelHandler()
+                                        .setTunnelClientChannelListener(new TunnelClientChannelListener() {
+                                            @Override
+                                            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                                                // 连接断开，3秒后发起重连
+                                                TimeUnit.SECONDS.sleep(3);
+                                                start();
+                                            }
+                                        })
+                                )
                         ;
                     }
                 });

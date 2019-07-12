@@ -20,6 +20,7 @@ public class TunnelClientTest {
                 "127.0.0.1", 4000,
                 "192.168.1.10", 22,
                 10022
-        ).start().channel().closeFuture().sync();
+        ).start();
+        System.in.read();
     }
 }
