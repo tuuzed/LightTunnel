@@ -3,6 +3,8 @@ package com.tuuzed.tunnel.cli;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
+import com.tuuzed.tunnel.server.Interceptor;
 import com.tuuzed.tunnel.server.TunnelServer;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.Option;
@@ -38,18 +40,39 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         logger.info("options: {}", options);
         final String bindAddr = (String) options.get("bind_addr");
         final int bindPort = Integer.parseInt(options.get("bind_port").toString());
+        final String token = (String) options.get("token");
         new TunnelServer(
                 bindAddr,
                 bindPort,
-                null
+                new Interceptor<OpenTunnelRequest>() {
+                    @Override
+                    public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
+                        if (!"tk123456".equals(token)) {
+                            throw new Exception("Token Error");
+                        }
+                        if (request.remotePort < 10000) {
+                            throw new Exception("remotePort Error");
+                        }
+                    }
+                }
         ).start();
     }
 
-    private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
+    private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
         new TunnelServer(
                 runOptions.bindAddr.length() == 0 ? null : runOptions.bindAddr,
                 runOptions.bindPort,
-                null
+                new Interceptor<OpenTunnelRequest>() {
+                    @Override
+                    public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
+                        if (!"tk123456".equals(runOptions.token)) {
+                            throw new Exception("Token Error");
+                        }
+                        if (request.remotePort < 10000) {
+                            throw new Exception("remotePort Error");
+                        }
+                    }
+                }
         ).start();
     }
 
@@ -57,10 +80,13 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         @Option(name = "-c", aliases = {"--configFile"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
         public String configFile = "";
 
-        @Option(name = "-a", aliases = {"-bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
+        @Option(name = "-a", aliases = {"--bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
         public String bindAddr = "";
 
-        @Option(name = "-p", aliases = {"-bindPort"}, help = true, metaVar = "<int>", usage = "绑定端口")
+        @Option(name = "-p", aliases = {"--bindPort"}, help = true, metaVar = "<int>", usage = "绑定端口")
         public int bindPort = 5000;
+
+        @Option(name = "-t", aliases = {"--token"}, help = true, metaVar = "<int>", usage = "令牌")
+        public String token = "";
     }
 }

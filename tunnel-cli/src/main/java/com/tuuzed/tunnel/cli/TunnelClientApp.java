@@ -10,6 +10,7 @@ import org.kohsuke.args4j.Option;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +43,9 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
         logger.info("options: {}", options);
         final String serverAddr = options.get("server_addr").toString();
         final int serverPort = Integer.parseInt(options.get("server_port").toString());
+        final String token = options.get("token").toString();
+        Map<String, String> requestOptions = new HashMap<>();
+        requestOptions.put("token", token);
         @SuppressWarnings("unchecked")
         List<Map> tunnels = (List) options.get("tunnels");
         for (Map tunnel : tunnels) {
@@ -53,18 +57,22 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                     serverPort,
                     localAddr,
                     localPort,
-                    remotePort
+                    remotePort,
+                    requestOptions
             ).start();
         }
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) {
+        Map<String, String> requestOptions = new HashMap<>();
+        requestOptions.put("token", runOptions.token);
         new TunnelClient(
                 runOptions.serverAddr,
                 runOptions.serverPort,
                 runOptions.localAddr,
                 runOptions.localPort,
-                runOptions.remotePort
+                runOptions.remotePort,
+                requestOptions
         ).start();
     }
 
@@ -87,5 +95,8 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
 
         @Option(name = "-rp", aliases = {"--remotePort"}, help = true, metaVar = "<int>", usage = "映射外网端口")
         public int remotePort = 10080;
+
+        @Option(name = "-t", aliases = {"--token"}, help = true, metaVar = "<int>", usage = "令牌")
+        public String token = "";
     }
 }
