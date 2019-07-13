@@ -12,6 +12,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
@@ -66,11 +68,14 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
             case MESSAGE_TYPE_TRANSFER:
                 handleTransferMessage(ctx, msg);
                 break;
-
+            case MESSAGE_TYPE_USER_TUNNEL_DISCONNECT:
+                handleUserChannelDisconnect(ctx, msg);
+                break;
             default:
                 break;
         }
     }
+
 
     /**
      * 处理心跳数据
@@ -149,7 +154,20 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
                         }
                     }
             );
-
         }
+    }
+
+    private void handleUserChannelDisconnect(ChannelHandlerContext ctx, TunnelMessage msg) {
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        head.release();
+        // 60秒后移除本地隧道连接
+        ctx.executor().schedule(new Runnable() {
+            @Override
+            public void run() {
+                LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
+            }
+        }, 60, TimeUnit.SECONDS);
     }
 }

@@ -57,6 +57,10 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             if (tunnelToken != null && sessionToken != null) {
                 tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
             }
+            serverChannel.writeAndFlush(
+                    TunnelMessage.newInstance(MESSAGE_TYPE_USER_TUNNEL_DISCONNECT)
+                            .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+            );
         }
         super.channelInactive(ctx);
     }

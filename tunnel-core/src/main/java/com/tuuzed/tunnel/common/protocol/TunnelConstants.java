@@ -50,6 +50,10 @@ public final class TunnelConstants {
      * 本地隧道断开连接
      */
     public static final byte MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT = 0x07;
+    /**
+     * 用户隧道断开连接
+     */
+    public static final byte MESSAGE_TYPE_USER_TUNNEL_DISCONNECT = 0x08;
 
 
     public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");
