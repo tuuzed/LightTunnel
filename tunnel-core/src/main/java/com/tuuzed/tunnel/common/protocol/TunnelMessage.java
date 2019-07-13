@@ -73,6 +73,9 @@ public final class TunnelMessage {
             case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
                 type = "OPEN_TUNNEL_RESPONSE";
                 break;
+            case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_ERROR:
+                type = "OPEN_TUNNEL_ERROR";
+                break;
             case TunnelConstants.MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL:
                 type = "CONNECT_LOCAL_TUNNEL";
                 break;

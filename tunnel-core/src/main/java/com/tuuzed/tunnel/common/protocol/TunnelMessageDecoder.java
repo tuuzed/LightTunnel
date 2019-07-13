@@ -10,7 +10,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 public class TunnelMessageDecoder extends LengthFieldBasedFrameDecoder {
 
     public TunnelMessageDecoder() {
-        this(1 * 1024 * 1024);
+        this(2 * 1024 * 1024);
     }
 
     public TunnelMessageDecoder(int maxFrameLength) {

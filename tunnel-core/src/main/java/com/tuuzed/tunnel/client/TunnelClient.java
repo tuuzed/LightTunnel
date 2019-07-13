@@ -61,6 +61,17 @@ public class TunnelClient {
         this.localPort = localPort;
         this.remotePort = remotePort;
         this.arguments = arguments;
+        final TunnelClientChannelListener listener = new TunnelClientChannelListener() {
+            @Override
+            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                Boolean openTunnelError = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR).get();
+                if (openTunnelError != null && openTunnelError) {
+                    return;
+                }
+                TimeUnit.SECONDS.sleep(3);
+                start();
+            }
+        };
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -70,16 +81,7 @@ public class TunnelClient {
                                 .addLast(new TunnelMessageDecoder())
                                 .addLast(new TunnelMessageEncoder())
                                 .addLast(new TunnelHeartbeatHandler())
-                                .addLast(new TunnelClientChannelHandler()
-                                        .setTunnelClientChannelListener(new TunnelClientChannelListener() {
-                                            @Override
-                                            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                                // 连接断开，3秒后发起重连
-                                                TimeUnit.SECONDS.sleep(3);
-                                                start();
-                                            }
-                                        })
-                                )
+                                .addLast(new TunnelClientChannelHandler(listener))
                         ;
                     }
                 });
@@ -87,15 +89,6 @@ public class TunnelClient {
 
     @NotNull
     public ChannelFuture start() {
-        return connectTunnelServerAndRequestOpenTunnel();
-    }
-
-    public void stop() {
-        workerGroup.shutdownGracefully();
-    }
-
-    @NotNull
-    private ChannelFuture connectTunnelServerAndRequestOpenTunnel() {
         ChannelFuture f = bootstrap.connect(serverAddr, serverPort);
         f.addListener(new ChannelFutureListener() {
             @Override
@@ -117,11 +110,15 @@ public class TunnelClient {
                     logger.warn("connect tunnel server failed {}", future.channel(), future.cause());
                     // 连接失败，3秒后发起重连
                     TimeUnit.SECONDS.sleep(3);
-                    connectTunnelServerAndRequestOpenTunnel();
+                    start();
                 }
             }
         });
         return f;
+    }
+
+    public void stop() {
+        workerGroup.shutdownGracefully();
     }
 
 }

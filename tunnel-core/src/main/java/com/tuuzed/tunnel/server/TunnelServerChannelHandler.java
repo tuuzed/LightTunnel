@@ -13,6 +13,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.BindException;
+
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
@@ -37,6 +39,12 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             UserTunnelManager.getInstance().closeUserTunnel(tunnelToken);
         }
         super.channelInactive(ctx);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.info("exceptionCaught: ", cause);
+        ctx.close();
     }
 
     @Override
@@ -72,38 +80,43 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final byte[] head = msg.getHead();
+        OpenTunnelRequest openTunnelRequest = null;
+        boolean next;
+        final String[] errorMessage = new String[1];
         try {
-            OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.create(new String(head));
+            openTunnelRequest = OpenTunnelRequest.create(new String(head));
             logger.info("openTunnelRequest: {}", openTunnelRequest);
-
-            boolean next = true;
-            final String[] errorMessage = new String[1];
-            if (openTunnelRequestInterceptor != null) {
-                next = openTunnelRequestInterceptor.proceed(openTunnelRequest, errorMessage);
+            next = true;
+        } catch (Exception e) {
+            errorMessage[0] = "Protocol Error";
+            next = false;
+        }
+        if (next && openTunnelRequestInterceptor != null) {
+            next = openTunnelRequestInterceptor.proceed(openTunnelRequest, errorMessage);
+        }
+        if (next) {
+            try {
+                ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
+                final long tunnelToken = UserTunnelManager.getInstance()
+                        .openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
+                ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+                next = true;
+            } catch (BindException e) {
+                errorMessage[0] = "Bind Port Error";
+                next = false;
             }
-            if (!next) {
-                logger.error("openUserTunnel Error: {}", errorMessage[0]);
-                // 开启隧道异常，关闭连接
-                ctx.close();
-                return;
-            }
-
-            final int remotePort = openTunnelRequest.remotePort;
-
-            ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-
-            final long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
-            ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+        }
+        if (next) {
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
-                            .setHead(Unpooled.copyLong(tunnelToken).array())
+                            .setHead(Unpooled.copyLong(ctx.channel().attr(ATTR_TUNNEL_TOKEN).get()).array())
             );
-        } catch (Exception e) {
-            logger.error("openUserTunnel Error", e);
-            // 开启隧道异常，关闭连接
-            ctx.close();
+        } else {
+            ctx.channel().writeAndFlush(
+                    TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_ERROR)
+                            .setHead(errorMessage[0].getBytes())
+            ).addListener(ChannelFutureListener.CLOSE);
         }
-
     }
 
     /**

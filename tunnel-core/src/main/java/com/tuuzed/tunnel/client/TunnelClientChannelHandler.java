@@ -12,8 +12,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
@@ -26,10 +24,9 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     @Nullable
     private TunnelClientChannelListener tunnelClientChannelListener;
 
-    @NotNull
-    public TunnelClientChannelHandler setTunnelClientChannelListener(TunnelClientChannelListener listener) {
+
+    public TunnelClientChannelHandler(@Nullable TunnelClientChannelListener listener) {
         this.tunnelClientChannelListener = listener;
-        return this;
     }
 
     @Override
@@ -48,7 +45,6 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
         ctx.close();
     }
 
@@ -61,6 +57,9 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
                 break;
             case MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
                 handleOpenTunnelResponseMessage(ctx, msg);
+                break;
+            case MESSAGE_TYPE_OPEN_TUNNEL_ERROR:
+                handleOpenTunnelErrorMessage(ctx, msg);
                 break;
             case MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL:
                 handleConnectLocalTunnelMessage(ctx, msg);
@@ -95,6 +94,15 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
         OpenTunnelRequest openTunnelRequest = ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
         logger.info("Opened Tunnel: {}", openTunnelRequest);
+    }
+
+    /**
+     * 处理建立隧道错误消息
+     */
+    private void handleOpenTunnelErrorMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+        final String errorMessage = new String(msg.getHead());
+        logger.warn("Open Tunnel Error: {}", errorMessage);
+        ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR).set(true);
     }
 
     /**

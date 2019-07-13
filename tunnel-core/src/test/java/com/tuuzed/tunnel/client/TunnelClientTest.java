@@ -11,6 +11,13 @@ public class TunnelClientTest {
     public void start() throws Exception {
         Map<String, String> arguments = new HashMap<>();
         arguments.put("token", "tk123456");
+        // error
+        new TunnelClient(
+                "127.0.0.1", 4000,
+                "192.168.1.1", 80,
+                100,
+                arguments
+        ).start();
         // http
         new TunnelClient(
                 "127.0.0.1", 4000,

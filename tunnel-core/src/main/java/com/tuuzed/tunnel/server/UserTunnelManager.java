@@ -59,11 +59,11 @@ public class UserTunnelManager {
     }
 
 
-    public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws Exception {
+    public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
         return openUserTunnel(null, bindPort, serverChannel);
     }
 
-    public long openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws Exception {
+    public long openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws BindException {
         if (hasBandedPort(bindPort)) {
             throw new BindException("bindPort: " + bindPort);
         }
