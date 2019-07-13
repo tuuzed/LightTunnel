@@ -2,6 +2,9 @@ package com.tuuzed.tunnel.common.logging;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.WeakHashMap;
+import java.util.logging.Level;
+
 public class PlatformLogger implements Logger {
 
     public static void setup() {

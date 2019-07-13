@@ -41,6 +41,9 @@ public class UserTunnelManager {
     private UserTunnelManager() {
     }
 
+    /**
+     * 判断是否已经绑定端口
+     */
     public boolean hasBandedPort(int bindPort) {
         return bindPortUserTunnels.containsKey(bindPort);
     }
@@ -56,11 +59,11 @@ public class UserTunnelManager {
     }
 
 
-    public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
+    public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws Exception {
         return openUserTunnel(null, bindPort, serverChannel);
     }
 
-    public long openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws BindException {
+    public long openUserTunnel(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) throws Exception {
         if (hasBandedPort(bindPort)) {
             throw new BindException("bindPort: " + bindPort);
         }

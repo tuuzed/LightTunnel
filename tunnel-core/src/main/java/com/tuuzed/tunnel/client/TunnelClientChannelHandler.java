@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.client;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -82,14 +83,12 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理建立隧道请求消息
      */
     private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        long tunnelToken = head.readLong();
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
 
-        String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
-        int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
-        int remotePort = ctx.channel().attr(ATTR_REMOTE_PORT).get();
-        logger.info("Opened Tunnel: {}:{}<-{}", localAddr, localPort, remotePort);
+        OpenTunnelRequest openTunnelRequest = ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
+        logger.info("Opened Tunnel: {}", openTunnelRequest);
     }
 
     /**
@@ -103,8 +102,10 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
 
-        final String localAddr = ctx.channel().attr(ATTR_LOCAL_ADDR).get();
-        final int localPort = ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        final OpenTunnelRequest openTunnelRequest = ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
+        final String localAddr = openTunnelRequest.localAddr;
+        final int localPort = openTunnelRequest.localPort;
+
         LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
                 new LocalTunnel.GetLocalTunnelChannelCallback() {
                     @Override
@@ -126,7 +127,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     @SuppressWarnings("Duplicates")
     private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
-        ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
@@ -154,26 +155,35 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     }
 
+
+    // ====================== 工具方法 =========================== //
     @SuppressWarnings("Duplicates")
     @Nullable
-    private static String getLocalAddr(ChannelHandlerContext ctx) {
+    private static OpenTunnelRequest getOpenTunnelRequest(ChannelHandlerContext ctx) {
         if (ctx == null) {
             return null;
         }
-        if (ctx.channel().hasAttr(ATTR_LOCAL_ADDR)) {
-            return ctx.channel().attr(ATTR_LOCAL_ADDR).get();
+        if (ctx.channel().hasAttr(ATTR_OPEN_TUNNEL_REQUEST)) {
+            return ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
         }
         return null;
     }
 
-    @SuppressWarnings("Duplicates")
+    @Nullable
+    private static String getLocalAddr(ChannelHandlerContext ctx) {
+        OpenTunnelRequest openTunnelRequest = getOpenTunnelRequest(ctx);
+        if (openTunnelRequest != null) {
+            return openTunnelRequest.localAddr;
+        }
+        return null;
+    }
+
+
     @Nullable
     private static Integer getLocalPort(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return null;
-        }
-        if (ctx.channel().hasAttr(ATTR_LOCAL_PORT)) {
-            return ctx.channel().attr(ATTR_LOCAL_PORT).get();
+        OpenTunnelRequest openTunnelRequest = getOpenTunnelRequest(ctx);
+        if (openTunnelRequest != null) {
+            return openTunnelRequest.localPort;
         }
         return null;
     }

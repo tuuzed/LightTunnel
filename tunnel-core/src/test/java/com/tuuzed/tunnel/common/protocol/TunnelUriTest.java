@@ -6,7 +6,7 @@ public class TunnelUriTest {
 
     @Test
     public void create() {
-        String uriString = "tcp://127.0.0.1:8080?token=123&token=中国&a=#18080";
+        String uriString = "tcp://139.199.221.244:22?token=tk123456#10022";
         OpenTunnelRequest tunnelUri = OpenTunnelRequest.create(uriString);
         System.out.println(tunnelUri.localAddr);
         System.out.println(tunnelUri.localPort);

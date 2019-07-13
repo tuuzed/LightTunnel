@@ -1,10 +1,10 @@
 package com.tuuzed.tunnel.cli;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
+import com.tuuzed.tunnel.common.Interceptor;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
-import com.tuuzed.tunnel.common.Interceptor;
 import com.tuuzed.tunnel.server.TunnelServer;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.Option;
@@ -36,25 +36,15 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
 
     private void runAppAtCfg(@NotNull RunOptions runOptions) throws Exception {
         YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
-        Map options = (Map) reader.read();
-        logger.info("options: {}", options);
-        final String bindAddr = (String) options.get("bind_addr");
-        final int bindPort = Integer.parseInt(options.get("bind_port").toString());
-        final String token = (String) options.get("token");
+        Map cfgOptions = (Map) reader.read();
+        logger.info("cfgOptions: {}", cfgOptions);
+        final String bindAddr = (String) cfgOptions.get("bind_addr");
+        final int bindPort = Integer.parseInt(cfgOptions.get("bind_port").toString());
+        final String token = (String) cfgOptions.get("token");
         new TunnelServer(
                 bindAddr,
                 bindPort,
-                new Interceptor<OpenTunnelRequest>() {
-                    @Override
-                    public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
-                        if (!"tk123456".equals(token)) {
-                            throw new Exception("Token Error");
-                        }
-                        if (request.remotePort < 10000) {
-                            throw new Exception("remotePort Error");
-                        }
-                    }
-                }
+                new OpenTunnelRequestInterceptor(token)
         ).start();
     }
 
@@ -62,25 +52,33 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         new TunnelServer(
                 runOptions.bindAddr.length() == 0 ? null : runOptions.bindAddr,
                 runOptions.bindPort,
-                new Interceptor<OpenTunnelRequest>() {
-                    @Override
-                    public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
-                        if (!"tk123456".equals(runOptions.token)) {
-                            throw new Exception("Token Error");
-                        }
-                        if (request.remotePort < 10000) {
-                            throw new Exception("remotePort Error");
-                        }
-                    }
-                }
+                new OpenTunnelRequestInterceptor(runOptions.token)
         ).start();
+    }
+
+    private static class OpenTunnelRequestInterceptor implements Interceptor<OpenTunnelRequest> {
+        private String requestToken;
+
+        public OpenTunnelRequestInterceptor(String requestToken) {
+            this.requestToken = requestToken;
+        }
+
+        @Override
+        public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
+            if (!"tk123456".equals(requestToken)) {
+                throw new Exception("Token Error");
+            }
+            if (request.remotePort < 10000) {
+                throw new Exception("remotePort Error");
+            }
+        }
     }
 
     static class RunOptions {
         @Option(name = "-c", aliases = {"--configFile"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
         public String configFile = "";
 
-        @Option(name = "-a", aliases = {"--bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
+        @Option(name = "-b", aliases = {"--bindAddr"}, help = true, metaVar = "<string>", usage = "绑定地址")
         public String bindAddr = "";
 
         @Option(name = "-p", aliases = {"--bindPort"}, help = true, metaVar = "<int>", usage = "绑定端口")

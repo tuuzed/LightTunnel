@@ -81,6 +81,12 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
     }
 
     @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        super.exceptionCaught(ctx, cause);
+    }
+
+    @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {

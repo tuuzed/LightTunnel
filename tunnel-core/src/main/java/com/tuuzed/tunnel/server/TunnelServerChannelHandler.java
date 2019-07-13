@@ -70,7 +70,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理建立隧道请求消息
      */
-    @SuppressWarnings("Duplicates")
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final byte[] head = msg.getHead();
         try {
@@ -81,16 +80,11 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
                 openTunnelRequestInterceptor.proceed(openTunnelRequest);
             }
 
-            final String localAddr = openTunnelRequest.localAddr;
-            final int localPort = openTunnelRequest.localPort;
             final int remotePort = openTunnelRequest.remotePort;
 
             ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-            ctx.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
-            ctx.channel().attr(ATTR_LOCAL_PORT).set(localPort);
-            ctx.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
 
-            long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
+            final long tunnelToken = UserTunnelManager.getInstance().openUserTunnel(remotePort, ctx.channel());
             ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)

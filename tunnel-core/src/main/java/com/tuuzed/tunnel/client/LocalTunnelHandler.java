@@ -82,6 +82,8 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         super.channelWritabilityChanged(ctx);
     }
 
+
+    // ====================== 工具方法 =========================== //
     @SuppressWarnings("Duplicates")
     @Nullable
     private static Channel getNextChannel(ChannelHandlerContext ctx) {

@@ -13,26 +13,20 @@ public class TunnelClientTest {
         options.put("token", "tk123456");
         new TunnelClient(
                 "127.0.0.1", 4000,
-                "192.168.1.1", 80,
+                "127.0.0.1", 80,
                 10080,
                 options
         ).start();
+//        new TunnelClient(
+//                "127.0.0.1", 4000,
+//                "192.168.1.33", 5900,
+//                15900,
+//                options
+//        ).start();
         new TunnelClient(
                 "127.0.0.1", 4000,
-                "192.168.1.33", 5900,
-                15900,
-                options
-        ).start();
-        new TunnelClient(
-                "127.0.0.1", 4000,
-                "192.168.1.10", 22,
+                "139.199.221.244", 22,
                 10022,
-                options
-        ).start();
-        new TunnelClient(
-                "127.0.0.1", 4000,
-                "192.168.1.10", 22,
-                800,
                 options
         ).start();
         System.in.read();

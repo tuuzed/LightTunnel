@@ -106,9 +106,6 @@ public class TunnelClient {
                     );
                     // 连接成功，向服务器发送请求建立隧道消息
                     future.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-                    future.channel().attr(ATTR_LOCAL_ADDR).set(localAddr);
-                    future.channel().attr(ATTR_LOCAL_PORT).set(localPort);
-                    future.channel().attr(ATTR_REMOTE_PORT).set(remotePort);
 
                     future.channel().writeAndFlush(
                             TunnelMessage
