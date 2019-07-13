@@ -57,20 +57,24 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
     }
 
     private static class OpenTunnelRequestInterceptor implements Interceptor<OpenTunnelRequest> {
-        private String requestToken;
+        @NotNull
+        private String token;
 
-        public OpenTunnelRequestInterceptor(String requestToken) {
-            this.requestToken = requestToken;
+        public OpenTunnelRequestInterceptor(@NotNull String token) {
+            this.token = token;
         }
 
         @Override
-        public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
-            if (!"tk123456".equals(requestToken)) {
-                throw new Exception("Token Error");
+        public boolean proceed(@NotNull OpenTunnelRequest request, @NotNull String[] errorMessage) {
+            if (!this.token.equals(request.arguments.get("token"))) {
+                errorMessage[0] = "Token Error";
+                return false;
             }
-            if (request.remotePort < 10000) {
-                throw new Exception("remotePort Error");
+            if (request.remotePort < 1024) {
+                errorMessage[0] = "remotePort Error";
+                return false;
             }
+            return true;
         }
     }
 

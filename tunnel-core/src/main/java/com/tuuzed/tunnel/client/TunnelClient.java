@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
+@SuppressWarnings("Duplicates")
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
 
@@ -35,7 +36,7 @@ public class TunnelClient {
     private final String localAddr;
     private final int localPort;
     private final int remotePort;
-    private final Map<String, String> options;
+    private final Map<String, String> arguments;
 
 
     public TunnelClient(
@@ -50,7 +51,7 @@ public class TunnelClient {
             @NotNull String serverAddr, int serverPort,
             @NotNull String localAddr, int localPort,
             int remotePort,
-            @NotNull Map<String, String> options
+            @NotNull Map<String, String> arguments
     ) {
         this.bootstrap = new Bootstrap();
         this.workerGroup = new NioEventLoopGroup();
@@ -59,7 +60,7 @@ public class TunnelClient {
         this.localAddr = localAddr;
         this.localPort = localPort;
         this.remotePort = remotePort;
-        this.options = options;
+        this.arguments = arguments;
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -94,7 +95,6 @@ public class TunnelClient {
     }
 
     @NotNull
-    @SuppressWarnings("Duplicates")
     private ChannelFuture connectTunnelServerAndRequestOpenTunnel() {
         ChannelFuture f = bootstrap.connect(serverAddr, serverPort);
         f.addListener(new ChannelFutureListener() {
@@ -102,7 +102,7 @@ public class TunnelClient {
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
                     OpenTunnelRequest openTunnelRequest = new OpenTunnelRequest(
-                            OpenTunnelRequest.SCHEME_TCP, localAddr, localPort, remotePort, options
+                            OpenTunnelRequest.SCHEME_TCP, localAddr, localPort, remotePort, arguments
                     );
                     // 连接成功，向服务器发送请求建立隧道消息
                     future.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);

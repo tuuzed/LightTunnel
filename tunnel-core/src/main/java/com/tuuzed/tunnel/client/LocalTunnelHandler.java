@@ -16,36 +16,24 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * 本地连接数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(LocalTunnelHandler.class);
 
-
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        final Long tunnelToken = getTunnelToken(ctx);
-        final Long sessionToken = getSessionToken(ctx);
-        final Channel tunnelClientChannel = getNextChannel(ctx);
-        if (tunnelToken != null && sessionToken != null && tunnelClientChannel != null) {
-            tunnelClientChannel.writeAndFlush(
-                    TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED)
-                            .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
-            );
-        }
-        super.channelActive(ctx);
-    }
-
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.debug("channelInactive: {}", ctx);
         final Long tunnelToken = getTunnelToken(ctx);
         final Long sessionToken = getSessionToken(ctx);
+        if (tunnelToken != null && sessionToken != null) {
+            LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
+        }
         final Channel tunnelClientChannel = getNextChannel(ctx);
-        if (tunnelToken != null && sessionToken != null && tunnelClientChannel != null) {
+        if (tunnelClientChannel != null) {
             tunnelClientChannel.writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT)
                             .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
             );
-            LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
-
         }
         super.channelInactive(ctx);
     }
@@ -84,7 +72,6 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
 
     // ====================== 工具方法 =========================== //
-    @SuppressWarnings("Duplicates")
     @Nullable
     private static Channel getNextChannel(ChannelHandlerContext ctx) {
         if (ctx == null) {
@@ -96,7 +83,6 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         return null;
     }
 
-    @SuppressWarnings("Duplicates")
     @Nullable
     private static Long getTunnelToken(ChannelHandlerContext ctx) {
         if (ctx == null) {
@@ -108,7 +94,6 @@ public class LocalTunnelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         return null;
     }
 
-    @SuppressWarnings("Duplicates")
     @Nullable
     private static Long getSessionToken(ChannelHandlerContext ctx) {
         if (ctx == null) {

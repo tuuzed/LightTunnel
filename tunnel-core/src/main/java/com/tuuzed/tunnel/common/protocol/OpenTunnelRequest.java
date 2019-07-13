@@ -24,26 +24,26 @@ public final class OpenTunnelRequest {
     public final String localAddr;
     public final int localPort;
     public final int remotePort;
-    public final Map<String, String> options;
+    public final Map<String, String> arguments;
 
     public OpenTunnelRequest(@NotNull String scheme,
                              @NotNull String localAddr, int localPort,
                              int remotePort,
-                             @NotNull Map<String, String> options) {
+                             @NotNull Map<String, String> arguments) {
         this.scheme = scheme;
         this.localAddr = localAddr;
         this.localPort = localPort;
         this.remotePort = remotePort;
-        this.options = options;
+        this.arguments = arguments;
     }
 
     @Override
     public String toString() {
         StringBuilder query = new StringBuilder();
-        if (options.isEmpty()) {
+        if (arguments.isEmpty()) {
             return String.format("%s://%s:%d#%d", scheme, localAddr, localPort, remotePort);
         }
-        Set<Map.Entry<String, String>> entries = options.entrySet();
+        Set<Map.Entry<String, String>> entries = arguments.entrySet();
         boolean first = true;
         for (Map.Entry<String, String> entry : entries) {
             String key = entry.getKey();

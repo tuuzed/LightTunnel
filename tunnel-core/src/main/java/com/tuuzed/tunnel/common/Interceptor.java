@@ -6,5 +6,5 @@ public interface Interceptor<T> {
     /**
      * 如需拦截则抛出异常
      */
-    void proceed(@NotNull T t) throws Exception;
+    boolean proceed(@NotNull T t, @NotNull String[] errorMessage);
 }

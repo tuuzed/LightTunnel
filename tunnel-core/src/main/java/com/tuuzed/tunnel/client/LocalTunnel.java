@@ -52,7 +52,7 @@ public class LocalTunnel {
     public void removeLocalTunnelChannel(final long tunnelToken, final long sessionToken) {
         final String key = getKey(tunnelToken, sessionToken);
         Channel channel = tunnelTokenSessionTokenChannels.remove(key);
-        if (channel != null && channel.isOpen()) {
+        if (channel != null) {
             channel.close();
         }
     }

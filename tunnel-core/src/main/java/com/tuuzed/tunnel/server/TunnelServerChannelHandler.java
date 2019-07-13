@@ -7,7 +7,10 @@ import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
@@ -49,9 +52,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             case MESSAGE_TYPE_TRANSFER:
                 handleTransferMessage(ctx, msg);
                 break;
-            case MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED:
-                handleLocalTunnelConnectedMessage(ctx, msg);
-                break;
             case MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT:
                 handleLocalTunnelDisconnectMessage(ctx, msg);
                 break;
@@ -76,8 +76,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.create(new String(head));
             logger.info("openTunnelRequest: {}", openTunnelRequest);
 
+            boolean next = true;
+            final String[] errorMessage = new String[1];
             if (openTunnelRequestInterceptor != null) {
-                openTunnelRequestInterceptor.proceed(openTunnelRequest);
+                next = openTunnelRequestInterceptor.proceed(openTunnelRequest, errorMessage);
+            }
+            if (!next) {
+                logger.error("openUserTunnel Error: {}", errorMessage[0]);
+                // 开启隧道异常，关闭连接
+                ctx.close();
+                return;
             }
 
             final int remotePort = openTunnelRequest.remotePort;
@@ -119,25 +127,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-    /**
-     * 处理本地隧道连接成功消息
-     */
-    @SuppressWarnings("Duplicates")
-    private void handleLocalTunnelConnectedMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        long[] tunnelTokenAndSessionToken = getTunnelTokenAndSessionToken(msg);
-        if (tunnelTokenAndSessionToken == null) {
-            return;
-        }
-        final long tunnelToken = tunnelTokenAndSessionToken[0];
-        final long sessionToken = tunnelTokenAndSessionToken[1];
-        final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
-        if (tunnel != null) {
-            Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
-            if (userTunnelChannel != null) {
-                userTunnelChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
-            }
-        }
-    }
 
     /**
      * 处理本地隧道断开连接消息

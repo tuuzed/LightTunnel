@@ -17,6 +17,7 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * Tunnel客户端数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
 
@@ -65,11 +66,11 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
             case MESSAGE_TYPE_TRANSFER:
                 handleTransferMessage(ctx, msg);
                 break;
+
             default:
                 break;
         }
     }
-
 
     /**
      * 处理心跳数据
@@ -98,7 +99,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
-
+        head.release();
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
 
@@ -125,11 +126,12 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理数据透传消息
      * 数据流向: UserTunnelManager -> LocalTunnel
      */
-    @SuppressWarnings("Duplicates")
     private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
+        head.release();
+
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
 
@@ -148,7 +150,6 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
                         @Override
                         public void error(Throwable cause) {
-
                         }
                     });
         }

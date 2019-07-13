@@ -79,9 +79,6 @@ public final class TunnelMessage {
             case TunnelConstants.MESSAGE_TYPE_TRANSFER:
                 type = "TRANSFER";
                 break;
-            case TunnelConstants.MESSAGE_TYPE_LOCAL_TUNNEL_CONNECTED:
-                type = "LOCAL_TUNNEL_CONNECTED";
-                break;
             case TunnelConstants.MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT:
                 type = "LOCAL_TUNNEL_DISCONNECT";
                 break;

@@ -10,14 +10,17 @@ public class TunnelServerTest {
     public void start() throws Exception {
         new TunnelServer(null, 4000, new Interceptor<OpenTunnelRequest>() {
             @Override
-            public void proceed(@NotNull OpenTunnelRequest request) throws Exception {
-                String token = request.options.get("token");
+            public boolean proceed(@NotNull OpenTunnelRequest request, @NotNull String[] errorMessage) {
+                String token = request.arguments.get("token");
                 if (!"tk123456".equals(token)) {
-                    throw new Exception("Token Error");
+                    errorMessage[0] = "Token Error";
+                    return false;
                 }
                 if (request.remotePort < 1024) {
-                    throw new Exception("remotePort Error");
+                    errorMessage[0] = "remotePort Error";
+                    return false;
                 }
+                return true;
             }
         }).start();
     }

@@ -11,7 +11,7 @@ public class TunnelUriTest {
         System.out.println(tunnelUri.localAddr);
         System.out.println(tunnelUri.localPort);
         System.out.println(tunnelUri.remotePort);
-        System.out.println(tunnelUri.options);
+        System.out.println(tunnelUri.arguments);
         System.out.println(tunnelUri);
     }
 }

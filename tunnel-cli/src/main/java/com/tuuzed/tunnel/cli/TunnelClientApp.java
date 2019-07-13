@@ -44,8 +44,8 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
         final String serverAddr = options.get("server_addr").toString();
         final int serverPort = Integer.parseInt(options.get("server_port").toString());
         final String token = options.get("token").toString();
-        Map<String, String> requestOptions = new HashMap<>();
-        requestOptions.put("token", token);
+        Map<String, String> arguments = new HashMap<>();
+        arguments.put("token", token);
         @SuppressWarnings("unchecked")
         List<Map> tunnels = (List) options.get("tunnels");
         for (Map tunnel : tunnels) {
@@ -58,21 +58,21 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
                     localAddr,
                     localPort,
                     remotePort,
-                    requestOptions
+                    arguments
             ).start();
         }
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) {
-        Map<String, String> requestOptions = new HashMap<>();
-        requestOptions.put("token", runOptions.token);
+        Map<String, String> arguments = new HashMap<>();
+        arguments.put("token", runOptions.token);
         new TunnelClient(
                 runOptions.serverAddr,
                 runOptions.serverPort,
                 runOptions.localAddr,
                 runOptions.localPort,
                 runOptions.remotePort,
-                requestOptions
+                arguments
         ).start();
     }
 

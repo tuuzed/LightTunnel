@@ -36,10 +36,11 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
                     ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
                 }
                 tunnel.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
-                serverChannel.writeAndFlush(
-                        TunnelMessage.newInstance(MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL)
-                                .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
-                );
+                // 会导致SSH连接异常
+//                serverChannel.writeAndFlush(
+//                        TunnelMessage.newInstance(MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL)
+//                                .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+//                );
             }
 
         }
@@ -64,6 +65,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
+        logger.debug("length: {}", length);
         // 根据入站端口获取用户隧道,如果用户隧道不存在则直接关闭连接
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
