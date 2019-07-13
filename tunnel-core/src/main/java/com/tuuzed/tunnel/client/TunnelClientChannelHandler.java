@@ -162,12 +162,6 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        // 60秒后移除本地隧道连接
-        ctx.executor().schedule(new Runnable() {
-            @Override
-            public void run() {
-                LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
-            }
-        }, 60, TimeUnit.SECONDS);
+        LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
     }
 }

@@ -5,10 +5,7 @@ import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
@@ -57,10 +54,15 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             if (tunnelToken != null && sessionToken != null) {
                 tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
             }
-            serverChannel.writeAndFlush(
-                    TunnelMessage.newInstance(MESSAGE_TYPE_USER_TUNNEL_DISCONNECT)
-                            .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
-            );
+            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    serverChannel.writeAndFlush(
+                            TunnelMessage.newInstance(MESSAGE_TYPE_USER_TUNNEL_DISCONNECT)
+                                    .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+                    );
+                }
+            });
         }
         super.channelInactive(ctx);
     }

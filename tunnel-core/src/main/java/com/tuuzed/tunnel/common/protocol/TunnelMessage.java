@@ -82,6 +82,9 @@ public final class TunnelMessage {
             case TunnelConstants.MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT:
                 type = "LOCAL_TUNNEL_DISCONNECT";
                 break;
+            case TunnelConstants.MESSAGE_TYPE_USER_TUNNEL_DISCONNECT:
+                type = "USER_TUNNEL_DISCONNECT";
+                break;
             default:
                 type = String.valueOf(this.type);
                 break;
