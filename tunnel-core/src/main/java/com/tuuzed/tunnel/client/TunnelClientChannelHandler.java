@@ -45,8 +45,10 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.info("exceptionCaught: ", cause);
         ctx.close();
     }
+
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
@@ -170,6 +172,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
+
         LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
     }
 }

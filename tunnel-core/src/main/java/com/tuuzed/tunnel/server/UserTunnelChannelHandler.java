@@ -68,6 +68,12 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
     }
 
     @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        logger.info("exceptionCaught: ", cause);
+        ctx.close();
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         logger.debug("channelRead0: {}", ctx);
         int length = msg.readableBytes();
@@ -87,12 +93,6 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
                 );
             }
         }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
-        super.exceptionCaught(ctx, cause);
     }
 
     @Override
