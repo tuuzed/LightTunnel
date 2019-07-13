@@ -19,12 +19,12 @@ public class TunnelClientTest {
                 arguments
         ).start();
         // vnc
-//        new TunnelClient(
-//                "127.0.0.1", 4000,
-//                "192.168.1.33", 5900,
-//                15900,
-//                arguments
-//        ).start();
+        new TunnelClient(
+                "127.0.0.1", 4000,
+                "192.168.1.33", 5900,
+                15900,
+                arguments
+        ).start();
         // ssh
         new TunnelClient(
                 "127.0.0.1", 4000,

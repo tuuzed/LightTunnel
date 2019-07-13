@@ -178,7 +178,8 @@ public class UserTunnelManager {
         @Override
         public void removeUserTunnelChannel(long tunnelToken, long sessionToken) {
             final String key = getKey(tunnelToken, sessionToken);
-            tunnelTokenSessionTokenUserTunnelChannels.remove(key);
+            Channel channel = tunnelTokenSessionTokenUserTunnelChannels.remove(key);
+            channel.close();
         }
 
         @NotNull

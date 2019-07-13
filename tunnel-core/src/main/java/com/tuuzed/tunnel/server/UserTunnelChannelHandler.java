@@ -19,40 +19,41 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * 隧道数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelChannelHandler.class);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.debug("channelActive: {}", ctx);
         super.channelActive(ctx);
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = getTunnelToken(serverChannel);
+            final Long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
             if (tunnelToken != null) {
-                Long sessionToken = getSessionToken(ctx);
+                Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
                 if (sessionToken == null) {
                     sessionToken = tunnel.generateSessionToken();
                     ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
                 }
+                serverChannel.writeAndFlush(
+                        TunnelMessage.newInstance(MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL)
+                                .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
+                );
                 tunnel.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
-                // 会导致SSH连接异常
-//                serverChannel.writeAndFlush(
-//                        TunnelMessage.newInstance(MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL)
-//                                .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
-//                );
             }
-
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.debug("channelInactive: {}", ctx);
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = getTunnelToken(serverChannel);
-            final Long sessionToken = getSessionToken(ctx);
+            final Long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+            final Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
             if (tunnelToken != null && sessionToken != null) {
                 tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
             }
@@ -62,16 +63,16 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        logger.debug("channelRead0: {}", ctx);
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
-        logger.debug("length: {}", length);
         // 根据入站端口获取用户隧道,如果用户隧道不存在则直接关闭连接
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = getTunnelToken(serverChannel);
-            final Long sessionToken = getSessionToken(ctx);
+            final Long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+            final Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
             if (tunnelToken != null && sessionToken != null) {
                 serverChannel.writeAndFlush(
                         TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)
@@ -118,35 +119,6 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
                 return null;
             }
             return tunnel;
-        }
-        return null;
-    }
-
-    /**
-     * 获取隧道令牌
-     */
-    @Nullable
-    private static Long getTunnelToken(Channel serverChannel) {
-        if (serverChannel == null) {
-            return null;
-        }
-        if (serverChannel.hasAttr(ATTR_TUNNEL_TOKEN)) {
-            return serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
-        }
-        return null;
-    }
-
-    /**
-     * 获取会话令牌
-     */
-    @SuppressWarnings("Duplicates")
-    @Nullable
-    private static Long getSessionToken(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return null;
-        }
-        if (ctx.channel().hasAttr(ATTR_SESSION_TOKEN)) {
-            return ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         }
         return null;
     }

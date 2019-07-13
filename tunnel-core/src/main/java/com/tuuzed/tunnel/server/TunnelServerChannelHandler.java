@@ -18,8 +18,8 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 /**
  * Tunnel服务数据通道处理器
  */
+@SuppressWarnings("Duplicates")
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
-
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
 
     @Nullable
@@ -32,7 +32,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
-        Long tunnelToken = getTunnelToken(ctx);
+        final Long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
         if (tunnelToken != null) {
             UserTunnelManager.getInstance().closeUserTunnel(tunnelToken);
         }
@@ -110,14 +110,11 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理数据透传消息
      * 数据流向: TunnelClient  ->  UserTunnelManager
      */
-    @SuppressWarnings("Duplicates")
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        long[] tunnelTokenAndSessionToken = getTunnelTokenAndSessionToken(msg);
-        if (tunnelTokenAndSessionToken == null) {
-            return;
-        }
-        final long tunnelToken = tunnelTokenAndSessionToken[0];
-        final long sessionToken = tunnelTokenAndSessionToken[1];
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        head.release();
         final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
@@ -131,14 +128,11 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理本地隧道断开连接消息
      */
-    @SuppressWarnings("Duplicates")
     private void handleLocalTunnelDisconnectMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
-        long[] tunnelTokenAndSessionToken = getTunnelTokenAndSessionToken(msg);
-        if (tunnelTokenAndSessionToken == null) {
-            return;
-        }
-        final long tunnelToken = tunnelTokenAndSessionToken[0];
-        final long sessionToken = tunnelTokenAndSessionToken[1];
+        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
+        final long tunnelToken = head.readLong();
+        final long sessionToken = head.readLong();
+        head.release();
         UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
@@ -147,39 +141,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
                 userTunnelChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             }
         }
-    }
-
-
-    // ====================== 工具方法 =========================== //
-
-    @Nullable
-    private static long[] getTunnelTokenAndSessionToken(TunnelMessage msg) {
-        if (msg == null) {
-            return null;
-        }
-        if (msg.getHead().length < 16) {
-            return null;
-        }
-        final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
-        final long tunnelToken = head.readLong();
-        final long sessionToken = head.readLong();
-        head.release();
-        return new long[]{tunnelToken, sessionToken};
-    }
-
-    /**
-     * 获取隧道令牌
-     */
-    @SuppressWarnings("Duplicates")
-    @Nullable
-    private static Long getTunnelToken(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return null;
-        }
-        if (ctx.channel().hasAttr(ATTR_TUNNEL_TOKEN)) {
-            return ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
-        }
-        return null;
     }
 
 }

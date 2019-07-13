@@ -33,10 +33,10 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 隧道断开
-        final Long tunnelToken = getTunnelToken(ctx);
-        final Long sessionToken = getSessionToken(ctx);
+        final Long tunnelToken = ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
+        final Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
         if (tunnelToken != null && sessionToken != null) {
-            LocalTunnel.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
+            LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
         }
         super.channelInactive(ctx);
         if (tunnelClientChannelListener != null) {
@@ -107,13 +107,11 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final String localAddr = openTunnelRequest.localAddr;
         final int localPort = openTunnelRequest.localPort;
 
-        LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
-                new LocalTunnel.GetLocalTunnelChannelCallback() {
+        LocalTunnelChannelManager.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
+                ctx.channel(),
+                new LocalTunnelChannelManager.GetLocalTunnelChannelCallback() {
                     @Override
-                    public void success(@NotNull Channel channel) {
-                        channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
-                        channel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
-                        channel.attr(ATTR_SESSION_TOKEN).set(sessionToken);
+                    public void success(@NotNull Channel localTunnelChannel) {
                     }
 
                     @Override
@@ -124,7 +122,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     /**
      * 处理数据透传消息
-     * 数据流向: UserTunnelManager -> LocalTunnel
+     * 数据流向: UserTunnelManager -> LocalTunnelChannelManager
      */
     private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
@@ -134,83 +132,24 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
-
-        final String localAddr = getLocalAddr(ctx);
-        final Integer localPort = getLocalPort(ctx);
-        if (localAddr != null && localPort != null) {
-            LocalTunnel.getInstance().getLocalTunnelChannel(localAddr, localPort, tunnelToken, sessionToken,
-                    new LocalTunnel.GetLocalTunnelChannelCallback() {
+        OpenTunnelRequest openTunnelRequest = ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
+        if (openTunnelRequest != null) {
+            LocalTunnelChannelManager.getInstance().getLocalTunnelChannel(
+                    openTunnelRequest.localAddr, openTunnelRequest.localPort,
+                    tunnelToken, sessionToken,
+                    ctx.channel(),
+                    new LocalTunnelChannelManager.GetLocalTunnelChannelCallback() {
                         @Override
-                        public void success(@NotNull Channel channel) {
-                            channel.attr(ATTR_NEXT_CHANNEL).set(ctx.channel());
-                            channel.attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
-                            channel.attr(ATTR_SESSION_TOKEN).set(sessionToken);
-                            channel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                        public void success(@NotNull Channel localTunnelChannel) {
+                            localTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                         }
 
                         @Override
                         public void error(Throwable cause) {
                         }
-                    });
-        }
+                    }
+            );
 
+        }
     }
-
-
-    // ====================== 工具方法 =========================== //
-    @SuppressWarnings("Duplicates")
-    @Nullable
-    private static OpenTunnelRequest getOpenTunnelRequest(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return null;
-        }
-        if (ctx.channel().hasAttr(ATTR_OPEN_TUNNEL_REQUEST)) {
-            return ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
-        }
-        return null;
-    }
-
-    @Nullable
-    private static String getLocalAddr(ChannelHandlerContext ctx) {
-        OpenTunnelRequest openTunnelRequest = getOpenTunnelRequest(ctx);
-        if (openTunnelRequest != null) {
-            return openTunnelRequest.localAddr;
-        }
-        return null;
-    }
-
-
-    @Nullable
-    private static Integer getLocalPort(ChannelHandlerContext ctx) {
-        OpenTunnelRequest openTunnelRequest = getOpenTunnelRequest(ctx);
-        if (openTunnelRequest != null) {
-            return openTunnelRequest.localPort;
-        }
-        return null;
-    }
-
-    @SuppressWarnings("Duplicates")
-    @Nullable
-    private static Long getTunnelToken(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return null;
-        }
-        if (ctx.channel().hasAttr(ATTR_TUNNEL_TOKEN)) {
-            return ctx.channel().attr(ATTR_TUNNEL_TOKEN).get();
-        }
-        return null;
-    }
-
-    @SuppressWarnings("Duplicates")
-    @Nullable
-    private static Long getSessionToken(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return null;
-        }
-        if (ctx.channel().hasAttr(ATTR_SESSION_TOKEN)) {
-            return ctx.channel().attr(ATTR_SESSION_TOKEN).get();
-        }
-        return null;
-    }
-
 }
