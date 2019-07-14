@@ -32,6 +32,7 @@ public final class TunnelConstants {
     public static final byte MESSAGE_TYPE_HEARTBEAT_PONG = 0x02;
     /**
      * 建立隧道请求
+     *
      */
     public static final byte MESSAGE_TYPE_OPEN_TUNNEL_REQUEST = 0x03;
     /**

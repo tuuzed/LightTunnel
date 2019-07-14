@@ -17,11 +17,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_OPEN_TUNNEL_ERROR;
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_REQUEST;
 
 @SuppressWarnings("Duplicates")
 public class TunnelClient {
@@ -38,14 +38,6 @@ public class TunnelClient {
     private final int remotePort;
     private final Map<String, String> arguments;
 
-
-    public TunnelClient(
-            @NotNull String serverAddr, int serverPort,
-            @NotNull String localAddr, int localPort,
-            int remotePort
-    ) {
-        this(serverAddr, serverPort, localAddr, localPort, remotePort, Collections.<String, String>emptyMap());
-    }
 
     public TunnelClient(
             @NotNull String serverAddr, int serverPort,
@@ -95,7 +87,7 @@ public class TunnelClient {
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
                     OpenTunnelRequest openTunnelRequest = new OpenTunnelRequest(
-                            OpenTunnelRequest.SCHEME_TCP, localAddr, localPort, remotePort, arguments
+                            OpenTunnelRequest.TYPE_TCP, localAddr, localPort, remotePort, arguments
                     );
                     // 连接成功，向服务器发送请求建立隧道消息
                     future.channel().writeAndFlush(

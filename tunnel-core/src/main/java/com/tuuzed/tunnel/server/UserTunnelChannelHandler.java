@@ -22,7 +22,6 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("channelActive: {}", ctx);
         super.channelActive(ctx);
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
@@ -31,7 +30,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             if (tunnelToken != null) {
                 Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
                 if (sessionToken == null) {
-                    sessionToken = tunnel.generateSessionToken();
+                    sessionToken = UserTunnelManager.getInstance().generateSessionToken(tunnelToken);
                     ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
                 }
                 serverChannel.writeAndFlush(
@@ -40,12 +39,13 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
                 );
                 tunnel.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
             }
+        } else {
+            ctx.close();
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("channelInactive: {}", ctx);
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
@@ -54,6 +54,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             if (tunnelToken != null && sessionToken != null) {
                 tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
             }
+            // 解决 HTTP/1.x 数据传输问题
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
@@ -121,7 +122,6 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             int inboundPort = ((InetSocketAddress) socketAddress).getPort();
             UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
             if (tunnel == null) {
-                ctx.close();
                 return null;
             }
             return tunnel;

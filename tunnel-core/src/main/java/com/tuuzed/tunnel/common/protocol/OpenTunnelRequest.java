@@ -12,7 +12,7 @@ import java.util.Set;
 
 public final class OpenTunnelRequest {
 
-    public static final String SCHEME_TCP = "tcp";
+    public static final String TYPE_TCP = "tcp";
 
     public static OpenTunnelRequest create(@NotNull String uri) throws TunnelProtocolException {
         try {
@@ -26,17 +26,17 @@ public final class OpenTunnelRequest {
 
     }
 
-    public final String scheme;
+    public final String type;
     public final String localAddr;
     public final int localPort;
     public final int remotePort;
     public final Map<String, String> arguments;
 
-    public OpenTunnelRequest(@NotNull String scheme,
+    public OpenTunnelRequest(@NotNull String type,
                              @NotNull String localAddr, int localPort,
                              int remotePort,
                              @NotNull Map<String, String> arguments) {
-        this.scheme = scheme;
+        this.type = type;
         this.localAddr = localAddr;
         this.localPort = localPort;
         this.remotePort = remotePort;
@@ -47,7 +47,7 @@ public final class OpenTunnelRequest {
     public String toUri() {
         StringBuilder query = new StringBuilder();
         if (arguments.isEmpty()) {
-            return String.format("%s://%s:%d#%d", scheme, localAddr, localPort, remotePort);
+            return String.format("%s://%s:%d#%d", type, localAddr, localPort, remotePort);
         }
         Set<Map.Entry<String, String>> entries = arguments.entrySet();
         boolean first = true;
@@ -69,7 +69,7 @@ public final class OpenTunnelRequest {
 
             first = false;
         }
-        return String.format("%s://%s:%d?%s#%d", scheme, localAddr, localPort, query.toString(), remotePort);
+        return String.format("%s://%s:%d?%s#%d", type, localAddr, localPort, query.toString(), remotePort);
     }
 
     @Override

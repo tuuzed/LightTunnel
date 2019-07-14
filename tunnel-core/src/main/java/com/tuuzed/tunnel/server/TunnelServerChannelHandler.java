@@ -70,6 +70,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
+
     /**
      * 处理心跳消息
      */
@@ -111,7 +112,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     /**
      * 处理数据透传消息
-     * 数据流向: TunnelClient  ->  UserTunnelManager
      */
     private void handleTransferMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
@@ -127,11 +127,10 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-
     /**
      * 处理本地隧道断开连接消息
      */
-    private void handleLocalTunnelDisconnectMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+    private void handleLocalTunnelDisconnectMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();

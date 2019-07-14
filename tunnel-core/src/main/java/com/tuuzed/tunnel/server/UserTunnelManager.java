@@ -37,6 +37,8 @@ public class UserTunnelManager {
 
     private final Map<Integer, UserTunnelImpl> bindPortUserTunnels = new ConcurrentHashMap<>();
     private final Map<Long, UserTunnelImpl> tunnelTokenUserTunnels = new ConcurrentHashMap<>();
+    private final Map<Long, AtomicLong> tunnelTokenSessionTokenGenerator = new ConcurrentHashMap<>();
+
 
     private UserTunnelManager() {
     }
@@ -58,6 +60,14 @@ public class UserTunnelManager {
         return bindPortUserTunnels.get(bindPort);
     }
 
+    public long generateSessionToken(long tunnelToken) {
+        AtomicLong sessionTokenGenerator = tunnelTokenSessionTokenGenerator.get(tunnelToken);
+        if (sessionTokenGenerator == null) {
+            sessionTokenGenerator = new AtomicLong();
+            tunnelTokenSessionTokenGenerator.put(tunnelToken, sessionTokenGenerator);
+        }
+        return sessionTokenGenerator.incrementAndGet();
+    }
 
     public long openUserTunnel(int bindPort, @NotNull Channel serverChannel) throws BindException {
         return openUserTunnel(null, bindPort, serverChannel);
@@ -82,6 +92,7 @@ public class UserTunnelManager {
      * @param tunnelToken 隧道令牌
      */
     public void closeUserTunnel(long tunnelToken) {
+        tunnelTokenSessionTokenGenerator.remove(tunnelToken);
         UserTunnelImpl tunnel = tunnelTokenUserTunnels.remove(tunnelToken);
         if (tunnel != null) {
             bindPortUserTunnels.remove(tunnel.bindPort());
@@ -103,8 +114,6 @@ public class UserTunnelManager {
         private final Channel serverChannel;
         @NotNull
         private final Map<String, Channel> tunnelTokenSessionTokenUserTunnelChannels = new ConcurrentHashMap<>();
-        @NotNull
-        private final AtomicLong sessionTokenGenerator;
 
         private UserTunnelImpl(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) {
             this.bossGroup = new NioEventLoopGroup();
@@ -112,7 +121,6 @@ public class UserTunnelManager {
             this.bindAddr = bindAddr;
             this.bindPort = bindPort;
             this.serverChannel = serverChannel;
-            this.sessionTokenGenerator = new AtomicLong();
         }
 
         private void open() {
@@ -157,10 +165,6 @@ public class UserTunnelManager {
             return bindPort;
         }
 
-        @Override
-        public long generateSessionToken() {
-            return sessionTokenGenerator.incrementAndGet();
-        }
 
         @Override
         public void putUserTunnelChannel(long tunnelToken, long sessionToken, @NotNull Channel channel) {
@@ -189,7 +193,7 @@ public class UserTunnelManager {
 
         @Override
         public String toString() {
-            return "UserTunnelImpl(" + bindPort + ")";
+            return "UserTunnel:" + bindPort;
         }
     }
 

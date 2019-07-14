@@ -10,8 +10,6 @@ public interface UserTunnel {
 
     int bindPort();
 
-    long generateSessionToken();
-
     void putUserTunnelChannel(long tunnelToken, long sessionToken, @NotNull Channel channel);
 
     @Nullable

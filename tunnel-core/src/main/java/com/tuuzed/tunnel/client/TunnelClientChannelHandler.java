@@ -23,10 +23,8 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 @SuppressWarnings("Duplicates")
 public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
-
     @Nullable
     private TunnelClientChannelListener tunnelClientChannelListener;
-
 
     public TunnelClientChannelHandler(@Nullable TunnelClientChannelListener listener) {
         this.tunnelClientChannelListener = listener;
@@ -51,7 +49,6 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         logger.info("exceptionCaught: ", cause);
         ctx.close();
     }
-
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
@@ -80,19 +77,17 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-
     /**
      * 处理心跳数据
      */
-    private void handleHeartbeatPingMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+    private void handleHeartbeatPingMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         ctx.channel().writeAndFlush(TunnelMessage.newInstance(MESSAGE_TYPE_HEARTBEAT_PONG));
     }
-
 
     /**
      * 处理建立隧道请求消息
      */
-    private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+    private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         head.release();
@@ -111,7 +106,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理建立隧道错误消息
      */
-    private void handleOpenTunnelErrorMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
+    private void handleOpenTunnelErrorMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final String errorMessage = new String(msg.getHead());
         logger.warn("Open Tunnel Error: {}", errorMessage);
         ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR).set(true);
@@ -120,7 +115,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     /**
      * 处理连接本地隧道消息
      */
-    private void handleConnectLocalTunnelMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
+    private void handleConnectLocalTunnelMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
@@ -147,9 +142,8 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     /**
      * 处理数据透传消息
-     * 数据流向: UserTunnelManager -> LocalTunnelChannelManager
      */
-    private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) {
+    private void handleTransferMessage(final ChannelHandlerContext ctx, final TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
@@ -177,11 +171,15 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-    private void handleUserChannelDisconnect(ChannelHandlerContext ctx, TunnelMessage msg) {
+    /**
+     * 处理用户隧道断开消息
+     */
+    private void handleUserChannelDisconnect(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
         LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
     }
+
 }
