@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.client;
 
+import com.tuuzed.tunnel.common.TunnelProtocolException;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
@@ -11,6 +12,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.charset.Charset;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -92,10 +95,17 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
-        ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
-
-        OpenTunnelRequest openTunnelRequest = ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).get();
-        logger.info("Opened Tunnel: {}", openTunnelRequest);
+        head.release();
+        try {
+            final OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.create(
+                    new String(msg.getData(), Charset.forName("utf-8"))
+            );
+            ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
+            ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
+            logger.info("Opened Tunnel: {}", openTunnelRequest);
+        } catch (TunnelProtocolException e) {
+            logger.warn("Open Tunnel Error: {}", e.getMessage());
+        }
     }
 
     /**
@@ -172,7 +182,6 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-
         LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
     }
 }

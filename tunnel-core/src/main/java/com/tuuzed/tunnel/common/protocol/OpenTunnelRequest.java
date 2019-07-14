@@ -1,6 +1,7 @@
 package com.tuuzed.tunnel.common.protocol;
 
 
+import com.tuuzed.tunnel.common.TunnelProtocolException;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
@@ -13,11 +14,16 @@ public final class OpenTunnelRequest {
 
     public static final String SCHEME_TCP = "tcp";
 
-    public static OpenTunnelRequest create(@NotNull String uri) {
-        URI uri0 = URI.create(uri);
-        int remotePort = Integer.parseInt(uri0.getFragment());
-        Map<String, String> queryMap = parseQuery(uri0);
-        return new OpenTunnelRequest(uri0.getScheme(), uri0.getHost(), uri0.getPort(), remotePort, queryMap);
+    public static OpenTunnelRequest create(@NotNull String uri) throws TunnelProtocolException {
+        try {
+            URI uri0 = URI.create(uri);
+            int remotePort = Integer.parseInt(uri0.getFragment());
+            Map<String, String> queryMap = parseQuery(uri0);
+            return new OpenTunnelRequest(uri0.getScheme(), uri0.getHost(), uri0.getPort(), remotePort, queryMap);
+        } catch (Exception e) {
+            throw new TunnelProtocolException("OpenTunnelRequest uri error", e);
+        }
+
     }
 
     public final String scheme;
@@ -37,8 +43,8 @@ public final class OpenTunnelRequest {
         this.arguments = arguments;
     }
 
-    @Override
-    public String toString() {
+    @NotNull
+    public String toUri() {
         StringBuilder query = new StringBuilder();
         if (arguments.isEmpty()) {
             return String.format("%s://%s:%d#%d", scheme, localAddr, localPort, remotePort);
@@ -64,6 +70,11 @@ public final class OpenTunnelRequest {
             first = false;
         }
         return String.format("%s://%s:%d?%s#%d", scheme, localAddr, localPort, query.toString(), remotePort);
+    }
+
+    @Override
+    public String toString() {
+        return toUri();
     }
 
     @NotNull

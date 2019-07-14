@@ -1,6 +1,7 @@
 package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.Interceptor;
+import com.tuuzed.tunnel.common.TunnelProtocolException;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
@@ -14,6 +15,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.BindException;
+import java.nio.charset.Charset;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -79,42 +81,30 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      * 处理建立隧道请求消息
      */
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        final byte[] head = msg.getHead();
-        OpenTunnelRequest openTunnelRequest = null;
-        boolean next;
-        final String[] errorMessage = new String[1];
         try {
-            openTunnelRequest = OpenTunnelRequest.create(new String(head));
+            OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.create(new String(msg.getHead()));
             logger.info("openTunnelRequest: {}", openTunnelRequest);
-            next = true;
-        } catch (Exception e) {
-            errorMessage[0] = "Protocol Error";
-            next = false;
-        }
-        if (next && openTunnelRequestInterceptor != null) {
-            next = openTunnelRequestInterceptor.proceed(openTunnelRequest, errorMessage);
-        }
-        if (next) {
-            try {
-                ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-                final long tunnelToken = UserTunnelManager.getInstance()
-                        .openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
-                ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
-                next = true;
-            } catch (BindException e) {
-                errorMessage[0] = "Bind Port Error";
-                next = false;
+            if (openTunnelRequestInterceptor != null) {
+                openTunnelRequest = openTunnelRequestInterceptor.proceed(openTunnelRequest);
             }
-        }
-        if (next) {
+            ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
+            final long tunnelToken = UserTunnelManager.getInstance()
+                    .openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
+            ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
-                            .setHead(Unpooled.copyLong(ctx.channel().attr(ATTR_TUNNEL_TOKEN).get()).array())
+                            .setHead(Unpooled.copyLong(tunnelToken).array())
+                            .setData(openTunnelRequest.toUri().getBytes(Charset.forName("utf-8")))
             );
-        } else {
+        } catch (TunnelProtocolException e) {
             ctx.channel().writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_ERROR)
-                            .setHead(errorMessage[0].getBytes())
+                            .setHead(e.getMessage().getBytes())
+            ).addListener(ChannelFutureListener.CLOSE);
+        } catch (BindException e) {
+            ctx.channel().writeAndFlush(
+                    TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_ERROR)
+                            .setHead("Bind Port Error".getBytes())
             ).addListener(ChannelFutureListener.CLOSE);
         }
     }

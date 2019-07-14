@@ -98,12 +98,10 @@ public class TunnelClient {
                             OpenTunnelRequest.SCHEME_TCP, localAddr, localPort, remotePort, arguments
                     );
                     // 连接成功，向服务器发送请求建立隧道消息
-                    future.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-
                     future.channel().writeAndFlush(
                             TunnelMessage
                                     .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
-                                    .setHead(openTunnelRequest.toString().getBytes())
+                                    .setHead(openTunnelRequest.toUri().getBytes())
                     );
                     logger.info("connect tunnel server success, {}", future.channel());
                 } else {

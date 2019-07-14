@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.cli;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.common.Interceptor;
+import com.tuuzed.tunnel.common.TunnelProtocolException;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
@@ -58,23 +59,23 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
 
     private static class OpenTunnelRequestInterceptor implements Interceptor<OpenTunnelRequest> {
         @NotNull
-        private String token;
+        private final String token;
 
         public OpenTunnelRequestInterceptor(@NotNull String token) {
             this.token = token;
         }
 
+        @NotNull
         @Override
-        public boolean proceed(@NotNull OpenTunnelRequest request, @NotNull String[] errorMessage) {
-            if (!this.token.equals(request.arguments.get("token"))) {
-                errorMessage[0] = "Token Error";
-                return false;
+        public OpenTunnelRequest proceed(@NotNull OpenTunnelRequest request) throws TunnelProtocolException {
+            String token = request.arguments.get("token");
+            if (!this.token.equals(token)) {
+                throw new TunnelProtocolException("Token Error");
             }
             if (request.remotePort < 1024) {
-                errorMessage[0] = "remotePort Error";
-                return false;
+                throw new TunnelProtocolException("remotePort Error");
             }
-            return true;
+            return request;
         }
     }
 
