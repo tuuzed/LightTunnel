@@ -8,7 +8,7 @@ public final class LogFormatter {
         String msg = format;
         for (Object arg : arguments) {
             int index = msg.indexOf("{}");
-            if (index > 0) {
+            if (index >= 0) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(msg, 0, index);
                 sb.append((arg == null) ? "null" : arg.toString());
