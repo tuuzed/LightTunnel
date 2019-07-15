@@ -2,7 +2,7 @@ package com.tuuzed.tunnel.common.logging;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.WeakHashMap;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 
 public class PlatformLogger implements Logger {
@@ -25,12 +25,26 @@ public class PlatformLogger implements Logger {
 
     private final java.util.logging.Logger logger;
 
-    public PlatformLogger(String name) {
-        this.logger = java.util.logging.Logger.getLogger(name);
-    }
 
     public PlatformLogger(Class clazz) {
-        this.logger = java.util.logging.Logger.getLogger(clazz.getCanonicalName());
+        this(clazz.getCanonicalName());
+    }
+
+    public PlatformLogger(String name) {
+        this.logger = java.util.logging.Logger.getLogger(name);
+        this.logger.setUseParentHandlers(false);
+        Handler[] handlers = this.logger.getHandlers();
+        boolean isExist = false;
+        for (Handler handler : handlers) {
+            if (handler instanceof PlatformConsoleHandler) {
+                isExist = true;
+                break;
+            }
+        }
+        if (!isExist) {
+            this.logger.addHandler(new PlatformConsoleHandler());
+        }
+        logger.setLevel(Level.ALL);
     }
 
     @Override
@@ -113,4 +127,5 @@ public class PlatformLogger implements Logger {
     private String formatMsg(String format, Object... args) {
         return LogFormatter.format(format, args);
     }
+
 }

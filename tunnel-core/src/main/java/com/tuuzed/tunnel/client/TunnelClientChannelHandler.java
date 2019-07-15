@@ -44,13 +44,13 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("exceptionCaught: ", cause);
+        logger.debug("exceptionCaught: ", cause);
         ctx.close();
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
-        logger.info("Recv : {}", msg);
+        logger.trace("Recv : {}", msg);
         switch (msg.getType()) {
             case MESSAGE_TYPE_HEARTBEAT_PING:
                 handleHeartbeatPingMessage(ctx, msg);
@@ -93,9 +93,9 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
             final OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.fromBytes(msg.getData());
             ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-            logger.info("Opened Tunnel: {}", openTunnelRequest);
+            logger.debug("Opened Tunnel: {}", openTunnelRequest);
         } catch (TunnelProtocolException e) {
-            logger.warn("Open Tunnel Error: {}", e.getMessage());
+            logger.debug("Open Tunnel Error: {}", e.getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     private void handleOpenTunnelErrorMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final String errorMessage = new String(msg.getHead());
-        logger.warn("Open Tunnel Error: {}", errorMessage);
+        logger.debug("Open Tunnel Error: {}", errorMessage);
         ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_FLAG).set(true);
         ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_MESSAGE).set(errorMessage);
     }
