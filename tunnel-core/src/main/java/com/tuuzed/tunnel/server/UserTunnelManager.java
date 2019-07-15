@@ -4,6 +4,7 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -38,14 +39,28 @@ public class UserTunnelManager {
     private final Map<Integer, UserTunnelImpl> bindPortUserTunnels = new ConcurrentHashMap<>();
     private final Map<Long, UserTunnelImpl> tunnelTokenUserTunnels = new ConcurrentHashMap<>();
     private final Map<Long, AtomicLong> tunnelTokenSessionTokenGenerator = new ConcurrentHashMap<>();
+    @NotNull
+    private final NioEventLoopGroup bossGroup;
+    @NotNull
+    private final NioEventLoopGroup workerGroup;
+    @NotNull
+    private final ServerBootstrap bootstrap;
 
 
     private UserTunnelManager() {
+        this.bossGroup = new NioEventLoopGroup();
+        this.workerGroup = new NioEventLoopGroup();
+        this.bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new UserTunnelChannelHandler());
+                    }
+                });
     }
 
-    /**
-     * 判断是否已经绑定端口
-     */
     public boolean hasBandedPort(int bindPort) {
         return bindPortUserTunnels.containsKey(bindPort);
     }
@@ -78,22 +93,13 @@ public class UserTunnelManager {
             throw new BindException("bindPort: " + bindPort);
         }
         UserTunnelImpl tunnel = new UserTunnelImpl(bindAddr, bindPort, serverChannel);
-        tunnel.open();
+        tunnel.open(bootstrap);
         bindPortUserTunnels.put(bindPort, tunnel);
         long tunnelToken = tunnelTokenGenerator.incrementAndGet();
         tunnelTokenUserTunnels.put(tunnelToken, tunnel);
         return tunnelToken;
     }
 
-    public int getUserTunnelTotalCount() {
-        return bindPortUserTunnels.size();
-    }
-
-    /**
-     * 关闭隧道
-     *
-     * @param tunnelToken 隧道令牌
-     */
     public void closeUserTunnel(long tunnelToken) {
         tunnelTokenSessionTokenGenerator.remove(tunnelToken);
         UserTunnelImpl tunnel = tunnelTokenUserTunnels.remove(tunnelToken);
@@ -104,12 +110,12 @@ public class UserTunnelManager {
         }
     }
 
+    public int getUserTunnelTotalCount() {
+        return bindPortUserTunnels.size();
+    }
 
     private static class UserTunnelImpl implements UserTunnel {
-        @NotNull
-        private final NioEventLoopGroup bossGroup;
-        @NotNull
-        private final NioEventLoopGroup workerGroup;
+
         @Nullable
         private final String bindAddr;
         private final int bindPort;
@@ -117,44 +123,13 @@ public class UserTunnelManager {
         private final Channel serverChannel;
         @NotNull
         private final Map<String, Channel> tunnelTokenSessionTokenUserTunnelChannels = new ConcurrentHashMap<>();
+        @Nullable
+        private ChannelFuture bindChannelFuture;
 
         private UserTunnelImpl(@Nullable String bindAddr, int bindPort, @NotNull Channel serverChannel) {
-            this.bossGroup = new NioEventLoopGroup();
-            this.workerGroup = new NioEventLoopGroup();
             this.bindAddr = bindAddr;
             this.bindPort = bindPort;
             this.serverChannel = serverChannel;
-        }
-
-        private void open() {
-            ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new UserTunnelChannelHandler());
-                        }
-                    });
-            try {
-                if (bindAddr == null) {
-                    bootstrap.bind(bindPort).get();
-                } else {
-                    bootstrap.bind(bindAddr, bindPort).get();
-                }
-                logger.info("Open Tunnel: {}", serverChannel.attr(ATTR_OPEN_TUNNEL_REQUEST).get());
-            } catch (Exception ex) {
-                // BindException表示该端口已经绑定过
-                if (!(ex.getCause() instanceof BindException)) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }
-
-        private void close() {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-            tunnelTokenSessionTokenUserTunnelChannels.clear();
         }
 
         @NotNull
@@ -188,15 +163,39 @@ public class UserTunnelManager {
             channel.close();
         }
 
+        @Override
+        public String toString() {
+            return "UserTunnel:" + bindPort;
+        }
+
+        private void open(@NotNull ServerBootstrap bootstrap) {
+            try {
+                if (bindAddr == null) {
+                    bindChannelFuture = bootstrap.bind(bindPort);
+                } else {
+                    bindChannelFuture = bootstrap.bind(bindAddr, bindPort);
+                }
+                logger.info("Open Tunnel: {}", serverChannel.attr(ATTR_OPEN_TUNNEL_REQUEST).get());
+            } catch (Exception ex) {
+                // BindException表示该端口已经绑定过
+                if (!(ex.getCause() instanceof BindException)) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+
+        private void close() {
+            if (bindChannelFuture != null) {
+                bindChannelFuture.channel().close();
+            }
+            tunnelTokenSessionTokenUserTunnelChannels.clear();
+        }
+
         @NotNull
         private String getKey(long tunnelToken, long sessionToken) {
             return String.format("%d@%d", tunnelToken, sessionToken);
         }
 
-        @Override
-        public String toString() {
-            return "UserTunnel:" + bindPort;
-        }
     }
 
 
