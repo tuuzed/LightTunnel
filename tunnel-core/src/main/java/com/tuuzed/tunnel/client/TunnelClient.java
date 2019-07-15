@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -36,11 +37,9 @@ public class TunnelClient {
         final TunnelClientChannelListener listener = new TunnelClientChannelListener() {
             @Override
             public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
                 Boolean openTunnelError = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_FLAG).get();
                 String errorMessage = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_MESSAGE).get();
                 TunnelClient tunnelClient = ctx.channel().attr(ATTR_TUNNEL_CLIENT).get();
-                logger.debug("channelInactive: {}, openTunnelError: {}, errorMessage: {}", ctx, openTunnelError, errorMessage);
                 if (openTunnelError != null && openTunnelError) {
                     logger.error(errorMessage);
                     return;
@@ -69,6 +68,7 @@ public class TunnelClient {
     private final String serverAddr;
     private final int serverPort;
     private final OpenTunnelRequest request;
+    private final AtomicBoolean stopFlag = new AtomicBoolean(false);
     @Nullable
     private ChannelFuture connectChannelFuture;
 
@@ -84,6 +84,9 @@ public class TunnelClient {
     }
 
     public void start() {
+        if (stopFlag.get()) {
+            return;
+        }
         ChannelFuture f = bootstrap.connect(serverAddr, serverPort);
         connectChannelFuture = f;
         f.addListener(new ChannelFutureListener() {
@@ -110,6 +113,8 @@ public class TunnelClient {
 
     public void stop() {
         if (connectChannelFuture != null) {
+            stopFlag.set(true);
+            connectChannelFuture.channel().attr(ATTR_TUNNEL_CLIENT).set(null);
             connectChannelFuture.channel().close();
         }
     }

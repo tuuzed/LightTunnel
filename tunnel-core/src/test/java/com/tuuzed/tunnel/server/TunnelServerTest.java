@@ -20,7 +20,7 @@ public class TunnelServerTest {
                 if (request.remotePort < 1024) {
                     throw new TunnelProtocolException("remotePort Error");
                 }
-                if (request.remotePort == 10080) {
+                if (request.remotePort == 20000) {
                     // 替换远程端口
                     return new OpenTunnelRequest(
                             request.type,

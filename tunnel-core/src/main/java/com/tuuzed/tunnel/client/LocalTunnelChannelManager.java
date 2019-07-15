@@ -69,8 +69,7 @@ public class LocalTunnelChannelManager {
             final long sessionToken,
             final Channel tunnelClientChannel,
             @NotNull final GetLocalTunnelChannelCallback callback) {
-        logger.trace("localAddr: {}, localPort: {},tunnelToken:{}, sessionToken: {}", localAddr, localAddr, tunnelToken, sessionToken);
-        logger.trace("tunnelTokenSessionTokenLocalTunnelChannels: {}", tunnelTokenSessionTokenLocalTunnelChannels);
+        logger.trace("localTunnelChannels: {}", tunnelTokenSessionTokenLocalTunnelChannels);
         final String key = String.format("%d@%d", tunnelToken, sessionToken);
         Channel localTunnelChannel = tunnelTokenSessionTokenLocalTunnelChannels.get(key);
         if (localTunnelChannel != null && localTunnelChannel.isActive()) {

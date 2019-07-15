@@ -107,6 +107,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         logger.debug("Open Tunnel Error: {}", errorMessage);
         ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_FLAG).set(true);
         ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_MESSAGE).set(errorMessage);
+        ctx.channel().close();
     }
 
     /**
@@ -117,6 +118,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
+
         ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
         ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
 
@@ -176,6 +178,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
+
         LocalTunnelChannelManager.getInstance().removeLocalTunnelChannel(tunnelToken, sessionToken);
     }
 
