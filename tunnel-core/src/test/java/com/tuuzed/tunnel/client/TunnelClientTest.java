@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.client;
 
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -12,33 +13,29 @@ public class TunnelClientTest {
         Map<String, String> arguments = new HashMap<>();
         arguments.put("token", "tk123456");
         // error
-        new TunnelClient(
-                "127.0.0.1", 4000,
+        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 "192.168.1.1", 80,
                 100,
                 arguments
-        ).start();
+        )).start();
         // http
-        new TunnelClient(
-                "127.0.0.1", 4000,
+        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 "192.168.1.1", 80,
                 10080,
                 arguments
-        ).start();
+        )).start();
         // vnc
-        new TunnelClient(
-                "127.0.0.1", 4000,
+        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 "192.168.1.33", 5900,
                 15900,
                 arguments
-        ).start();
+        )).start();
         // ssh
-        new TunnelClient(
-                "127.0.0.1", 4000,
+        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 "192.168.1.10", 22,
                 10022,
                 arguments
-        ).start();
+        )).start();
         System.in.read();
     }
 }

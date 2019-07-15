@@ -5,6 +5,7 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.client.TunnelClient;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.Option;
 
@@ -52,28 +53,24 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
             final String localAddr = tunnel.get("local_addr").toString();
             final int localPort = Integer.parseInt(tunnel.get("local_port").toString());
             final int remotePort = Integer.parseInt(tunnel.get("remote_port").toString());
-            new TunnelClient(
-                    serverAddr,
-                    serverPort,
+            new TunnelClient(serverAddr, serverPort, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                     localAddr,
                     localPort,
                     remotePort,
                     arguments
-            ).start();
+            )).start();
         }
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) {
         Map<String, String> arguments = new HashMap<>();
         arguments.put("token", runOptions.token);
-        new TunnelClient(
-                runOptions.serverAddr,
-                runOptions.serverPort,
+        new TunnelClient(runOptions.serverAddr, runOptions.serverPort, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 runOptions.localAddr,
                 runOptions.localPort,
                 runOptions.remotePort,
                 arguments
-        ).start();
+        )).start();
     }
 
     static class RunOptions {

@@ -15,9 +15,10 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.AttributeKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
@@ -25,45 +26,29 @@ import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 @SuppressWarnings("Duplicates")
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
-
-    private final Bootstrap bootstrap;
+    private static final AttributeKey<TunnelClient> ATTR_TUNNEL_CLIENT = AttributeKey.newInstance("tunnel_client");
     @NotNull
-    private final NioEventLoopGroup workerGroup;
+    private final static Bootstrap bootstrap = new Bootstrap();
+    @NotNull
+    private final static NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 
-    private final String serverAddr;
-    private final int serverPort;
-    private final String localAddr;
-    private final int localPort;
-    private final int remotePort;
-    private final Map<String, String> arguments;
-
-
-    public TunnelClient(
-            @NotNull String serverAddr, int serverPort,
-            @NotNull String localAddr, int localPort,
-            int remotePort,
-            @NotNull Map<String, String> arguments
-    ) {
-        this.bootstrap = new Bootstrap();
-        this.workerGroup = new NioEventLoopGroup();
-        this.serverAddr = serverAddr;
-        this.serverPort = serverPort;
-        this.localAddr = localAddr;
-        this.localPort = localPort;
-        this.remotePort = remotePort;
-        this.arguments = arguments;
+    static {
         final TunnelClientChannelListener listener = new TunnelClientChannelListener() {
             @Override
             public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                //
+
                 Boolean openTunnelError = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_FLAG).get();
                 String errorMessage = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_MESSAGE).get();
+                TunnelClient tunnelClient = ctx.channel().attr(ATTR_TUNNEL_CLIENT).get();
+                logger.debug("channelInactive: {}, openTunnelError: {}, errorMessage: {}", ctx, openTunnelError, errorMessage);
                 if (openTunnelError != null && openTunnelError) {
                     logger.error(errorMessage);
                     return;
                 }
-                TimeUnit.SECONDS.sleep(3);
-                start();
+                if (tunnelClient != null) {
+                    TimeUnit.SECONDS.sleep(3);
+                    tunnelClient.start();
+                }
             }
         };
         bootstrap.group(workerGroup)
@@ -81,36 +66,52 @@ public class TunnelClient {
                 });
     }
 
-    @NotNull
-    public ChannelFuture start() {
+    private final String serverAddr;
+    private final int serverPort;
+    private final OpenTunnelRequest request;
+    @Nullable
+    private ChannelFuture connectChannelFuture;
+
+
+    public TunnelClient(
+            @NotNull String serverAddr, int serverPort,
+            OpenTunnelRequest request
+    ) {
+        this.serverAddr = serverAddr;
+        this.serverPort = serverPort;
+        this.request = request;
+
+    }
+
+    public void start() {
         ChannelFuture f = bootstrap.connect(serverAddr, serverPort);
+        connectChannelFuture = f;
         f.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
-                    OpenTunnelRequest openTunnelRequest = new OpenTunnelRequest(
-                            OpenTunnelRequest.TYPE_TCP, localAddr, localPort, remotePort, arguments
-                    );
                     // 连接成功，向服务器发送请求建立隧道消息
                     future.channel().writeAndFlush(
                             TunnelMessage
                                     .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
-                                    .setHead(openTunnelRequest.toBytes())
+                                    .setHead(request.toBytes())
                     );
-                    logger.info("connect tunnel server success, {}", future.channel());
+                    future.channel().attr(ATTR_TUNNEL_CLIENT).set(TunnelClient.this);
+                    logger.debug("connect tunnel server success, {}", future.channel());
                 } else {
-                    logger.warn("connect tunnel server failed {}", future.channel(), future.cause());
+                    logger.debug("connect tunnel server failed, {}", future.channel(), future.cause());
                     // 连接失败，3秒后发起重连
                     TimeUnit.SECONDS.sleep(3);
                     start();
                 }
             }
         });
-        return f;
     }
 
     public void stop() {
-        workerGroup.shutdownGracefully();
+        if (connectChannelFuture != null) {
+            connectChannelFuture.channel().close();
+        }
     }
 
 }

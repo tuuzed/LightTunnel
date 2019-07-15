@@ -31,12 +31,14 @@ public class LocalTunnelChannelManager {
         return InstanceHolder.instance;
     }
 
+    @NotNull
     private final Map<String, Channel> tunnelTokenSessionTokenLocalTunnelChannels = new ConcurrentHashMap<>();
-
+    @NotNull
+    private final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+    @NotNull
     private final Bootstrap bootstrap;
 
     private LocalTunnelChannelManager() {
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
@@ -58,7 +60,6 @@ public class LocalTunnelChannelManager {
             localTunnelChannel.close();
         }
     }
-
 
 
     public void getLocalTunnelChannel(
