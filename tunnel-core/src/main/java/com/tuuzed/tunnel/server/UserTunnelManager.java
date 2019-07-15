@@ -85,6 +85,9 @@ public class UserTunnelManager {
         return tunnelToken;
     }
 
+    public int getUserTunnelTotalCount() {
+        return bindPortUserTunnels.size();
+    }
 
     /**
      * 关闭隧道
@@ -165,7 +168,6 @@ public class UserTunnelManager {
             return bindPort;
         }
 
-
         @Override
         public void putUserTunnelChannel(long tunnelToken, long sessionToken, @NotNull Channel channel) {
             final String key = getKey(tunnelToken, sessionToken);
@@ -187,7 +189,7 @@ public class UserTunnelManager {
         }
 
         @NotNull
-        private static String getKey(long tunnelToken, long sessionToken) {
+        private String getKey(long tunnelToken, long sessionToken) {
             return String.format("%d@%d", tunnelToken, sessionToken);
         }
 

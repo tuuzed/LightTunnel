@@ -20,8 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_OPEN_TUNNEL_ERROR;
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_REQUEST;
+import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 @SuppressWarnings("Duplicates")
 public class TunnelClient {
@@ -56,8 +55,11 @@ public class TunnelClient {
         final TunnelClientChannelListener listener = new TunnelClientChannelListener() {
             @Override
             public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                Boolean openTunnelError = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR).get();
+                //
+                Boolean openTunnelError = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_FLAG).get();
+                String errorMessage = ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_MESSAGE).get();
                 if (openTunnelError != null && openTunnelError) {
+                    logger.error(errorMessage);
                     return;
                 }
                 TimeUnit.SECONDS.sleep(3);
@@ -93,7 +95,7 @@ public class TunnelClient {
                     future.channel().writeAndFlush(
                             TunnelMessage
                                     .newInstance(MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
-                                    .setHead(openTunnelRequest.toUri().getBytes())
+                                    .setHead(openTunnelRequest.toBytes())
                     );
                     logger.info("connect tunnel server success, {}", future.channel());
                 } else {

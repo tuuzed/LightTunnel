@@ -5,21 +5,23 @@ import com.tuuzed.tunnel.common.TunnelProtocolException;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+
 public final class OpenTunnelRequest {
 
     public static final String TYPE_TCP = "tcp";
 
-    public static OpenTunnelRequest create(@NotNull String uri) throws TunnelProtocolException {
+    public static OpenTunnelRequest fromBytes(@NotNull byte[] bytes) throws TunnelProtocolException {
         try {
-            URI uri0 = URI.create(uri);
-            int remotePort = Integer.parseInt(uri0.getFragment());
-            Map<String, String> queryMap = parseQuery(uri0);
-            return new OpenTunnelRequest(uri0.getScheme(), uri0.getHost(), uri0.getPort(), remotePort, queryMap);
+            URI uri = URI.create(new String(bytes, StandardCharsets.UTF_8));
+            int remotePort = Integer.parseInt(uri.getFragment());
+            Map<String, String> queryMap = parseQuery(uri);
+            return new OpenTunnelRequest(uri.getScheme(), uri.getHost(), uri.getPort(), remotePort, queryMap);
         } catch (Exception e) {
             throw new TunnelProtocolException("OpenTunnelRequest uri error", e);
         }
@@ -44,7 +46,17 @@ public final class OpenTunnelRequest {
     }
 
     @NotNull
-    public String toUri() {
+    public byte[] toBytes() {
+        return toUri().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public String toString() {
+        return toUri();
+    }
+
+    @NotNull
+    private String toUri() {
         StringBuilder query = new StringBuilder();
         if (arguments.isEmpty()) {
             return String.format("%s://%s:%d#%d", type, localAddr, localPort, remotePort);
@@ -72,11 +84,6 @@ public final class OpenTunnelRequest {
         return String.format("%s://%s:%d?%s#%d", type, localAddr, localPort, query.toString(), remotePort);
     }
 
-    @Override
-    public String toString() {
-        return toUri();
-    }
-
     @NotNull
     private static Map<String, String> parseQuery(URI uri) {
         if (uri == null) {
@@ -99,4 +106,5 @@ public final class OpenTunnelRequest {
         return map;
 
     }
+
 }

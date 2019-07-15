@@ -15,7 +15,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.BindException;
-import java.nio.charset.Charset;
 
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
@@ -83,7 +82,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
      */
     private void handleOpenTunnelRequestMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         try {
-            OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.create(new String(msg.getHead()));
+            OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.fromBytes(msg.getHead());
             logger.info("openTunnelRequest: {}", openTunnelRequest);
             if (openTunnelRequestInterceptor != null) {
                 openTunnelRequest = openTunnelRequestInterceptor.proceed(openTunnelRequest);
@@ -95,7 +94,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
                             .setHead(Unpooled.copyLong(tunnelToken).array())
-                            .setData(openTunnelRequest.toUri().getBytes(Charset.forName("utf-8")))
+                            .setData(openTunnelRequest.toBytes())
             );
         } catch (TunnelProtocolException e) {
             ctx.channel().writeAndFlush(
@@ -118,9 +117,9 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        final UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
-        if (tunnel != null) {
-            Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
+        final UserTunnel userTunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
+        if (userTunnel != null) {
+            Channel userTunnelChannel = userTunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
                 userTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
             }

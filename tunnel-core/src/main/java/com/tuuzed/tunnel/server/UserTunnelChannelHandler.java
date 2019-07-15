@@ -76,7 +76,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        logger.debug("channelRead0: {}", ctx);
+        logger.info("channelRead0: {}", ctx);
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);

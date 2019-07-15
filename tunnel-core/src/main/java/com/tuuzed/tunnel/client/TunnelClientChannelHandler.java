@@ -13,8 +13,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.Charset;
-
 import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
@@ -92,9 +90,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         head.release();
         try {
-            final OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.create(
-                    new String(msg.getData(), Charset.forName("utf-8"))
-            );
+            final OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.fromBytes(msg.getData());
             ctx.channel().attr(ATTR_TUNNEL_TOKEN).set(tunnelToken);
             ctx.channel().attr(ATTR_OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
             logger.info("Opened Tunnel: {}", openTunnelRequest);
@@ -109,7 +105,8 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
     private void handleOpenTunnelErrorMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final String errorMessage = new String(msg.getHead());
         logger.warn("Open Tunnel Error: {}", errorMessage);
-        ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR).set(true);
+        ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_FLAG).set(true);
+        ctx.channel().attr(ATTR_OPEN_TUNNEL_ERROR_MESSAGE).set(errorMessage);
     }
 
     /**

@@ -3,6 +3,8 @@ package com.tuuzed.tunnel.common.protocol;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 
+import java.nio.charset.Charset;
+
 
 public final class TunnelConstants {
     /**
@@ -21,7 +23,6 @@ public final class TunnelConstants {
      * 空的字节数组
      */
     public static final byte[] EMPTY_BYTES = new byte[0];
-
     /**
      * 心跳消息 PING
      */
@@ -32,7 +33,6 @@ public final class TunnelConstants {
     public static final byte MESSAGE_TYPE_HEARTBEAT_PONG = 0x02;
     /**
      * 建立隧道请求
-     *
      */
     public static final byte MESSAGE_TYPE_OPEN_TUNNEL_REQUEST = 0x03;
     /**
@@ -62,7 +62,8 @@ public final class TunnelConstants {
 
 
     public static final AttributeKey<Channel> ATTR_NEXT_CHANNEL = AttributeKey.newInstance("next_channel");
-    public static final AttributeKey<Boolean> ATTR_OPEN_TUNNEL_ERROR = AttributeKey.newInstance("open_tunnel_error");
+    public static final AttributeKey<Boolean> ATTR_OPEN_TUNNEL_ERROR_FLAG = AttributeKey.newInstance("open_tunnel_error_flag");
+    public static final AttributeKey<String> ATTR_OPEN_TUNNEL_ERROR_MESSAGE = AttributeKey.newInstance("open_tunnel_error_message");
     public static final AttributeKey<OpenTunnelRequest> ATTR_OPEN_TUNNEL_REQUEST = AttributeKey.newInstance("open_tunnel_request");
     public static final AttributeKey<Long> ATTR_TUNNEL_TOKEN = AttributeKey.newInstance("tunnel_token");
     public static final AttributeKey<Long> ATTR_SESSION_TOKEN = AttributeKey.newInstance("session_token");

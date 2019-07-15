@@ -92,7 +92,7 @@ public final class TunnelMessage {
                 type = String.valueOf(this.type);
                 break;
         }
-        return "TunnelMessage(Type: " + type + ")";
+        return String.format("TunnelMessage(%s)", type);
     }
 
 }
