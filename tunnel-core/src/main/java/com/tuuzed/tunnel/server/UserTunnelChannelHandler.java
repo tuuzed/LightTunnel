@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.TunnelAttributeKey;
 import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.*;
 
 /**
  * 隧道数据通道处理器
@@ -26,15 +26,15 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
+            final Long tunnelToken = serverChannel.attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
             if (tunnelToken != null) {
-                Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+                Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
                 if (sessionToken == null) {
                     sessionToken = UserTunnelManager.getInstance().generateSessionToken(tunnelToken);
-                    ctx.channel().attr(ATTR_SESSION_TOKEN).set(sessionToken);
+                    ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).set(sessionToken);
                 }
                 serverChannel.writeAndFlush(
-                        TunnelMessage.newInstance(MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL)
+                        TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_USER_TUNNEL_CONNECTED)
                                 .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
                 );
                 tunnel.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
@@ -49,8 +49,8 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
-            final Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+            final Long tunnelToken = serverChannel.attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
+            final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
             if (tunnelToken != null && sessionToken != null) {
                 tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
             }
@@ -59,24 +59,25 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     serverChannel.writeAndFlush(
-                            TunnelMessage.newInstance(MESSAGE_TYPE_USER_TUNNEL_DISCONNECT)
+                            TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_USER_TUNNEL_DISCONNECT)
                                     .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
                     );
                 }
             });
         }
         super.channelInactive(ctx);
+        ctx.close();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.debug("exceptionCaught: ", cause);
+        logger.trace("exceptionCaught: ", cause);
         ctx.close();
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        logger.debug("channelRead0: {}", ctx);
+        logger.trace("channelRead0: {}", ctx);
         int length = msg.readableBytes();
         byte[] data = new byte[length];
         msg.readBytes(data);
@@ -84,11 +85,11 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         UserTunnel tunnel = getUserTunnel(ctx);
         if (tunnel != null) {
             final Channel serverChannel = tunnel.serverChannel();
-            final Long tunnelToken = serverChannel.attr(ATTR_TUNNEL_TOKEN).get();
-            final Long sessionToken = ctx.channel().attr(ATTR_SESSION_TOKEN).get();
+            final Long tunnelToken = serverChannel.attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
+            final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
             if (tunnelToken != null && sessionToken != null) {
                 serverChannel.writeAndFlush(
-                        TunnelMessage.newInstance(MESSAGE_TYPE_TRANSFER)
+                        TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_TRANSFER)
                                 .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
                                 .setData(data)
                 );

@@ -1,16 +1,10 @@
 package com.tuuzed.tunnel.common.logging;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class PlatformLoggerTest {
 
     private Logger logger = LoggerFactory.getLogger(PlatformLoggerTest.class);
-
-    @Before
-    public void setUp() throws Exception {
-
-    }
 
 
     @Test

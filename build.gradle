@@ -1,4 +1,6 @@
 buildscript {
+    ext.netty_version = '4.1.37.Final'
+    ext.jdk_version = JavaVersion.VERSION_1_7
     repositories {
         maven { url 'https://maven.aliyun.com/repository/public' }
         jcenter()

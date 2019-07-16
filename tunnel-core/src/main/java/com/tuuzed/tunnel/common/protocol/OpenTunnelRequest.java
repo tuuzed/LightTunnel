@@ -1,7 +1,6 @@
 package com.tuuzed.tunnel.common.protocol;
 
 
-import com.tuuzed.tunnel.common.TunnelProtocolException;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;

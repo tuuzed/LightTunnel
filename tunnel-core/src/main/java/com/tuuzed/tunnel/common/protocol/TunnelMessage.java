@@ -1,8 +1,72 @@
 package com.tuuzed.tunnel.common.protocol;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class TunnelMessage {
+public class TunnelMessage {
+
+    @NotNull
+    private static final byte[] EMPTY_BYTES = new byte[0];
+    /**
+     * 心跳消息 PING
+     * 消息流向：Client <-> Server
+     */
+    public static final byte MESSAGE_TYPE_HEARTBEAT_PING = 0x01;
+    /**
+     * 心跳消息 PONG
+     * 消息流向：Client <-> Server
+     */
+    public static final byte MESSAGE_TYPE_HEARTBEAT_PONG = 0x02;
+    /**
+     * 建立隧道请求
+     * 消息head域内容为OpenTunnelRequest数据
+     * 消息流向：Client -> Server
+     */
+    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_REQUEST = 0x03;
+    /**
+     * 建立隧道响应
+     * 消息head域第1个字节为是否成功，剩下8个字节为Long类型的tunnelToken
+     * 如果建立隧道成功data域为OpenTunnelRequest数据，如果建立隧道失败data域为失败消息
+     * 消息流向：Client <- Server
+     */
+    public static final byte MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE = 0x04;
+    /**
+     * 透传消息
+     * 消息head域前8个字节为Long类型的tunnelToken，后8个字节为Long类型的sessionToken
+     * 消息流向：Client <-> Server
+     */
+    public static final byte MESSAGE_TYPE_TRANSFER = 0x05;
+    /**
+     * 用户隧道连接成功
+     * 消息head域前8个字节为Long类型的tunnelToken，后8个字节为Long类型的sessionToken
+     * 消息流向：Client <- Server
+     */
+    public static final byte MESSAGE_TYPE_USER_TUNNEL_CONNECTED = 0x06;
+    /**
+     * 用户隧道断开连接
+     * 消息head域前8个字节为Long类型的tunnelToken，后8个字节为Long类型的sessionToken
+     * 消息流向：Client <- Server
+     */
+    public static final byte MESSAGE_TYPE_USER_TUNNEL_DISCONNECT = 0x07;
+    /**
+     * 本地连接成功
+     * 消息head域前8个字节为Long类型的tunnelToken，后8个字节为Long类型的sessionToken
+     * 消息流向：Client -> Server
+     */
+    public static final byte MESSAGE_TYPE_LOCAL_CONNECT_CONNECTED = 0x08;
+    /**
+     * 本地连接断开
+     * 消息head域前8个字节为Long类型的tunnelToken，后8个字节为Long类型的sessionToken
+     * 消息流向：Client -> Server
+     */
+    public static final byte MESSAGE_TYPE_LOCAL_CONNECT_DISCONNECT = 0x09;
+
+
+    @NotNull
+    public static TunnelMessage newInstance(byte type) {
+        return new TunnelMessage(type);
+    }
+
     /**
      * 消息类型
      */
@@ -10,16 +74,13 @@ public final class TunnelMessage {
     /**
      * 消息头
      */
+    @Nullable
     private byte[] head;
     /**
      * 消息数据
      */
+    @Nullable
     private byte[] data;
-
-    @NotNull
-    public static TunnelMessage newInstance(byte type) {
-        return new TunnelMessage(type);
-    }
 
     private TunnelMessage(byte type) {
         this.type = type;
@@ -30,9 +91,15 @@ public final class TunnelMessage {
     }
 
     @NotNull
+    public TunnelMessage setType(byte type) {
+        this.type = type;
+        return this;
+    }
+
+    @NotNull
     public byte[] getHead() {
         if (head == null) {
-            return TunnelConstants.EMPTY_BYTES;
+            return EMPTY_BYTES;
         }
         return head;
     }
@@ -46,7 +113,7 @@ public final class TunnelMessage {
     @NotNull
     public byte[] getData() {
         if (data == null) {
-            return TunnelConstants.EMPTY_BYTES;
+            return EMPTY_BYTES;
         }
         return data;
     }
@@ -59,40 +126,37 @@ public final class TunnelMessage {
 
     @Override
     public String toString() {
-        String type;
-        switch (this.type) {
-            case TunnelConstants.MESSAGE_TYPE_HEARTBEAT_PING:
-                type = "HEARTBEAT_PING";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_HEARTBEAT_PONG:
-                type = "HEARTBEAT_PONG";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_REQUEST:
-                type = "OPEN_TUNNEL_REQUEST";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
-                type = "OPEN_TUNNEL_RESPONSE";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_OPEN_TUNNEL_ERROR:
-                type = "OPEN_TUNNEL_ERROR";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_CONNECT_LOCAL_TUNNEL:
-                type = "CONNECT_LOCAL_TUNNEL";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_TRANSFER:
-                type = "TRANSFER";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_LOCAL_TUNNEL_DISCONNECT:
-                type = "LOCAL_TUNNEL_DISCONNECT";
-                break;
-            case TunnelConstants.MESSAGE_TYPE_USER_TUNNEL_DISCONNECT:
-                type = "USER_TUNNEL_DISCONNECT";
-                break;
-            default:
-                type = String.valueOf(this.type);
-                break;
-        }
-        return String.format("TunnelMessage(%s)", type);
+        return getTypeName();
+//        "TunnelMessage{" +
+//                "type=" + getTypeName() +
+//                ", head=" + Arrays.toString(getHead()) +
+//                ", data=" + Arrays.toString(getData()) +
+//                '}';
     }
 
+    @NotNull
+    private String getTypeName() {
+        switch (type) {
+            case MESSAGE_TYPE_HEARTBEAT_PING:
+                return "HEARTBEAT_PING";
+            case MESSAGE_TYPE_HEARTBEAT_PONG:
+                return "HEARTBEAT_PONG";
+            case MESSAGE_TYPE_OPEN_TUNNEL_REQUEST:
+                return "OPEN_TUNNEL_REQUEST";
+            case MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE:
+                return "OPEN_TUNNEL_RESPONSE";
+            case MESSAGE_TYPE_TRANSFER:
+                return "TRANSFER";
+            case MESSAGE_TYPE_USER_TUNNEL_CONNECTED:
+                return "USER_TUNNEL_CONNECTED";
+            case MESSAGE_TYPE_USER_TUNNEL_DISCONNECT:
+                return "USER_TUNNEL_DISCONNECT";
+            case MESSAGE_TYPE_LOCAL_CONNECT_CONNECTED:
+                return "LOCAL_CONNECT_CONNECTED";
+            case MESSAGE_TYPE_LOCAL_CONNECT_DISCONNECT:
+                return "LOCAL_CONNECT_DISCONNECT";
+            default:
+                return String.valueOf(type);
+        }
+    }
 }

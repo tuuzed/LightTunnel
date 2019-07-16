@@ -4,8 +4,8 @@ apply plugin: 'gitvc-gradle-plugin'
 group rootProject.group
 version rootProject.version
 
-targetCompatibility = JavaVersion.VERSION_1_7
-sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = jdk_version
+sourceCompatibility = jdk_version
 
 dependencies {
     compile project(":tunnel-core")

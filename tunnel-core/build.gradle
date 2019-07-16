@@ -4,11 +4,10 @@ apply plugin: "maven"
 group rootProject.group
 version rootProject.version
 
-targetCompatibility = JavaVersion.VERSION_1_7
-sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = jdk_version
+sourceCompatibility = jdk_version
 
 dependencies {
-    def netty_version = '4.1.37.Final'
     compile "org.jetbrains:annotations:13.0"
     compile "io.netty:netty-buffer:$netty_version"
     compile "io.netty:netty-codec:$netty_version"

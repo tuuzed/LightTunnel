@@ -4,3 +4,5 @@ bind_addr: 0.0.0.0
 bind_port: 5000
 # 令牌
 token: tk123456
+# 允许使用端口（端口白名单）
+allow_ports: 10000-50000

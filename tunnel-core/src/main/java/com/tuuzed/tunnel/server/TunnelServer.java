@@ -1,10 +1,9 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.Interceptor;
-import com.tuuzed.tunnel.common.handler.TunnelHeartbeatHandler;
+import com.tuuzed.tunnel.common.protocol.TunnelHeartbeatHandler;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
+import com.tuuzed.tunnel.common.protocol.OpenTunnelRequestInterceptor;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageDecoder;
 import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
 import io.netty.bootstrap.ServerBootstrap;
@@ -36,12 +35,12 @@ public class TunnelServer {
         this(null, bindPort, null);
     }
 
-    public TunnelServer(int bindPort, @Nullable Interceptor<OpenTunnelRequest> interceptor) {
+    public TunnelServer(int bindPort, @Nullable OpenTunnelRequestInterceptor interceptor) {
         this(null, bindPort, interceptor);
     }
 
     public TunnelServer(@Nullable String bindAddr, int bindPort,
-                        @Nullable final Interceptor<OpenTunnelRequest> interceptor) {
+                        @Nullable final OpenTunnelRequestInterceptor interceptor) {
         this.bossGroup = new NioEventLoopGroup();
         this.workerGroup = new NioEventLoopGroup();
         this.bindAddr = bindAddr;

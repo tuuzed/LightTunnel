@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.protocol.TunnelAttributeKey;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.tuuzed.tunnel.common.protocol.TunnelConstants.ATTR_OPEN_TUNNEL_REQUEST;
 
 public class UserTunnelManager {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelManager.class);
@@ -122,7 +122,7 @@ public class UserTunnelManager {
         @NotNull
         private final Channel serverChannel;
         @NotNull
-        private final Map<String, Channel> tunnelTokenSessionTokenUserTunnelChannels = new ConcurrentHashMap<>();
+        private final Map<String, Channel> cachedUserTunnelChannels = new ConcurrentHashMap<>();
         @Nullable
         private ChannelFuture bindChannelFuture;
 
@@ -145,22 +145,24 @@ public class UserTunnelManager {
 
         @Override
         public void putUserTunnelChannel(long tunnelToken, long sessionToken, @NotNull Channel channel) {
-            final String key = getKey(tunnelToken, sessionToken);
-            tunnelTokenSessionTokenUserTunnelChannels.put(key, channel);
+            final String key = getCachedUserTunnelChannelKey(tunnelToken, sessionToken);
+            cachedUserTunnelChannels.put(key, channel);
         }
 
         @Nullable
         @Override
         public Channel getUserTunnelChannel(long tunnelToken, long sessionToken) {
-            final String key = getKey(tunnelToken, sessionToken);
-            return tunnelTokenSessionTokenUserTunnelChannels.get(key);
+            final String key = getCachedUserTunnelChannelKey(tunnelToken, sessionToken);
+            return cachedUserTunnelChannels.get(key);
         }
 
         @Override
         public void removeUserTunnelChannel(long tunnelToken, long sessionToken) {
-            final String key = getKey(tunnelToken, sessionToken);
-            Channel channel = tunnelTokenSessionTokenUserTunnelChannels.remove(key);
-            channel.close();
+            final String key = getCachedUserTunnelChannelKey(tunnelToken, sessionToken);
+            Channel channel = cachedUserTunnelChannels.remove(key);
+            if (channel != null) {
+                channel.close();
+            }
         }
 
         @Override
@@ -175,7 +177,7 @@ public class UserTunnelManager {
                 } else {
                     bindChannelFuture = bootstrap.bind(bindAddr, bindPort);
                 }
-                logger.info("Open Tunnel: {}", serverChannel.attr(ATTR_OPEN_TUNNEL_REQUEST).get());
+                logger.info("Open Tunnel: {}", serverChannel.attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).get());
             } catch (Exception ex) {
                 // BindException表示该端口已经绑定过
                 if (!(ex.getCause() instanceof BindException)) {
@@ -188,11 +190,11 @@ public class UserTunnelManager {
             if (bindChannelFuture != null) {
                 bindChannelFuture.channel().close();
             }
-            tunnelTokenSessionTokenUserTunnelChannels.clear();
+            cachedUserTunnelChannels.clear();
         }
 
         @NotNull
-        private String getKey(long tunnelToken, long sessionToken) {
+        private String getCachedUserTunnelChannelKey(long tunnelToken, long sessionToken) {
             return String.format("%d@%d", tunnelToken, sessionToken);
         }
 

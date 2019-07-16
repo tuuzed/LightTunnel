@@ -13,30 +13,40 @@ public class TunnelClientTest {
         Map<String, String> arguments = new HashMap<>();
         arguments.put("token", "tk123456");
         // error
-        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                "192.168.1.1", 80,
-                20000,
-                arguments
-        )).start();
+        TunnelClientManager.getInstance()
+                .connect("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                        "192.168.1.1", 80,
+                        65000,
+                        arguments
+                ));
+        // replace
+        final TunnelClient replaceTunnelClient = TunnelClientManager.getInstance()
+                .connect("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                        "192.168.1.1", 80,
+                        20000,
+                        arguments
+                ));
         // http
-        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                "192.168.1.1", 80,
-                10080,
-                arguments
-        )).start();
+        TunnelClientManager.getInstance()
+                .connect("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                        "192.168.1.1", 80,
+                        10080,
+                        arguments
+                ));
         // vnc
-        new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                "192.168.1.33", 5900,
-                15900,
-                arguments
-        )).start();
+        TunnelClientManager.getInstance()
+                .connect("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                        "192.168.1.33", 5900,
+                        15900,
+                        arguments
+                ));
         // ssh
-        final TunnelClient sshTunnelClient = new TunnelClient("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                "192.168.1.10", 22,
-                10022,
-                arguments
-        ));
-        sshTunnelClient.start();
+        TunnelClientManager.getInstance()
+                .connect("127.0.0.1", 4000, new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                        "192.168.1.10", 22,
+                        10022,
+                        arguments
+                ));
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -45,7 +55,7 @@ public class TunnelClientTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                sshTunnelClient.stop();
+                replaceTunnelClient.shutdown();
             }
         }).start();
         System.in.read();

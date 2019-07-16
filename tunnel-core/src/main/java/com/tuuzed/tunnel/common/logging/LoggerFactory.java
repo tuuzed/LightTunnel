@@ -1,27 +1,17 @@
 package com.tuuzed.tunnel.common.logging;
 
+import org.jetbrains.annotations.NotNull;
+
 public final class LoggerFactory {
-
-    public interface Creator {
-        Logger getLogger(String name);
-
-        Logger getLogger(Class clazz);
+    @NotNull
+    public static Logger getLogger(@NotNull Class clazz) {
+        return getLogger(clazz.getCanonicalName());
     }
 
-    private static Creator creator = new PlatformLogger.Creator();
-
-    public static void setCreator(Creator creator) {
-        if (creator == null) {
-            return;
-        }
-        LoggerFactory.creator = creator;
+    @NotNull
+    public static Logger getLogger(@NotNull String name) {
+        return new DefaultLogger(name);
     }
 
-    public static Logger getLogger(String name) {
-        return creator.getLogger(name);
-    }
 
-    public static Logger getLogger(Class clazz) {
-        return creator.getLogger(clazz);
-    }
 }

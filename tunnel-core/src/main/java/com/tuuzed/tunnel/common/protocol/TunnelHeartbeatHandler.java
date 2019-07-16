@@ -1,9 +1,7 @@
-package com.tuuzed.tunnel.common.handler;
+package com.tuuzed.tunnel.common.protocol;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.TunnelConstants;
-import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -37,7 +35,7 @@ public class TunnelHeartbeatHandler extends IdleStateHandler {
     protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
         if (IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT == evt) {
             logger.debug("channel write timeout {}", ctx);
-            ctx.channel().writeAndFlush(TunnelMessage.newInstance(TunnelConstants.MESSAGE_TYPE_HEARTBEAT_PING));
+            ctx.channel().writeAndFlush(TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_HEARTBEAT_PING));
         } else if (IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT == evt) {
             logger.warn("channel read timeout {}", ctx);
             ctx.channel().close();

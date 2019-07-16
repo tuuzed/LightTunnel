@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.common;
+package com.tuuzed.tunnel.common.protocol;
 
 import org.jetbrains.annotations.NotNull;
 

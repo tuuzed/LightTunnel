@@ -1,6 +1,5 @@
 package com.tuuzed.tunnel.common.protocol;
 
-import com.tuuzed.tunnel.common.TunnelProtocolException;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
