@@ -4,13 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 
-public class DefaultLogger implements Logger {
+import static com.tuuzed.tunnel.common.logging.LogConfigurator.isPrintLog;
 
-    private static final int TRACE = 100;
-    private static final int DEBUG = 200;
-    private static final int INFO = 300;
-    private static final int WARN = 400;
-    private static final int ERROR = 500;
+public class DefaultLogger implements Logger {
 
     @NotNull
     private String name;
@@ -126,12 +122,6 @@ public class DefaultLogger implements Logger {
         }
     }
 
-    private boolean isPrintLog(int level) {
-        if (level >= DEBUG) {
-            return true;
-        }
-        return false;
-    }
 
     @NotNull
     private String getLevenName(int level) {

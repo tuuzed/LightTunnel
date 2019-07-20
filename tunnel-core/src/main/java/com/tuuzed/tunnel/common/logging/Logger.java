@@ -4,6 +4,15 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Logger {
 
+    int ALL = Integer.MIN_VALUE;
+    int TRACE = 100;
+    int DEBUG = 200;
+    int INFO = 300;
+    int WARN = 400;
+    int ERROR = 500;
+    int OFF = Integer.MAX_VALUE;
+
+
     void trace(@NotNull String format, Object... args);
 
     void trace(@NotNull String msg, Throwable cause);
