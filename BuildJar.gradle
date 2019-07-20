@@ -1,0 +1,37 @@
+buildscript {
+    repositories {
+        flatDir dirs: "${System.getenv("PROGUARD_HOME")}/lib"
+    }
+    dependencies {
+        classpath ':proguard:'
+    }
+}
+
+jar {
+    exclude 'OSGI-OPT/'
+    exclude 'META-INF/maven/'
+    exclude 'META-INF/native-image/'
+    exclude 'LICENSE'
+    exclude 'META-INF/INDEX.LIST'
+    exclude 'META-INF/io.netty.versions.properties'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Main-Class': 'Bootstrap'
+        attributes 'Version-Code': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'Version-Name': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'Last-Commit-SHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'Last-Commit-Date': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'Build-Date': String.valueOf(new Date())
+    }
+}
+
+task proguardJar(
+        group: "build",
+        type: proguard.gradle.ProGuardTask,
+        dependsOn: jar
+) {
+    configuration 'proguard-rules.txt'
+
+    injars "build/libs/tunnel-cli-${project.version}.jar"
+    outjars "build/libs/tunnel-cli.jar"
+}
