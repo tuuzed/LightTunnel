@@ -1,15 +1,15 @@
-package com.tuuzed.tunnel.cli;
+package com.tuuzed.tunnel.cli.common;
 
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.spi.OptionHandler;
 
-abstract class AbstractApp<Options> {
+public abstract class AbstractApp<Options> {
     @NotNull
-    abstract Options newRunOptions();
+    public abstract Options newRunOptions();
 
-    abstract void runApp(@NotNull Options runOptions);
+    public abstract void runApp(@NotNull Options runOptions);
 
     public final void doMain(String[] args) {
         Options runOptions = newRunOptions();

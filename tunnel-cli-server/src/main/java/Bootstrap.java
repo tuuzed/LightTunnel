@@ -1,6 +1,7 @@
-import com.tuuzed.tunnel.cli.TunnelServerApp;
+import com.tuuzed.tunnel.cli.server.TunnelServerApp;
 
-public class RunServer {
+public class Bootstrap {
+
     public static void main(String[] args) {
         new TunnelServerApp().doMain(args);
     }

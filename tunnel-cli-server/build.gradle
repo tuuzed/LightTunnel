@@ -7,11 +7,8 @@ targetCompatibility = jdk_version
 sourceCompatibility = jdk_version
 
 dependencies {
-    compile project(":tunnel-common")
-    compile project(":tunnel-client")
+    compile project(":tunnel-cli-common")
     compile project(":tunnel-server")
-    compile "args4j:args4j:2.33"
-    compile 'com.esotericsoftware.yamlbeans:yamlbeans:1.13'
     // 单元测试
     testImplementation "junit:junit:4.12"
 }

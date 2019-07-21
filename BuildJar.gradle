@@ -30,8 +30,7 @@ task proguardJar(
         type: proguard.gradle.ProGuardTask,
         dependsOn: jar
 ) {
-    configuration 'proguard-rules.txt'
-
-    injars "build/libs/tunnel-cli-${project.version}.jar"
-    outjars "build/libs/tunnel-cli.jar"
+    configuration project.file("proguard-rules.txt")
+    injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"
+    outjars rootProject.file("dists/${project.name}-${project.version}.jar")
 }

@@ -2,6 +2,7 @@
 /out/
 /.repo/
 /distribution/
+/dists/
 
 HELP.md
 .gradle

@@ -4,4 +4,6 @@ include 'tunnel-common'
 include 'tunnel-client'
 include 'tunnel-server'
 
-include 'tunnel-cli'
+include 'tunnel-cli-common'
+include 'tunnel-cli-client'
+include 'tunnel-cli-server'

@@ -1,6 +1,7 @@
-package com.tuuzed.tunnel.cli;
+package com.tuuzed.tunnel.cli.server;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
+import com.tuuzed.tunnel.cli.common.AbstractApp;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
@@ -19,12 +20,12 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
 
     @NotNull
     @Override
-    RunOptions newRunOptions() {
+    public RunOptions newRunOptions() {
         return new RunOptions();
     }
 
     @Override
-    void runApp(@NotNull RunOptions runOptions) {
+    public void runApp(@NotNull RunOptions runOptions) {
         try {
             if (runOptions.configFile.length() != 0) {
                 runAppAtCfg(runOptions);
