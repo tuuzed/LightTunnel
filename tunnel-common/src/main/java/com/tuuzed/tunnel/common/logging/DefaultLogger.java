@@ -11,10 +11,13 @@ public class DefaultLogger implements Logger {
     @NotNull
     private String name;
 
+    private String shortName;
+
     private final Date date = new Date();
 
     public DefaultLogger(@NotNull String name) {
         this.name = name;
+        this.shortName = getShortClassName(name);
     }
 
     @Override
@@ -74,20 +77,20 @@ public class DefaultLogger implements Logger {
         date.setTime(System.currentTimeMillis());
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         if (stackTrace.length >= 3) {
-            System.err.printf("%1$tF %1$tT %5$s %2$s#%3$s [%4$s]: %6$s%n",
+            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s#%5$s=> %6$s%n",
                     date,
-                    name,
-                    stackTrace[3].getMethodName(),
                     getLevenName(level),
                     Thread.currentThread().getName(),
+                    getShortClassName(stackTrace[3].getClassName()),
+                    stackTrace[3].getMethodName(),
                     LogFormatter.format(format, args)
             );
         } else {
-            System.err.printf("%1$tF %1$tT %4$s %2$s [%3$s]: %5$s%n",
+            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s=> %5$s%n",
                     date,
-                    name,
                     getLevenName(level),
                     Thread.currentThread().getName(),
+                    shortName,
                     LogFormatter.format(format, args)
             );
         }
@@ -100,20 +103,20 @@ public class DefaultLogger implements Logger {
         date.setTime(System.currentTimeMillis());
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         if (stackTrace.length >= 3) {
-            System.err.printf("%1$tF %1$tT %5$s %2$s#%3$s [%4$s]: %6$s%n",
+            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s#%5$s=> %6$s%n",
                     date,
-                    name,
-                    stackTrace[3].getMethodName(),
                     getLevenName(level),
                     Thread.currentThread().getName(),
+                    getShortClassName(stackTrace[3].getClassName()),
+                    stackTrace[3].getMethodName(),
                     msg
             );
         } else {
-            System.err.printf("%1$tF %1$tT %4$s %2$s [%3$s]: %5$s%n",
+            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s=> %5$s%n",
                     date,
-                    name,
                     getLevenName(level),
                     Thread.currentThread().getName(),
+                    shortName,
                     msg
             );
         }
@@ -122,6 +125,20 @@ public class DefaultLogger implements Logger {
         }
     }
 
+    private String getShortClassName(String className) {
+        if (className.length() > 20) {
+            String[] array = className.split("\\.");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < array.length - 1; i++) {
+                sb.append(array[i], 0, 1);
+                sb.append(".");
+            }
+            sb.append(array[array.length - 1]);
+            return sb.toString();
+        } else {
+            return className;
+        }
+    }
 
     @NotNull
     private String getLevenName(int level) {
@@ -131,13 +148,13 @@ public class DefaultLogger implements Logger {
             case DEBUG:
                 return "DEBUG";
             case INFO:
-                return "INFO";
+                return "INFO ";
             case WARN:
-                return "WARN";
+                return "WARN ";
             case ERROR:
                 return "ERROR";
             default:
-                return "";
+                return "     ";
         }
     }
 }

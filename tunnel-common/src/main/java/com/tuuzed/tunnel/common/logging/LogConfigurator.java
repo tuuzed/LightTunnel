@@ -18,7 +18,7 @@ public final class LogConfigurator {
             return getLogger(clazz.getCanonicalName());
         }
     };
-    private static int level = Logger.DEBUG;
+    private static int level = Logger.ALL;
 
     @NotNull
     static LoggerCreator getCreator() {

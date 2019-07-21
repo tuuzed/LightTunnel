@@ -34,10 +34,10 @@ public class TunnelHeartbeatHandler extends IdleStateHandler {
     @Override
     protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
         if (IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT == evt) {
-            logger.debug("channel write timeout {}", ctx);
+            logger.trace("channel write timeout {}", ctx);
             ctx.channel().writeAndFlush(TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_HEARTBEAT_PING));
         } else if (IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT == evt) {
-            logger.warn("channel read timeout {}", ctx);
+            logger.trace("channel read timeout {}", ctx);
             ctx.channel().close();
         }
         super.channelIdle(ctx, evt);
