@@ -44,12 +44,36 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         Map cfgOptions = (Map) reader.read();
         logger.info("cfgOptions: {}", cfgOptions);
         final String bindAddr = (String) cfgOptions.get("bind_addr");
-        final int bindPort = Integer.parseInt(cfgOptions.get("bind_port").toString());
+
+        int bindPort;
+        try {
+            bindPort = Integer.parseInt(cfgOptions.get("bind_port").toString());
+        } catch (Exception e) {
+            bindPort = 5000;
+        }
+
         final String token = (String) cfgOptions.get("token");
         final String allowPorts = (String) cfgOptions.get("allow_ports");
-        TunnelServer.Builder builder = new TunnelServer.Builder()
+
+        int bossThreads;
+        try {
+            bossThreads = Integer.parseInt(cfgOptions.get("boss_threads").toString());
+        } catch (Exception e) {
+            bossThreads = -1;
+        }
+
+        int workerThreads;
+        try {
+            workerThreads = Integer.parseInt(cfgOptions.get("worker_threads").toString());
+        } catch (Exception e) {
+            workerThreads = -1;
+        }
+
+        final TunnelServer.Builder builder = new TunnelServer.Builder()
                 .setBindAddr(bindAddr.length() == 0 ? null : bindAddr)
                 .setBindPort(bindPort)
+                .setBossThreads(bossThreads)
+                .setWorkerThreads(workerThreads)
                 .setInterceptor(new OpenTunnelRequestInterceptor(token, allowPorts));
         final Map sslOptions = (Map) cfgOptions.get("ssl");
         if (sslOptions != null) {
@@ -58,23 +82,26 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
                     (String) sslOptions.get("storepass"),
                     (String) sslOptions.get("keypass")
             );
-            builder.enableSsl(context, Integer.parseInt(sslOptions.get("bind_port").toString()));
+            int sslBindPort;
+            try {
+                sslBindPort = Integer.parseInt(sslOptions.get("bind_port").toString());
+            } catch (Exception e) {
+                sslBindPort = 5001;
+            }
+            builder.enableSsl(context, sslBindPort);
         }
         builder.build().start();
 
     }
 
     private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
-        final String bindAddr = runOptions.bindAddr;
-        final int bindPort = runOptions.bindPort;
-        final String token = runOptions.token;
-        final String allowPorts = runOptions.allowPorts;
-
 
         TunnelServer.Builder builder = new TunnelServer.Builder()
-                .setBindAddr(bindAddr)
-                .setBindPort(bindPort)
-                .setInterceptor(new OpenTunnelRequestInterceptor(token, allowPorts));
+                .setBindAddr(runOptions.bindAddr)
+                .setBindPort(runOptions.bindPort)
+                .setBossThreads(runOptions.bossThreads)
+                .setWorkerThreads(runOptions.workerThreads)
+                .setInterceptor(new OpenTunnelRequestInterceptor(runOptions.token, runOptions.allowPorts));
         if (runOptions.ssl) {
             SslContext context = SslContexts.forServer(
                     runOptions.sslJks,
@@ -126,6 +153,12 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
 
         @Option(name = "-a", aliases = {"--allowPorts"}, help = true, metaVar = "<string>", usage = "端口白名单，例如：10000-21000,30000,30001,30003")
         public String allowPorts = "1024-65534";
+
+        @Option(name = "-bossThreads", aliases = {"--bossThreads"}, help = true, metaVar = "<int>", usage = "Boss线程数量")
+        public int bossThreads = -1;
+
+        @Option(name = "-workerThreads", aliases = {"--workerThreads"}, help = true, metaVar = "<int>", usage = "Worker线程数量")
+        public int workerThreads = -1;
 
         // SSL
         @Option(name = "-ssl", aliases = {"--ssl"}, help = true, metaVar = "<boolean>", usage = "是否启用SSL")

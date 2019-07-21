@@ -41,20 +41,38 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
 
     private void runAppAtCfg(@NotNull RunOptions runOptions) throws Exception {
         YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
-        Map options = (Map) reader.read();
-        logger.info("options: {}", options);
-        final String serverAddr = options.get("server_addr").toString();
-        final int serverPort = Integer.parseInt(options.get("server_port").toString());
-        final String token = options.get("token").toString();
-        Map<String, String> arguments = new HashMap<>();
+        Map cfgOptions = (Map) reader.read();
+        logger.info("cfgOptions: {}", cfgOptions);
+
+        final String serverAddr = cfgOptions.get("server_addr").toString();
+
+        int serverPort;
+        try {
+            serverPort = Integer.parseInt(cfgOptions.get("server_port").toString());
+        } catch (Exception e) {
+            serverPort = 5000;
+        }
+
+        final String token = cfgOptions.get("token").toString();
+
+        final Map<String, String> arguments = new HashMap<>();
         arguments.put("token", token);
-        @SuppressWarnings("unchecked")
-        List<Map> tunnels = (List) options.get("tunnels");
-        TunnelClient tunnelClient = new TunnelClient.Builder().build();
+        @SuppressWarnings("unchecked") final List<Map> tunnels = (List) cfgOptions.get("tunnels");
+
+        int workerThreads;
+        try {
+            workerThreads = Integer.parseInt(cfgOptions.get("worker_threads").toString());
+        } catch (Exception e) {
+            workerThreads = -1;
+        }
+
+        final TunnelClient tunnelClient = new TunnelClient.Builder()
+                .setWorkerThreads(workerThreads)
+                .build();
 
         SslContext context = null;
         int sslServerPort = serverPort;
-        final Map sslOptions = (Map) options.get("ssl");
+        final Map sslOptions = (Map) cfgOptions.get("ssl");
         if (sslOptions != null) {
             context = SslContexts.forClient(
                     (String) sslOptions.get("jks"),
@@ -85,7 +103,9 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
     private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
         Map<String, String> arguments = new HashMap<>();
         arguments.put("token", runOptions.token);
-        TunnelClient tunnelClient = new TunnelClient.Builder().build();
+        TunnelClient tunnelClient = new TunnelClient.Builder()
+                .setWorkerThreads(runOptions.workerThreads)
+                .build();
         OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 runOptions.localAddr,
                 runOptions.localPort,
@@ -121,6 +141,9 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
 
         @Option(name = "-t", aliases = {"--token"}, help = true, metaVar = "<int>", usage = "令牌")
         public String token = "";
+
+        @Option(name = "-workerThreads", aliases = {"--workerThreads"}, help = true, metaVar = "<int>", usage = "Worker线程数量")
+        public int workerThreads = -1;
 
         // SSL
         @Option(name = "-ssl", aliases = {"--ssl"}, help = true, metaVar = "<boolean>", usage = "是否启用SSL")

@@ -6,6 +6,9 @@ bind_port: 5000
 token: tk123456
 # 允许使用端口（端口白名单）
 allow_ports: 10000-50000
+# 线程数量
+boss_threads: -1
+worker_threads: -1
 # ssl
 ssl:
   bind_port: 5001

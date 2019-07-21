@@ -10,6 +10,9 @@ ssl:
   jks: tunnel-client.jks
   storepass: ctunnelpass
 
+# 线程数量
+worker_threads: -1
+
 # 隧道列表
 tunnels:
   - local_addr: 127.0.0.1
