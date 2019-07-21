@@ -3,6 +3,7 @@ package com.tuuzed.tunnel.server;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelAttributeKey;
+import com.tuuzed.tunnel.server.stat.StatHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -56,7 +57,10 @@ public class UserTunnelManager {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new UserTunnelChannelHandler());
+                        ch.pipeline()
+                                .addFirst(new StatHandler())
+                                .addLast(new UserTunnelChannelHandler())
+                        ;
                     }
                 });
     }
