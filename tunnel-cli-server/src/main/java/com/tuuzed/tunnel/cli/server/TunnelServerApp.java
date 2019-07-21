@@ -6,8 +6,10 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import com.tuuzed.tunnel.common.protocol.TunnelProtocolException;
+import com.tuuzed.tunnel.common.ssl.SslContexts;
 import com.tuuzed.tunnel.common.util.PortUtils;
 import com.tuuzed.tunnel.server.TunnelServer;
+import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.args4j.Option;
@@ -37,7 +39,7 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         }
     }
 
-    private void runAppAtCfg(@NotNull RunOptions runOptions) throws Exception {
+    private void runAppAtCfg(@NotNull final RunOptions runOptions) throws Exception {
         YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
         Map cfgOptions = (Map) reader.read();
         logger.info("cfgOptions: {}", cfgOptions);
@@ -45,22 +47,43 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         final int bindPort = Integer.parseInt(cfgOptions.get("bind_port").toString());
         final String token = (String) cfgOptions.get("token");
         final String allowPorts = (String) cfgOptions.get("allow_ports");
-        new TunnelServer(
-                bindAddr,
-                bindPort,
-                new OpenTunnelRequestInterceptor(token, allowPorts)
-        ).start();
+        TunnelServer.Builder builder = new TunnelServer.Builder()
+                .setBindAddr(bindAddr.length() == 0 ? null : bindAddr)
+                .setBindPort(bindPort)
+                .setInterceptor(new OpenTunnelRequestInterceptor(token, allowPorts));
+        final Map sslOptions = (Map) cfgOptions.get("ssl");
+        if (sslOptions != null) {
+            SslContext context = SslContexts.forServer(
+                    (String) sslOptions.get("jks"),
+                    (String) sslOptions.get("storepass"),
+                    (String) sslOptions.get("keypass")
+            );
+            builder.enableSsl(context, Integer.parseInt(sslOptions.get("bind_port").toString()));
+        }
+        builder.build().start();
+
     }
 
     private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
-        new TunnelServer(
-                runOptions.bindAddr.length() == 0 ? null : runOptions.bindAddr,
-                runOptions.bindPort,
-                new OpenTunnelRequestInterceptor(
-                        runOptions.token,
-                        runOptions.allowPorts.length() == 0 ? null : runOptions.allowPorts
-                )
-        ).start();
+        final String bindAddr = runOptions.bindAddr;
+        final int bindPort = runOptions.bindPort;
+        final String token = runOptions.token;
+        final String allowPorts = runOptions.allowPorts;
+
+
+        TunnelServer.Builder builder = new TunnelServer.Builder()
+                .setBindAddr(bindAddr)
+                .setBindPort(bindPort)
+                .setInterceptor(new OpenTunnelRequestInterceptor(token, allowPorts));
+        if (runOptions.ssl) {
+            SslContext context = SslContexts.forServer(
+                    runOptions.sslJks,
+                    runOptions.sslStorepass,
+                    runOptions.sslKeypass
+            );
+            builder.enableSsl(context, runOptions.sslBindPort);
+        }
+        builder.build().start();
     }
 
     private static class OpenTunnelRequestInterceptor implements com.tuuzed.tunnel.common.protocol.OpenTunnelRequestInterceptor {
@@ -102,6 +125,23 @@ public class TunnelServerApp extends AbstractApp<TunnelServerApp.RunOptions> {
         public String token = "";
 
         @Option(name = "-a", aliases = {"--allowPorts"}, help = true, metaVar = "<string>", usage = "端口白名单，例如：10000-21000,30000,30001,30003")
-        public String allowPorts = "";
+        public String allowPorts = "1024-65534";
+
+        // SSL
+        @Option(name = "-ssl", aliases = {"--ssl"}, help = true, metaVar = "<boolean>", usage = "是否启用SSL")
+        public boolean ssl = false;
+
+        @Option(name = "-ssl-bindPort", aliases = {"--ssl-bindPort"}, help = true, metaVar = "<int>", usage = "SSL绑定端口")
+        public int sslBindPort = 5001;
+
+        @Option(name = "-ssl-jks", aliases = {"--ssl-jks"}, help = true, metaVar = "<string>", usage = "jks签名文件")
+        public String sslJks = "";
+
+        @Option(name = "-ssl-storepass", aliases = {"--ssl-storepass"}, help = true, metaVar = "<string>", usage = "jks签名文件Store密码")
+        public String sslStorepass = "";
+
+        @Option(name = "-ssl-keypass", aliases = {"--ssl-keypass"}, help = true, metaVar = "<string>", usage = "jks签名文件Key密码")
+        public String sslKeypass = "";
+
     }
 }

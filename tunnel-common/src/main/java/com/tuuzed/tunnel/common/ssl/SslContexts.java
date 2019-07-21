@@ -19,7 +19,7 @@ import java.security.KeyStore;
  * keytool -importkeystore -srckeystore tunnel-client.jks -destkeystore tunnel-client.jks -deststoretype pkcs12
  * keytool -import -trustcacerts -alias stunnalalias -file tunnel-server.cer -storepass ctunnelpass -keystore tunnel-client.jks
  */
-public class SslContextHelper {
+public class SslContexts {
     @NotNull
     public static SslContext forServer(
             @NotNull String jks,

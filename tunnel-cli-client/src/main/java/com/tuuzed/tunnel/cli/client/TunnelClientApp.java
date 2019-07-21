@@ -1,16 +1,16 @@
 package com.tuuzed.tunnel.cli.client;
 
-import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.cli.common.AbstractApp;
-import com.tuuzed.tunnel.client.TunnelClientManager;
+import com.tuuzed.tunnel.client.TunnelClient;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
+import com.tuuzed.tunnel.common.ssl.SslContexts;
+import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.args4j.Option;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +39,7 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
         }
     }
 
-    private void runAppAtCfg(@NotNull RunOptions runOptions) throws FileNotFoundException, YamlException {
+    private void runAppAtCfg(@NotNull RunOptions runOptions) throws Exception {
         YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
         Map options = (Map) reader.read();
         logger.info("options: {}", options);
@@ -50,32 +50,53 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
         arguments.put("token", token);
         @SuppressWarnings("unchecked")
         List<Map> tunnels = (List) options.get("tunnels");
+        TunnelClient tunnelClient = new TunnelClient.Builder().build();
+
+        SslContext context = null;
+        int sslServerPort = serverPort;
+        final Map sslOptions = (Map) options.get("ssl");
+        if (sslOptions != null) {
+            context = SslContexts.forClient(
+                    (String) sslOptions.get("jks"),
+                    (String) sslOptions.get("storepass")
+            );
+            sslServerPort = Integer.parseInt(sslOptions.get("server_port").toString());
+        }
         for (Map tunnel : tunnels) {
             final String localAddr = tunnel.get("local_addr").toString();
             final int localPort = Integer.parseInt(tunnel.get("local_port").toString());
             final int remotePort = Integer.parseInt(tunnel.get("remote_port").toString());
-            TunnelClientManager.getInstance().connect(serverAddr, serverPort,
-                    new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                            localAddr,
-                            localPort,
-                            remotePort,
-                            arguments
-                    )
+            final boolean enableSsl = Boolean.parseBoolean(tunnel.get("enable_ssl").toString());
+            OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                    localAddr,
+                    localPort,
+                    remotePort,
+                    arguments
+            );
+            tunnelClient.connect(
+                    serverAddr,
+                    (enableSsl) ? sslServerPort : serverPort,
+                    request,
+                    (enableSsl) ? context : null
             );
         }
     }
 
-    private void runAppAtArgs(@NotNull RunOptions runOptions) {
+    private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
         Map<String, String> arguments = new HashMap<>();
         arguments.put("token", runOptions.token);
-        TunnelClientManager.getInstance().connect(runOptions.serverAddr, runOptions.serverPort,
-                new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                        runOptions.localAddr,
-                        runOptions.localPort,
-                        runOptions.remotePort,
-                        arguments
-                )
+        TunnelClient tunnelClient = new TunnelClient.Builder().build();
+        OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
+                runOptions.localAddr,
+                runOptions.localPort,
+                runOptions.remotePort,
+                arguments
         );
+        SslContext context = null;
+        if (runOptions.ssl) {
+            context = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);
+        }
+        tunnelClient.connect(runOptions.serverAddr, runOptions.serverPort, request, context);
     }
 
     static class RunOptions {
@@ -89,7 +110,7 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
         @Option(name = "-p", aliases = {"--serverPort"}, help = true, metaVar = "<int>", usage = "服务器端口")
         public int serverPort = 5000;
 
-        @Option(name = "-lh", aliases = {"--localAddr"}, help = true, metaVar = "<string>", usage = "内网地址")
+        @Option(name = "-la", aliases = {"--localAddr"}, help = true, metaVar = "<string>", usage = "内网地址")
         public String localAddr = "127.0.0.1";
 
         @Option(name = "-lp", aliases = {"--localPort"}, help = true, metaVar = "<int>", usage = "内网端口")
@@ -100,5 +121,18 @@ public class TunnelClientApp extends AbstractApp<TunnelClientApp.RunOptions> {
 
         @Option(name = "-t", aliases = {"--token"}, help = true, metaVar = "<int>", usage = "令牌")
         public String token = "";
+
+        // SSL
+        @Option(name = "-ssl", aliases = {"--ssl"}, help = true, metaVar = "<boolean>", usage = "是否启用SSL")
+        public boolean ssl = false;
+
+        @Option(name = "-ssl-jks", aliases = {"--ssl-jks"}, help = true, metaVar = "<string>", usage = "jks签名文件")
+        public String sslJks = "";
+
+        @Option(name = "-ssl-storepass", aliases = {"--ssl-storepass"}, help = true, metaVar = "<string>", usage = "jks签名文件Store密码")
+        public String sslStorepass = "";
+
+
     }
+
 }

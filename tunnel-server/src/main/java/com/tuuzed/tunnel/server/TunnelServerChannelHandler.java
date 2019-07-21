@@ -9,6 +9,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.BindException;
@@ -19,13 +20,15 @@ import java.nio.charset.StandardCharsets;
  * Tunnel服务数据通道处理器
  */
 @SuppressWarnings("Duplicates")
-public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
+class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
-
     @Nullable
     private final OpenTunnelRequestInterceptor openTunnelRequestInterceptor;
+    @NotNull
+    private final UserTunnelManager userTunnelManager;
 
-    public TunnelServerChannelHandler(@Nullable OpenTunnelRequestInterceptor interceptor) {
+    public TunnelServerChannelHandler(@NotNull UserTunnelManager manager, @Nullable OpenTunnelRequestInterceptor interceptor) {
+        this.userTunnelManager = manager;
         this.openTunnelRequestInterceptor = interceptor;
     }
 
@@ -35,7 +38,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         final Long tunnelToken = ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
         logger.trace("channelInactive: {}, {}", tunnelToken, ctx);
         if (tunnelToken != null) {
-            UserTunnelManager.getInstance().closeUserTunnel(tunnelToken);
+            userTunnelManager.closeUserTunnel(tunnelToken);
         }
         super.channelInactive(ctx);
     }
@@ -70,7 +73,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         }
     }
 
-
     /**
      * 处理心跳消息
      */
@@ -89,8 +91,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
                 openTunnelRequest = openTunnelRequestInterceptor.proceed(openTunnelRequest);
             }
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-            final long tunnelToken = UserTunnelManager.getInstance()
-                    .openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
+            final long tunnelToken = userTunnelManager.openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
             ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).set(tunnelToken);
             final ByteBuf head = Unpooled.buffer(9);
             head.writeByte(1);
@@ -130,7 +131,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
+        UserTunnel tunnel = userTunnelManager.getUserTunnelByTunnelToken(tunnelToken);
         if (tunnel != null) {
             Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
@@ -148,7 +149,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        final UserTunnel userTunnel = UserTunnelManager.getInstance().getUserTunnelByTunnelToken(tunnelToken);
+        final UserTunnel userTunnel = userTunnelManager.getUserTunnelByTunnelToken(tunnelToken);
         if (userTunnel != null) {
             Channel userTunnelChannel = userTunnel.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {

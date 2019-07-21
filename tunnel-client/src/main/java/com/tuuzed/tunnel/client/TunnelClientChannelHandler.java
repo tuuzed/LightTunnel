@@ -20,12 +20,15 @@ import java.nio.charset.StandardCharsets;
  * Tunnel客户端数据通道处理器
  */
 @SuppressWarnings("Duplicates")
-public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
+class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
     @Nullable
     private TunnelClientChannelListener tunnelClientChannelListener;
+    @NotNull
+    private final LocalConnectManager localConnectManager;
 
-    public TunnelClientChannelHandler(@Nullable TunnelClientChannelListener listener) {
+    public TunnelClientChannelHandler(@NotNull LocalConnectManager manager, @Nullable TunnelClientChannelListener listener) {
+        this.localConnectManager = manager;
         this.tunnelClientChannelListener = listener;
     }
 
@@ -35,7 +38,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final Long tunnelToken = ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
         final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
         if (tunnelToken != null && sessionToken != null) {
-            LocalConnectManager.getInstance().removeLocalConnectChannel(tunnelToken, sessionToken);
+            localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
         }
         super.channelInactive(ctx);
         if (tunnelClientChannelListener != null) {
@@ -125,7 +128,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final String localAddr = openTunnelRequest.localAddr;
         final int localPort = openTunnelRequest.localPort;
 
-        LocalConnectManager.getInstance().getLocalConnectChannel(localAddr, localPort, tunnelToken, sessionToken,
+        localConnectManager.getLocalConnectChannel(localAddr, localPort, tunnelToken, sessionToken,
                 ctx.channel(),
                 new LocalConnectManager.GetLocalTunnelChannelCallback() {
                     @Override
@@ -151,7 +154,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).set(sessionToken);
         OpenTunnelRequest openTunnelRequest = ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).get();
         if (openTunnelRequest != null) {
-            LocalConnectManager.getInstance().getLocalConnectChannel(
+            localConnectManager.getLocalConnectChannel(
                     openTunnelRequest.localAddr, openTunnelRequest.localPort,
                     tunnelToken, sessionToken,
                     ctx.channel(),
@@ -178,7 +181,7 @@ public class TunnelClientChannelHandler extends SimpleChannelInboundHandler<Tunn
         final long sessionToken = head.readLong();
         head.release();
 
-        LocalConnectManager.getInstance().removeLocalConnectChannel(tunnelToken, sessionToken);
+        localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
     }
 
 }

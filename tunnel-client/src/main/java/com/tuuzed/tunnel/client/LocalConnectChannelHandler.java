@@ -10,13 +10,21 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * 本地连接数据通道处理器
  */
 @SuppressWarnings("Duplicates")
-public class LocalConnectChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
+class LocalConnectChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(LocalConnectChannelHandler.class);
+
+    @NotNull
+    private final LocalConnectManager localConnectManager;
+
+    public LocalConnectChannelHandler(@NotNull LocalConnectManager manager) {
+        this.localConnectManager = manager;
+    }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -24,7 +32,7 @@ public class LocalConnectChannelHandler extends SimpleChannelInboundHandler<Byte
         final Long tunnelToken = ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
         final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
         if (tunnelToken != null && sessionToken != null) {
-            LocalConnectManager.getInstance().removeLocalConnectChannel(tunnelToken, sessionToken);
+            localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
         }
         final Channel tunnelClientChannel = ctx.channel().attr(TunnelAttributeKey.NEXT_CHANNEL).get();
         if (tunnelClientChannel != null) {

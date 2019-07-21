@@ -4,14 +4,20 @@ server_addr: 127.0.0.1
 server_port: 5000
 # 令牌
 token: tk123456
-
+# ssl
+ssl:
+  server_port: 5001
+  jks: tunnel-client.jks
+  storepass: ctunnelpass
 
 # 隧道列表
 tunnels:
   - local_addr: 127.0.0.1
     local_port: 80
     remote_port: 10080
+    enable_ssl: true
 
   - local_addr: 127.0.0.1
     local_port: 8080
     remote_port: 18080
+    enable_ssl: false

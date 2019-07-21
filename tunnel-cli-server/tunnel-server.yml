@@ -6,3 +6,9 @@ bind_port: 5000
 token: tk123456
 # 允许使用端口（端口白名单）
 allow_ports: 10000-50000
+# ssl
+ssl:
+  bind_port: 5001
+  jks: tunnel-server.jks
+  storepass: stunnelpass
+  keypass: stunnelpass

@@ -18,27 +18,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class LocalConnectManager {
-
+class LocalConnectManager {
     private static final Logger logger = LoggerFactory.getLogger(LocalConnectManager.class);
-
-    private static class InstanceHolder {
-        private static final LocalConnectManager instance = new LocalConnectManager();
-    }
-
-    @NotNull
-    public static LocalConnectManager getInstance() {
-        return InstanceHolder.instance;
-    }
 
     @NotNull
     private final Map<String, Channel> cachedLocalConnectChannels = new ConcurrentHashMap<>();
     @NotNull
-    private final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
-    @NotNull
     private final Bootstrap bootstrap;
 
-    private LocalConnectManager() {
+    public LocalConnectManager(@NotNull NioEventLoopGroup workerGroup) {
         bootstrap = new Bootstrap();
         bootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
@@ -46,12 +34,11 @@ public class LocalConnectManager {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline()
-                                .addLast(new LocalConnectChannelHandler())
+                                .addLast(new LocalConnectChannelHandler(LocalConnectManager.this))
                         ;
                     }
                 });
     }
-
 
     public void removeLocalConnectChannel(long tunnelToken, long sessionToken) {
         Channel localTunnelChannel = removeCachedLocalConnectChannel(tunnelToken, sessionToken);
@@ -95,6 +82,10 @@ public class LocalConnectManager {
         }
     }
 
+    public void destroy() {
+        cachedLocalConnectChannels.clear();
+    }
+
     @Nullable
     private Channel getCachedLocalConnectChannel(long tunnelToken, long sessionToken) {
         final String key = String.format("%d@%d", tunnelToken, sessionToken);
@@ -118,11 +109,11 @@ public class LocalConnectManager {
         }
     }
 
-
     public interface GetLocalTunnelChannelCallback {
         void success(@NotNull Channel localTunnelChannel);
 
         void error(Throwable cause);
     }
+
 
 }

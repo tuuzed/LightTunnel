@@ -4,7 +4,7 @@ import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface UserTunnel {
+interface UserTunnel {
     @NotNull
     Channel serverChannel();
 

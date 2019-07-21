@@ -3,7 +3,6 @@ package com.tuuzed.tunnel.server;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.TunnelAttributeKey;
-import com.tuuzed.tunnel.server.stat.StatHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -20,18 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class UserTunnelManager {
+class UserTunnelManager {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelManager.class);
-
-    @NotNull
-    public static UserTunnelManager getInstance() {
-        return InstanceHolder.instance;
-    }
-
-    private static class InstanceHolder {
-        private static final UserTunnelManager instance = new UserTunnelManager();
-    }
-
     /**
      * 隧道ID生成器
      */
@@ -41,25 +30,22 @@ public class UserTunnelManager {
     private final Map<Long, UserTunnelImpl> tunnelTokenUserTunnels = new ConcurrentHashMap<>();
     private final Map<Long, AtomicLong> tunnelTokenSessionTokenGenerator = new ConcurrentHashMap<>();
     @NotNull
-    private final NioEventLoopGroup bossGroup;
-    @NotNull
-    private final NioEventLoopGroup workerGroup;
-    @NotNull
     private final ServerBootstrap bootstrap;
 
-
-    private UserTunnelManager() {
-        this.bossGroup = new NioEventLoopGroup();
-        this.workerGroup = new NioEventLoopGroup();
+    public UserTunnelManager(
+            @NotNull NioEventLoopGroup bossGroup,
+            @NotNull NioEventLoopGroup workerGroup,
+            @NotNull final Statisticians statisticians
+    ) {
         this.bootstrap = new ServerBootstrap();
-        bootstrap.group(bossGroup, workerGroup)
+        this.bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline()
-                                .addFirst(new StatHandler())
-                                .addLast(new UserTunnelChannelHandler())
+                                .addFirst(new StatisticsHandler(statisticians))
+                                .addLast(new UserTunnelChannelHandler(UserTunnelManager.this))
                         ;
                     }
                 });
@@ -116,6 +102,12 @@ public class UserTunnelManager {
 
     public int getUserTunnelTotalCount() {
         return bindPortUserTunnels.size();
+    }
+
+    public void destroy() {
+        bindPortUserTunnels.clear();
+        tunnelTokenUserTunnels.clear();
+        tunnelTokenSessionTokenGenerator.clear();
     }
 
     private static class UserTunnelImpl implements UserTunnel {

@@ -7,6 +7,7 @@ import com.tuuzed.tunnel.common.protocol.TunnelMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
@@ -17,8 +18,14 @@ import java.net.SocketAddress;
  * 隧道数据通道处理器
  */
 @SuppressWarnings("Duplicates")
-public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
+class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelChannelHandler.class);
+    @NotNull
+    private final UserTunnelManager userTunnelManager;
+
+    public UserTunnelChannelHandler(@NotNull UserTunnelManager manager) {
+        this.userTunnelManager = manager;
+    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -30,7 +37,7 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
             if (tunnelToken != null) {
                 Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
                 if (sessionToken == null) {
-                    sessionToken = UserTunnelManager.getInstance().generateSessionToken(tunnelToken);
+                    sessionToken = userTunnelManager.generateSessionToken(tunnelToken);
                     ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).set(sessionToken);
                 }
                 serverChannel.writeAndFlush(
@@ -107,21 +114,18 @@ public class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBu
         super.channelWritabilityChanged(ctx);
     }
 
-
-    // ====================== 工具方法 =========================== //
-
     /**
      * 获取隧道对象
      */
     @Nullable
-    private static UserTunnel getUserTunnel(ChannelHandlerContext ctx) {
+    private UserTunnel getUserTunnel(ChannelHandlerContext ctx) {
         if (ctx == null) {
             return null;
         }
         SocketAddress socketAddress = ctx.channel().localAddress();
         if (socketAddress instanceof InetSocketAddress) {
             int inboundPort = ((InetSocketAddress) socketAddress).getPort();
-            UserTunnel tunnel = UserTunnelManager.getInstance().getUserTunnelByBindPort(inboundPort);
+            UserTunnel tunnel = userTunnelManager.getUserTunnelByBindPort(inboundPort);
             if (tunnel == null) {
                 return null;
             }
