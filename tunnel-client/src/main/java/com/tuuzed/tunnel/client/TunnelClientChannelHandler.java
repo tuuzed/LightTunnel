@@ -11,7 +11,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 
@@ -22,12 +21,12 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings("Duplicates")
 class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
-    @Nullable
+    @NotNull
     private TunnelClientChannelListener tunnelClientChannelListener;
     @NotNull
     private final LocalConnectManager localConnectManager;
 
-    public TunnelClientChannelHandler(@NotNull LocalConnectManager manager, @Nullable TunnelClientChannelListener listener) {
+    public TunnelClientChannelHandler(@NotNull LocalConnectManager manager, @NotNull TunnelClientChannelListener listener) {
         this.localConnectManager = manager;
         this.tunnelClientChannelListener = listener;
     }
@@ -41,14 +40,12 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
         }
         super.channelInactive(ctx);
-        if (tunnelClientChannelListener != null) {
-            tunnelClientChannelListener.channelInactive(ctx);
-        }
+        tunnelClientChannelListener.channelInactive(ctx);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.debug("exceptionCaught: ", cause);
+        logger.trace("exceptionCaught: ", cause);
         ctx.close();
     }
 
@@ -97,7 +94,8 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set(null);
-            logger.info("Opened Tunnel: {}", openTunnelRequest);
+            logger.debug("Opened Tunnel: {}", openTunnelRequest);
+            tunnelClientChannelListener.tunnelConnected(ctx);
         } else if (status == TunnelMessage.OPEN_TUNNEL_RESPONSE_FAILURE) {
             // 开启隧道失败
             final String openTunnelMessage = new String(msg.getData(), StandardCharsets.UTF_8);
@@ -105,8 +103,8 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(true);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set(openTunnelMessage);
-            ctx.close();
-            logger.warn("Open Tunnel Error: {}", openTunnelMessage);
+            ctx.channel().close();
+            logger.debug("Open Tunnel Error: {}", openTunnelMessage);
         } else {
             // 开启隧道失败
             final String openTunnelMessage = new String(msg.getData(), StandardCharsets.UTF_8);
@@ -114,12 +112,11 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(true);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set("Protocol error");
-            ctx.close();
-            logger.warn("Open Tunnel Error: {}", openTunnelMessage);
+            ctx.channel().close();
+            logger.debug("Open Tunnel Error: {}", openTunnelMessage);
         }
         head.release();
     }
-
 
     /**
      * 处理连接本地隧道消息
