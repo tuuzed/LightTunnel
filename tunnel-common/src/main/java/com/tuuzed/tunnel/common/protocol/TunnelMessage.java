@@ -3,6 +3,8 @@ package com.tuuzed.tunnel.common.protocol;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class TunnelMessage {
 
     @NotNull
@@ -30,6 +32,15 @@ public class TunnelMessage {
      * 消息流向：Client <- Server
      */
     public static final byte MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE = 0x04;
+    /**
+     * 建立隧道成功
+     */
+    public static final byte OPEN_TUNNEL_RESPONSE_FAILURE = 0x00;
+    /**
+     * 建立隧道失败
+     */
+    public static final byte OPEN_TUNNEL_RESPONSE_SUCCESS = 0x01;
+
     /**
      * 透传消息
      * 消息head域前8个字节为Long类型的tunnelToken，后8个字节为Long类型的sessionToken
@@ -127,7 +138,7 @@ public class TunnelMessage {
     @Override
     public String toString() {
         return getTypeName();
-//        "TunnelMessage{" +
+//        return "TunnelMessage{" +
 //                "type=" + getTypeName() +
 //                ", head=" + Arrays.toString(getHead()) +
 //                ", data=" + Arrays.toString(getData()) +

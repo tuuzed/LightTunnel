@@ -16,7 +16,7 @@ jar {
     exclude 'META-INF/io.netty.versions.properties'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
-        attributes 'Main-Class': 'Bootstrap'
+        attributes 'Main-Class': project.MainClass
         attributes 'Version-Code': String.valueOf(GitVC.VERSION_CODE)
         attributes 'Version-Name': String.valueOf(GitVC.VERSION_NAME)
         attributes 'Last-Commit-SHA': String.valueOf(GitVC.LAST_COMMIT_SHA)

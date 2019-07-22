@@ -1,8 +1,12 @@
 package com.tuuzed.tunnel.client;
 
+import com.tuuzed.tunnel.common.logging.LogConfigurator;
+import com.tuuzed.tunnel.common.logging.Logger;
+import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
 import com.tuuzed.tunnel.common.ssl.SslContexts;
 import io.netty.handler.ssl.SslContext;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,12 +15,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TunnelClientTest {
-
+    private static final Logger logger = LoggerFactory.getLogger(TunnelClientTest.class);
     private TunnelClient manager;
 
     @Before
     public void setUp() {
-        manager = new TunnelClient.Builder().build();
+        LogConfigurator.setLevel(Logger.INFO);
+        manager = new TunnelClient.Builder()
+                .setAutoReconnect(true)
+                .setWorkerThreads(1)
+                .setListener(new TunnelClient.Listener() {
+                    @Override
+                    public void onConnecting(@NotNull TunnelClient.Tunnel tunnel, boolean reconnect) {
+                        logger.info("tunnel: {}, reconnect: {}", tunnel, reconnect);
+                    }
+
+                    @Override
+                    public void onConnected(@NotNull TunnelClient.Tunnel tunnel) {
+                        logger.info("{}", tunnel);
+                    }
+
+                    @Override
+                    public void onDisconnect(@NotNull TunnelClient.Tunnel tunnel, boolean deadly) {
+                        logger.info("tunnel: {}, deadly: {}", tunnel, deadly);
+                    }
+                })
+                .build();
     }
 
     @After
