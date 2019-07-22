@@ -67,6 +67,7 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
 
         final TunnelClient tunnelClient = new TunnelClient.Builder()
                 .setWorkerThreads(workerThreads)
+                .setAutoReconnect(true)
                 .build();
 
         SslContext context = null;
@@ -104,6 +105,7 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
         arguments.put("token", runOptions.token);
         TunnelClient tunnelClient = new TunnelClient.Builder()
                 .setWorkerThreads(runOptions.workerThreads)
+                .setAutoReconnect(true)
                 .build();
         OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                 runOptions.localAddr,
