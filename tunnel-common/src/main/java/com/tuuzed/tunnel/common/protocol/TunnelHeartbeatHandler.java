@@ -16,7 +16,7 @@ public class TunnelHeartbeatHandler extends IdleStateHandler {
     private static Logger logger = LoggerFactory.getLogger(TunnelHeartbeatHandler.class);
 
     public TunnelHeartbeatHandler() {
-        this(90, 60, 0, TimeUnit.SECONDS);
+        this(60 * 5, 60 * 3, 0, TimeUnit.SECONDS);
     }
 
     public TunnelHeartbeatHandler(int readerIdleTimeSeconds, int writerIdleTimeSeconds, int allIdleTimeSeconds) {
