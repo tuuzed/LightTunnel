@@ -94,7 +94,7 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             final long tunnelToken = userTunnelManager.openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
             ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).set(tunnelToken);
             final ByteBuf head = Unpooled.buffer(9);
-            head.writeByte(1);
+            head.writeByte(TunnelMessage.OPEN_TUNNEL_RESPONSE_SUCCESS);
             head.writeLong(tunnelToken);
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
@@ -104,7 +104,7 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         } catch (TunnelProtocolException e) {
             ctx.writeAndFlush(
                     TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
-                            .setHead(new byte[]{0})
+                            .setHead(new byte[]{TunnelMessage.OPEN_TUNNEL_RESPONSE_FAILURE})
                             .setData(e.getMessage().getBytes(StandardCharsets.UTF_8))
             ).addListener(ChannelFutureListener.CLOSE);
 
@@ -112,7 +112,7 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         } catch (BindException e) {
             ctx.channel().writeAndFlush(
                     TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_OPEN_TUNNEL_RESPONSE)
-                            .setHead(new byte[]{0})
+                            .setHead(new byte[]{TunnelMessage.OPEN_TUNNEL_RESPONSE_FAILURE})
                             .setData("Bind Port Error".getBytes(StandardCharsets.UTF_8))
             ).addListener(ChannelFutureListener.CLOSE);
         }

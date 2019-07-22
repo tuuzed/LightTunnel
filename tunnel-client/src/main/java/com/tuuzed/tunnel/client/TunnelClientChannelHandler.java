@@ -89,7 +89,7 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
     private void handleOpenTunnelResponseMessage(ChannelHandlerContext ctx, TunnelMessage msg) throws Exception {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final byte status = head.readByte();
-        if (status == 1) {
+        if (status == TunnelMessage.OPEN_TUNNEL_RESPONSE_SUCCESS) {
             // 开启隧道成功
             final long tunnelToken = head.readLong();
             final OpenTunnelRequest openTunnelRequest = OpenTunnelRequest.fromBytes(msg.getData());
@@ -98,13 +98,22 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set(null);
             logger.info("Opened Tunnel: {}", openTunnelRequest);
-        } else {
+        } else if (status == TunnelMessage.OPEN_TUNNEL_RESPONSE_FAILURE) {
             // 开启隧道失败
             final String openTunnelMessage = new String(msg.getData(), StandardCharsets.UTF_8);
             ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(true);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set(openTunnelMessage);
+            ctx.close();
+            logger.warn("Open Tunnel Error: {}", openTunnelMessage);
+        } else {
+            // 开启隧道失败
+            final String openTunnelMessage = new String(msg.getData(), StandardCharsets.UTF_8);
+            ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).set(null);
+            ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(null);
+            ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(true);
+            ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set("Protocol error");
             ctx.close();
             logger.warn("Open Tunnel Error: {}", openTunnelMessage);
         }
