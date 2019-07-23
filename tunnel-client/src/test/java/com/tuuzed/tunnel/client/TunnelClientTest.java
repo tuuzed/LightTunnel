@@ -20,24 +20,24 @@ public class TunnelClientTest {
 
     @Before
     public void setUp() {
-        LogConfigurator.setLevel(Logger.INFO);
+        LogConfigurator.setLevel(Logger.ALL);
         manager = new TunnelClient.Builder()
                 .setAutoReconnect(true)
-                .setWorkerThreads(1)
+                .setWorkerThreads(4)
                 .setListener(new TunnelClient.Listener() {
                     @Override
-                    public void onConnecting(@NotNull TunnelClient.Tunnel tunnel, boolean reconnect) {
-                        logger.info("tunnel: {}, reconnect: {}", tunnel, reconnect);
+                    public void onConnecting(@NotNull TunnelClient.TunnelDescriptor tunnelDescriptor, boolean reconnect) {
+                        logger.info("tunnel: {}, reconnect: {}", tunnelDescriptor, reconnect);
                     }
 
                     @Override
-                    public void onConnected(@NotNull TunnelClient.Tunnel tunnel) {
+                    public void onConnected(@NotNull TunnelClient.TunnelDescriptor tunnel) {
                         logger.info("{}", tunnel);
                     }
 
                     @Override
-                    public void onDisconnect(@NotNull TunnelClient.Tunnel tunnel, boolean deadly) {
-                        logger.info("tunnel: {}, deadly: {}", tunnel, deadly);
+                    public void onDisconnect(@NotNull TunnelClient.TunnelDescriptor tunnelDescriptor, boolean deadly) {
+                        logger.info("tunnel: {}, deadly: {}", tunnelDescriptor, deadly);
                     }
                 })
                 .build();
@@ -65,7 +65,7 @@ public class TunnelClientTest {
                 context
         );
         // replace
-        final TunnelClient.Tunnel replaceTunnel = manager.connect(serverAddr, serverPort,
+        final TunnelClient.TunnelDescriptor replaceTunnelDescriptor = manager.connect(serverAddr, serverPort,
                 new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
                         "192.168.1.1", 80,
                         20000,
@@ -107,7 +107,7 @@ public class TunnelClientTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                replaceTunnel.shutdown();
+                replaceTunnelDescriptor.shutdown();
             }
         }).start();
         System.in.read();

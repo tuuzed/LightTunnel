@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Statisticians {
-    private static final Logger logger = LoggerFactory.getLogger(Statisticians.class);
+public class Stats {
+    private static final Logger logger = LoggerFactory.getLogger(Stats.class);
 
     @NotNull
     private final Map<Integer, Item> items = new ConcurrentHashMap<>();
@@ -49,37 +49,37 @@ public class Statisticians {
         public void incrementReadBytes(int count) {
             readBytes.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Statisticians: {}", this);
+            logger.trace("Stats: {}", this);
         }
 
         public void incrementWriteBytes(int count) {
             writeBytes.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Statisticians: {}", this);
+            logger.trace("Stats: {}", this);
         }
 
         public void incrementReadMsgs(int count) {
             readMsgs.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Statisticians: {}", this);
+            logger.trace("Stats: {}", this);
         }
 
         public void incrementWriteMsgs(int count) {
             writeMsgs.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Statisticians: {}", this);
+            logger.trace("Stats: {}", this);
         }
 
         public void incrementChannels() {
             channels.incrementAndGet();
             timestamp = System.currentTimeMillis();
-            logger.trace("Statisticians: {}", this);
+            logger.trace("Stats: {}", this);
         }
 
         public void decrementChannels() {
             timestamp = System.currentTimeMillis();
             channels.decrementAndGet();
-            logger.trace("Statisticians: {}", this);
+            logger.trace("Stats: {}", this);
         }
 
         public void resetReadStat() {

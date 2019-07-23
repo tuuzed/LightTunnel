@@ -11,19 +11,19 @@ import java.net.InetSocketAddress;
 /**
  * 数据统计
  */
-public class StatisticsHandler extends ChannelDuplexHandler {
+public class StatsHandler extends ChannelDuplexHandler {
 
     @NotNull
-    private final Statisticians statisticians;
+    private final Stats stats;
 
-    public StatisticsHandler(@NotNull Statisticians statisticians) {
-        this.statisticians = statisticians;
+    public StatsHandler(@NotNull Stats stats) {
+        this.stats = stats;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        Statisticians.Item item = statisticians.getItem(sa.getPort());
+        Stats.Item item = stats.getItem(sa.getPort());
         item.incrementReadBytes(((ByteBuf) msg).readableBytes());
         item.incrementReadMsgs(1);
         ctx.fireChannelRead(msg);
@@ -32,7 +32,7 @@ public class StatisticsHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        Statisticians.Item item = statisticians.getItem(sa.getPort());
+        Stats.Item item = stats.getItem(sa.getPort());
         item.incrementWriteBytes(((ByteBuf) msg).readableBytes());
         item.incrementWriteMsgs(1);
         super.write(ctx, msg, promise);
@@ -41,7 +41,7 @@ public class StatisticsHandler extends ChannelDuplexHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        Statisticians.Item item = statisticians.getItem(sa.getPort());
+        Stats.Item item = stats.getItem(sa.getPort());
         item.incrementChannels();
         super.channelActive(ctx);
     }
@@ -49,7 +49,7 @@ public class StatisticsHandler extends ChannelDuplexHandler {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        Statisticians.Item item = statisticians.getItem(sa.getPort());
+        Stats.Item item = stats.getItem(sa.getPort());
         item.decrementChannels();
         super.channelInactive(ctx);
     }

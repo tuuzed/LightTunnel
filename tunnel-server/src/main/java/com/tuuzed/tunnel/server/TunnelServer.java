@@ -23,35 +23,55 @@ public class TunnelServer {
     private final NioEventLoopGroup bossGroup;
     @NotNull
     private final NioEventLoopGroup workerGroup;
-    @NotNull
-    private final ServerBootstrap bootstrap;
     @Nullable
     private final String bindAddr;
     private final int bindPort;
-    @NotNull
-    private final UserTunnelManager userTunnelManager;
-    // ssl
-    @Nullable
-    private ServerBootstrap sslBootstrap;
     private final int sslBindPort;
+    @NotNull
+    private final UserTunnel userTunnelManager;
+    @NotNull
+    private final OpenTunnelRequestInterceptor openTunnelRequestInterceptor;
+    @Nullable
+    private final SslContext sslContext;
     // 数据统计
     @NotNull
-    private final Statisticians statisticians;
+    private final Stats stats;
 
     private TunnelServer(@NotNull final Builder builder) {
-        this.bootstrap = new ServerBootstrap();
         this.bossGroup = (builder.bossThreads > 0)
                 ? new NioEventLoopGroup(builder.bossThreads)
                 : new NioEventLoopGroup();
         this.workerGroup = (builder.workerThreads > 0)
                 ? new NioEventLoopGroup(builder.workerThreads)
                 : new NioEventLoopGroup();
-        this.statisticians = new Statisticians();
+        this.stats = new Stats();
 
-        this.userTunnelManager = new UserTunnelManager(this.bossGroup, this.workerGroup, statisticians);
+        this.userTunnelManager = new UserTunnel(this.bossGroup, this.workerGroup, stats);
+        this.openTunnelRequestInterceptor = builder.interceptor;
         this.bindAddr = builder.bindAddr;
         this.bindPort = builder.bindPort;
-        this.bootstrap.group(bossGroup, workerGroup)
+        this.sslBindPort = builder.sslBindPort;
+        if (builder.ssl) {
+            this.sslContext = builder.context;
+        } else {
+            this.sslContext = null;
+        }
+    }
+
+    @NotNull
+    public Stats getStats() {
+        return stats;
+    }
+
+    public void start() throws Exception {
+        serve();
+        serveWithSsl();
+    }
+
+
+    private void serve() throws Exception {
+        ServerBootstrap bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
@@ -60,54 +80,44 @@ public class TunnelServer {
                                 .addLast(new TunnelMessageDecoder())
                                 .addLast(new TunnelMessageEncoder())
                                 .addLast(new TunnelHeartbeatHandler())
-                                .addLast(new TunnelServerChannelHandler(userTunnelManager, builder.interceptor))
+                                .addLast(new TunnelServerChannelHandler(userTunnelManager, openTunnelRequestInterceptor))
                         ;
                     }
                 });
-
-        // ssl
-        this.sslBindPort = builder.sslBindPort;
-        if (builder.ssl) {
-            this.sslBootstrap = new ServerBootstrap();
-            this.sslBootstrap.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline()
-                                    .addLast(new SslHandler(builder.context.newEngine(ch.alloc())))
-                                    .addLast(new TunnelMessageDecoder())
-                                    .addLast(new TunnelMessageEncoder())
-                                    .addLast(new TunnelHeartbeatHandler())
-                                    .addLast(new TunnelServerChannelHandler(userTunnelManager, builder.interceptor))
-                            ;
-                        }
-                    });
-        }
-
-
-    }
-
-    @NotNull
-    public Statisticians getStatisticians() {
-        return statisticians;
-    }
-
-    public void start() throws Exception {
         if (bindAddr == null) {
             bootstrap.bind(bindPort).get();
             logger.info("Serving Tunnel on any address port {}", bindPort);
-            if (sslBootstrap != null) {
-                sslBootstrap.bind(sslBindPort).get();
-                logger.info("Serving SSL Tunnel on any address port {}", sslBindPort);
-            }
         } else {
             bootstrap.bind(bindAddr, bindPort).sync();
             logger.info("Serving Tunnel on {} port {}", bindAddr, bindPort);
-            if (sslBootstrap != null) {
-                sslBootstrap.bind(bindAddr, sslBindPort).sync();
-                logger.info("Serving SSL Tunnel on {} port {}", bindAddr, sslBindPort);
-            }
+        }
+    }
+
+    private void serveWithSsl() throws Exception {
+        if (sslContext == null) {
+            return;
+        }
+        ServerBootstrap bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline()
+                                .addLast(new SslHandler(sslContext.newEngine(ch.alloc())))
+                                .addLast(new TunnelMessageDecoder())
+                                .addLast(new TunnelMessageEncoder())
+                                .addLast(new TunnelHeartbeatHandler())
+                                .addLast(new TunnelServerChannelHandler(userTunnelManager, openTunnelRequestInterceptor))
+                        ;
+                    }
+                });
+        if (bindAddr == null) {
+            bootstrap.bind(sslBindPort).get();
+            logger.info("Serving SSL Tunnel on any address port {}", sslBindPort);
+        } else {
+            bootstrap.bind(bindAddr, sslBindPort).sync();
+            logger.info("Serving SSL Tunnel on {} port {}", bindAddr, sslBindPort);
         }
     }
 

@@ -15,6 +15,7 @@ public final class OpenTunnelRequest {
 
     public static final String TYPE_TCP = "tcp";
 
+
     public static OpenTunnelRequest fromBytes(@NotNull byte[] bytes) throws TunnelProtocolException {
         try {
             URI uri = URI.create(new String(bytes, StandardCharsets.UTF_8));
@@ -22,7 +23,7 @@ public final class OpenTunnelRequest {
             Map<String, String> queryMap = parseQuery(uri);
             return new OpenTunnelRequest(uri.getScheme(), uri.getHost(), uri.getPort(), remotePort, queryMap);
         } catch (Exception e) {
-            throw new TunnelProtocolException("OpenTunnelRequest uri error", e);
+            throw new TunnelProtocolException("OpenTunnelRequest bytes error", e);
         }
 
     }
@@ -33,10 +34,12 @@ public final class OpenTunnelRequest {
     public final int remotePort;
     public final Map<String, String> arguments;
 
-    public OpenTunnelRequest(@NotNull String type,
-                             @NotNull String localAddr, int localPort,
-                             int remotePort,
-                             @NotNull Map<String, String> arguments) {
+    public OpenTunnelRequest(
+            @NotNull String type,
+            @NotNull String localAddr, int localPort,
+            int remotePort,
+            @NotNull Map<String, String> arguments
+    ) {
         this.type = type;
         this.localAddr = localAddr;
         this.localPort = localPort;

@@ -21,18 +21,18 @@ import java.net.SocketAddress;
 class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(UserTunnelChannelHandler.class);
     @NotNull
-    private final UserTunnelManager userTunnelManager;
+    private final UserTunnel userTunnelManager;
 
-    public UserTunnelChannelHandler(@NotNull UserTunnelManager manager) {
+    public UserTunnelChannelHandler(@NotNull UserTunnel manager) {
         this.userTunnelManager = manager;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
-        UserTunnel tunnel = getUserTunnel(ctx);
-        if (tunnel != null) {
-            final Channel serverChannel = tunnel.serverChannel();
+        final UserTunnel.Descriptor descriptor = getUserTunnelDescriptor(ctx);
+        if (descriptor != null) {
+            final Channel serverChannel = descriptor.serverChannel();
             final Long tunnelToken = serverChannel.attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
             if (tunnelToken != null) {
                 Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
@@ -44,7 +44,7 @@ class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
                         TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_USER_TUNNEL_CONNECTED)
                                 .setHead(Unpooled.copyLong(tunnelToken, sessionToken).array())
                 );
-                tunnel.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
+                descriptor.putUserTunnelChannel(tunnelToken, sessionToken, ctx.channel());
             }
         } else {
             ctx.close();
@@ -53,13 +53,13 @@ class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        UserTunnel tunnel = getUserTunnel(ctx);
-        if (tunnel != null) {
-            final Channel serverChannel = tunnel.serverChannel();
+        final UserTunnel.Descriptor descriptor = getUserTunnelDescriptor(ctx);
+        if (descriptor != null) {
+            final Channel serverChannel = descriptor.serverChannel();
             final Long tunnelToken = serverChannel.attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
             final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
             if (tunnelToken != null && sessionToken != null) {
-                tunnel.removeUserTunnelChannel(tunnelToken, sessionToken);
+                descriptor.removeUserTunnelChannel(tunnelToken, sessionToken);
             }
             // 解决 HTTP/1.x 数据传输问题
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(new ChannelFutureListener() {
@@ -89,9 +89,9 @@ class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         byte[] data = new byte[length];
         msg.readBytes(data);
         // 根据入站端口获取用户隧道,如果用户隧道不存在则直接关闭连接
-        UserTunnel tunnel = getUserTunnel(ctx);
-        if (tunnel != null) {
-            final Channel serverChannel = tunnel.serverChannel();
+        final UserTunnel.Descriptor descriptor = getUserTunnelDescriptor(ctx);
+        if (descriptor != null) {
+            final Channel serverChannel = descriptor.serverChannel();
             final Long tunnelToken = serverChannel.attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
             final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
             if (tunnelToken != null && sessionToken != null) {
@@ -106,9 +106,9 @@ class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        UserTunnel tunnel = getUserTunnel(ctx);
-        if (tunnel != null) {
-            Channel serverChannel = tunnel.serverChannel();
+        final UserTunnel.Descriptor descriptor = getUserTunnelDescriptor(ctx);
+        if (descriptor != null) {
+            Channel serverChannel = descriptor.serverChannel();
             serverChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
         }
         super.channelWritabilityChanged(ctx);
@@ -118,18 +118,18 @@ class UserTunnelChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
      * 获取隧道对象
      */
     @Nullable
-    private UserTunnel getUserTunnel(ChannelHandlerContext ctx) {
+    private UserTunnel.Descriptor getUserTunnelDescriptor(ChannelHandlerContext ctx) {
         if (ctx == null) {
             return null;
         }
-        SocketAddress socketAddress = ctx.channel().localAddress();
+        final SocketAddress socketAddress = ctx.channel().localAddress();
         if (socketAddress instanceof InetSocketAddress) {
-            int inboundPort = ((InetSocketAddress) socketAddress).getPort();
-            UserTunnel tunnel = userTunnelManager.getUserTunnelByBindPort(inboundPort);
-            if (tunnel == null) {
+            final int port = ((InetSocketAddress) socketAddress).getPort();
+            final UserTunnel.Descriptor descriptor = userTunnelManager.getUserTunnelDescriptorByBindPort(port);
+            if (descriptor == null) {
                 return null;
             }
-            return tunnel;
+            return descriptor;
         }
         return null;
     }
