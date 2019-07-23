@@ -3,8 +3,6 @@ package com.tuuzed.tunnel.common.protocol;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 public class TunnelMessage {
 
     @NotNull
@@ -137,7 +135,7 @@ public class TunnelMessage {
 
     @Override
     public String toString() {
-        return getTypeName();
+        return String.format("%s(%d)", getTypeName(), getByteLength());
 //        return "TunnelMessage{" +
 //                "type=" + getTypeName() +
 //                ", head=" + Arrays.toString(getHead()) +
@@ -145,8 +143,12 @@ public class TunnelMessage {
 //                '}';
     }
 
+    public long getByteLength() {
+        return 1 + getHead().length + getData().length;
+    }
+
     @NotNull
-    private String getTypeName() {
+    public String getTypeName() {
         switch (type) {
             case MESSAGE_TYPE_HEARTBEAT_PING:
                 return "HEARTBEAT_PING";
