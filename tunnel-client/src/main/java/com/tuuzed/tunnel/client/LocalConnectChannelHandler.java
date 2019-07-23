@@ -20,10 +20,10 @@ class LocalConnectChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static final Logger logger = LoggerFactory.getLogger(LocalConnectChannelHandler.class);
 
     @NotNull
-    private final LocalConnectManager localConnectManager;
+    private final LocalConnect localConnect;
 
-    public LocalConnectChannelHandler(@NotNull LocalConnectManager manager) {
-        this.localConnectManager = manager;
+    public LocalConnectChannelHandler(@NotNull LocalConnect localConnect) {
+        this.localConnect = localConnect;
     }
 
     @Override
@@ -32,7 +32,7 @@ class LocalConnectChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
         final Long tunnelToken = ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
         final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
         if (tunnelToken != null && sessionToken != null) {
-            localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
+            localConnect.removeLocalConnectChannel(tunnelToken, sessionToken);
         }
         final Channel tunnelClientChannel = ctx.channel().attr(TunnelAttributeKey.NEXT_CHANNEL).get();
         if (tunnelClientChannel != null) {

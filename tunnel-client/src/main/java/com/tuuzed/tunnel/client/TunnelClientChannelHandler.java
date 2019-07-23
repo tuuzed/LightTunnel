@@ -22,13 +22,13 @@ import java.nio.charset.StandardCharsets;
 class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientChannelHandler.class);
     @NotNull
-    private TunnelClientChannelListener tunnelClientChannelListener;
+    private ChannelListener channelListener;
     @NotNull
-    private final LocalConnectManager localConnectManager;
+    private final LocalConnect localConnect;
 
-    public TunnelClientChannelHandler(@NotNull LocalConnectManager manager, @NotNull TunnelClientChannelListener listener) {
-        this.localConnectManager = manager;
-        this.tunnelClientChannelListener = listener;
+    public TunnelClientChannelHandler(@NotNull LocalConnect localConnect, @NotNull ChannelListener channelListener) {
+        this.localConnect = localConnect;
+        this.channelListener = channelListener;
     }
 
     @Override
@@ -37,10 +37,10 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         final Long tunnelToken = ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).get();
         final Long sessionToken = ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).get();
         if (tunnelToken != null && sessionToken != null) {
-            localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
+            localConnect.removeLocalConnectChannel(tunnelToken, sessionToken);
         }
         super.channelInactive(ctx);
-        tunnelClientChannelListener.channelInactive(ctx);
+        channelListener.channelInactive(ctx);
     }
 
     @Override
@@ -95,7 +95,7 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).set(null);
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).set(null);
             logger.debug("Opened Tunnel: {}", openTunnelRequest);
-            tunnelClientChannelListener.tunnelConnected(ctx);
+            channelListener.tunnelConnected(ctx);
         } else if (status == TunnelMessage.OPEN_TUNNEL_RESPONSE_FAILURE) {
             // 开启隧道失败
             final String openTunnelMessage = new String(msg.getData(), StandardCharsets.UTF_8);
@@ -134,11 +134,11 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         final String localAddr = openTunnelRequest.localAddr;
         final int localPort = openTunnelRequest.localPort;
 
-        localConnectManager.getLocalConnectChannel(localAddr, localPort, tunnelToken, sessionToken,
+        localConnect.getLocalConnectChannel(localAddr, localPort, tunnelToken, sessionToken,
                 ctx.channel(),
-                new LocalConnectManager.GetLocalTunnelChannelCallback() {
+                new LocalConnect.GetLocalContentChannelCallback() {
                     @Override
-                    public void success(@NotNull Channel localTunnelChannel) {
+                    public void success(@NotNull Channel localContentChannel) {
                     }
 
                     @Override
@@ -160,14 +160,14 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).set(sessionToken);
         OpenTunnelRequest openTunnelRequest = ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).get();
         if (openTunnelRequest != null) {
-            localConnectManager.getLocalConnectChannel(
+            localConnect.getLocalConnectChannel(
                     openTunnelRequest.localAddr, openTunnelRequest.localPort,
                     tunnelToken, sessionToken,
                     ctx.channel(),
-                    new LocalConnectManager.GetLocalTunnelChannelCallback() {
+                    new LocalConnect.GetLocalContentChannelCallback() {
                         @Override
-                        public void success(@NotNull Channel localTunnelChannel) {
-                            localTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                        public void success(@NotNull Channel localContentChannel) {
+                            localContentChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                         }
 
                         @Override
@@ -186,8 +186,13 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
+        localConnect.removeLocalConnectChannel(tunnelToken, sessionToken);
+    }
 
-        localConnectManager.removeLocalConnectChannel(tunnelToken, sessionToken);
+    public interface ChannelListener {
+        void channelInactive(@NotNull ChannelHandlerContext ctx) throws Exception;
+
+        void tunnelConnected(@NotNull ChannelHandlerContext ctx);
     }
 
 }

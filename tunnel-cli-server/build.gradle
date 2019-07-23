@@ -13,6 +13,6 @@ dependencies {
     testImplementation "junit:junit:4.12"
 }
 
-project.ext.MainClass = "Bootstrap"
+project.ext.MainClass = "ServerBootstrap"
 
 apply from: "../BuildJar.gradle"

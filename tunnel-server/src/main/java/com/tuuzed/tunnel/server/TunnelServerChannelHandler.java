@@ -25,9 +25,9 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
     @Nullable
     private final OpenTunnelRequestInterceptor openTunnelRequestInterceptor;
     @NotNull
-    private final UserTunnelManager userTunnelManager;
+    private final UserTunnel userTunnelManager;
 
-    public TunnelServerChannelHandler(@NotNull UserTunnelManager manager, @Nullable OpenTunnelRequestInterceptor interceptor) {
+    public TunnelServerChannelHandler(@NotNull UserTunnel manager, @Nullable OpenTunnelRequestInterceptor interceptor) {
         this.userTunnelManager = manager;
         this.openTunnelRequestInterceptor = interceptor;
     }
@@ -131,9 +131,9 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        UserTunnel tunnel = userTunnelManager.getUserTunnelByTunnelToken(tunnelToken);
-        if (tunnel != null) {
-            Channel userTunnelChannel = tunnel.getUserTunnelChannel(tunnelToken, sessionToken);
+        final UserTunnel.Descriptor descriptor = userTunnelManager.getUserTunnelDescriptorByTunnelToken(tunnelToken);
+        if (descriptor != null) {
+            Channel userTunnelChannel = descriptor.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
                 // 解决 HTTP/1.x 数据传输问题
                 userTunnelChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
@@ -149,9 +149,9 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        final UserTunnel userTunnel = userTunnelManager.getUserTunnelByTunnelToken(tunnelToken);
-        if (userTunnel != null) {
-            Channel userTunnelChannel = userTunnel.getUserTunnelChannel(tunnelToken, sessionToken);
+        final UserTunnel.Descriptor descriptor = userTunnelManager.getUserTunnelDescriptorByTunnelToken(tunnelToken);
+        if (descriptor != null) {
+            Channel userTunnelChannel = descriptor.getUserTunnelChannel(tunnelToken, sessionToken);
             if (userTunnelChannel != null) {
                 userTunnelChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
             }
