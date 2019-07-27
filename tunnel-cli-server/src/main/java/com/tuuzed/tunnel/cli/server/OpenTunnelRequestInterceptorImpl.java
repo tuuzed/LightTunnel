@@ -21,12 +21,13 @@ public class OpenTunnelRequestInterceptorImpl implements OpenTunnelRequestInterc
     @NotNull
     @Override
     public OpenTunnelRequest proceed(@NotNull OpenTunnelRequest request) throws TunnelProtocolException {
-        String token = request.arguments.get("token");
+        String token = request.getOption("token");
         if (!this.token.equals(token)) {
             throw new TunnelProtocolException(String.format("request(%s), Bad Token(%s)", request.toString(), token));
         }
-        if (portRule != null && !PortUtils.inPortRule(portRule, request.remotePort)) {
-            throw new TunnelProtocolException(String.format("\"request(%s), remotePort(%s) Not allowed to use.", request.toString(), request.remotePort));
+        final int remotePort = request.getRemotePort();
+        if (portRule != null && !PortUtils.inPortRule(portRule, remotePort)) {
+            throw new TunnelProtocolException(String.format("request(%s), remotePort(%s) Not allowed to use.", request.toString(), remotePort));
         }
         return request;
     }

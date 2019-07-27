@@ -91,7 +91,8 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
                 openTunnelRequest = openTunnelRequestInterceptor.proceed(openTunnelRequest);
             }
             ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).set(openTunnelRequest);
-            final long tunnelToken = userTunnelManager.openUserTunnel(openTunnelRequest.remotePort, ctx.channel());
+            final int remotePort = openTunnelRequest.getRemotePort();
+            final long tunnelToken = userTunnelManager.openUserTunnel(remotePort, ctx.channel());
             ctx.channel().attr(TunnelAttributeKey.TUNNEL_TOKEN).set(tunnelToken);
             final ByteBuf head = Unpooled.buffer(9);
             head.writeByte(TunnelMessage.OPEN_TUNNEL_RESPONSE_SUCCESS);
@@ -117,7 +118,6 @@ class TunnelServerChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
             ).addListener(ChannelFutureListener.CLOSE);
         }
     }
-
 
     private void handleLocalConnectConnectedMessage(ChannelHandlerContext ctx, TunnelMessage msg) {
         // pass

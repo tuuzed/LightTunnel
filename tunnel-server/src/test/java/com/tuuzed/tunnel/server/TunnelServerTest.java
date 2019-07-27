@@ -21,21 +21,17 @@ public class TunnelServerTest {
             @NotNull
             @Override
             public OpenTunnelRequest proceed(@NotNull OpenTunnelRequest request) throws TunnelProtocolException {
-                String token = request.arguments.get("token");
+                final String token = request.getOption("token");
+                final int remotePort = request.getRemotePort();
                 if (!"tk123456".equals(token)) {
                     throw new TunnelProtocolException(String.format("request(%s), Bad Token(%s)", request.toString(), token));
                 }
-                if (!PortUtils.inPortRule("1024-60000", request.remotePort)) {
-                    throw new TunnelProtocolException(String.format("request(%s), remotePort(%s) Not allowed to use.", request.toString(), request.remotePort));
+                if (!PortUtils.inPortRule("1024-60000", remotePort)) {
+                    throw new TunnelProtocolException(String.format("request(%s), remotePort(%s) Not allowed to use.", request.toString(), remotePort));
                 }
-                if (request.remotePort == 20000) {
+                if (remotePort == 20000) {
                     // 替换远程端口
-                    return new OpenTunnelRequest(
-                            request.type,
-                            request.localAddr, request.localPort,
-                            20080,
-                            request.arguments
-                    );
+                    return request.newTcpBuilder(20080).build();
                 }
                 return request;
             }

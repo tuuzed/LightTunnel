@@ -15,7 +15,12 @@ public class TunnelMessageDecoder extends LengthFieldBasedFrameDecoder {
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
-        return TunnelMessageCodec.decode((ByteBuf) super.decode(ctx, in));
+        ByteBuf src = (ByteBuf) super.decode(ctx, in);
+        TunnelMessage message = TunnelMessageCodec.decode(src);
+        if (src != null) {
+            src.release();
+        }
+        return message;
     }
 
 }

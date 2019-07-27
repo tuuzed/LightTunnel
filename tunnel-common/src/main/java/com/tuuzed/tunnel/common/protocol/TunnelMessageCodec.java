@@ -19,8 +19,7 @@ final class TunnelMessageCodec {
     private static final int MESSAGE_HEAD_FIELD_SIZE = 4;
 
     static void encode(@NotNull TunnelMessage msg, @NotNull ByteBuf out) throws Exception {
-        int messageFrameLength = MESSAGE_TYPE_FIELD_SIZE
-                + MESSAGE_HEAD_FIELD_SIZE;
+        int messageFrameLength = MESSAGE_TYPE_FIELD_SIZE + MESSAGE_HEAD_FIELD_SIZE;
         messageFrameLength += msg.getHead().length;
         messageFrameLength += msg.getData().length;
         // 消息帧长度
@@ -57,7 +56,6 @@ final class TunnelMessageCodec {
                 - headLength;
         byte[] data = new byte[dataLength];
         in.readBytes(data);
-        in.release();
         return TunnelMessage.newInstance(type)
                 .setHead(head)
                 .setData(data)

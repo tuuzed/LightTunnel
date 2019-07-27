@@ -11,7 +11,6 @@ import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileReader;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,8 +53,6 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
 
         final String token = cfgOptions.get("token").toString();
 
-        final Map<String, String> arguments = new HashMap<>();
-        arguments.put("token", token);
         @SuppressWarnings("unchecked") final List<Map> tunnels = (List) cfgOptions.get("tunnels");
 
         int workerThreads;
@@ -85,12 +82,13 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
             final int localPort = Integer.parseInt(tunnel.get("local_port").toString());
             final int remotePort = Integer.parseInt(tunnel.get("remote_port").toString());
             final boolean enableSsl = Boolean.parseBoolean(tunnel.get("enable_ssl").toString());
-            OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                    localAddr,
-                    localPort,
-                    remotePort,
-                    arguments
-            );
+
+            OpenTunnelRequest request = OpenTunnelRequest.tcpBuilder(remotePort)
+                    .setLocalAddr(localAddr)
+                    .setLocalPort(localPort)
+                    .setOption("token", token)
+                    .build();
+
             tunnelClient.connect(
                     serverAddr,
                     (enableSsl) ? sslServerPort : serverPort,
@@ -101,18 +99,16 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
-        Map<String, String> arguments = new HashMap<>();
-        arguments.put("token", runOptions.token);
         TunnelClient tunnelClient = new TunnelClient.Builder()
                 .setWorkerThreads(runOptions.workerThreads)
                 .setAutoReconnect(true)
                 .build();
-        OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                runOptions.localAddr,
-                runOptions.localPort,
-                runOptions.remotePort,
-                arguments
-        );
+        OpenTunnelRequest request = OpenTunnelRequest.tcpBuilder(runOptions.remotePort)
+                .setLocalAddr(runOptions.localAddr)
+                .setLocalPort(runOptions.localPort)
+                .setOption("token", runOptions.token)
+                .build();
+
         SslContext context = null;
         if (runOptions.ssl) {
             context = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);

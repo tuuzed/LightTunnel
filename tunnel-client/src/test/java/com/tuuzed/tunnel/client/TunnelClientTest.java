@@ -57,46 +57,51 @@ public class TunnelClientTest {
         SslContext context = SslContexts.forClient("../jks/tunnel-client.jks", "ctunnelpass");
         // error
         manager.connect(serverAddr, serverPort,
-                new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                        "192.168.1.1", 80,
-                        65000,
-                        arguments
-                ),
+                OpenTunnelRequest.tcpBuilder(65000)
+                        .setLocalAddr("192.168.1.1")
+                        .setLocalPort(80)
+                        .setOption("token", "tk123456")
+                        .build()
+                ,
                 context
         );
         // replace
         final TunnelClient.TunnelDescriptor replaceTunnelDescriptor = manager.connect(serverAddr, serverPort,
-                new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                        "192.168.1.1", 80,
-                        20000,
-                        arguments
-                ),
+                OpenTunnelRequest.tcpBuilder(20000)
+                        .setLocalAddr("192.168.1.1")
+                        .setLocalPort(80)
+                        .setOption("token", "tk123456")
+                        .build()
+                ,
                 context
         );
         // http
         manager.connect(serverAddr, serverPort,
-                new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                        "192.168.1.1", 80,
-                        10080,
-                        arguments
-                ),
+                OpenTunnelRequest.tcpBuilder(10080)
+                        .setLocalAddr("192.168.1.1")
+                        .setLocalPort(80)
+                        .setOption("token", "tk123456")
+                        .build()
+                ,
                 context);
         // vnc
         manager.connect(serverAddr, serverPort,
-                new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                        "192.168.1.33", 5900,
-                        15900,
-                        arguments
-                ),
+                OpenTunnelRequest.tcpBuilder(15900)
+                        .setLocalAddr("192.168.1.33")
+                        .setLocalPort(5900)
+                        .setOption("token", "tk123456")
+                        .build()
+                ,
                 context
         );
         // ssh
         manager.connect(serverAddr, serverPort,
-                new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                        "192.168.1.10", 22,
-                        10022,
-                        arguments
-                ),
+                OpenTunnelRequest.tcpBuilder(10022)
+                        .setLocalAddr("192.168.1.10")
+                        .setLocalPort(22)
+                        .setOption("token", "tk123456")
+                        .build()
+                ,
                 context
         );
         new Thread(new Runnable() {

@@ -131,8 +131,8 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).set(sessionToken);
 
         final OpenTunnelRequest openTunnelRequest = ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).get();
-        final String localAddr = openTunnelRequest.localAddr;
-        final int localPort = openTunnelRequest.localPort;
+        final String localAddr = openTunnelRequest.getLocalAddr();
+        final int localPort = openTunnelRequest.getLocalPort();
 
         localConnect.getLocalConnectChannel(localAddr, localPort, tunnelToken, sessionToken,
                 ctx.channel(),
@@ -160,10 +160,10 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<TunnelMessa
         ctx.channel().attr(TunnelAttributeKey.SESSION_TOKEN).set(sessionToken);
         OpenTunnelRequest openTunnelRequest = ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_REQUEST).get();
         if (openTunnelRequest != null) {
+            final String localAddr = openTunnelRequest.getLocalAddr();
+            final int localPort = openTunnelRequest.getLocalPort();
             localConnect.getLocalConnectChannel(
-                    openTunnelRequest.localAddr, openTunnelRequest.localPort,
-                    tunnelToken, sessionToken,
-                    ctx.channel(),
+                    localAddr, localPort, tunnelToken, sessionToken, ctx.channel(),
                     new LocalConnect.GetLocalContentChannelCallback() {
                         @Override
                         public void success(@NotNull Channel localContentChannel) {
