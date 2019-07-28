@@ -26,7 +26,7 @@ apply plugin: 'gitvc-gradle-plugin'
 
 
 group 'com.tuuzed.tunnel'
-version '1.0-SNAPSHOT'
+version = String.valueOf(GitVC.VERSION_NAME)
 
 targetCompatibility = JavaVersion.VERSION_1_7
 sourceCompatibility = JavaVersion.VERSION_1_7
