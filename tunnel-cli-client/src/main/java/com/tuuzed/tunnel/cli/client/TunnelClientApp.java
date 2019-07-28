@@ -57,8 +57,8 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
         final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
         if (!sslOptions.isEmpty()) {
             context = SslContexts.forClient(
-                CfgUtils.getString(globalOptions, "jks", ""),
-                CfgUtils.getString(globalOptions, "storepass", "")
+                CfgUtils.getString(sslOptions, "jks", ""),
+                CfgUtils.getString(sslOptions, "storepass", "")
             );
             sslServerPort = CfgUtils.getInt(sslOptions, "server_addr", 5000);
         }

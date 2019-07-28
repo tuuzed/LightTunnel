@@ -30,5 +30,5 @@ tunnels:
   - proto: http
     enable_ssl: false
     local_addr: 127.0.0.1
-    local_port: 80
-    vhost: 10080
+    local_port: 8080
+    vhost: t1.tunnel.lo
