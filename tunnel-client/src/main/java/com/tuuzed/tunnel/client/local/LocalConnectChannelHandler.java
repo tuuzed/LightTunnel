@@ -32,7 +32,10 @@ public class LocalConnectChannelHandler extends SimpleChannelInboundHandler<Byte
         final Long tunnelToken = ctx.channel().attr(AttributeKeys.TUNNEL_TOKEN).get();
         final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
         if (tunnelToken != null && sessionToken != null) {
-            localConnect.removeLocalChannel(tunnelToken, sessionToken);
+            Channel localChannel = localConnect.removeLocalChannel(tunnelToken, sessionToken);
+            if (localChannel != null) {
+                localChannel.close();
+            }
         }
         final Channel tunnelClientChannel = ctx.channel().attr(AttributeKeys.NEXT_CHANNEL).get();
         if (tunnelClientChannel != null) {
