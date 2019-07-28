@@ -57,7 +57,7 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
                 CfgUtils.getString(sslOptions, "jks", ""),
                 CfgUtils.getString(sslOptions, "storepass", "")
             );
-            sslServerPort = CfgUtils.getInt(sslOptions, "server_addr", 5001);
+            sslServerPort = CfgUtils.getInt(sslOptions, "server_port", 5001);
         }
 
         final TunnelClient tunnelClient = new TunnelClient.Builder()
