@@ -1,8 +1,11 @@
 package com.tuuzed.tunnel.client;
 
+import com.tuuzed.tunnel.client.internal.AttributeKeys;
+import com.tuuzed.tunnel.client.local.LocalConnect;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.*;
+import com.tuuzed.tunnel.common.proto.*;
+import com.tuuzed.tunnel.common.util.Function1;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -24,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
-    private static final AttributeKey<TunnelDescriptor> ATTR_TUNNEL_DESCRIPTOR = AttributeKey.newInstance("tunnel_descriptor");
+    private static final AttributeKey<Descriptor> DESCRIPTOR = AttributeKey.newInstance("$DESCRIPTOR");
 
     @NotNull
     private final NioEventLoopGroup workerGroup;
@@ -37,25 +40,26 @@ public class TunnelClient {
     @NotNull
     private final LocalConnect localConnect;
     @Nullable
-    private final Listener listener;
+    private final TunnelClientListener listener;
     /* 是否自动重新连接 */
     private final boolean autoReconnect;
     @NotNull
-    private final TunnelDescriptorConnectFailureCallback tunnelDescriptorConnectFailureCallback = new TunnelDescriptorConnectFailureCallback() {
+    private final Function1<Descriptor> failureCallback = new Function1<Descriptor>() {
         @Override
-        public void invoke(@NotNull TunnelDescriptor tunnelDescriptor) throws Exception {
-            if (!tunnelDescriptor.hasShutdown() && autoReconnect) {
+        public void invoke(@NotNull Descriptor descriptor) throws Exception {
+            if (!descriptor.isShutdown() && autoReconnect) {
                 // 连接失败，3秒后发起重连
                 TimeUnit.SECONDS.sleep(3);
-                tunnelDescriptor.connect(this);
+                descriptor.connect(this);
             }
         }
     };
 
     private TunnelClient(@NotNull final Builder builder) {
         this.workerGroup = (builder.workerThreads > 0)
-                ? new NioEventLoopGroup(builder.workerThreads)
-                : new NioEventLoopGroup();
+            ? new NioEventLoopGroup(builder.workerThreads)
+            : new NioEventLoopGroup();
+
         this.bootstrap = new Bootstrap();
         this.localConnect = new LocalConnect(workerGroup);
         this.listener = builder.listener;
@@ -63,27 +67,26 @@ public class TunnelClient {
         this.channelListener = new TunnelClientChannelHandler.ChannelListener() {
             @Override
             public void channelInactive(@NotNull ChannelHandlerContext ctx) throws Exception {
-                Boolean openTunnelFailFlag = ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_FLAG).get();
-                String errorMessage = ctx.channel().attr(TunnelAttributeKey.OPEN_TUNNEL_FAIL_MESSAGE).get();
-                TunnelDescriptor tunnelDescriptor = ctx.channel().attr(ATTR_TUNNEL_DESCRIPTOR).get();
-                // 服务器端放回错误响应
-                if (openTunnelFailFlag != null && openTunnelFailFlag) {
-                    if (tunnelDescriptor != null) {
+                final Boolean fatalFlag = ctx.channel().attr(AttributeKeys.FATAL_FLAG).get();
+                final Throwable fatalCause = ctx.channel().attr(AttributeKeys.FATAL_CAUSE).get();
+                final Descriptor descriptor = ctx.channel().attr(DESCRIPTOR).get();
+                if (fatalFlag != null && fatalFlag) {
+                    if (descriptor != null) {
                         if (listener != null) {
-                            listener.onDisconnect(tunnelDescriptor, true);
+                            listener.onDisconnect(descriptor, true);
                         }
                     }
-                    logger.error(errorMessage);
+                    logger.error("{}", fatalCause.getMessage(), fatalCause);
                 } else {
-                    if (tunnelDescriptor != null) {
+                    if (descriptor != null) {
                         if (listener != null) {
-                            listener.onDisconnect(tunnelDescriptor, false);
+                            listener.onDisconnect(descriptor, false);
                         }
-                        if (!tunnelDescriptor.hasShutdown() && autoReconnect) {
+                        if (!descriptor.isShutdown() && autoReconnect) {
                             TimeUnit.SECONDS.sleep(3);
-                            tunnelDescriptor.connect(tunnelDescriptorConnectFailureCallback);
+                            descriptor.connect(failureCallback);
                             if (listener != null) {
-                                listener.onConnecting(tunnelDescriptor, true);
+                                listener.onConnecting(descriptor, true);
                             }
                         }
                     }
@@ -92,45 +95,46 @@ public class TunnelClient {
 
             @Override
             public void tunnelConnected(@NotNull ChannelHandlerContext ctx) {
-                final TunnelDescriptor tunnelDescriptor = ctx.channel().attr(ATTR_TUNNEL_DESCRIPTOR).get();
+                final Descriptor descriptor = ctx.channel().attr(DESCRIPTOR).get();
                 if (listener != null) {
-                    listener.onConnected(tunnelDescriptor);
+                    listener.onConnected(descriptor);
                 }
             }
         };
 
         bootstrap.group(workerGroup)
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline()
-                                .addLast(new TunnelMessageDecoder())
-                                .addLast(new TunnelMessageEncoder())
-                                .addLast(new TunnelHeartbeatHandler())
-                                .addLast(new TunnelClientChannelHandler(
-                                        localConnect, channelListener
-                                ))
-                        ;
-                    }
-                });
+            .channel(NioSocketChannel.class)
+            .handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline()
+                        .addLast(new ProtoMessageDecoder())
+                        .addLast(new ProtoMessageEncoder())
+                        .addLast(new ProtoHeartbeatHandler())
+                        .addLast(new TunnelClientChannelHandler(
+                            localConnect, channelListener
+                        ))
+                    ;
+                }
+            });
     }
 
     @NotNull
-    public TunnelDescriptor connect(
-            @NotNull final String serverAddr,
-            final int serverPort,
-            @NotNull final OpenTunnelRequest request,
-            @Nullable final SslContext context
+    public Descriptor connect(
+        @NotNull final String serverAddr,
+        final int serverPort,
+        @NotNull final ProtoRequest protoRequest,
+        @Nullable final SslContext sslContext
     ) {
-        TunnelDescriptor tunnel = (context == null)
-                ? new TunnelDescriptor(bootstrap, serverAddr, serverPort, request)
-                : new TunnelDescriptor(getSslBootstrap(context), serverAddr, serverPort, request);
-        tunnel.connect(tunnelDescriptorConnectFailureCallback);
+
+        final Descriptor descriptor = (sslContext == null)
+            ? new Descriptor(bootstrap, serverAddr, serverPort, protoRequest)
+            : new Descriptor(getSslBootstrap(sslContext), serverAddr, serverPort, protoRequest);
+        descriptor.connect(failureCallback);
         if (listener != null) {
-            listener.onConnecting(tunnel, false);
+            listener.onConnecting(descriptor, false);
         }
-        return tunnel;
+        return descriptor;
     }
 
     @NotNull
@@ -139,28 +143,28 @@ public class TunnelClient {
         if (sslBootstrap == null) {
             sslBootstrap = new Bootstrap();
             sslBootstrap.group(workerGroup)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline()
-                                    .addLast(new SslHandler(context.newEngine(ch.alloc())))
-                                    .addLast(new TunnelMessageDecoder())
-                                    .addLast(new TunnelMessageEncoder())
-                                    .addLast(new TunnelHeartbeatHandler())
-                                    .addLast(new TunnelClientChannelHandler(
-                                            localConnect, channelListener
-                                    ))
-                            ;
-                        }
-                    });
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline()
+                            .addLast(new SslHandler(context.newEngine(ch.alloc())))
+                            .addLast(new ProtoMessageDecoder())
+                            .addLast(new ProtoMessageEncoder())
+                            .addLast(new ProtoHeartbeatHandler())
+                            .addLast(new TunnelClientChannelHandler(
+                                localConnect, channelListener
+                            ))
+                        ;
+                    }
+                });
             sslBootstraps.put(context, sslBootstrap);
         }
         return sslBootstrap;
     }
 
-    public void shutdown(@NotNull final TunnelDescriptor tunnelDescriptor) {
-        tunnelDescriptor.shutdown();
+    public void shutdown(@NotNull final Descriptor descriptor) {
+        descriptor.shutdown();
     }
 
     public void destroy() {
@@ -169,36 +173,32 @@ public class TunnelClient {
         sslBootstraps.clear();
     }
 
-    private interface TunnelDescriptorConnectFailureCallback {
-        void invoke(@NotNull TunnelDescriptor tunnel) throws Exception;
-    }
-
-    public static class TunnelDescriptor {
+    public static class Descriptor {
+        @NotNull
+        private final Bootstrap bootstrap;
         @NotNull
         private final String serverAddr;
         private final int serverPort;
         @NotNull
-        private final OpenTunnelRequest request;
-        @NotNull
-        private final Bootstrap bootstrap;
+        private final ProtoRequest protoRequest;
         @NotNull
         private final AtomicBoolean shutdownFlag = new AtomicBoolean(false);
         @Nullable
         private ChannelFuture connectChannelFuture;
 
-        private TunnelDescriptor(
-                @NotNull final Bootstrap bootstrap,
-                @NotNull final String serverAddr,
-                final int serverPort,
-                @NotNull final OpenTunnelRequest request
+        private Descriptor(
+            @NotNull final Bootstrap bootstrap,
+            @NotNull final String serverAddr,
+            final int serverPort,
+            @NotNull final ProtoRequest protoRequest
         ) {
             this.bootstrap = bootstrap;
             this.serverAddr = serverAddr;
             this.serverPort = serverPort;
-            this.request = request;
+            this.protoRequest = protoRequest;
         }
 
-        private void connect(@NotNull final TunnelDescriptorConnectFailureCallback callback) {
+        private void connect(@NotNull final Function1<Descriptor> failureCallback) {
             if (shutdownFlag.get()) {
                 logger.warn("This tunnel already shutdown.");
                 return;
@@ -211,52 +211,55 @@ public class TunnelClient {
                     if (future.isSuccess()) {
                         // 连接成功，向服务器发送请求建立隧道消息
                         future.channel().writeAndFlush(
-                                TunnelMessage.newInstance(TunnelMessage.MESSAGE_TYPE_OPEN_TUNNEL_REQUEST)
-                                        .setHead(request.toBytes())
+                            new ProtoMessage(
+                                ProtoMessage.Type.REQUEST,
+                                protoRequest.toBytes(),
+                                null
+                            )
                         );
-                        future.channel().attr(ATTR_TUNNEL_DESCRIPTOR).set(TunnelDescriptor.this);
+                        future.channel().attr(DESCRIPTOR).set(Descriptor.this);
                     } else {
-                        callback.invoke(TunnelDescriptor.this);
+                        failureCallback.invoke(Descriptor.this);
                     }
                 }
             });
         }
 
         @NotNull
-        public String getServerAddr() {
+        public String serverAddr() {
             return serverAddr;
         }
 
-        public int getServerPort() {
+        public int serverPort() {
             return serverPort;
         }
 
         @NotNull
-        public OpenTunnelRequest getRequest() {
-            return request;
+        public ProtoRequest protoRequest() {
+            return protoRequest;
         }
 
-        public boolean hasShutdown() {
+        public boolean isShutdown() {
             return shutdownFlag.get();
         }
 
         public void shutdown() {
             if (connectChannelFuture != null) {
                 shutdownFlag.set(true);
-                connectChannelFuture.channel().attr(ATTR_TUNNEL_DESCRIPTOR).set(null);
+                connectChannelFuture.channel().attr(DESCRIPTOR).set(null);
                 connectChannelFuture.channel().close();
             }
         }
 
         @Override
         public String toString() {
-            return request.toString();
+            return protoRequest.toString();
         }
     }
 
     public static class Builder {
         @Nullable
-        private Listener listener;
+        private TunnelClientListener listener;
         private boolean autoReconnect = true;
         private int workerThreads = -1;
 
@@ -267,7 +270,7 @@ public class TunnelClient {
         }
 
         @NotNull
-        public Builder setListener(@Nullable Listener listener) {
+        public Builder setListener(@Nullable TunnelClientListener listener) {
             this.listener = listener;
             return this;
         }
@@ -284,11 +287,5 @@ public class TunnelClient {
         }
     }
 
-    public interface Listener {
-        void onConnecting(@NotNull TunnelDescriptor tunnelDescriptor, boolean reconnect);
 
-        void onConnected(@NotNull TunnelDescriptor tunnelDescriptor);
-
-        void onDisconnect(@NotNull TunnelDescriptor tunnelDescriptor, boolean deadly);
-    }
 }

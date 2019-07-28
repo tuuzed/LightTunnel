@@ -3,13 +3,14 @@ apply plugin: "java"
 group rootProject.group
 version rootProject.version
 
-targetCompatibility = jdk_version
-sourceCompatibility = jdk_version
+targetCompatibility = rootProject.targetCompatibility
+sourceCompatibility = rootProject.sourceCompatibility
+
 
 dependencies {
     compile project(":tunnel-common")
     compile "args4j:args4j:2.33"
     compile 'com.esotericsoftware.yamlbeans:yamlbeans:1.13'
     // 单元测试
-    testImplementation "junit:junit:4.12"
+    testCompile "junit:junit:4.12"
 }

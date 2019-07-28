@@ -13,5 +13,4 @@ public final class LoggerFactory {
         return LogConfigurator.getCreator().getLogger(name);
     }
 
-
 }

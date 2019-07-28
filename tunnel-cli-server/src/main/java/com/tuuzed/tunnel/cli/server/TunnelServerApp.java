@@ -2,9 +2,10 @@ package com.tuuzed.tunnel.cli.server;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.cli.common.AbstractApp;
+import com.tuuzed.tunnel.cli.common.CfgUtils;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.ssl.SslContexts;
+import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.server.TunnelServer;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
@@ -35,54 +36,40 @@ public class TunnelServerApp extends AbstractApp<RunOptions> {
     }
 
     private void runAppAtCfg(@NotNull final RunOptions runOptions) throws Exception {
-        YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
-        Map cfgOptions = (Map) reader.read();
-        logger.info("cfgOptions: {}", cfgOptions);
-        final String bindAddr = (String) cfgOptions.get("bind_addr");
+        final YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
+        final Map globalOptions = (Map) reader.read();
+        // common
+        final String bindAddr = CfgUtils.getString(globalOptions, "bind_addr", "0.0.0.0");
+        final int bindPort = CfgUtils.getInt(globalOptions, "bind_port", 5000);
+        final String token = CfgUtils.getString(globalOptions, "token", "");
+        final String allowPorts = CfgUtils.getString(globalOptions, "allow_ports", "1024-65535");
+        final int bossThreads = CfgUtils.getInt(globalOptions, "boss_threads", -1);
+        final int workerThreads = CfgUtils.getInt(globalOptions, "worker_threads", -1);
+        // http
+        final Map httpOptions = CfgUtils.getMap(globalOptions, "http");
+        final String httpBindAddr = CfgUtils.getString(httpOptions, "bind_addr", "0.0.0.0");
+        final int httpBindPort = CfgUtils.getInt(httpOptions, "bind_port", 5080);
 
-        int bindPort;
-        try {
-            bindPort = Integer.parseInt(cfgOptions.get("bind_port").toString());
-        } catch (Exception e) {
-            bindPort = 5000;
-        }
-
-        final String token = (String) cfgOptions.get("token");
-        final String allowPorts = (String) cfgOptions.get("allow_ports");
-
-        int bossThreads;
-        try {
-            bossThreads = Integer.parseInt(cfgOptions.get("boss_threads").toString());
-        } catch (Exception e) {
-            bossThreads = -1;
-        }
-
-        int workerThreads;
-        try {
-            workerThreads = Integer.parseInt(cfgOptions.get("worker_threads").toString());
-        } catch (Exception e) {
-            workerThreads = -1;
-        }
 
         final TunnelServer.Builder builder = new TunnelServer.Builder()
-                .setBindAddr(bindAddr.length() == 0 ? null : bindAddr)
-                .setBindPort(bindPort)
-                .setBossThreads(bossThreads)
-                .setWorkerThreads(workerThreads)
-                .setInterceptor(new OpenTunnelRequestInterceptorImpl(token, allowPorts));
-        final Map sslOptions = (Map) cfgOptions.get("ssl");
-        if (sslOptions != null) {
+            .setBindAddr(bindAddr.length() == 0 ? null : bindAddr)
+            .setBindPort(bindPort)
+            .setBossThreads(bossThreads)
+            .setWorkerThreads(workerThreads)
+            .setProtoRequestInterceptor(new ProtoRequestInterceptorImpl(token, allowPorts))
+            // http
+            .setHttpBindAddr(httpBindAddr)
+            .setHttpBindPort(httpBindPort);
+
+        // ssl
+        final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
+        if (!sslOptions.isEmpty()) {
             SslContext context = SslContexts.forServer(
-                    (String) sslOptions.get("jks"),
-                    (String) sslOptions.get("storepass"),
-                    (String) sslOptions.get("keypass")
+                CfgUtils.getString(sslOptions, "jks", ""),
+                CfgUtils.getString(sslOptions, "storepass", ""),
+                CfgUtils.getString(sslOptions, "keypass", "")
             );
-            int sslBindPort;
-            try {
-                sslBindPort = Integer.parseInt(sslOptions.get("bind_port").toString());
-            } catch (Exception e) {
-                sslBindPort = 5001;
-            }
+            final int sslBindPort = CfgUtils.getInt(sslOptions, "bind_port", 5000);
             builder.enableSsl(context, sslBindPort);
         }
         builder.build().start();
@@ -92,20 +79,23 @@ public class TunnelServerApp extends AbstractApp<RunOptions> {
     private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
 
         TunnelServer.Builder builder = new TunnelServer.Builder()
-                .setBindAddr(runOptions.bindAddr)
-                .setBindPort(runOptions.bindPort)
-                .setBossThreads(runOptions.bossThreads)
-                .setWorkerThreads(runOptions.workerThreads)
-                .setInterceptor(new OpenTunnelRequestInterceptorImpl(runOptions.token, runOptions.allowPorts));
+            .setBindAddr(runOptions.bindAddr)
+            .setBindPort(runOptions.bindPort)
+            .setHttpBindAddr(runOptions.httpBindAddr)
+            .setHttpBindPort(runOptions.httpBindPort)
+            .setBossThreads(runOptions.bossThreads)
+            .setWorkerThreads(runOptions.workerThreads)
+            .setProtoRequestInterceptor(new ProtoRequestInterceptorImpl(runOptions.token, runOptions.allowPorts));
         if (runOptions.ssl) {
             SslContext context = SslContexts.forServer(
-                    runOptions.sslJks,
-                    runOptions.sslStorepass,
-                    runOptions.sslKeypass
+                runOptions.sslJks,
+                runOptions.sslStorepass,
+                runOptions.sslKeypass
             );
-            builder.enableSsl(context, runOptions.sslBindPort);
+            builder.enableSsl(context, runOptions.sslBindAddr, runOptions.sslBindPort);
         }
         builder.build().start();
     }
+
 
 }

@@ -1,4 +1,4 @@
-rootProject.name = 'tunnel'
+rootProject.name = 'tunnel-parent'
 
 include 'tunnel-common'
 include 'tunnel-client'
@@ -7,5 +7,3 @@ include 'tunnel-server'
 include 'tunnel-cli-common'
 include 'tunnel-cli-client'
 include 'tunnel-cli-server'
-
-include 'http-tunnel'

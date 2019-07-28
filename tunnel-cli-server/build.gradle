@@ -3,8 +3,8 @@ apply plugin: "java"
 group rootProject.group
 version rootProject.version
 
-targetCompatibility = jdk_version
-sourceCompatibility = jdk_version
+targetCompatibility = rootProject.targetCompatibility
+sourceCompatibility = rootProject.sourceCompatibility
 
 dependencies {
     compile project(":tunnel-cli-common")
@@ -15,4 +15,4 @@ dependencies {
 
 project.ext.MainClass = "ServerBootstrap"
 
-apply from: "../BuildJar.gradle"
+apply from: "../gradle/BuildJar.gradle"

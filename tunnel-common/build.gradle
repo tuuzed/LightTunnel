@@ -1,22 +1,24 @@
 apply plugin: "java"
-apply plugin: "maven"
 
 group rootProject.group
 version rootProject.version
 
-targetCompatibility = jdk_version
-sourceCompatibility = jdk_version
+targetCompatibility = rootProject.targetCompatibility
+sourceCompatibility = rootProject.sourceCompatibility
 
 dependencies {
     compile "org.jetbrains:annotations:13.0"
+    def netty_version = '4.1.37.Final'
     compile "io.netty:netty-buffer:$netty_version"
     compile "io.netty:netty-codec:$netty_version"
+    compile "io.netty:netty-codec-http:$netty_version"
     compile "io.netty:netty-common:$netty_version"
     compile "io.netty:netty-handler:$netty_version"
     compile "io.netty:netty-resolver:$netty_version"
     compile "io.netty:netty-transport:$netty_version"
     // 单元测试
-    testImplementation "junit:junit:4.12"
+    testCompile "junit:junit:4.12"
 }
 
-apply from: "../BuildPackage.gradle"
+
+apply from: "../gradle/BuildPackage.gradle"
