@@ -47,7 +47,7 @@ public final class CfgUtils {
             return def;
         }
         try {
-            return Integer.parseInt(src.get(key).toString());
+            return Integer.parseInt(o.toString());
         } catch (Exception e) {
             return def;
         }
@@ -59,7 +59,7 @@ public final class CfgUtils {
             return def;
         }
         try {
-            return Boolean.parseBoolean(src.get(key).toString());
+            return Boolean.parseBoolean(o.toString());
         } catch (Exception e) {
             return def;
         }

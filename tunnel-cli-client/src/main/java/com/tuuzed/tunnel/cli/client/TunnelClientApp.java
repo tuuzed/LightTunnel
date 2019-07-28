@@ -49,15 +49,15 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
         final int workerThreads = CfgUtils.getInt(globalOptions, "worker_threads", -1);
 
         // ssl
-        SslContext context = null;
+        SslContext sslContext = null;
         int sslServerPort = serverPort;
         final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
         if (!sslOptions.isEmpty()) {
-            context = SslContexts.forClient(
+            sslContext = SslContexts.forClient(
                 CfgUtils.getString(sslOptions, "jks", ""),
                 CfgUtils.getString(sslOptions, "storepass", "")
             );
-            sslServerPort = CfgUtils.getInt(sslOptions, "server_addr", 5000);
+            sslServerPort = CfgUtils.getInt(sslOptions, "server_addr", 5001);
         }
 
         final TunnelClient tunnelClient = new TunnelClient.Builder()
@@ -101,7 +101,7 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
                     serverAddr,
                     (enableSsl) ? sslServerPort : serverPort,
                     protoRequest,
-                    (enableSsl) ? context : null
+                    (enableSsl) ? sslContext : null
                 );
             }
         }
@@ -137,12 +137,12 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
         }
 
 
-        SslContext context = null;
+        SslContext sslContext = null;
         if (runOptions.ssl) {
-            context = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);
+            sslContext = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);
         }
         if (protoRequest != null) {
-            tunnelClient.connect(runOptions.serverAddr, runOptions.serverPort, protoRequest, context);
+            tunnelClient.connect(runOptions.serverAddr, runOptions.serverPort, protoRequest, sslContext);
         }
     }
 

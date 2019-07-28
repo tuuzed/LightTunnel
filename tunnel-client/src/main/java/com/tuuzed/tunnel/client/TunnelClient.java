@@ -121,8 +121,7 @@ public class TunnelClient {
 
     @NotNull
     public Descriptor connect(
-        @NotNull final String serverAddr,
-        final int serverPort,
+        @NotNull final String serverAddr, final int serverPort,
         @NotNull final ProtoRequest protoRequest,
         @Nullable final SslContext sslContext
     ) {
@@ -138,8 +137,8 @@ public class TunnelClient {
     }
 
     @NotNull
-    private Bootstrap getSslBootstrap(@NotNull final SslContext context) {
-        Bootstrap sslBootstrap = sslBootstraps.get(context);
+    private Bootstrap getSslBootstrap(@NotNull final SslContext sslContext) {
+        Bootstrap sslBootstrap = sslBootstraps.get(sslContext);
         if (sslBootstrap == null) {
             sslBootstrap = new Bootstrap();
             sslBootstrap.group(workerGroup)
@@ -148,7 +147,7 @@ public class TunnelClient {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline()
-                            .addLast(new SslHandler(context.newEngine(ch.alloc())))
+                            .addLast(new SslHandler(sslContext.newEngine(ch.alloc())))
                             .addLast(new ProtoMessageDecoder())
                             .addLast(new ProtoMessageEncoder())
                             .addLast(new ProtoHeartbeatHandler())
@@ -158,7 +157,7 @@ public class TunnelClient {
                         ;
                     }
                 });
-            sslBootstraps.put(context, sslBootstrap);
+            sslBootstraps.put(sslContext, sslBootstrap);
         }
         return sslBootstrap;
     }
