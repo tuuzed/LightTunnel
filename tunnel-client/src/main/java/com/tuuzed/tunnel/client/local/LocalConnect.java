@@ -63,17 +63,17 @@ public class LocalConnect {
                 if (localChannel != null && localChannel.isActive()) {
                     callback.success(localChannel);
                     future.channel().close();
+                    return;
+                }
+                removeLocalChannel(tunnelToken, sessionToken);
+                if (future.isSuccess()) {
+                    future.channel().attr(AttributeKeys.TUNNEL_TOKEN).set(tunnelToken);
+                    future.channel().attr(AttributeKeys.SESSION_TOKEN).set(sessionToken);
+                    future.channel().attr(AttributeKeys.NEXT_CHANNEL).set(tunnelClientChannel);
+                    putCachedChannelSync(tunnelToken, sessionToken, future.channel());
+                    callback.success(future.channel());
                 } else {
-                    removeLocalChannel(tunnelToken, sessionToken);
-                    if (future.isSuccess()) {
-                        future.channel().attr(AttributeKeys.TUNNEL_TOKEN).set(tunnelToken);
-                        future.channel().attr(AttributeKeys.SESSION_TOKEN).set(sessionToken);
-                        future.channel().attr(AttributeKeys.NEXT_CHANNEL).set(tunnelClientChannel);
-                        putCachedChannelSync(tunnelToken, sessionToken, future.channel());
-                        callback.success(future.channel());
-                    } else {
-                        callback.error(future.cause());
-                    }
+                    callback.error(future.cause());
                 }
             }
         });

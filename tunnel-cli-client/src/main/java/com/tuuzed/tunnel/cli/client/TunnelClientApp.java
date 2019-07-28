@@ -42,16 +42,13 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
         final YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
         final Map globalOptions = (Map) reader.read();
 
+        // common
         final String serverAddr = CfgUtils.getString(globalOptions, "server_addr", "0.0.0.0");
         final int serverPort = CfgUtils.getInt(globalOptions, "server_addr", 5000);
         final String token = CfgUtils.getString(globalOptions, "token", "");
         final int workerThreads = CfgUtils.getInt(globalOptions, "worker_threads", -1);
 
-        final TunnelClient tunnelClient = new TunnelClient.Builder()
-            .setWorkerThreads(workerThreads)
-            .setAutoReconnect(true)
-            .build();
-
+        // ssl
         SslContext context = null;
         int sslServerPort = serverPort;
         final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
@@ -62,6 +59,11 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
             );
             sslServerPort = CfgUtils.getInt(sslOptions, "server_addr", 5000);
         }
+
+        final TunnelClient tunnelClient = new TunnelClient.Builder()
+            .setWorkerThreads(workerThreads)
+            .setAutoReconnect(true)
+            .build();
 
         final List<Map> tunnels = CfgUtils.getListMap(globalOptions, "tunnels");
 

@@ -17,7 +17,7 @@ public final class CfgUtils {
         if (o instanceof String) {
             return (String) o;
         } else {
-            return def;
+            return o.toString();
         }
     }
 
