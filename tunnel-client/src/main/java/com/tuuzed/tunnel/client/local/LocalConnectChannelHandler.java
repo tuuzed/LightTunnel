@@ -8,7 +8,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,31 +35,31 @@ public class LocalConnectChannelHandler extends SimpleChannelInboundHandler<Byte
             if (localChannel != null) {
                 localChannel.close();
             }
-        }
-        final Channel tunnelClientChannel = ctx.channel().attr(AttributeKeys.NEXT_CHANNEL).get();
-        if (tunnelClientChannel != null) {
-            tunnelClientChannel.writeAndFlush(
-                new ProtoMessage(ProtoMessage.Type.LOCAL_DISCONNECT,
-                    Unpooled.copyLong(tunnelToken, sessionToken).array(),
-                    null
-                )
-            );
+            final Channel tunnelClientChannel = ctx.channel().attr(AttributeKeys.NEXT_CHANNEL).get();
+            if (tunnelClientChannel != null) {
+                tunnelClientChannel.writeAndFlush(
+                    new ProtoMessage(ProtoMessage.Type.LOCAL_DISCONNECT,
+                        Unpooled.copyLong(tunnelToken, sessionToken).array(),
+                        null
+                    )
+                );
+            }
         }
         super.channelInactive(ctx);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
+        logger.trace("exceptionCaught: {}", ctx, cause);
         ctx.close();
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-
         final Long tunnelToken = ctx.channel().attr(AttributeKeys.TUNNEL_TOKEN).get();
         final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
         final Channel tunnelClientChannel = ctx.channel().attr(AttributeKeys.NEXT_CHANNEL).get();
+
         if (tunnelToken != null && sessionToken != null && tunnelClientChannel != null) {
             final byte[] data = new byte[msg.readableBytes()];
             msg.readBytes(data);
@@ -71,14 +70,6 @@ public class LocalConnectChannelHandler extends SimpleChannelInboundHandler<Byte
                 )
             );
         }
-    }
 
-    @Override
-    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        final Channel tunnelClientChannel = ctx.channel().attr(AttributeKeys.NEXT_CHANNEL).get();
-        if (tunnelClientChannel != null) {
-            tunnelClientChannel.config().setOption(ChannelOption.AUTO_READ, ctx.channel().isWritable());
-        }
-        super.channelWritabilityChanged(ctx);
     }
 }

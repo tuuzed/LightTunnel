@@ -50,37 +50,37 @@ public class TunnelClientTest {
         final String serverAddr = "127.0.0.1";
         final int serverPort = 5001;
         final SslContext sslContext = SslContexts.forClient("../resources/jks/tunnel-client.jks", "ctunnelpass");
-//        // error
-//        manager.connect(serverAddr, serverPort,
-//            ProtoRequest.tcpBuilder(65000)
-//                .setLocalAddr("192.168.1.1")
-//                .setLocalPort(80)
-//                .setOption("token", "tk123456")
-//                .build()
-//            ,
-//            context
-//        );
-//        // replace
-//        final TunnelClient.Descriptor replaceDescriptor = manager.connect(serverAddr, serverPort,
-//            ProtoRequest.tcpBuilder(20000)
-//                .setLocalAddr("192.168.1.1")
-//                .setLocalPort(80)
-//                .setOption("token", "tk123456")
-//                .build()
-//            ,
-//            context
-//        );
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    Thread.sleep(6_000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                replaceDescriptor.shutdown();
-//            }
-//        }).start();
+        // error
+        manager.connect(serverAddr, serverPort,
+            ProtoRequest.tcpBuilder(65000)
+                .setLocalAddr("192.168.1.1")
+                .setLocalPort(80)
+                .setOption("token", "tk123456")
+                .build()
+            ,
+            sslContext
+        );
+        // replace
+        final TunnelClient.Descriptor replaceDescriptor = manager.connect(serverAddr, serverPort,
+            ProtoRequest.tcpBuilder(20000)
+                .setLocalAddr("192.168.1.1")
+                .setLocalPort(80)
+                .setOption("token", "tk123456")
+                .build()
+            ,
+            sslContext
+        );
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(6_000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                replaceDescriptor.shutdown();
+            }
+        }).start();
         // tcp-http
         manager.connect(serverAddr, serverPort,
             ProtoRequest.tcpBuilder(10080)
@@ -103,7 +103,7 @@ public class TunnelClientTest {
         // ssh
         manager.connect(serverAddr, serverPort,
             ProtoRequest.tcpBuilder(10022)
-                .setLocalAddr("139.199.221.244")
+                .setLocalAddr("192.168.1.10")
                 .setLocalPort(22)
                 .setOption("token", "tk123456")
                 .build()
@@ -113,8 +113,8 @@ public class TunnelClientTest {
         // vhost-http
         manager.connect(serverAddr, serverPort,
             ProtoRequest.httpBuilder("t1.tunnel.lo")
-                .setLocalAddr("127.0.0.1")
-                .setLocalPort(8080)
+                .setLocalAddr("192.168.1.1")
+                .setLocalPort(80)
                 .setOption("token", "tk123456")
                 .build()
             ,
@@ -123,8 +123,8 @@ public class TunnelClientTest {
         // vhost-http
         manager.connect(serverAddr, serverPort,
             ProtoRequest.httpBuilder("t2.tunnel.lo")
-                .setLocalAddr("127.0.0.1")
-                .setLocalPort(9090)
+                .setLocalAddr("119.23.106.133")
+                .setLocalPort(5020)
                 .setOption("token", "tk123456")
                 .build()
             ,

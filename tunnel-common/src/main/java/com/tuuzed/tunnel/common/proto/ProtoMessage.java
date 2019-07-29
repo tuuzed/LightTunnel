@@ -47,8 +47,8 @@ public class ProtoMessage {
     public String toString() {
         return "ProtoMessage{" +
             "type=" + type +
-            ", head=" + Arrays.toString(getHead()) +
-            ", data=" + Arrays.toString(getData()) +
+            ", head=head(" + getHead().length + ")" +
+            ", data=data(" + getData().length + ")" +
             '}';
     }
 

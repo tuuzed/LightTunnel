@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.server.http;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import com.tuuzed.tunnel.server.tcp.TcpServer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -50,7 +51,16 @@ public class HttpServer {
     }
 
 
+    public boolean isRegistered(@NotNull String vhost) {
+        synchronized (descriptorsLock) {
+            return vhostDescriptors.containsKey(vhost);
+        }
+    }
+
     public void register(@NotNull String vhost, @NotNull ServerTunnelSessions tunnelSessions) throws Exception {
+        if (isRegistered(vhost)) {
+            throw new ProtoException("vhost(" + vhost + ") already used");
+        }
         final Descriptor descriptor = new Descriptor(vhost, tunnelSessions);
         synchronized (descriptorsLock) {
             tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);

@@ -45,7 +45,7 @@ public class TunnelServerTest {
         );
         this.tunnelServer = new TunnelServer.Builder()
             .setBossThreads(1)
-            .setWorkerThreads(Runtime.getRuntime().availableProcessors() * 2 + 1)
+            .setWorkerThreads(-1)
             .setBindPort(5000)
             .enableSsl(context, 5001)
             .setHttpBindPort(5080)

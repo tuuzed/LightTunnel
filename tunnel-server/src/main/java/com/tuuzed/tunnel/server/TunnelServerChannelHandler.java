@@ -62,7 +62,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.trace("exceptionCaught: ", cause);
+        logger.trace("exceptionCaught: {}", ctx, cause);
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 
@@ -133,13 +133,13 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
             case HTTP:
                 try {
                     protoRequest = protoRequestInterceptor.proceed(protoRequest);
+                    if (httpServer.isRegistered(protoRequest.vhost())) {
+                        throw new ProtoException("vhost(" + protoRequest.vhost() + ") already used");
+                    }
                     final long tunnelToken = tunnelTokenProducer.nextToken();
                     final ServerTunnelSessions tunnelSessions = new ServerTunnelSessions(tunnelToken, protoRequest, ctx.channel());
-
                     ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(tunnelSessions);
-
                     httpServer.register(protoRequest.vhost(), tunnelSessions);
-
                     final ByteBuf head = Unpooled.buffer(9);
                     head.writeBoolean(true);
                     head.writeLong(tunnelToken);
@@ -214,15 +214,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();
         head.release();
-        final TcpServer.Descriptor descriptor = tcpServer.getDescriptorTunnelToken(tunnelToken);
-        if (descriptor != null) {
-            final Channel sessionChannel = descriptor.tunnelSessions().getSessionChannel(sessionToken);
-            if (sessionChannel != null) {
-                // 解决 HTTP/1.x 数据传输问题
-                sessionChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-            }
+
+        ServerTunnelSessions tunnelSessions = ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).get();
+        if (tunnelSessions == null) {
+            return;
+        }
+        final Channel sessionChannel = tunnelSessions.getSessionChannel(sessionToken);
+        if (sessionChannel != null) {
+            // 解决 HTTP/1.x 数据传输问题
+            sessionChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
     }
-
 
 }
