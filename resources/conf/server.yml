@@ -18,7 +18,7 @@ worker_threads: -1
 ssl:
   bind_addr: 0.0.0.0
   bind_port: 5001
-  jks: tunnel-server.jks
+  jks: server.jks
   storepass: stunnelpass
   keypass: stunnelpass
 

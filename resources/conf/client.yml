@@ -7,7 +7,7 @@ token: tk123456
 # ssl
 ssl:
   server_port: 5001
-  jks: tunnel-client.jks
+  jks: client.jks
   storepass: ctunnelpass
 
 # 线程数量
@@ -15,20 +15,38 @@ worker_threads: -1
 
 # 隧道列表
 tunnels:
+
+  # tcp-http
   - proto: tcp
     enable_ssl: true
-    local_addr: 127.0.0.1
+    local_addr: 192.168.1.1
     local_port: 80
     remote_port: 10080
 
+  # vnc
   - proto: tcp
     enable_ssl: false
     local_addr: 127.0.0.1
-    local_port: 8080
-    remote_port: 18080
+    local_port: 5900
+    remote_port: 15900
 
+  # ssh
+  - proto: tcp
+    enable_ssl: false
+    local_addr: 192.168.1.10
+    local_port: 22
+    remote_port: 10022
+
+  # http-vhost
   - proto: http
     enable_ssl: false
-    local_addr: 127.0.0.1
-    local_port: 8080
+    local_addr: 192.168.1.1
+    local_port: 80
     vhost: t1.tunnel.lo
+
+  # http-vhost
+  - proto: http
+    enable_ssl: false
+    local_addr: apache.org
+    local_port: 80
+    vhost: t2.tunnel.lo

@@ -40,9 +40,7 @@ public class TunnelServerTest {
                 return request;
             }
         };
-        SslContext context = SslContexts.forServer(
-            "../resources/jks/tunnel-server.jks", "stunnelpass", "stunnelpass"
-        );
+        SslContext context = SslContexts.forServer("../resources/jks/server.jks", "stunnelpass", "stunnelpass");
         this.tunnelServer = new TunnelServer.Builder()
             .setBossThreads(1)
             .setWorkerThreads(-1)

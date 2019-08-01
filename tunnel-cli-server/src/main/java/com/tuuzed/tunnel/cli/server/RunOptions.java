@@ -25,29 +25,29 @@ class RunOptions {
     public int workerThreads = -1;
 
     // http
-    @Option(name = "-http-b", aliases = {"--http-bind-addr"}, help = true, metaVar = "<string>", usage = "HTTP绑定地址")
+    @Option(name = "-hb", aliases = {"--http-bind-addr"}, help = true, metaVar = "<string>", usage = "HTTP绑定地址")
     public String httpBindAddr = "0.0.0.0";
 
-    @Option(name = "-http-p", aliases = {"--http-bind-port"}, help = true, metaVar = "<int>", usage = "HTTP绑定端口")
+    @Option(name = "-hp", aliases = {"--http-bind-port"}, help = true, metaVar = "<int>", usage = "HTTP绑定端口")
     public int httpBindPort = 5001;
 
     // ssl
     @Option(name = "-ssl", aliases = {"--ssl"}, help = true, metaVar = "<boolean>", usage = "是否启用SSL")
     public boolean ssl = false;
 
-    @Option(name = "-ssl-b", aliases = {"--ssl-bind-addr"}, help = true, metaVar = "<string>", usage = "SSL绑定地址")
+    @Option(name = "-sb", aliases = {"--ssl-bind-addr"}, help = true, metaVar = "<string>", usage = "SSL绑定地址")
     public String sslBindAddr = "0.0.0.0";
 
-    @Option(name = "-ssl-p", aliases = {"--ssl-bind-port"}, help = true, metaVar = "<int>", usage = "SSL绑定端口")
+    @Option(name = "-sp", aliases = {"--ssl-bind-port"}, help = true, metaVar = "<int>", usage = "SSL绑定端口")
     public int sslBindPort = 5001;
 
-    @Option(name = "-ssl-jks", aliases = {"--ssl-jks"}, help = true, metaVar = "<string>", usage = "jks签名文件")
+    @Option(name = "-sj", aliases = {"--ssl-jks"}, help = true, metaVar = "<string>", usage = "jks签名文件")
     public String sslJks = "";
 
-    @Option(name = "-ssl-storepass", aliases = {"--ssl-storepass"}, help = true, metaVar = "<string>", usage = "jks签名文件Store密码")
+    @Option(name = "-ss", aliases = {"--ssl-storepass"}, help = true, metaVar = "<string>", usage = "jks签名文件Store密码")
     public String sslStorepass = "";
 
-    @Option(name = "-ssl-keypass", aliases = {"--ssl-keypass"}, help = true, metaVar = "<string>", usage = "jks签名文件Key密码")
+    @Option(name = "-sk", aliases = {"--ssl-keypass"}, help = true, metaVar = "<string>", usage = "jks签名文件Key密码")
     public String sslKeypass = "";
 
 }

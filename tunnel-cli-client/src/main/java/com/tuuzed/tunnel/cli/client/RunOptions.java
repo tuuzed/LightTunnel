@@ -8,18 +8,17 @@ class RunOptions {
     @Option(name = "-c", aliases = {"--config-file"}, help = true, metaVar = "<string>", usage = "配置文件，当设置了配置文件时优先使用配置文件配置项")
     public String configFile = "";
 
-    @Option(name = "-proto", aliases = {"--proto"}, help = true, metaVar = "<string>", usage = "协议")
+    @Option(name = "-pt", aliases = {"--proto"}, help = true, metaVar = "<string>", usage = "协议, tcp|http")
     public String proto = "tcp";
-
 
     // ssl
     @Option(name = "-ssl", aliases = {"--ssl"}, help = true, metaVar = "<boolean>", usage = "是否启用SSL")
     public boolean ssl = false;
 
-    @Option(name = "-ssl-jks", aliases = {"--ssl-jks"}, help = true, metaVar = "<string>", usage = "jks签名文件")
+    @Option(name = "-sj", aliases = {"--ssl-jks"}, help = true, metaVar = "<string>", usage = "jks签名文件")
     public String sslJks = "";
 
-    @Option(name = "-ssl-storepass", aliases = {"--ssl-storepass"}, help = true, metaVar = "<string>", usage = "jks签名文件Store密码")
+    @Option(name = "-ss", aliases = {"--ssl-storepass"}, help = true, metaVar = "<string>", usage = "jks签名文件Store密码")
     public String sslStorepass = "";
 
     // tcp

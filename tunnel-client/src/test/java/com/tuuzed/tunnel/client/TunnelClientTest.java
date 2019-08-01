@@ -49,7 +49,7 @@ public class TunnelClientTest {
     public void start() throws Exception {
         final String serverAddr = "127.0.0.1";
         final int serverPort = 5001;
-        final SslContext sslContext = SslContexts.forClient("../resources/jks/tunnel-client.jks", "ctunnelpass");
+        final SslContext sslContext = SslContexts.forClient("../resources/jks/client.jks", "ctunnelpass");
         // error
         manager.connect(serverAddr, serverPort,
             ProtoRequest.tcpBuilder(65000)
@@ -123,8 +123,8 @@ public class TunnelClientTest {
         // vhost-http
         manager.connect(serverAddr, serverPort,
             ProtoRequest.httpBuilder("t2.tunnel.lo")
-                .setLocalAddr("119.23.106.133")
-                .setLocalPort(5020)
+                .setLocalAddr("apache.org")
+                .setLocalPort(80)
                 .setOption("token", "tk123456")
                 .build()
             ,
