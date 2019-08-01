@@ -26,7 +26,7 @@ tunnels:
   # vnc
   - proto: tcp
     enable_ssl: false
-    local_addr: 127.0.0.1
+    local_addr: 192.168.1.33
     local_port: 5900
     remote_port: 15900
 
