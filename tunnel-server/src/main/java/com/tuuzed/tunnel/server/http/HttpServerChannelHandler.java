@@ -73,6 +73,9 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /**
+     * 处理读取到的HttpRequest类型的消息
+     */
     private void channelReadHttpRequest(ChannelHandlerContext ctx, HttpRequest msg) throws Exception {
         final String host = msg.headers().get(HttpHeaderNames.HOST);
         final String vhost = host.split(":")[0];
@@ -82,7 +85,6 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             return;
-
         }
         final long sessionToken = descriptor.tunnelSessions().putSessionChannel(ctx.channel());
         ctx.channel().attr(AttributeKeys.SESSION_TOKEN).set(sessionToken);
@@ -98,6 +100,9 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
         );
     }
 
+    /**
+     * 处理读取到的HttpContent类型的消息
+     */
     private void channelReadHttpContent(ChannelHandlerContext ctx, HttpContent msg) throws Exception {
         final String vhost = ctx.channel().attr(AttributeKeys.VHOST).get();
         final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();

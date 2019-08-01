@@ -73,11 +73,15 @@ public class HttpServer {
     }
 
 
-    public void unregister(long tunnelToken) {
+    public void unregister(@Nullable String vhost) {
+        if (vhost == null) {
+            return;
+        }
         synchronized (descriptorsLock) {
-            final Descriptor descriptor = tunnelTokenDescriptors.remove(tunnelToken);
+            final Descriptor descriptor = vhostDescriptors.remove(vhost);
             if (descriptor != null) {
-                vhostDescriptors.remove(descriptor.vhost);
+                tunnelTokenDescriptors.remove(descriptor.tunnelSessions.tunnelToken());
+                descriptor.close();
                 logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions.protoRequest());
             }
         }
@@ -131,6 +135,10 @@ public class HttpServer {
         @NotNull
         public ServerTunnelSessions tunnelSessions() {
             return tunnelSessions;
+        }
+
+        private void close() {
+            tunnelSessions.destroy();
         }
 
         @Override

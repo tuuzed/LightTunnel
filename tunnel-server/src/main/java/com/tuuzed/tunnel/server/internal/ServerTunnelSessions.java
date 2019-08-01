@@ -1,10 +1,13 @@
 package com.tuuzed.tunnel.server.internal;
 
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,14 +23,17 @@ public class ServerTunnelSessions {
     @NotNull
     private final Map<Long, Channel> cachedSessionChannels;
 
-    public ServerTunnelSessions(long tunnelToken, @NotNull ProtoRequest protoRequest, @NotNull Channel tunnelChannel) {
+    public ServerTunnelSessions(
+        long tunnelToken,
+        @NotNull ProtoRequest protoRequest,
+        @NotNull Channel tunnelChannel
+    ) {
         this.tunnelToken = tunnelToken;
         this.protoRequest = protoRequest;
         this.tunnelChannel = tunnelChannel;
         this.sessionTokenProducer = new TokenProducer();
         this.cachedSessionChannels = new ConcurrentHashMap<>();
     }
-
 
     public long tunnelToken() {
         return tunnelToken;
@@ -42,16 +48,6 @@ public class ServerTunnelSessions {
     public Channel tunnelChannel() {
         return tunnelChannel;
     }
-
-
-    public boolean isTcp() {
-        return protoRequest.isTcp();
-    }
-
-    public boolean isHttp() {
-        return protoRequest.isHttp();
-    }
-
 
     public long putSessionChannel(@NotNull Channel channel) {
         final long sessionToken = sessionTokenProducer.nextToken();
@@ -76,7 +72,17 @@ public class ServerTunnelSessions {
     }
 
     public void destroy() {
-        cachedSessionChannels.clear();
+        synchronized (cachedSessionChannels) {
+            shutdownAllSessionChannelUnsafe();
+            cachedSessionChannels.clear();
+        }
+    }
+
+    private void shutdownAllSessionChannelUnsafe() {
+        final Collection<Channel> channels = cachedSessionChannels.values();
+        for (Channel ch : channels) {
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
     }
 
 }

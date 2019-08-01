@@ -32,7 +32,6 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
     @NotNull
     private final TokenProducer tunnelTokenProducer;
 
-
     public TunnelServerChannelHandler(
         @NotNull TcpServer tcpServer,
         @NotNull HttpServer httpServer,
@@ -45,15 +44,27 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         this.tunnelTokenProducer = tunnelTokenProducer;
     }
 
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        /*
+         * 隧道连接断开
+         */
+        logger.trace("channelInactive: {}", ctx);
         final ServerTunnelSessions tunnelSessions = ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).get();
         if (tunnelSessions != null) {
-            final long tunnelToken = tunnelSessions.tunnelToken();
-            if (tunnelSessions.isHttp()) {
-                httpServer.unregister(tunnelToken);
-            } else if (tunnelSessions.isTcp()) {
-                tcpServer.shutdownTunnel(tunnelToken);
+            final ProtoRequest.Proto proto = tunnelSessions.protoRequest().proto();
+            switch (proto) {
+                case TCP:
+                    final long tunnelToken = tunnelSessions.tunnelToken();
+                    tcpServer.shutdownTunnel(tunnelToken);
+                    break;
+                case HTTP:
+                    final String vhost = tunnelSessions.protoRequest().vhost();
+                    httpServer.unregister(vhost);
+                    break;
+                default:
+                    break;
             }
         }
         ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(null);
@@ -89,10 +100,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         }
     }
 
+    /**
+     * 处理Ping消息
+     */
     private void handlePingMessage(ChannelHandlerContext ctx, ProtoMessage msg) throws Exception {
         ctx.writeAndFlush(new ProtoMessage(ProtoMessage.Type.HEARTBEAT_PONG, null, null));
     }
 
+    /**
+     * 处理请求开启隧道消息
+     */
     private void handleRequestMessage(ChannelHandlerContext ctx, ProtoMessage msg) throws Exception {
         ProtoRequest protoRequest = ProtoRequest.fromBytes(msg.getHead());
         switch (protoRequest.proto()) {
@@ -178,6 +195,9 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         }
     }
 
+    /**
+     * 处理数据传输消息
+     */
     private void handleTransferMessage(ChannelHandlerContext ctx, ProtoMessage msg) {
         final ServerTunnelSessions tunnelSessions = ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).get();
         if (tunnelSessions != null) {
@@ -185,30 +205,42 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
             final long tunnelToken = head.readLong();
             final long sessionToken = head.readLong();
             head.release();
-            if (tunnelSessions.isTcp()) {
-                final TcpServer.Descriptor descriptor = tcpServer.getDescriptorTunnelToken(tunnelToken);
-                if (descriptor != null) {
-                    final Channel sessionChannel = descriptor.tunnelSessions().getSessionChannel(sessionToken);
-                    if (sessionChannel != null) {
-                        sessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+            final ProtoRequest.Proto proto = tunnelSessions.protoRequest().proto();
+            switch (proto) {
+                case TCP:
+                    final TcpServer.Descriptor tcpDescriptor = tcpServer.getDescriptorTunnelToken(tunnelToken);
+                    if (tcpDescriptor != null) {
+                        final Channel sessionChannel = tcpDescriptor.tunnelSessions().getSessionChannel(sessionToken);
+                        if (sessionChannel != null) {
+                            sessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                        }
                     }
-                }
-            } else if (tunnelSessions.isHttp()) {
-                final HttpServer.Descriptor descriptor = httpServer.getDescriptorTunnelToken(tunnelToken);
-                if (descriptor != null) {
-                    final Channel sessionChannel = descriptor.tunnelSessions().getSessionChannel(sessionToken);
-                    if (sessionChannel != null) {
-                        sessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                    break;
+                case HTTP:
+                    final HttpServer.Descriptor httpDescriptor = httpServer.getDescriptorTunnelToken(tunnelToken);
+                    if (httpDescriptor != null) {
+                        final Channel sessionChannel = httpDescriptor.tunnelSessions().getSessionChannel(sessionToken);
+                        if (sessionChannel != null) {
+                            sessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                        }
                     }
-                }
+                    break;
+                default:
+                    break;
             }
         }
     }
 
+    /**
+     * 处理本地连接成功消息
+     */
     private void handleLocalConnectedMessage(ChannelHandlerContext ctx, ProtoMessage msg) {
         // 无需操作
     }
 
+    /**
+     * 处理本地连接断开消息
+     */
     private void handleLocalDisconnectMessage(ChannelHandlerContext ctx, ProtoMessage msg) {
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
