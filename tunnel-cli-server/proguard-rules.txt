@@ -21,10 +21,10 @@
 
 
 # Args4j
-#-keep class org.kohsuke.args4j.** { *;}
-#-dontwarn org.kohsuke.args4j.**
--keepclasseswithmembers class org.kohsuke.args4j.** { *;}
+-keep class org.kohsuke.args4j.** { *;}
 -dontwarn org.kohsuke.args4j.**
+#-keepclasseswithmembers class org.kohsuke.args4j.** { *;}
+#-dontwarn org.kohsuke.args4j.**
 
 
 -keepclassmembernames class * {
