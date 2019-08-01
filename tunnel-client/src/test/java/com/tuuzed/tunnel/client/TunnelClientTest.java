@@ -13,27 +13,27 @@ import org.junit.Test;
 
 public class TunnelClientTest {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientTest.class);
-    private TunnelClient manager;
+    private TunnelClient client;
 
     @Before
     public void setUp() {
         LogConfigurator.setLevel(Logger.ALL);
-        manager = new TunnelClient.Builder()
+        client = TunnelClient.builder()
             .setAutoReconnect(true)
             .setWorkerThreads(4)
             .setListener(new TunnelClientListener() {
                 @Override
-                public void onConnecting(@NotNull TunnelClient.Descriptor descriptor, boolean reconnect) {
+                public void onConnecting(@NotNull TunnelClientDescriptor descriptor, boolean reconnect) {
                     logger.info("tunnel: {}, reconnect: {}", descriptor, reconnect);
                 }
 
                 @Override
-                public void onConnected(@NotNull TunnelClient.Descriptor descriptor) {
+                public void onConnected(@NotNull TunnelClientDescriptor descriptor) {
                     logger.info("{}", descriptor);
                 }
 
                 @Override
-                public void onDisconnect(@NotNull TunnelClient.Descriptor descriptor, boolean fatal) {
+                public void onDisconnect(@NotNull TunnelClientDescriptor descriptor, boolean fatal) {
                     logger.info("tunnel: {}, deadly: {}", descriptor, fatal);
                 }
             })
@@ -42,7 +42,7 @@ public class TunnelClientTest {
 
     @After
     public void shutDown() {
-        manager.destroy();
+        client.destroy();
     }
 
     @Test
@@ -50,26 +50,66 @@ public class TunnelClientTest {
         final String serverAddr = "127.0.0.1";
         final int serverPort = 5001;
         final SslContext sslContext = SslContexts.forClient("../resources/jks/client.jks", "ctunnelpass");
-        // error
-        manager.connect(serverAddr, serverPort,
-            ProtoRequest.tcpBuilder(65000)
-                .setLocalAddr("192.168.1.1")
-                .setLocalPort(80)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext
-        );
-        // replace
-        final TunnelClient.Descriptor replaceDescriptor = manager.connect(serverAddr, serverPort,
-            ProtoRequest.tcpBuilder(20000)
-                .setLocalAddr("192.168.1.1")
-                .setLocalPort(80)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext
-        );
+
+
+        ProtoRequest portError = ProtoRequest.tcpBuilder(65000)
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .build();
+
+        ProtoRequest portReplaced = ProtoRequest.tcpBuilder(20000) // 20080
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .build();
+
+        ProtoRequest tcpHttp = ProtoRequest.tcpBuilder(10080) // 20080
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .build();
+
+        ProtoRequest vnc = ProtoRequest.tcpBuilder(15900) // 20080
+            .setLocalAddr("192.168.1.33")
+            .setLocalPort(5900)
+            .setOption("token", "tk123456")
+            .build();
+
+        ProtoRequest ssh = ProtoRequest.tcpBuilder(10022) // 20080
+            .setLocalAddr("192.168.1.10")
+            .setLocalPort(22)
+            .setOption("token", "tk123456")
+            .build();
+
+
+        ProtoRequest vhostHttp1 = ProtoRequest.httpBuilder("t1.tunnel.lo")
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:192.168.1.1")
+            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .build();
+
+        ProtoRequest vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
+            .setLocalAddr("apache.org")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:apache.org")
+            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .build();
+
+
+        client.connect(serverAddr, serverPort, portError, sslContext);
+        final TunnelClientDescriptor portReplacedDescriptor =
+            client.connect(serverAddr, serverPort, portReplaced, sslContext);
+
+        client.connect(serverAddr, serverPort, tcpHttp, sslContext);
+        client.connect(serverAddr, serverPort, vnc, sslContext);
+        client.connect(serverAddr, serverPort, ssh, sslContext);
+        // vhostHttp
+        client.connect(serverAddr, serverPort, vhostHttp1, sslContext);
+        client.connect(serverAddr, serverPort, vhostHttp2, sslContext);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -78,59 +118,9 @@ public class TunnelClientTest {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                replaceDescriptor.shutdown();
+                portReplacedDescriptor.shutdown();
             }
         }).start();
-        // tcp-http
-        manager.connect(serverAddr, serverPort,
-            ProtoRequest.tcpBuilder(10080)
-                .setLocalAddr("192.168.1.1")
-                .setLocalPort(80)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext);
-        // vnc
-        manager.connect(serverAddr, serverPort,
-            ProtoRequest.tcpBuilder(15900)
-                .setLocalAddr("192.168.1.33")
-                .setLocalPort(5900)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext
-        );
-        // ssh
-        manager.connect(serverAddr, serverPort,
-            ProtoRequest.tcpBuilder(10022)
-                .setLocalAddr("192.168.1.10")
-                .setLocalPort(22)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext
-        );
-        // vhost-http
-        manager.connect(serverAddr, serverPort,
-            ProtoRequest.httpBuilder("t1.tunnel.lo")
-                .setLocalAddr("192.168.1.1")
-                .setLocalPort(80)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext
-        );
-        // vhost-http
-        manager.connect(serverAddr, serverPort,
-            ProtoRequest.httpBuilder("t2.tunnel.lo")
-                .setLocalAddr("apache.org")
-                .setLocalPort(80)
-                .setOption("token", "tk123456")
-                .build()
-            ,
-            sslContext
-        );
-
         System.in.read();
     }
 }

@@ -3,10 +3,8 @@ package com.tuuzed.tunnel.server.tcp;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
-import com.tuuzed.tunnel.server.stats.Stats;
-import com.tuuzed.tunnel.server.stats.StatsHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -22,9 +20,9 @@ public class TcpServer {
     private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
 
     @NotNull
-    private final Map<Long, Descriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
+    private final Map<Long, TcpTunnelDescriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
     @NotNull
-    private final Map<Integer, Descriptor> portDescriptors = new ConcurrentHashMap<>();
+    private final Map<Integer, TcpTunnelDescriptor> portDescriptors = new ConcurrentHashMap<>();
     @NotNull
     private final Object descriptorsLock = new Object();
     @NotNull
@@ -34,7 +32,7 @@ public class TcpServer {
     public TcpServer(
         @NotNull final NioEventLoopGroup bossGroup,
         @NotNull final NioEventLoopGroup workerGroup,
-        @NotNull final Stats stats
+        @NotNull final TcpStats stats
     ) {
         this.serverBootstrap = new ServerBootstrap();
         this.serverBootstrap.group(bossGroup, workerGroup)
@@ -45,7 +43,7 @@ public class TcpServer {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline()
-                        .addFirst(new StatsHandler(stats))
+                        .addFirst(new TcpStatsHandler(stats))
                         .addLast(new TcpServerChannelHandler(TcpServer.this))
                     ;
                 }
@@ -57,7 +55,7 @@ public class TcpServer {
         @Nullable String addr, int port,
         @NotNull ServerTunnelSessions tunnelSessions
     ) throws Exception {
-        final Descriptor descriptor = new Descriptor(addr, port, tunnelSessions);
+        final TcpTunnelDescriptor descriptor = new TcpTunnelDescriptor(addr, port, tunnelSessions);
         descriptor.open(serverBootstrap);
         synchronized (descriptorsLock) {
             tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
@@ -69,24 +67,30 @@ public class TcpServer {
 
     public void shutdownTunnel(long tunnelToken) {
         synchronized (descriptorsLock) {
-            final Descriptor descriptor = tunnelTokenDescriptors.remove(tunnelToken);
+            final TcpTunnelDescriptor descriptor = tunnelTokenDescriptors.remove(tunnelToken);
             if (descriptor != null) {
-                portDescriptors.remove(descriptor.port);
+                portDescriptors.remove(descriptor.port());
                 descriptor.close();
-                logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions.protoRequest());
+                logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions().protoRequest());
             }
         }
     }
 
     @Nullable
-    public Descriptor getDescriptorTunnelToken(long tunnelToken) {
+    public Channel getSessionChannel(long tunnelToken, long sessionToken) {
+        TcpTunnelDescriptor descriptor;
         synchronized (descriptorsLock) {
-            return tunnelTokenDescriptors.get(tunnelToken);
+            descriptor = tunnelTokenDescriptors.get(tunnelToken);
         }
+        if (descriptor == null) {
+            return null;
+        }
+        return descriptor.tunnelSessions().getSessionChannel(sessionToken);
     }
 
+
     @Nullable
-    public Descriptor getDescriptorByPort(int port) {
+    TcpTunnelDescriptor getDescriptorByPort(int port) {
         synchronized (descriptorsLock) {
             return portDescriptors.get(port);
         }
@@ -99,40 +103,5 @@ public class TcpServer {
         }
     }
 
-    public static class Descriptor {
-        @Nullable
-        private final String addr;
-        private final int port;
-        @NotNull
-        private final ServerTunnelSessions tunnelSessions;
-        @Nullable
-        private ChannelFuture bindChannelFuture;
-
-        @NotNull
-        public ServerTunnelSessions tunnelSessions() {
-            return tunnelSessions;
-        }
-
-        private Descriptor(@Nullable String addr, int port, @NotNull ServerTunnelSessions tunnelSessions) {
-            this.addr = addr;
-            this.port = port;
-            this.tunnelSessions = tunnelSessions;
-        }
-
-        private void open(@NotNull ServerBootstrap serverBootstrap) throws Exception {
-            if (addr != null) {
-                bindChannelFuture = serverBootstrap.bind(addr, port);
-            } else {
-                bindChannelFuture = serverBootstrap.bind(port);
-            }
-        }
-
-        private void close() {
-            if (bindChannelFuture != null) {
-                bindChannelFuture.channel().close();
-            }
-            tunnelSessions.destroy();
-        }
-    }
 
 }

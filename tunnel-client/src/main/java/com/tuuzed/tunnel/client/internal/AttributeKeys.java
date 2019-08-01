@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.client.internal;
 
+import com.tuuzed.tunnel.client.TunnelClientDescriptor;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
@@ -24,6 +25,9 @@ public final class AttributeKeys {
 
     @NotNull
     public static final AttributeKey<Throwable> FATAL_CAUSE = AttributeKey.newInstance("$FATAL_CAUSE");
+
+
+    public static final AttributeKey<TunnelClientDescriptor> TUNNEL_CLIENT_DESCRIPTOR = AttributeKey.newInstance("$TUNNEL_CLIENT_DESCRIPTOR");
 
 
 }

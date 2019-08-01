@@ -2,9 +2,7 @@ package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.proto.ProtoException;
-import com.tuuzed.tunnel.common.proto.ProtoMessage;
-import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.proto.*;
 import com.tuuzed.tunnel.server.http.HttpServer;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
@@ -28,14 +26,14 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
     @NotNull
     private final HttpServer httpServer;
     @NotNull
-    private final ProtoRequest.Interceptor protoRequestInterceptor;
+    private final ProtoRequestInterceptor protoRequestInterceptor;
     @NotNull
     private final TokenProducer tunnelTokenProducer;
 
     public TunnelServerChannelHandler(
         @NotNull TcpServer tcpServer,
         @NotNull HttpServer httpServer,
-        @NotNull ProtoRequest.Interceptor protoRequestInterceptor,
+        @NotNull ProtoRequestInterceptor protoRequestInterceptor,
         @NotNull TokenProducer tunnelTokenProducer
     ) {
         this.tcpServer = tcpServer;
@@ -53,7 +51,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         logger.trace("channelInactive: {}", ctx);
         final ServerTunnelSessions tunnelSessions = ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).get();
         if (tunnelSessions != null) {
-            final ProtoRequest.Proto proto = tunnelSessions.protoRequest().proto();
+            final Proto proto = tunnelSessions.protoRequest().proto();
             switch (proto) {
                 case TCP:
                     final long tunnelToken = tunnelSessions.tunnelToken();
@@ -205,24 +203,18 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
             final long tunnelToken = head.readLong();
             final long sessionToken = head.readLong();
             head.release();
-            final ProtoRequest.Proto proto = tunnelSessions.protoRequest().proto();
+            final Proto proto = tunnelSessions.protoRequest().proto();
             switch (proto) {
                 case TCP:
-                    final TcpServer.Descriptor tcpDescriptor = tcpServer.getDescriptorTunnelToken(tunnelToken);
-                    if (tcpDescriptor != null) {
-                        final Channel sessionChannel = tcpDescriptor.tunnelSessions().getSessionChannel(sessionToken);
-                        if (sessionChannel != null) {
-                            sessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
-                        }
+                    final Channel tcpSessionChannel = tcpServer.getSessionChannel(tunnelToken, sessionToken);
+                    if (tcpSessionChannel != null) {
+                        tcpSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
                     break;
                 case HTTP:
-                    final HttpServer.Descriptor httpDescriptor = httpServer.getDescriptorTunnelToken(tunnelToken);
-                    if (httpDescriptor != null) {
-                        final Channel sessionChannel = httpDescriptor.tunnelSessions().getSessionChannel(sessionToken);
-                        if (sessionChannel != null) {
-                            sessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
-                        }
+                    final Channel httpSessionChannel = httpServer.getSessionChannel(tunnelToken, sessionToken);
+                    if (httpSessionChannel != null) {
+                        httpSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
                     break;
                 default:

@@ -5,10 +5,11 @@ import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
 import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
 import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
-import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
+import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import com.tuuzed.tunnel.server.http.HttpServer;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
-import com.tuuzed.tunnel.server.stats.Stats;
+import com.tuuzed.tunnel.server.tcp.TcpStats;
 import com.tuuzed.tunnel.server.tcp.TcpServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
@@ -43,9 +44,12 @@ public class TunnelServer {
     private final int httpBindPort;
     //
     @NotNull
-    private final ProtoRequest.Interceptor protoRequestInterceptor;
+    private final ProtoRequestInterceptor protoRequestInterceptor;
     @NotNull
-    private final Stats stats;
+    private final HttpRequestInterceptor httpRequestInterceptor;
+
+    @NotNull
+    private final TcpStats stats;
     @NotNull
     private final TcpServer tcpServer;
     @NotNull
@@ -53,7 +57,7 @@ public class TunnelServer {
     @NotNull
     private final TokenProducer tunnelTokenProducer;
 
-    private TunnelServer(@NotNull Builder builder) {
+    TunnelServer(@NotNull TunnelServerBuilder builder) {
         this.bossGroup = (builder.bossThreads > 0)
             ? new NioEventLoopGroup(builder.bossThreads)
             : new NioEventLoopGroup();
@@ -73,18 +77,22 @@ public class TunnelServer {
         this.httpBindPort = builder.httpBindPort;
 
         this.protoRequestInterceptor = builder.protoRequestInterceptor;
-        this.stats = new Stats();
+        this.httpRequestInterceptor = builder.httpRequestInterceptor;
+        this.stats = new TcpStats();
         this.tcpServer = new TcpServer(bossGroup, workerGroup, stats);
-        this.httpServer = new HttpServer(bossGroup, workerGroup);
+        this.httpServer = new HttpServer(bossGroup, workerGroup, httpRequestInterceptor);
         this.tunnelTokenProducer = new TokenProducer();
-
     }
 
     @NotNull
-    public Stats stats() {
-        return stats;
+    public static TunnelServerBuilder builder() {
+        return new TunnelServerBuilder();
     }
 
+    @NotNull
+    public TcpStats stats() {
+        return stats;
+    }
 
     public void start() throws Exception {
         serve();
@@ -162,97 +170,10 @@ public class TunnelServer {
     }
 
     public void destroy() {
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
         tcpServer.destroy();
         httpServer.destroy();
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
-
-    public static class Builder {
-        private int bossThreads = -1;
-        private int workerThreads = -1;
-
-        private String bindAddr = null;
-        private int bindPort = 5000;
-
-        // ssl
-        private boolean enableSsl;
-        private SslContext sslContext;
-        private String sslBindAddr = null;
-        private int sslBindPort = 5001;
-        // http
-        private String httpBindAddr = null;
-        private int httpBindPort = 5080;
-
-        //
-        private ProtoRequest.Interceptor protoRequestInterceptor = ProtoRequest.Interceptor.DEFAULT;
-
-
-        @NotNull
-        public Builder setBindAddr(String bindAddr) {
-            this.bindAddr = bindAddr;
-            return this;
-        }
-
-        @NotNull
-        public Builder setBindPort(int bindPort) {
-            this.bindPort = bindPort;
-            return this;
-        }
-
-        @NotNull
-        public Builder setBossThreads(int bossThreads) {
-            this.bossThreads = bossThreads;
-            return this;
-        }
-
-        @NotNull
-        public Builder setWorkerThreads(int workerThreads) {
-            this.workerThreads = workerThreads;
-            return this;
-        }
-
-
-        @NotNull
-        public Builder enableSsl(@NotNull SslContext sslContext, int bindPort) {
-            this.enableSsl = true;
-            this.sslContext = sslContext;
-            this.sslBindPort = bindPort;
-            return this;
-        }
-
-        @NotNull
-        public Builder enableSsl(@NotNull SslContext sslContext, String bindAddr, int bindPort) {
-            this.enableSsl = true;
-            this.sslContext = sslContext;
-            this.sslBindAddr = bindAddr;
-            this.sslBindPort = bindPort;
-            return this;
-        }
-
-        @NotNull
-        public Builder setHttpBindAddr(String bindAddr) {
-            this.httpBindAddr = bindAddr;
-            return this;
-        }
-
-        @NotNull
-        public Builder setHttpBindPort(int bindPort) {
-            this.httpBindPort = bindPort;
-            return this;
-        }
-
-        @NotNull
-        public Builder setProtoRequestInterceptor(@NotNull ProtoRequest.Interceptor interceptor) {
-            this.protoRequestInterceptor = interceptor;
-            return this;
-        }
-
-        @NotNull
-        public TunnelServer build() {
-            return new TunnelServer(this);
-        }
-    }
-
 
 }

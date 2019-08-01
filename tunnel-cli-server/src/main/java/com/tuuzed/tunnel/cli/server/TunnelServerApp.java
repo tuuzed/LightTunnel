@@ -5,8 +5,11 @@ import com.tuuzed.tunnel.cli.common.AbstractApp;
 import com.tuuzed.tunnel.cli.common.CfgUtils;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.server.TunnelServer;
+import com.tuuzed.tunnel.server.TunnelServerBuilder;
+import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,12 +54,19 @@ public class TunnelServerApp extends AbstractApp<RunOptions> {
         final int httpBindPort = CfgUtils.getInt(httpOptions, "bind_port", 5080);
 
 
-        final TunnelServer.Builder builder = new TunnelServer.Builder()
+        final ProtoRequestInterceptor protoRequestInterceptor = new DefaultProtoRequestInterceptor(
+            token,
+            allowPorts
+        );
+        final HttpRequestInterceptor httpRequestInterceptor = new DefaultHttpRequestInterceptor();
+
+        final TunnelServerBuilder builder = TunnelServer.builder()
             .setBindAddr(bindAddr.length() == 0 ? null : bindAddr)
             .setBindPort(bindPort)
             .setBossThreads(bossThreads)
             .setWorkerThreads(workerThreads)
-            .setProtoRequestInterceptor(new ProtoRequestInterceptorImpl(token, allowPorts))
+            .setProtoRequestInterceptor(protoRequestInterceptor)
+            .setHttpRequestInterceptor(httpRequestInterceptor)
             // http
             .setHttpBindAddr(httpBindAddr)
             .setHttpBindPort(httpBindPort);
@@ -77,15 +87,20 @@ public class TunnelServerApp extends AbstractApp<RunOptions> {
     }
 
     private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
-
-        TunnelServer.Builder builder = new TunnelServer.Builder()
+        final ProtoRequestInterceptor protoRequestInterceptor = new DefaultProtoRequestInterceptor(
+            runOptions.token,
+            runOptions.allowPorts
+        );
+        final HttpRequestInterceptor httpRequestInterceptor = new DefaultHttpRequestInterceptor();
+        TunnelServerBuilder builder = TunnelServer.builder()
             .setBindAddr(runOptions.bindAddr)
             .setBindPort(runOptions.bindPort)
             .setHttpBindAddr(runOptions.httpBindAddr)
             .setHttpBindPort(runOptions.httpBindPort)
             .setBossThreads(runOptions.bossThreads)
             .setWorkerThreads(runOptions.workerThreads)
-            .setProtoRequestInterceptor(new ProtoRequestInterceptorImpl(runOptions.token, runOptions.allowPorts));
+            .setProtoRequestInterceptor(protoRequestInterceptor)
+            .setHttpRequestInterceptor(httpRequestInterceptor);
         if (runOptions.ssl) {
             SslContext context = SslContexts.forServer(
                 runOptions.sslJks,

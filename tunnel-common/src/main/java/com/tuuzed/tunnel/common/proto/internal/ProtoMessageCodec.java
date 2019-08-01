@@ -55,9 +55,9 @@ public final class ProtoMessageCodec {
         byte[] head = new byte[headLength];
         in.readBytes(head);
         int dataLength = messageFrameLength
-                - MESSAGE_TYPE_FIELD_SIZE
-                - MESSAGE_HEAD_FIELD_SIZE
-                - headLength;
+            - MESSAGE_TYPE_FIELD_SIZE
+            - MESSAGE_HEAD_FIELD_SIZE
+            - headLength;
         byte[] data = new byte[dataLength];
         in.readBytes(data);
         return new ProtoMessage(type, head, data);

@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.server.stats;
+package com.tuuzed.tunnel.server.tcp;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Stats {
-    private static final Logger logger = LoggerFactory.getLogger(Stats.class);
+public class TcpStats {
+    private static final Logger logger = LoggerFactory.getLogger(TcpStats.class);
 
     @NotNull
     private final Map<Integer, Item> items = new ConcurrentHashMap<>();
@@ -49,37 +49,37 @@ public class Stats {
         public void incrementReadBytes(int count) {
             readBytes.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Stats: {}", this);
+            logger.trace("TcpStats: {}", this);
         }
 
         public void incrementWriteBytes(int count) {
             writeBytes.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Stats: {}", this);
+            logger.trace("TcpStats: {}", this);
         }
 
         public void incrementReadMsgs(int count) {
             readMsgs.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Stats: {}", this);
+            logger.trace("TcpStats: {}", this);
         }
 
         public void incrementWriteMsgs(int count) {
             writeMsgs.addAndGet(count);
             timestamp = System.currentTimeMillis();
-            logger.trace("Stats: {}", this);
+            logger.trace("TcpStats: {}", this);
         }
 
         public void incrementChannels() {
             channels.incrementAndGet();
             timestamp = System.currentTimeMillis();
-            logger.trace("Stats: {}", this);
+            logger.trace("TcpStats: {}", this);
         }
 
         public void decrementChannels() {
             timestamp = System.currentTimeMillis();
             channels.decrementAndGet();
-            logger.trace("Stats: {}", this);
+            logger.trace("TcpStats: {}", this);
         }
 
         public void resetReadStat() {

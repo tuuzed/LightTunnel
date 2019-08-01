@@ -6,6 +6,7 @@ import com.tuuzed.tunnel.cli.common.CfgUtils;
 import com.tuuzed.tunnel.client.TunnelClient;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.proto.Proto;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
@@ -15,6 +16,7 @@ import java.io.FileReader;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("Duplicates")
 public class TunnelClientApp extends AbstractApp<RunOptions> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientApp.class);
 
@@ -60,7 +62,7 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
             sslServerPort = CfgUtils.getInt(sslOptions, "server_port", 5001);
         }
 
-        final TunnelClient tunnelClient = new TunnelClient.Builder()
+        final TunnelClient tunnelClient = TunnelClient.builder()
             .setWorkerThreads(workerThreads)
             .setAutoReconnect(true)
             .build();
@@ -68,7 +70,7 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
         final List<Map> tunnels = CfgUtils.getListMap(globalOptions, "tunnels");
 
         for (Map tunnel : tunnels) {
-            final ProtoRequest.Proto proto = ProtoRequest.Proto.valueOf(
+            final Proto proto = Proto.valueOf(
                 CfgUtils.getString(tunnel, "proto", "tcp").toUpperCase()
             );
             final boolean enableSsl = CfgUtils.getBoolean(tunnel, "enable_ssl", false);
@@ -87,10 +89,42 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
                     break;
                 case HTTP:
                     final String vhost = CfgUtils.getString(tunnel, "vhost", "");
+
+                    StringBuilder setHeaders = new StringBuilder();
+                    StringBuilder addHeaders = new StringBuilder();
+
+                    boolean isFirst = true;
+
+                    for (Object header : CfgUtils.getMap(tunnel, "set_headers").entrySet()) {
+                        if (header instanceof Map.Entry) {
+                            String key = ((Map.Entry) header).getKey().toString();
+                            String value = ((Map.Entry) header).getValue().toString();
+                            setHeaders.append(key).append(":").append(value);
+                            if (!isFirst) {
+                                setHeaders.append(";");
+                            }
+                            isFirst = false;
+                        }
+                    }
+
+                    for (Object header : CfgUtils.getMap(tunnel, "add_headers").entrySet()) {
+                        if (header instanceof Map.Entry) {
+                            String key = ((Map.Entry) header).getKey().toString();
+                            String value = ((Map.Entry) header).getValue().toString();
+                            addHeaders.append(key).append(":").append(value);
+                            if (!isFirst) {
+                                addHeaders.append(";");
+                            }
+                            isFirst = false;
+                        }
+                    }
+
                     protoRequest = ProtoRequest.httpBuilder(vhost)
                         .setLocalAddr(localAddr)
                         .setLocalPort(localPort)
                         .setOption("token", token)
+                        .setOption("set_headers", setHeaders.toString())
+                        .setOption("add_headers", addHeaders.toString())
                         .build();
                     break;
                 default:
@@ -108,12 +142,12 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
-        TunnelClient tunnelClient = new TunnelClient.Builder()
+        TunnelClient tunnelClient = TunnelClient.builder()
             .setWorkerThreads(runOptions.workerThreads)
             .setAutoReconnect(true)
             .build();
 
-        ProtoRequest.Proto proto = ProtoRequest.Proto.valueOf(runOptions.proto.toUpperCase());
+        Proto proto = Proto.valueOf(runOptions.proto.toUpperCase());
 
         ProtoRequest protoRequest = null;
         switch (proto) {
@@ -135,8 +169,6 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
             default:
                 break;
         }
-
-
         SslContext sslContext = null;
         if (runOptions.ssl) {
             sslContext = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);

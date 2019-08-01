@@ -3,7 +3,8 @@ package com.tuuzed.tunnel.server.http;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoMessage;
-import com.tuuzed.tunnel.common.util.HttpRequestUtils;
+import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.server.http.internal.HttpRequestUtils;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -11,9 +12,10 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import org.jetbrains.annotations.NotNull;
+
+import java.net.SocketAddress;
 
 @SuppressWarnings("Duplicates")
 public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
@@ -21,9 +23,12 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
 
     @NotNull
     private final HttpServer httpServer;
+    @NotNull
+    private final HttpRequestInterceptor httpRequestInterceptor;
 
-    public HttpServerChannelHandler(@NotNull HttpServer httpServer) {
+    public HttpServerChannelHandler(@NotNull HttpServer httpServer, @NotNull HttpRequestInterceptor interceptor) {
         this.httpServer = httpServer;
+        this.httpRequestInterceptor = interceptor;
     }
 
     @Override
@@ -39,7 +44,7 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
         final String vhost = ctx.channel().attr(AttributeKeys.VHOST).get();
         final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
         if (vhost != null && sessionToken != null) {
-            final HttpServer.Descriptor descriptor = httpServer.getDescriptorByVhost(vhost);
+            final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
             if (descriptor != null) {
                 final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
                 final Channel tunnelChannel = descriptor.tunnelSessions().tunnelChannel();
@@ -77,21 +82,30 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
      * 处理读取到的HttpRequest类型的消息
      */
     private void channelReadHttpRequest(ChannelHandlerContext ctx, HttpRequest msg) throws Exception {
-        final String host = msg.headers().get(HttpHeaderNames.HOST);
-        final String vhost = host.split(":")[0];
+        final String vhost = HttpRequestUtils.getVhost(msg);
+        if (vhost == null) {
+            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+            return;
+        }
         ctx.channel().attr(AttributeKeys.VHOST).set(vhost);
-
-        final HttpServer.Descriptor descriptor = httpServer.getDescriptorByVhost(vhost);
+        final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             return;
         }
         final long sessionToken = descriptor.tunnelSessions().putSessionChannel(ctx.channel());
         ctx.channel().attr(AttributeKeys.SESSION_TOKEN).set(sessionToken);
-
         final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
+        final ProtoRequest protoRequest = descriptor.tunnelSessions().protoRequest();
+        final SocketAddress localAddress = ctx.channel().localAddress();
+        final SocketAddress remoteAddress = ctx.channel().remoteAddress();
+        httpRequestInterceptor.proceed(
+            localAddress,
+            remoteAddress,
+            protoRequest,
+            msg
+        );
         final byte[] requestBytes = HttpRequestUtils.httpRequest2Bytes(msg);
-
         descriptor.tunnelSessions().tunnelChannel().writeAndFlush(
             new ProtoMessage(ProtoMessage.Type.TRANSFER,
                 Unpooled.copyLong(tunnelToken, sessionToken).array(),
@@ -112,7 +126,7 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
             return;
         }
 
-        final HttpServer.Descriptor descriptor = httpServer.getDescriptorByVhost(vhost);
+        final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             return;

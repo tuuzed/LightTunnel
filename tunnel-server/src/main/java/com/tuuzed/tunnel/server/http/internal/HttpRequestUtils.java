@@ -1,10 +1,8 @@
-package com.tuuzed.tunnel.common.util;
+package com.tuuzed.tunnel.server.http.internal;
 
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
@@ -28,6 +26,12 @@ public final class HttpRequestUtils {
         }
         raw.append("\r\n");
         return raw.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Nullable
+    public static String getVhost(@NotNull HttpRequest request) {
+        final String host = request.headers().get(HttpHeaderNames.HOST);
+        return host.split(":")[0];
     }
 
 }

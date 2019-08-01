@@ -6,6 +6,7 @@ import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import com.tuuzed.tunnel.server.tcp.TcpServer;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -23,16 +24,17 @@ public class HttpServer {
     @NotNull
     private final ServerBootstrap serverBootstrap;
     @NotNull
-    private final Map<Long, Descriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
+    private final Map<Long, HttpTunnelDescriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
     @NotNull
-    private final Map<String, Descriptor> vhostDescriptors = new ConcurrentHashMap<>();
+    private final Map<String, HttpTunnelDescriptor> vhostDescriptors = new ConcurrentHashMap<>();
 
     @NotNull
     private final Object descriptorsLock = new Object();
 
     public HttpServer(
         @NotNull final NioEventLoopGroup bossGroup,
-        @NotNull final NioEventLoopGroup workerGroup
+        @NotNull final NioEventLoopGroup workerGroup,
+        @NotNull final HttpRequestInterceptor interceptor
     ) {
         this.serverBootstrap = new ServerBootstrap();
         this.serverBootstrap.group(bossGroup, workerGroup)
@@ -44,7 +46,7 @@ public class HttpServer {
                 protected void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline()
                         .addLast(new HttpRequestDecoder())
-                        .addLast(new HttpServerChannelHandler(HttpServer.this))
+                        .addLast(new HttpServerChannelHandler(HttpServer.this, interceptor))
                     ;
                 }
             });
@@ -61,7 +63,7 @@ public class HttpServer {
         if (isRegistered(vhost)) {
             throw new ProtoException("vhost(" + vhost + ") already used");
         }
-        final Descriptor descriptor = new Descriptor(vhost, tunnelSessions);
+        final HttpTunnelDescriptor descriptor = new HttpTunnelDescriptor(vhost, tunnelSessions);
         synchronized (descriptorsLock) {
             tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
             vhostDescriptors.put(vhost, descriptor);
@@ -78,24 +80,33 @@ public class HttpServer {
             return;
         }
         synchronized (descriptorsLock) {
-            final Descriptor descriptor = vhostDescriptors.remove(vhost);
+            final HttpTunnelDescriptor descriptor = vhostDescriptors.remove(vhost);
             if (descriptor != null) {
-                tunnelTokenDescriptors.remove(descriptor.tunnelSessions.tunnelToken());
+                tunnelTokenDescriptors.remove(descriptor.tunnelSessions().tunnelToken());
                 descriptor.close();
-                logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions.protoRequest());
+                logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions().protoRequest());
             }
         }
     }
 
     @Nullable
-    public Descriptor getDescriptorTunnelToken(long tunnelToken) {
+    public Channel getSessionChannel(long tunnelToken, long sessionToken) {
+        HttpTunnelDescriptor descriptor = getDescriptorByTunnelToken(tunnelToken);
+        if (descriptor == null) {
+            return null;
+        }
+        return descriptor.tunnelSessions().getSessionChannel(sessionToken);
+    }
+
+    @Nullable
+    public HttpTunnelDescriptor getDescriptorByTunnelToken(long tunnelToken) {
         synchronized (descriptorsLock) {
             return tunnelTokenDescriptors.get(tunnelToken);
         }
     }
 
     @Nullable
-    public Descriptor getDescriptorByVhost(@NotNull String vhost) {
+    public HttpTunnelDescriptor getDescriptorByVhost(@NotNull String vhost) {
         synchronized (descriptorsLock) {
             return vhostDescriptors.get(vhost);
         }
@@ -113,40 +124,6 @@ public class HttpServer {
         synchronized (descriptorsLock) {
             tunnelTokenDescriptors.clear();
             vhostDescriptors.clear();
-        }
-    }
-
-    public static class Descriptor {
-        @NotNull
-        private final String vhost;
-        @NotNull
-        private final ServerTunnelSessions tunnelSessions;
-
-        Descriptor(@NotNull String vhost, @NotNull ServerTunnelSessions tunnelSessions) {
-            this.vhost = vhost;
-            this.tunnelSessions = tunnelSessions;
-        }
-
-        @NotNull
-        public String vhost() {
-            return vhost;
-        }
-
-        @NotNull
-        public ServerTunnelSessions tunnelSessions() {
-            return tunnelSessions;
-        }
-
-        private void close() {
-            tunnelSessions.destroy();
-        }
-
-        @Override
-        public String toString() {
-            return "Descriptor{" +
-                "vhost='" + vhost + '\'' +
-                ", tunnelSessions=" + tunnelSessions +
-                '}';
         }
     }
 

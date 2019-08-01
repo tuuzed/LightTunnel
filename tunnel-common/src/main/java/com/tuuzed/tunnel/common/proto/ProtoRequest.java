@@ -1,16 +1,18 @@
 package com.tuuzed.tunnel.common.proto;
 
+import com.tuuzed.tunnel.common.proto.internal.ProtoUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 public class ProtoRequest {
-    private static final String REMOTE_PORT = "$r";
-    private static final String VHOST = "$v";
+    static final String REMOTE_PORT = "$r";
+    static final String VHOST = "$v";
 
     @NotNull
     private Proto proto;
@@ -20,7 +22,7 @@ public class ProtoRequest {
     @NotNull
     private Map<String, String> options;
 
-    private ProtoRequest(
+    ProtoRequest(
         @NotNull Proto proto,
         @NotNull String localAddr,
         int localPort,
@@ -92,7 +94,7 @@ public class ProtoRequest {
 
             byte[] optionsBytes = new byte[buffer.readInt()];
             buffer.readBytes(optionsBytes);
-            Map<String, String> options = string2Map(new String(optionsBytes, StandardCharsets.UTF_8));
+            Map<String, String> options = ProtoUtils.string2Map(new String(optionsBytes, StandardCharsets.UTF_8));
 
             return new ProtoRequest(proto, loadAddr, localPort, options);
         } catch (Exception e) {
@@ -105,14 +107,14 @@ public class ProtoRequest {
     @NotNull
     public byte[] toBytes() {
         final ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(proto.value);
+        buffer.writeByte(proto.value());
         buffer.writeInt(localPort);
 
         final byte[] loadAddrBytes = localAddr.getBytes(StandardCharsets.UTF_8);
         buffer.writeInt(loadAddrBytes.length);
         buffer.writeBytes(loadAddrBytes);
 
-        final byte[] optionsBytes = map2String(options).getBytes(StandardCharsets.UTF_8);
+        final byte[] optionsBytes = ProtoUtils.map2String(options).getBytes(StandardCharsets.UTF_8);
         buffer.writeInt(optionsBytes.length);
         buffer.writeBytes(optionsBytes);
 
@@ -123,21 +125,24 @@ public class ProtoRequest {
         return bytes;
     }
 
-
     @NotNull
-    public static Builder tcpBuilder(int remotePort) {
-        return new Builder(Proto.TCP).setOptionInternal(REMOTE_PORT, String.valueOf(remotePort));
-    }
-
-
-    @NotNull
-    public static Builder httpBuilder(@NotNull String vhost) {
-        return new Builder(Proto.HTTP).setOptionInternal(VHOST, vhost);
+    public static ProtoRequestBuilder tcpBuilder(int remotePort) {
+        return new ProtoRequestBuilder(Proto.TCP).setOptionInternal(REMOTE_PORT, String.valueOf(remotePort));
     }
 
     @NotNull
-    public Builder newTcpBuilder(int remotePort) {
-        Builder builder = new Builder(Proto.TCP);
+    public static ProtoRequestBuilder httpBuilder(@NotNull String vhost) {
+        return new ProtoRequestBuilder(Proto.HTTP).setOptionInternal(VHOST, vhost);
+    }
+
+    @NotNull
+    public ProtoRequestBuilder cloneTcpBuilder() {
+        return cloneTcpBuilder(remotePort());
+    }
+
+    @NotNull
+    public ProtoRequestBuilder cloneTcpBuilder(int remotePort) {
+        ProtoRequestBuilder builder = new ProtoRequestBuilder(Proto.TCP);
         builder.localAddr = localAddr;
         builder.localPort = localPort;
         builder.options = options;
@@ -146,8 +151,13 @@ public class ProtoRequest {
     }
 
     @NotNull
-    public Builder newHttpBuilder(@NotNull String vhost) {
-        Builder builder = new Builder(Proto.HTTP);
+    public ProtoRequestBuilder cloneHttpBuilder() {
+        return cloneHttpBuilder(vhost());
+    }
+
+    @NotNull
+    public ProtoRequestBuilder cloneHttpBuilder(@NotNull String vhost) {
+        ProtoRequestBuilder builder = new ProtoRequestBuilder(Proto.HTTP);
         builder.localAddr = localAddr;
         builder.localPort = localPort;
         builder.options = options;
@@ -159,9 +169,9 @@ public class ProtoRequest {
     public String toString() {
         switch (proto) {
             case TCP:
-                return String.format("[tcp://%s:%d⇦%d?%s]", localAddr, localPort, remotePort(), map2String(options));
+                return String.format("[tcp://%s:%d<-%d?%s]", localAddr, localPort, remotePort(), ProtoUtils.map2String(options));
             case HTTP:
-                return String.format("[http://%s:%d⇦%s?%s]", localAddr, localPort, vhost(), map2String(options));
+                return String.format("[http://%s:%d<-%s?%s]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
             default:
                 return "";
         }
@@ -183,162 +193,5 @@ public class ProtoRequest {
         return Objects.hash(proto, localAddr, localPort, options);
     }
 
-    public static class Builder {
-        private Proto proto;
-        private String localAddr;
-        private int localPort;
-        private Map<String, String> options;
-
-        private Builder(@NotNull Proto proto) {
-            this.proto = proto;
-        }
-
-        @NotNull
-        public Builder setLocalAddr(@NotNull String localAddr) {
-            this.localAddr = localAddr;
-            return this;
-        }
-
-        @NotNull
-        public Builder setLocalPort(int localPort) {
-            this.localPort = localPort;
-            return this;
-        }
-
-        @NotNull
-        private Builder setOptionInternal(@NotNull String key, @NotNull String value) {
-            if (options == null) {
-                options = new HashMap<>();
-            }
-            options.put(key, value);
-            return this;
-        }
-
-        @NotNull
-        public Builder setOption(@NotNull String key, @NotNull String value) {
-            if (key.startsWith("$")) {
-                throw new IllegalArgumentException("$打头的key为系统保留的key");
-            }
-            setOptionInternal(key, value);
-            return this;
-        }
-
-
-        @NotNull
-        public ProtoRequest build() {
-            if (localAddr == null) {
-                throw new IllegalArgumentException("localAddr == null");
-            }
-            if (localPort < 0 || localPort > 65535) {
-                throw new IllegalArgumentException("localPort < 0 || localPort > 65535");
-            }
-            if (options == null) {
-                options = Collections.emptyMap();
-            }
-            switch (proto) {
-                case UNKNOWN:
-                    break;
-                case TCP:
-                    if (!options.containsKey(REMOTE_PORT)) {
-                        throw new IllegalArgumentException("TCP协议必须设置REMOTE_PORT");
-                    }
-                    break;
-                case HTTP:
-                    if (!options.containsKey(VHOST)) {
-                        throw new IllegalArgumentException("HTTP协议必须设置VHOST");
-                    }
-                    break;
-                default:
-                    break;
-            }
-            return new ProtoRequest(proto, localAddr, localPort, options);
-        }
-
-    }
-
-    public interface Interceptor {
-        Interceptor DEFAULT = new Interceptor() {
-            @NotNull
-            @Override
-            public ProtoRequest proceed(@NotNull ProtoRequest request) throws ProtoException {
-                return request;
-            }
-        };
-
-        @NotNull
-        ProtoRequest proceed(@NotNull ProtoRequest request) throws ProtoException;
-    }
-
-    public enum Proto {
-        UNKNOWN((byte) 0x00),
-        TCP((byte) 0x01),
-        HTTP((byte) 0x02),
-        ;
-
-        private byte value;
-
-        Proto(byte value) {
-            this.value = value;
-        }
-
-        public byte getValue() {
-            return value;
-        }
-
-        @NotNull
-        public static Proto of(byte value) {
-            final Proto[] values = values();
-            for (Proto type : values) {
-                if (type.value == value) {
-                    return type;
-                }
-            }
-            return Proto.UNKNOWN;
-        }
-    }
-
-    @NotNull
-    private static String map2String(Map<String, String> originalMap) {
-        if (originalMap == null) {
-            return "";
-        }
-        StringBuilder line = new StringBuilder();
-        Set<Map.Entry<String, String>> entries = originalMap.entrySet();
-        boolean first = true;
-        for (Map.Entry<String, String> entry : entries) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (key != null) {
-                if (!first) {
-                    line.append("&");
-                }
-                line.append(key);
-                if (value != null) {
-                    line.append("=");
-                    line.append(value);
-                }
-            }
-            first = false;
-        }
-        return line.toString();
-    }
-
-    @NotNull
-    private static Map<String, String> string2Map(String originalLine) {
-        if (originalLine == null) {
-            return Collections.emptyMap();
-        }
-        String[] kvLines = originalLine.split("&");
-        Map<String, String> map = new LinkedHashMap<>(kvLines.length);
-        for (String it : kvLines) {
-            String[] kvLine = it.split("=");
-            if (kvLine.length == 1) {
-                map.put(kvLine[0], null);
-            } else if (kvLine.length == 2) {
-                map.put(kvLine[0], kvLine[1]);
-            }
-        }
-        return map;
-    }
 
 }
