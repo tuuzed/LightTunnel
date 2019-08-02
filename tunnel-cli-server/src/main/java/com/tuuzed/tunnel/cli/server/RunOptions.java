@@ -7,7 +7,6 @@ public final class RunOptions {
     @Option(name = "c", longName = "config-file", help = "配置文件，当设置了配置文件时优先使用配置文件配置项", order = 10)
     public String configFile = "";
 
-
     @Option(name = "bt", longName = "boss-threads", help = "Boss线程数量", order = 20)
     public int bossThreads = -1;
 

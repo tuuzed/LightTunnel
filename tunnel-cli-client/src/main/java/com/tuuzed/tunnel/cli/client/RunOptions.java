@@ -1,14 +1,15 @@
 package com.tuuzed.tunnel.cli.client;
 
 import com.tuuzed.tunnel.cli.common.Option;
+import com.tuuzed.tunnel.common.proto.Proto;
 
 public final class RunOptions {
 
     @Option(name = "c", longName = "config-file", help = "配置文件，当设置了配置文件时优先使用配置文件配置项", order = 10)
     public String configFile = "";
 
-    @Option(name = "pt", longName = "proto", help = "协议", order = 20)
-    public String proto = "tcp";
+    @Option(name = "pt", longName = "proto", help = "协议", order = 20, excludeEnums = {"UNKNOWN"})
+    public Proto proto = Proto.TCP;
 
     @Option(name = "wt", longName = "worker-threads", help = "Worker线程数量", order = 30)
     public int workerThreads = -1;

@@ -147,10 +147,9 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
             .setAutoReconnect(true)
             .build();
 
-        Proto proto = Proto.valueOf(runOptions.proto.toUpperCase());
 
         ProtoRequest protoRequest = null;
-        switch (proto) {
+        switch (runOptions.proto) {
             case TCP:
                 protoRequest = ProtoRequest.tcpBuilder(runOptions.remotePort)
                     .setLocalAddr(runOptions.localAddr)
