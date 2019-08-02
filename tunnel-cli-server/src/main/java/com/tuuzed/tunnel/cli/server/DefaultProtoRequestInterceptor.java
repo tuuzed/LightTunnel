@@ -7,7 +7,7 @@ import com.tuuzed.tunnel.common.util.PortUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DefaultProtoRequestInterceptor implements ProtoRequestInterceptor {
+public final class DefaultProtoRequestInterceptor implements ProtoRequestInterceptor {
     @NotNull
     private final String token;
     @Nullable

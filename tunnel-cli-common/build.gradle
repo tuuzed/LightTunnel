@@ -9,7 +9,6 @@ sourceCompatibility = rootProject.sourceCompatibility
 
 dependencies {
     compile project(":tunnel-common")
-    compile "args4j:args4j:2.33"
     compile 'com.esotericsoftware.yamlbeans:yamlbeans:1.13'
     // 单元测试
     testCompile "junit:junit:4.12"

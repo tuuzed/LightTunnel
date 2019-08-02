@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("Duplicates")
-public class TunnelClientApp extends AbstractApp<RunOptions> {
+public final class TunnelClientApp extends AbstractApp<RunOptions> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientApp.class);
 
     @NotNull

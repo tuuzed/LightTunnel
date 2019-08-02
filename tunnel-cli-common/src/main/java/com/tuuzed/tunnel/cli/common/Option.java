@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.cli.common.cmd;
+package com.tuuzed.tunnel.cli.common;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,11 @@ public @interface Option {
     @NotNull
     String help() default "";
 
+    // 排序，值越小排在越前面
     int order() default 0;
+
+    // 排除的枚举对象
+    String[] excludeEnums() default {};
 
 
 }

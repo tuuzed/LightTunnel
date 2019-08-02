@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
-public class DefaultHttpRequestInterceptor implements HttpRequestInterceptor {
+public final class DefaultHttpRequestInterceptor implements HttpRequestInterceptor {
     @Override
     public void proceed(
         @NotNull SocketAddress localAddress,

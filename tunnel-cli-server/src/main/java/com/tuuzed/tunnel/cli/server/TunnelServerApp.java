@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.FileReader;
 import java.util.Map;
 
-public class TunnelServerApp extends AbstractApp<RunOptions> {
+public final class TunnelServerApp extends AbstractApp<RunOptions> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerApp.class);
 
     @NotNull

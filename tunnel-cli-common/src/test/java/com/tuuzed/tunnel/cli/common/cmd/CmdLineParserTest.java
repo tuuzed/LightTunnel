@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.cli.common.cmd;
 
+import com.tuuzed.tunnel.cli.common.CmdLineParser;
 import org.junit.Test;
 
 public class CmdLineParserTest {

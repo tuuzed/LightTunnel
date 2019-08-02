@@ -1,0 +1,258 @@
+package com.tuuzed.tunnel.cli.common;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.*;
+
+/**
+ * 命令行解析器
+ * 支持的数据类型有: boolean, byte, char, short, int, long, float, double,
+ * *              String,
+ * *              Map<String,K>,默认使用'&'和'='分隔，例如，k1=v1&k2=v2
+ * *              List<T>, 默认使用','分隔，例如，123,456
+ */
+public class CmdLineParser {
+
+    private static final String LIST_DELIMITER = ",";
+    private static final String MAP_DELIMITER = "&";
+    private static final String MAP_KV_DELIMITER = "=";
+
+    public static <T> void parse(@NotNull T t, @NotNull String[] args) throws Exception {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (int i = 0; i < args.length; i++) {
+            map.put(args[i], args[++i]);
+        }
+        List<Item> items = getOptionItems(t);
+        for (Item item : items) {
+            item.apply(t, map);
+        }
+    }
+
+    public static <T> void printHelp(@NotNull T t, @NotNull OutputStream out) throws Exception {
+        List<Item> items = getOptionItems(t);
+        PrintStream os = (out instanceof PrintStream)
+            ? (PrintStream) out
+            : new PrintStream(out, true);
+        for (Item item : items) {
+            item.printHelp(os);
+        }
+    }
+
+    private static <T> List<Item> getOptionItems(T t) throws Exception {
+        List<Item> items = new ArrayList<>();
+        Class<?> clazz = t.getClass();
+        final Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            Option option = field.getAnnotation(Option.class);
+            if (option != null) {
+                items.add(new Item(
+                    field,
+                    option.name(),
+                    option.longName(),
+                    option.help(),
+                    field.get(t),
+                    option.order(),
+                    option.excludeEnums())
+                );
+            }
+        }
+        Collections.sort(items, new Comparator<Item>() {
+            @Override
+            public int compare(Item o1, Item o2) {
+                // 倒序
+                return Integer.compare(o1.order, o2.order);
+            }
+        });
+        return items;
+    }
+
+    private static class Item {
+        Field field;
+        String name;
+        String longName;
+        String help;
+        Object def;
+
+        int order;
+        List<String> excludeEnums;
+
+
+        public Item(Field field, String name, String longName, String help, Object def, int order, String[] excludeEnums) {
+            this.field = field;
+            this.name = name;
+            this.longName = longName;
+            this.help = help;
+            this.def = def;
+            this.order = order;
+            this.excludeEnums = Arrays.asList(excludeEnums);
+        }
+
+        void printHelp(@NotNull PrintStream out) throws Exception {
+            StringBuilder helpText = new StringBuilder();
+            helpText.append("-").append(name);
+            helpText.append("(--").append(longName).append(")\t:");
+            helpText.append("[").append(getTypeName()).append("] ");
+            helpText.append(", default: ").append(def);
+            helpText.append("\r\n\t");
+            helpText.append(help);
+            out.println(helpText);
+        }
+
+
+        void apply(@NotNull Object obj, @NotNull Map<String, String> map) throws Exception {
+            String name = "-" + this.name;
+            String longName = "--" + this.longName;
+            String value = null;
+            if (map.containsKey(name)) value = map.get(name);
+            if (map.containsKey(longName)) value = map.get(longName);
+            if (value == null) return;
+            Object typedVal = convertBasicType(field.getType(), value);
+            if (typedVal != null) {
+                field.setAccessible(true);
+                field.set(obj, typedVal);
+                return;
+            }
+            if (field.getType() == Map.class) { // map
+                field.setAccessible(true);
+                field.set(obj, convertMapType(field, value));
+            } else if (field.getType() == List.class) { // list
+                field.setAccessible(true);
+                field.set(obj, convertListType(field, value));
+            }
+        }
+
+        @SuppressWarnings("SuspiciousMethodCalls")
+        private String getTypeName() throws Exception {
+            if (field.getType().isEnum()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(field.getType().getSimpleName().toLowerCase()).append(" ##opt: ");
+                Object[] enums = field.getType().getEnumConstants();
+                Method name = field.getType().getMethod("name");
+                boolean first = true;
+                for (Object it : enums) {
+                    if (!first) {
+                        sb.append(" | ");
+                    }
+                    Object nameVal = name.invoke(it);
+                    if (!excludeEnums.contains(nameVal)) {
+                        sb.append(nameVal);
+                        first = false;
+                    }
+                }
+                sb.append(" ");
+                return sb.toString();
+            } else if (field.getType() == List.class) {
+                Type type = field.getGenericType();
+                if (type instanceof ParameterizedType) {
+                    Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+                    Class<?> genericType = (Class<?>) actualTypeArguments[0];
+                    return "list<" + genericType.getSimpleName().toLowerCase() + ">";
+                } else {
+                    return "list";
+                }
+            } else if (field.getType() == Map.class) {
+                Type type = field.getGenericType();
+                if (type instanceof ParameterizedType) {
+                    Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+                    Class<?> genericType = (Class<?>) actualTypeArguments[1];
+                    return "map<string," + genericType.getSimpleName().toLowerCase() + ">";
+                } else {
+                    return "list";
+                }
+            } else {
+                return field.getType().getSimpleName().toLowerCase();
+            }
+        }
+
+        @NotNull
+        private static Map convertMapType(
+            @NotNull Field field,
+            @NotNull String value
+        ) throws Exception {
+            Type type = field.getGenericType();
+            if (type instanceof ParameterizedType) {
+                Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+                if (actualTypeArguments.length == 2 && actualTypeArguments[0] == String.class) {
+                    Map values = new HashMap<>();
+                    String[] kvs = value.split(MAP_DELIMITER);
+                    for (String kv : kvs) {
+                        String[] array = kv.split(MAP_KV_DELIMITER);
+                        if (array.length == 2) {
+                            String k = array[0];
+                            String v = array[1];
+                            Object tmpVal = convertBasicType((Class<?>) actualTypeArguments[1], v);
+                            if (tmpVal != null) {
+                                //noinspection unchecked
+                                values.put(k, v);
+                            }
+                        }
+                    }
+                    return values;
+                }
+            }
+            return Collections.emptyMap();
+        }
+
+        @NotNull
+        private static List convertListType(
+            @NotNull Field field,
+            @NotNull String value
+        ) throws Exception {
+            Type type = field.getGenericType();
+            if (type instanceof ParameterizedType) {
+                Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+                Class<?> genericType = (Class<?>) actualTypeArguments[0];
+                String[] array = value.split(LIST_DELIMITER);
+
+                List<Object> values = new ArrayList<>();
+                for (String it : array) {
+                    Object tmpVal = convertBasicType(genericType, it);
+                    if (tmpVal != null) {
+                        values.add(tmpVal);
+                    }
+                }
+                return values;
+            }
+            return Collections.emptyList();
+        }
+
+        @Nullable
+        private static Object convertBasicType(
+            @NotNull Class<?> clazz,
+            @NotNull String value
+        ) throws Exception {
+            if (clazz == boolean.class || clazz == Boolean.class) { // boolean
+                return Boolean.parseBoolean(value);
+            } else if (clazz == byte.class || clazz == Byte.class) { // byte
+                return Byte.parseByte(value);
+            } else if (clazz == char.class || clazz == Character.class) { // char
+                return value.charAt(0);
+            } else if (clazz == short.class || clazz == Short.class) { // short
+                return Short.parseShort(value);
+            } else if (clazz == int.class || clazz == Integer.class) { // int
+                return Integer.parseInt(value);
+            } else if (clazz == long.class || clazz == Long.class) { // long
+                return Long.parseLong(value);
+            } else if (clazz == float.class || clazz == Float.class) { // long
+                return Float.parseFloat(value);
+            } else if (clazz == double.class || clazz == Double.class) { // long
+                return Double.parseDouble(value);
+            } else if (clazz == String.class) { // string
+                return value;
+            } else if (clazz.isEnum()) { // enum
+                Method valueOf = clazz.getMethod("valueOf", String.class);
+                return valueOf.invoke(clazz, value);
+            } else {
+                return null;
+            }
+        }
+    }
+
+}

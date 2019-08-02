@@ -19,14 +19,6 @@
 -keepclasseswithmembers class io.netty.** { *; }
 -dontwarn io.netty.**
 
-
-# Args4j
--keep class org.kohsuke.args4j.** { *;}
--dontwarn org.kohsuke.args4j.**
-#-keepclasseswithmembers class org.kohsuke.args4j.** { *;}
-#-dontwarn org.kohsuke.args4j.**
-
-
 -keepclassmembernames class * {
     java.lang.Class class$(java.lang.String);
     java.lang.Class class$(java.lang.String, boolean);
@@ -52,6 +44,8 @@
 -keepclasseswithmembers public class * {
     public static void main(java.lang.String[]);
 }
+
+
 
 # Keep filenames and line numbers
 
