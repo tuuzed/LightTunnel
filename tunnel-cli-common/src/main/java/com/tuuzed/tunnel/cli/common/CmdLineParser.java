@@ -58,15 +58,7 @@ public final class CmdLineParser {
         for (Field field : fields) {
             Option option = field.getAnnotation(Option.class);
             if (option != null) {
-                items.add(new Item(
-                    field,
-                    option.name(),
-                    option.longName(),
-                    option.help(),
-                    field.get(t),
-                    option.order(),
-                    option.excludeEnums())
-                );
+                items.add(new Item(field, option, field.get(t)));
             }
         }
         Collections.sort(items, new Comparator<Item>() {
@@ -93,17 +85,21 @@ public final class CmdLineParser {
         private String typeName;
 
 
-        public Item(Field field, String name, String longName, String help, Object def, int order, String[] excludeEnums) throws Exception {
+        public Item(@NotNull Field field, @NotNull Option option, Object def) throws Exception {
             this.field = field;
-            this.name = name;
-            this.longName = longName;
-            this.help = help;
+            this.name = option.name();
+            this.longName = option.longName();
+            this.help = option.help();
             this.def = def;
-            this.order = order;
-            this.excludeEnums = Arrays.asList(excludeEnums);
+            this.order = option.order();
+            this.excludeEnums = Arrays.asList(option.excludeEnums());
 
             this.names = "-" + name + "(--" + longName + ")";
-            this.typeName = getTypeName();
+            if (option.typeName().trim().length() > 0) {
+                this.typeName = option.typeName().trim();
+            } else {
+                this.typeName = getTypeName();
+            }
         }
 
         void printHelp(@NotNull PrintStream out, int nameLength, int typeLength) throws Exception {

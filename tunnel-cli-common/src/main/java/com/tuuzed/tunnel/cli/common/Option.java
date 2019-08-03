@@ -19,6 +19,10 @@ public @interface Option {
     @NotNull
     String help() default "";
 
+    // 类型名称
+    @NotNull
+    String typeName() default "";
+
     // 排序，值越小排在越前面
     int order() default 0;
 
