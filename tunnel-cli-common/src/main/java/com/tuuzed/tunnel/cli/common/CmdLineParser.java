@@ -93,13 +93,8 @@ public final class CmdLineParser {
             this.def = def;
             this.order = option.order();
             this.excludeEnums = Arrays.asList(option.excludeEnums());
-
             this.names = "-" + name + "(--" + longName + ")";
-            if (option.typeName().trim().length() > 0) {
-                this.typeName = option.typeName().trim();
-            } else {
-                this.typeName = getTypeName();
-            }
+            this.typeName = getTypeName();
         }
 
         void printHelp(@NotNull PrintStream out, int nameLength, int typeLength) throws Exception {
@@ -146,7 +141,7 @@ public final class CmdLineParser {
         private String getTypeName() throws Exception {
             if (field.getType().isEnum()) {
                 StringBuilder sb = new StringBuilder();
-                sb.append(field.getType().getSimpleName().toLowerCase()).append("[");
+                sb.append("enum").append("[");
                 Object[] enums = field.getType().getEnumConstants();
                 Method name = field.getType().getMethod("name");
                 boolean first = true;
