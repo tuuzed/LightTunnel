@@ -40,14 +40,16 @@ public final class CmdLineParser {
         PrintStream os = (out instanceof PrintStream)
             ? (PrintStream) out
             : new PrintStream(out, true);
-        int namesLength = 0;
+        int nameLength = 0;
+        int longNamesLength = 0;
         int typeLength = 0;
         for (Item item : items) {
-            namesLength = Math.max(item.names.length(), namesLength);
+            nameLength = Math.max(item.name.length(), nameLength);
+            longNamesLength = Math.max(item.longName.length(), longNamesLength);
             typeLength = Math.max(item.typeName.length(), typeLength);
         }
         for (Item item : items) {
-            item.printHelp(os, namesLength, typeLength);
+            item.printHelp(os, nameLength, longNamesLength, typeLength);
         }
     }
 
@@ -81,7 +83,6 @@ public final class CmdLineParser {
         int order;
         List<String> excludeEnums;
 
-        private String names;
         private String typeName;
 
 
@@ -93,21 +94,30 @@ public final class CmdLineParser {
             this.def = def;
             this.order = option.order();
             this.excludeEnums = Arrays.asList(option.excludeEnums());
-            this.names = "-" + name + "(--" + longName + ")";
             this.typeName = getTypeName();
         }
 
-        void printHelp(@NotNull PrintStream out, int nameLength, int typeLength) throws Exception {
+
+        void printHelp(@NotNull PrintStream out, int nameLength, int longNamesLength, int typeLength) throws Exception {
             StringBuilder helpText = new StringBuilder();
-            helpText.append(names);
-            for (int i = 0; i < nameLength - names.length(); i++) {
+            // name
+            helpText.append("-").append(name);
+            for (int i = 0; i < nameLength - name.length(); i++) {
                 helpText.append(" ");
             }
+            // longName
+            helpText.append(" (--").append(longName);
+            for (int i = 0; i < longNamesLength - longName.length(); i++) {
+                helpText.append(" ");
+            }
+            helpText.append(")");
+            // typeName
             helpText.append("    :");
             helpText.append(typeName);
             for (int i = 0; i < typeLength - typeName.length(); i++) {
                 helpText.append(" ");
             }
+            // help
             helpText.append("    ");
             helpText.append(help);
             helpText.append(", default: ").append(def);
