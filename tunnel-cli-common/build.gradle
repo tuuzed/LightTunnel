@@ -9,7 +9,8 @@ sourceCompatibility = rootProject.sourceCompatibility
 
 dependencies {
     compile project(":tunnel-common")
-    compile 'com.esotericsoftware.yamlbeans:yamlbeans:1.13'
+    // yml 文件解析
+    compile 'org.yaml:snakeyaml:1.24'
     // 单元测试
     testCompile "junit:junit:4.12"
 }

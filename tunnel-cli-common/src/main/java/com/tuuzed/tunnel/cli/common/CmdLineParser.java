@@ -18,7 +18,7 @@ import java.util.*;
  * *              Map<String,K>,默认使用'&'和'='分隔，例如，k1=v1&k2=v2
  * *              List<T>, 默认使用','分隔，例如，123,456
  */
-public class CmdLineParser {
+public final class CmdLineParser {
 
     private static final String LIST_DELIMITER = ",";
     private static final String MAP_DELIMITER = "&";
@@ -40,8 +40,14 @@ public class CmdLineParser {
         PrintStream os = (out instanceof PrintStream)
             ? (PrintStream) out
             : new PrintStream(out, true);
+        int namesLength = 0;
+        int typeLength = 0;
         for (Item item : items) {
-            item.printHelp(os);
+            namesLength = Math.max(item.names.length(), namesLength);
+            typeLength = Math.max(item.typeName.length(), typeLength);
+        }
+        for (Item item : items) {
+            item.printHelp(os, namesLength, typeLength);
         }
     }
 
@@ -83,8 +89,11 @@ public class CmdLineParser {
         int order;
         List<String> excludeEnums;
 
+        private String names;
+        private String typeName;
 
-        public Item(Field field, String name, String longName, String help, Object def, int order, String[] excludeEnums) {
+
+        public Item(Field field, String name, String longName, String help, Object def, int order, String[] excludeEnums) throws Exception {
             this.field = field;
             this.name = name;
             this.longName = longName;
@@ -92,16 +101,25 @@ public class CmdLineParser {
             this.def = def;
             this.order = order;
             this.excludeEnums = Arrays.asList(excludeEnums);
+
+            this.names = "-" + name + "(--" + longName + ")";
+            this.typeName = getTypeName();
         }
 
-        void printHelp(@NotNull PrintStream out) throws Exception {
+        void printHelp(@NotNull PrintStream out, int nameLength, int typeLength) throws Exception {
             StringBuilder helpText = new StringBuilder();
-            helpText.append("-").append(name);
-            helpText.append("(--").append(longName).append(")\t:");
-            helpText.append("[").append(getTypeName()).append("] ");
-            helpText.append(", default: ").append(def);
-            helpText.append("\r\n\t");
+            helpText.append(names);
+            for (int i = 0; i < nameLength - names.length(); i++) {
+                helpText.append(" ");
+            }
+            helpText.append("    :");
+            helpText.append(typeName);
+            for (int i = 0; i < typeLength - typeName.length(); i++) {
+                helpText.append(" ");
+            }
+            helpText.append("    ");
             helpText.append(help);
+            helpText.append(", default: ").append(def);
             out.println(helpText);
         }
 
@@ -132,13 +150,13 @@ public class CmdLineParser {
         private String getTypeName() throws Exception {
             if (field.getType().isEnum()) {
                 StringBuilder sb = new StringBuilder();
-                sb.append(field.getType().getSimpleName().toLowerCase()).append(" ##opt: ");
+                sb.append(field.getType().getSimpleName().toLowerCase()).append("[");
                 Object[] enums = field.getType().getEnumConstants();
                 Method name = field.getType().getMethod("name");
                 boolean first = true;
                 for (Object it : enums) {
                     if (!first) {
-                        sb.append(" | ");
+                        sb.append("|");
                     }
                     Object nameVal = name.invoke(it);
                     if (!excludeEnums.contains(nameVal)) {
@@ -146,7 +164,7 @@ public class CmdLineParser {
                         first = false;
                     }
                 }
-                sb.append(" ");
+                sb.append("]");
                 return sb.toString();
             } else if (field.getType() == List.class) {
                 Type type = field.getGenericType();

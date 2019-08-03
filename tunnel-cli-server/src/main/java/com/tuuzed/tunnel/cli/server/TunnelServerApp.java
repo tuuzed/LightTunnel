@@ -1,6 +1,5 @@
 package com.tuuzed.tunnel.cli.server;
 
-import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.cli.common.AbstractApp;
 import com.tuuzed.tunnel.cli.common.CfgUtils;
 import com.tuuzed.tunnel.common.logging.Logger;
@@ -12,6 +11,7 @@ import com.tuuzed.tunnel.server.TunnelServerBuilder;
 import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
 import java.util.Map;
@@ -39,8 +39,8 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
     }
 
     private void runAppAtCfg(@NotNull final RunOptions runOptions) throws Exception {
-        final YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
-        final Map globalOptions = (Map) reader.read();
+        final Map globalOptions = new Yaml().loadAs(new FileReader(runOptions.configFile), Map.class);
+
         // common
         final String bindAddr = CfgUtils.getString(globalOptions, "bind_addr", "0.0.0.0");
         final int bindPort = CfgUtils.getInt(globalOptions, "bind_port", 5000);

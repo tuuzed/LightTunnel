@@ -23,6 +23,7 @@ public @interface Option {
     int order() default 0;
 
     // 排除的枚举对象
+    @NotNull
     String[] excludeEnums() default {};
 
 

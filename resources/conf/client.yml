@@ -4,14 +4,14 @@ server_addr: 127.0.0.1
 server_port: 5000
 # 令牌
 token: tk123456
+# 线程数量
+worker_threads: -1
+
 # ssl
 ssl:
   server_port: 5001
   jks: client.jks
   storepass: ctunnelpass
-
-# 线程数量
-worker_threads: -1
 
 # 隧道列表
 tunnels:
