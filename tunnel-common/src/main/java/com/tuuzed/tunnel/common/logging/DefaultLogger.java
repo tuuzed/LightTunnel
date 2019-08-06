@@ -1,18 +1,18 @@
 package com.tuuzed.tunnel.common.logging;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-import static com.tuuzed.tunnel.common.logging.LogConfigurator.isPrintLog;
+import static com.tuuzed.tunnel.common.logging.LoggerFactory.isLoggable;
+import static com.tuuzed.tunnel.common.logging.Utils.*;
+
 
 public class DefaultLogger implements Logger {
-
     @NotNull
     private String name;
-
     private String shortName;
-
     private final Date date = new Date();
 
     public DefaultLogger(@NotNull String name) {
@@ -70,91 +70,81 @@ public class DefaultLogger implements Logger {
         log(ERROR, msg, cause);
     }
 
-    private synchronized void log(int level, @NotNull String format, Object... args) {
-        if (!isPrintLog(level)) {
+    @Override
+    public void prompt(@NotNull String format, Object... args) {
+        log(PROMPT, format, args);
+    }
+
+    @Override
+    public void prompt(@NotNull String msg, Throwable cause) {
+        log(PROMPT, msg, cause);
+    }
+
+    private void log(int level, @NotNull String format, Object... args) {
+        if (!isLoggable(level)) {
             return;
         }
-        date.setTime(System.currentTimeMillis());
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        if (stackTrace.length >= 3) {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s#%5$s=> %6$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    getShortClassName(stackTrace[3].getClassName()),
-                    stackTrace[3].getMethodName(),
-                    LogFormatter.format(format, args)
-            );
+        StackTraceElement[] traces = Thread.currentThread().getStackTrace();
+        if (traces.length >= 3) {
+            log(level, formatPlaceholderMsg(format, args), null, traces[3]);
         } else {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s=> %5$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    shortName,
-                    LogFormatter.format(format, args)
-            );
+            log(level, formatPlaceholderMsg(format, args), null, null);
         }
     }
 
-    private synchronized void log(int level, @NotNull String msg, Throwable cause) {
-        if (!isPrintLog(level)) {
+    private void log(int level, @NotNull String msg, @Nullable Throwable cause) {
+        if (!isLoggable(level)) {
             return;
         }
-        date.setTime(System.currentTimeMillis());
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        if (stackTrace.length >= 3) {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s#%5$s=> %6$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    getShortClassName(stackTrace[3].getClassName()),
-                    stackTrace[3].getMethodName(),
-                    msg
-            );
+        StackTraceElement[] traces = Thread.currentThread().getStackTrace();
+        if (traces.length >= 3) {
+            log(level, msg, cause, traces[3]);
         } else {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s=> %5$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    shortName,
-                    msg
-            );
+            log(level, msg, cause, null);
         }
+    }
+
+    private synchronized void log(
+        int level,
+        @NotNull String msg,
+        @Nullable Throwable cause,
+        @Nullable StackTraceElement trace
+    ) {
+        date.setTime(System.currentTimeMillis());
+        StringBuilder log = new StringBuilder();
+        log
+            .append(formatDate(date)).append(" [")
+            .append(getLevenName(level)).append("] ")
+            .append(Thread.currentThread().getName()).append(" ");
+
+        if (trace != null) {
+            log
+                .append(getShortClassName(trace.getClassName())).append("#")
+                .append(trace.getMethodName()).append(": ");
+        } else {
+            log
+                .append(shortName).append(": ");
+        }
+
+        log.append(msg);
+        colorfulPrintln(log.toString(), 35, -1, 0);
         if (cause != null) {
             cause.printStackTrace(System.err);
         }
     }
 
-    private String getShortClassName(String className) {
-        if (className.length() > 20) {
-            String[] array = className.split("\\.");
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < array.length - 1; i++) {
-                sb.append(array[i], 0, 1);
-                sb.append(".");
-            }
-            sb.append(array[array.length - 1]);
-            return sb.toString();
+    // 样式    : 0-空样式  1-粗体  4-下划线  7-反色
+    // 颜色1   : 30-白色  31-红色 32-绿色 33-黄色  34  蓝色 35  紫色 36  浅蓝 37  灰色
+    // 颜色2   : 90-白色  91-红色 92-绿色 93-黄色  94  蓝色 95  紫色 96  浅蓝 97  灰色
+    // 背景 : 40-白色  41-红色 42-绿色 43-黄色  44  蓝色 45  紫色 46  浅蓝 47  灰色
+    //
+    // 格式: "\033[颜色;背景;样式m%s\033[0m"
+    private void colorfulPrintln(String x, int color, int bg, int style) {
+        if (bg <= 47 && bg >= 40) {
+            System.err.printf("\033[%d;%d;%dm%s\033[%dm%n", color, bg, style, x, style);
         } else {
-            return className;
+            System.err.printf("\033[%d;%dm%s\033[%dm%n", color, style, x, style);
         }
     }
 
-    @NotNull
-    private String getLevenName(int level) {
-        switch (level) {
-            case TRACE:
-                return "TRACE";
-            case DEBUG:
-                return "DEBUG";
-            case INFO:
-                return "INFO ";
-            case WARN:
-                return "WARN ";
-            case ERROR:
-                return "ERROR";
-            default:
-                return "     ";
-        }
-    }
 }
