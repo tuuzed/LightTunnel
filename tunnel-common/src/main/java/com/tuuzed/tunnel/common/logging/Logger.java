@@ -15,6 +15,7 @@ public interface Logger {
     int OFF = Integer.MAX_VALUE;
 
 
+
     void trace(@NotNull String format, Object... args);
 
     void trace(@NotNull String msg, Throwable cause);
