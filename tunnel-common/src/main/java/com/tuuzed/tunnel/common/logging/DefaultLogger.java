@@ -71,6 +71,16 @@ public class DefaultLogger implements Logger {
     }
 
     @Override
+    public void fatal(@NotNull String format, Object... args) {
+        log(FATAL, format, args);
+    }
+
+    @Override
+    public void fatal(@NotNull String msg, Throwable cause) {
+        log(FATAL, msg, cause);
+    }
+
+    @Override
     public void prompt(@NotNull String format, Object... args) {
         log(PROMPT, format, args);
     }
@@ -114,7 +124,7 @@ public class DefaultLogger implements Logger {
         StringBuilder log = new StringBuilder();
         log
             .append(formatDate(date)).append(" [")
-            .append(getLevenName(level)).append("] ")
+            .append(getLevelName(level)).append("] ")
             .append(Thread.currentThread().getName()).append(" ");
 
         if (trace != null) {
@@ -125,26 +135,12 @@ public class DefaultLogger implements Logger {
             log
                 .append(shortName).append(": ");
         }
-
         log.append(msg);
-        colorfulPrintln(log.toString(), 35, -1, 0);
+        printlnColored(log.toString(), getLevelColor(level), -1, -1, System.err);
         if (cause != null) {
             cause.printStackTrace(System.err);
         }
     }
 
-    // 样式    : 0-空样式  1-粗体  4-下划线  7-反色
-    // 颜色1   : 30-白色  31-红色 32-绿色 33-黄色  34  蓝色 35  紫色 36  浅蓝 37  灰色
-    // 颜色2   : 90-白色  91-红色 92-绿色 93-黄色  94  蓝色 95  紫色 96  浅蓝 97  灰色
-    // 背景 : 40-白色  41-红色 42-绿色 43-黄色  44  蓝色 45  紫色 46  浅蓝 47  灰色
-    //
-    // 格式: "\033[颜色;背景;样式m%s\033[0m"
-    private void colorfulPrintln(String x, int color, int bg, int style) {
-        if (bg <= 47 && bg >= 40) {
-            System.err.printf("\033[%d;%d;%dm%s\033[%dm%n", color, bg, style, x, style);
-        } else {
-            System.err.printf("\033[%d;%dm%s\033[%dm%n", color, style, x, style);
-        }
-    }
 
 }
