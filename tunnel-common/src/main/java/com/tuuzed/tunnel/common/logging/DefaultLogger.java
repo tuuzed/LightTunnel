@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-import static com.tuuzed.tunnel.common.logging.LoggerFactory.isLoggable;
+import static com.tuuzed.tunnel.common.logging.LoggerFactory.logAdapters;
 import static com.tuuzed.tunnel.common.logging.Utils.*;
 
 
@@ -22,9 +22,6 @@ public class DefaultLogger extends AbstractLogger {
 
     @Override
     void log(int level, @NotNull String format, Object... args) {
-        if (!isLoggable(level)) {
-            return;
-        }
         StackTraceElement[] traces = Thread.currentThread().getStackTrace();
         if (traces.length >= 3) {
             log(level, formatPlaceholderMsg(format, args), null, traces[3]);
@@ -35,9 +32,6 @@ public class DefaultLogger extends AbstractLogger {
 
     @Override
     void log(int level, @NotNull String msg, @Nullable Throwable cause) {
-        if (!isLoggable(level)) {
-            return;
-        }
         StackTraceElement[] traces = Thread.currentThread().getStackTrace();
         if (traces.length >= 3) {
             log(level, msg, cause, traces[3]);
@@ -50,6 +44,19 @@ public class DefaultLogger extends AbstractLogger {
         int level,
         @NotNull String msg,
         @Nullable Throwable cause,
+        @Nullable StackTraceElement trace
+    ) {
+        String message = createMessage(level, msg, trace);
+        for (LogAdapter logAdapter : logAdapters.values()) {
+            if (logAdapter.isLoggable(level)) {
+                logAdapter.log(level, message, cause);
+            }
+        }
+    }
+
+    private synchronized String createMessage(
+        int level,
+        @NotNull String msg,
         @Nullable StackTraceElement trace
     ) {
         date.setTime(System.currentTimeMillis());
@@ -68,10 +75,7 @@ public class DefaultLogger extends AbstractLogger {
                 .append(shortName).append(": ");
         }
         log.append(msg);
-        printlnColored(log.toString(), getLevelColor(level), -1, -1, System.err);
-        if (cause != null) {
-            cause.printStackTrace(System.err);
-        }
+        return log.toString();
     }
 
 

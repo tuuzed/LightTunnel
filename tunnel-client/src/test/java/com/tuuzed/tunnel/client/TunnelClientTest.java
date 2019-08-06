@@ -16,7 +16,6 @@ public class TunnelClientTest {
 
     @Before
     public void setUp() {
-        LoggerFactory.setLevel(Logger.ALL);
         client = TunnelClient.builder()
             .setAutoReconnect(true)
             .setWorkerThreads(4)

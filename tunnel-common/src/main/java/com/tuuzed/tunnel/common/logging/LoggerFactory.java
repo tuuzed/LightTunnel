@@ -1,8 +1,26 @@
 package com.tuuzed.tunnel.common.logging;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class LoggerFactory {
+
+    private LoggerFactory() {
+        throw new IllegalStateException();
+    }
+
+    static final Map<String, LogAdapter> logAdapters = new ConcurrentHashMap<>();
+
+    @Nullable
+    private static LogcatLogAdapter logcatLogAdapter;
+
+    static {
+        logcatLogAdapter = new LogcatLogAdapter();
+        logAdapters.put("logcat", logcatLogAdapter);
+    }
 
     @NotNull
     public static Logger getLogger(@NotNull Class clazz) {
@@ -12,6 +30,27 @@ public final class LoggerFactory {
     @NotNull
     public static Logger getLogger(@NotNull String name) {
         return getCreator().getLogger(name);
+    }
+
+    public static void addLogAdapter(@NotNull String name, @NotNull LogAdapter logAdapter) {
+        if (logAdapters.containsKey(name)) {
+            throw new IllegalArgumentException("contains name: " + name);
+        }
+        logAdapters.put(name, logAdapter);
+    }
+
+    @Nullable
+    public static LogAdapter getLogAdapter(@NotNull String name) {
+        return logAdapters.get(name);
+    }
+
+    public static void clearLogAdapters() {
+        logAdapters.clear();
+        logcatLogAdapter = null;
+    }
+
+    public static void setCreator(@NotNull LoggerCreator creator) {
+        LoggerFactory.creator = creator;
     }
 
     @NotNull
@@ -29,23 +68,9 @@ public final class LoggerFactory {
         }
     };
 
-    private static int level = Logger.ALL;
-
     @NotNull
     private static LoggerCreator getCreator() {
         return creator;
-    }
-
-    public static void setCreator(@NotNull LoggerCreator creator) {
-        LoggerFactory.creator = creator;
-    }
-
-    public static void setLevel(int level) {
-        LoggerFactory.level = level;
-    }
-
-    public static boolean isLoggable(int level) {
-        return LoggerFactory.level < level;
     }
 
     interface LoggerCreator {
