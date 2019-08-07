@@ -54,15 +54,15 @@ public class DefaultLogger extends AbstractLogger {
         }
     }
 
-    private synchronized String createMessage(
+    @NotNull
+    private String createMessage(
         int level,
         @NotNull String msg,
         @Nullable StackTraceElement trace
     ) {
-        date.setTime(System.currentTimeMillis());
         StringBuilder log = new StringBuilder();
         log
-            .append(formatDate(date)).append(" [")
+            .append(takeDate()).append(" [")
             .append(getLevelName(level)).append("] ")
             .append(Thread.currentThread().getName()).append(" ");
 
@@ -76,6 +76,12 @@ public class DefaultLogger extends AbstractLogger {
         }
         log.append(msg);
         return log.toString();
+    }
+
+    @NotNull
+    private synchronized String takeDate() {
+        date.setTime(System.currentTimeMillis());
+        return formatDate(date);
     }
 
 

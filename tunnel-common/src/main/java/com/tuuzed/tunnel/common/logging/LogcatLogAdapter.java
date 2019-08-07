@@ -1,6 +1,7 @@
 package com.tuuzed.tunnel.common.logging;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.tuuzed.tunnel.common.logging.Utils.getLevelColor;
 import static com.tuuzed.tunnel.common.logging.Utils.printlnColored;
@@ -18,7 +19,7 @@ public class LogcatLogAdapter implements LogAdapter {
     }
 
     @Override
-    public void log(int level, @NotNull String msg, Throwable cause) {
+    public void log(int level, @NotNull String msg, @Nullable Throwable cause) {
         printlnColored(msg, getLevelColor(level), -1, -1, System.err);
         if (cause != null) {
             cause.printStackTrace(System.err);

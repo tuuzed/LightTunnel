@@ -14,12 +14,8 @@ public final class LoggerFactory {
 
     static final Map<String, LogAdapter> logAdapters = new ConcurrentHashMap<>();
 
-    @Nullable
-    private static LogcatLogAdapter logcatLogAdapter;
-
     static {
-        logcatLogAdapter = new LogcatLogAdapter();
-        logAdapters.put("logcat", logcatLogAdapter);
+        logAdapters.put("logcat", new LogcatLogAdapter());
     }
 
     @NotNull
@@ -46,7 +42,6 @@ public final class LoggerFactory {
 
     public static void clearLogAdapters() {
         logAdapters.clear();
-        logcatLogAdapter = null;
     }
 
     public static void setCreator(@NotNull LoggerCreator creator) {
