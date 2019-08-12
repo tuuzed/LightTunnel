@@ -1,5 +1,8 @@
 package com.tuuzed.tunnel.server;
 
+import com.tuuzed.tunnel.common.logging.LogAdapter;
+import com.tuuzed.tunnel.common.logging.Logger;
+import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
@@ -14,6 +17,10 @@ public class TunnelServerTest {
 
     @Before
     public void setUp() throws Exception {
+        LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
+        if (logcat != null) {
+            logcat.setLevel(Logger.ALL);
+        }
         ProtoRequestInterceptor protoRequestInterceptor = new ProtoRequestInterceptorImpl();
         HttpRequestInterceptor httpRequestInterceptor = new HttpRequestInterceptorImpl();
         SslContext sslContext = SslContexts.forServer(

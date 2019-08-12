@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.client;
 
+import com.tuuzed.tunnel.common.logging.LogAdapter;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
@@ -16,6 +17,10 @@ public class TunnelClientTest {
 
     @Before
     public void setUp() {
+        LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
+        if (logcat != null) {
+            logcat.setLevel(Logger.ALL);
+        }
         client = TunnelClient.builder()
             .setAutoReconnect(true)
             .setWorkerThreads(4)

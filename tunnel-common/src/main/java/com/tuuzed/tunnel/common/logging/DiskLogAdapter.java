@@ -34,6 +34,7 @@ class DiskLogAdapter implements LogAdapter {
         return this.level < level;
     }
 
+    @Override
     public void setLevel(int level) {
         this.level = level;
     }

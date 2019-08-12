@@ -26,7 +26,10 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
     @NotNull
     private final HttpRequestInterceptor httpRequestInterceptor;
 
-    public HttpServerChannelHandler(@NotNull HttpServer httpServer, @NotNull HttpRequestInterceptor interceptor) {
+    public HttpServerChannelHandler(
+        @NotNull HttpServer httpServer,
+        @NotNull HttpRequestInterceptor interceptor
+    ) {
         this.httpServer = httpServer;
         this.httpRequestInterceptor = interceptor;
     }
@@ -35,7 +38,6 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
         logger.trace("channelActive: {}", ctx);
-
     }
 
     @Override

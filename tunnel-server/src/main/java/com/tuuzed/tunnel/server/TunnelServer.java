@@ -9,8 +9,8 @@ import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import com.tuuzed.tunnel.server.http.HttpServer;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
-import com.tuuzed.tunnel.server.tcp.TcpStats;
 import com.tuuzed.tunnel.server.tcp.TcpServer;
+import com.tuuzed.tunnel.server.tcp.TcpStats;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -49,7 +49,7 @@ public class TunnelServer {
     private final HttpRequestInterceptor httpRequestInterceptor;
 
     @NotNull
-    private final TcpStats stats;
+    private final TcpStats tcpStats;
     @NotNull
     private final TcpServer tcpServer;
     @NotNull
@@ -78,8 +78,8 @@ public class TunnelServer {
 
         this.protoRequestInterceptor = builder.protoRequestInterceptor;
         this.httpRequestInterceptor = builder.httpRequestInterceptor;
-        this.stats = new TcpStats();
-        this.tcpServer = new TcpServer(bossGroup, workerGroup, stats);
+        this.tcpStats = new TcpStats();
+        this.tcpServer = new TcpServer(bossGroup, workerGroup, tcpStats);
         this.httpServer = new HttpServer(bossGroup, workerGroup, httpRequestInterceptor);
         this.tunnelTokenProducer = new TokenProducer();
     }
@@ -90,8 +90,8 @@ public class TunnelServer {
     }
 
     @NotNull
-    public TcpStats stats() {
-        return stats;
+    public TcpStats tcpStats() {
+        return tcpStats;
     }
 
     public void start() throws Exception {

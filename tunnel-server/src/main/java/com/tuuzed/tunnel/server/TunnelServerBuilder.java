@@ -27,6 +27,8 @@ public class TunnelServerBuilder {
 
     HttpRequestInterceptor httpRequestInterceptor = HttpRequestInterceptor.DEFAULT;
 
+    TunnelServerBuilder() {
+    }
 
     @NotNull
     public TunnelServerBuilder setBindAddr(String bindAddr) {

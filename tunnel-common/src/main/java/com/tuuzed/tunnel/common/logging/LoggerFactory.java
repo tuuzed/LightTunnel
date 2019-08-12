@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class LoggerFactory {
 
+    public static final String LOGCAT = "logcat";
+
     private LoggerFactory() {
         throw new IllegalStateException();
     }
@@ -15,7 +17,7 @@ public final class LoggerFactory {
     static final Map<String, LogAdapter> logAdapters = new ConcurrentHashMap<>();
 
     static {
-        logAdapters.put("logcat", new LogcatLogAdapter());
+        logAdapters.put(LOGCAT, new LogcatLogAdapter());
     }
 
     @NotNull

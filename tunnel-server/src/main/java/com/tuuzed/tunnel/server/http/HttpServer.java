@@ -27,7 +27,6 @@ public class HttpServer {
     private final Map<Long, HttpTunnelDescriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
     @NotNull
     private final Map<String, HttpTunnelDescriptor> vhostDescriptors = new ConcurrentHashMap<>();
-
     @NotNull
     private final Object descriptorsLock = new Object();
 

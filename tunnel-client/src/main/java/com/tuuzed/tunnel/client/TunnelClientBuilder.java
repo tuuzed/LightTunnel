@@ -9,6 +9,9 @@ public class TunnelClientBuilder {
     boolean autoReconnect = true;
     int workerThreads = -1;
 
+    TunnelClientBuilder() {
+    }
+
     @NotNull
     public TunnelClientBuilder setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;
