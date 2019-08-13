@@ -4,26 +4,26 @@
 
 ```yml
 tunnels:
-  - proto: tcp                 // 指定协议为TCP
-    enable_ssl: false          // 是否启用SSL
-    local_addr: 192.168.1.10   // 映射本地地址
-    local_port: 22             // 映射本地端口
-    remote_port: 10022         // 映射远程端口
+  - proto: tcp                 # 指定协议为TCP
+    enable_ssl: false          # 是否启用SSL
+    local_addr: 192.168.1.10   # 映射本地地址
+    local_port: 22             # 映射本地端口
+    remote_port: 10022         # 映射远程端口
 ```
 
 ## HTTP Tunnel
 
 ```yml
 tunnels:
-  - proto: http                // 指定协议为HTTP
-    enable_ssl: false          // 是否启用SSL
-    local_addr: apache.org     // 映射本地地址
-    local_port: 80             // 映射本地端口
-    vhost: t2.tunnel.lo        // 映射域名
-    set_headers:               // 设置HTTP响应头
-      X-Real-IP: $remote_addr  // $remote_addr将被替换成发起请求的客户端IP
+  - proto: http                # 指定协议为HTTP
+    enable_ssl: false          # 是否启用SSL
+    local_addr: apache.org     # 映射本地地址
+    local_port: 80             # 映射本地端口
+    vhost: t2.tunnel.lo        # 映射域名
+    set_headers:               # 设置HTTP响应头
+      X-Real-IP: $remote_addr  # $remote_addr 将被替换成发起请求的客户端IP
       Host: apache.org
-    add_headers:               // 添加HTTP响应头
+    add_headers:               # 添加HTTP响应头
       X-User-Agent: Tunnel
 ```
 
