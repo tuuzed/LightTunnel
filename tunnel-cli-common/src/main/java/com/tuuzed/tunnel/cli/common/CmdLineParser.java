@@ -199,7 +199,7 @@ public final class CmdLineParser {
             if (type instanceof ParameterizedType) {
                 Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
                 if (actualTypeArguments.length == 2 && actualTypeArguments[0] == String.class) {
-                    Map values = new HashMap<>();
+                    Map values = new LinkedHashMap();
                     String[] kvs = value.split(MAP_DELIMITER);
                     for (String kv : kvs) {
                         String[] array = kv.split(MAP_KV_DELIMITER);

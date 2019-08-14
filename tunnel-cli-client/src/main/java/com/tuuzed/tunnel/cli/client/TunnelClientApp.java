@@ -169,18 +169,55 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
 
                 break;
             case HTTP:
-                protoRequest = ProtoRequest.httpBuilder(runOptions.vhost)
-                    .setLocalAddr(runOptions.localAddr)
-                    .setLocalPort(runOptions.localPort)
-                    .setOption("token", runOptions.token)
-                    .build();
-                break;
             case HTTPS:
-                protoRequest = ProtoRequest.httpBuilder(runOptions.vhost)
-                    .setLocalAddr(runOptions.localAddr)
-                    .setLocalPort(runOptions.localPort)
-                    .setOption("token", runOptions.token)
-                    .build();
+                final String vhost = runOptions.vhost;
+
+                StringBuilder setHeaders = new StringBuilder();
+                StringBuilder addHeaders = new StringBuilder();
+                boolean isFirst = true;
+                for (Object header : runOptions.setHeaders.entrySet()) {
+                    if (header instanceof Map.Entry) {
+                        String key = ((Map.Entry) header).getKey().toString();
+                        String value = ((Map.Entry) header).getValue().toString();
+                        setHeaders.append(key).append(":").append(value);
+                        if (!isFirst) {
+                            setHeaders.append(";");
+                        }
+                        isFirst = false;
+                    }
+                }
+                isFirst = true;
+                for (Object header : runOptions.addHeaders.entrySet()) {
+                    if (header instanceof Map.Entry) {
+                        String key = ((Map.Entry) header).getKey().toString();
+                        String value = ((Map.Entry) header).getValue().toString();
+                        addHeaders.append(key).append(":").append(value);
+                        if (!isFirst) {
+                            addHeaders.append(";");
+                        }
+                        isFirst = false;
+                    }
+                }
+                switch (runOptions.proto) {
+                    case HTTP:
+                        protoRequest = ProtoRequest.httpBuilder(vhost)
+                            .setLocalAddr(runOptions.localAddr)
+                            .setLocalPort(runOptions.localPort)
+                            .setOption("token", runOptions.token)
+                            .setOption("set_headers", setHeaders.toString())
+                            .setOption("add_headers", addHeaders.toString())
+                            .build();
+                        break;
+                    case HTTPS:
+                        protoRequest = ProtoRequest.httpsBuilder(vhost)
+                            .setLocalAddr(runOptions.localAddr)
+                            .setLocalPort(runOptions.localPort)
+                            .setOption("token", runOptions.token)
+                            .setOption("set_headers", setHeaders.toString())
+                            .setOption("add_headers", addHeaders.toString())
+                            .build();
+                        break;
+                }
                 break;
             default:
                 break;

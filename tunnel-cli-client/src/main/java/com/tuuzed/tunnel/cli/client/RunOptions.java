@@ -51,10 +51,10 @@ public final class RunOptions {
     public String vhost = "";
 
     @Option(name = "sh", longName = "set-headers", help = "设置HTTP响应头", order = 140)
-    public Map<String, String> SetHeaders = Collections.emptyMap();
+    public Map<String, String> setHeaders = Collections.emptyMap();
 
     @Option(name = "ah", longName = "add-headers", help = "新增HTTP响应头", order = 150)
-    public Map<String, String> AddHeaders = Collections.emptyMap();
+    public Map<String, String> addHeaders = Collections.emptyMap();
 
 
 }
