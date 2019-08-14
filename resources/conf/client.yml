@@ -60,3 +60,27 @@ tunnels:
       Host: apache.org
     add_headers:
       X-User-Agent: Tunnel
+
+  # https-vhost
+  - proto: https
+    enable_ssl: false
+    local_addr: 192.168.1.1
+    local_port: 80
+    vhost: t1.tunnel.lo
+    set_headers:
+      X-Real-IP: $remote_addr
+      Host: 192.168.1.1
+    add_headers:
+      X-User-Agent: Tunnel
+
+  # https-vhost
+  - proto: https
+    enable_ssl: false
+    local_addr: apache.org
+    local_port: 80
+    vhost: t2.tunnel.lo
+    set_headers:
+      X-Real-IP: $remote_addr
+      Host: apache.org
+    add_headers:
+      X-User-Agent: Tunnel

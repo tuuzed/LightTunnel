@@ -4,7 +4,6 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
-import com.tuuzed.tunnel.server.tcp.TcpServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -13,6 +12,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HttpServer {
-    private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
     @NotNull
     private final ServerBootstrap serverBootstrap;
     @NotNull
@@ -33,7 +34,8 @@ public class HttpServer {
     public HttpServer(
         @NotNull final NioEventLoopGroup bossGroup,
         @NotNull final NioEventLoopGroup workerGroup,
-        @NotNull final HttpRequestInterceptor interceptor
+        @NotNull final HttpRequestInterceptor interceptor,
+        @Nullable final SslContext sslContext
     ) {
         this.serverBootstrap = new ServerBootstrap();
         this.serverBootstrap.group(bossGroup, workerGroup)
@@ -43,6 +45,9 @@ public class HttpServer {
             .childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
+                    if (sslContext != null) { // 启用SSL
+                        ch.pipeline().addFirst(new SslHandler(sslContext.newEngine(ch.alloc())));
+                    }
                     ch.pipeline()
                         .addLast(new HttpRequestDecoder())
                         .addLast(new HttpServerChannelHandler(HttpServer.this, interceptor))

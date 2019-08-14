@@ -103,6 +103,23 @@ public class TunnelClientTest {
             .build();
 
 
+        ProtoRequest vhostHttps1 = ProtoRequest.httpsBuilder("t1.tunnel.lo")
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:192.168.1.1")
+            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .build();
+
+        ProtoRequest vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
+            .setLocalAddr("apache.org")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:apache.org")
+            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .build();
+
+
         client.connect(serverAddr, serverPort, portError, sslContext);
         final TunnelClientDescriptor portReplacedDescriptor =
             client.connect(serverAddr, serverPort, portReplaced, sslContext);
@@ -113,6 +130,9 @@ public class TunnelClientTest {
         // vhostHttp
         client.connect(serverAddr, serverPort, vhostHttp1, sslContext);
         client.connect(serverAddr, serverPort, vhostHttp2, sslContext);
+        // vhostHttps
+        client.connect(serverAddr, serverPort, vhostHttps1, sslContext);
+        client.connect(serverAddr, serverPort, vhostHttps2, sslContext);
         new Thread(new Runnable() {
             @Override
             public void run() {

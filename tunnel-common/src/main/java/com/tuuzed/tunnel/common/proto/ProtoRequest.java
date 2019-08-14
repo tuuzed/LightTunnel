@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 
+@SuppressWarnings("Duplicates")
 public class ProtoRequest {
     static final String REMOTE_PORT = "$r";
     static final String VHOST = "$v";
@@ -80,6 +81,10 @@ public class ProtoRequest {
         return proto == Proto.HTTP;
     }
 
+    public boolean isHttps() {
+        return proto == Proto.HTTPS;
+    }
+
 
     @NotNull
     public static ProtoRequest fromBytes(@NotNull byte[] bytes) throws ProtoException {
@@ -136,6 +141,11 @@ public class ProtoRequest {
     }
 
     @NotNull
+    public static ProtoRequestBuilder httpsBuilder(@NotNull String vhost) {
+        return new ProtoRequestBuilder(Proto.HTTPS).setOptionInternal(VHOST, vhost);
+    }
+
+    @NotNull
     public ProtoRequestBuilder cloneTcpBuilder() {
         return cloneTcpBuilder(remotePort());
     }
@@ -165,13 +175,30 @@ public class ProtoRequest {
         return builder;
     }
 
+    @NotNull
+    public ProtoRequestBuilder cloneHttpsBuilder() {
+        return cloneHttpBuilder(vhost());
+    }
+
+    @NotNull
+    public ProtoRequestBuilder cloneHttpsBuilder(@NotNull String vhost) {
+        ProtoRequestBuilder builder = new ProtoRequestBuilder(Proto.HTTPS);
+        builder.localAddr = localAddr;
+        builder.localPort = localPort;
+        builder.options = options;
+        builder.setOptionInternal(VHOST, vhost);
+        return builder;
+    }
+
     @Override
     public String toString() {
         switch (proto) {
             case TCP:
-                return String.format("[tcp://%s:%d<-%d?%s]", localAddr, localPort, remotePort(), ProtoUtils.map2String(options));
+                return String.format("[%s:%d<-tcp://tunnel.server:%d?%s]", localAddr, localPort, remotePort(), ProtoUtils.map2String(options));
             case HTTP:
-                return String.format("[http://%s:%d<-%s?%s]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
+                return String.format("[%s:%d<-http://%s?%s]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
+            case HTTPS:
+                return String.format("[%s:%d<-https://%s?%s]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
             default:
                 return "";
         }

@@ -15,6 +15,12 @@ public class TunnelServerTest {
 
     private TunnelServer tunnelServer;
 
+    @Test
+    public void start() throws Exception {
+        tunnelServer.start();
+        System.in.read();
+    }
+
     @Before
     public void setUp() throws Exception {
         LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
@@ -23,6 +29,7 @@ public class TunnelServerTest {
         }
         ProtoRequestInterceptor protoRequestInterceptor = new ProtoRequestInterceptorImpl();
         HttpRequestInterceptor httpRequestInterceptor = new HttpRequestInterceptorImpl();
+        HttpRequestInterceptor httpsRequestInterceptor = new HttpRequestInterceptorImpl();
         SslContext sslContext = SslContexts.forServer(
             "../resources/jks/server.jks",
             "stunnelpass",
@@ -31,11 +38,27 @@ public class TunnelServerTest {
         this.tunnelServer = TunnelServer.builder()
             .setBossThreads(1)
             .setWorkerThreads(-1)
-            .setBindPort(5000)
-            .enableSsl(sslContext, 5001)
-            .setHttpBindPort(5080)
             .setProtoRequestInterceptor(protoRequestInterceptor)
+
+            .setBindAddr(null)
+            .setBindPort(5000)
+
+            .setSslEnable(true)
+            .setSslContext(sslContext)
+            .setSslBindAddr(null)
+            .setSslBindPort(5001)
+
+            .setHttpEnable(true)
+            .setHttpBindAddr(null)
+            .setHttpBindPort(5080)
             .setHttpRequestInterceptor(httpRequestInterceptor)
+
+            .setHttpsEnable(true)
+            .setHttpsContext(sslContext)
+            .setHttpsBindAddr(null)
+            .setHttpsBindPort(5443)
+            .setHttpsRequestInterceptor(httpsRequestInterceptor)
+
             .build();
     }
 
@@ -44,10 +67,5 @@ public class TunnelServerTest {
         this.tunnelServer.destroy();
     }
 
-    @Test
-    public void start() throws Exception {
-        tunnelServer.start();
-        System.in.read();
-    }
 
 }

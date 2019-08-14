@@ -16,6 +16,7 @@ worker_threads: -1
 
 # ssl
 ssl:
+  enable: true
   bind_addr: 0.0.0.0
   bind_port: 5001
   jks: server.jks
@@ -24,5 +25,15 @@ ssl:
 
 # http
 http:
+  enable: true
   bind_addr: 0.0.0.0
   bind_port: 5080
+
+# https
+https:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 5443
+  jks: server.jks
+  storepass: stunnelpass
+  keypass: stunnelpass

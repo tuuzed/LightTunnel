@@ -10,6 +10,7 @@ import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
@@ -49,7 +50,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
         final int workerThreads = CfgUtils.getInt(globalOptions, "worker_threads", -1);
 
         // ssl
-        SslContext sslContext = null;
+        @Nullable SslContext sslContext = null;
         int sslServerPort = serverPort;
         final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
         if (!sslOptions.isEmpty()) {
@@ -69,7 +70,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
 
         for (Map tunnel : tunnels) {
             final Proto proto = Proto.valueOf(
-                CfgUtils.getString(tunnel, "proto", "tcp").toUpperCase()
+                CfgUtils.getString(tunnel, "proto", "unknown").toUpperCase()
             );
             final boolean enableSsl = CfgUtils.getBoolean(tunnel, "enable_ssl", false);
             final String localAddr = CfgUtils.getString(tunnel, "local_addr", "");
@@ -86,13 +87,12 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                         .build();
                     break;
                 case HTTP:
+                case HTTPS:
                     final String vhost = CfgUtils.getString(tunnel, "vhost", "");
 
                     StringBuilder setHeaders = new StringBuilder();
                     StringBuilder addHeaders = new StringBuilder();
-
                     boolean isFirst = true;
-
                     for (Object header : CfgUtils.getMap(tunnel, "set_headers").entrySet()) {
                         if (header instanceof Map.Entry) {
                             String key = ((Map.Entry) header).getKey().toString();
@@ -104,7 +104,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                             isFirst = false;
                         }
                     }
-
+                    isFirst = true;
                     for (Object header : CfgUtils.getMap(tunnel, "add_headers").entrySet()) {
                         if (header instanceof Map.Entry) {
                             String key = ((Map.Entry) header).getKey().toString();
@@ -116,14 +116,26 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                             isFirst = false;
                         }
                     }
-
-                    protoRequest = ProtoRequest.httpBuilder(vhost)
-                        .setLocalAddr(localAddr)
-                        .setLocalPort(localPort)
-                        .setOption("token", token)
-                        .setOption("set_headers", setHeaders.toString())
-                        .setOption("add_headers", addHeaders.toString())
-                        .build();
+                    switch (proto) {
+                        case HTTP:
+                            protoRequest = ProtoRequest.httpBuilder(vhost)
+                                .setLocalAddr(localAddr)
+                                .setLocalPort(localPort)
+                                .setOption("token", token)
+                                .setOption("set_headers", setHeaders.toString())
+                                .setOption("add_headers", addHeaders.toString())
+                                .build();
+                            break;
+                        case HTTPS:
+                            protoRequest = ProtoRequest.httpsBuilder(vhost)
+                                .setLocalAddr(localAddr)
+                                .setLocalPort(localPort)
+                                .setOption("token", token)
+                                .setOption("set_headers", setHeaders.toString())
+                                .setOption("add_headers", addHeaders.toString())
+                                .build();
+                            break;
+                    }
                     break;
                 default:
                     break;
@@ -163,11 +175,18 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                     .setOption("token", runOptions.token)
                     .build();
                 break;
+            case HTTPS:
+                protoRequest = ProtoRequest.httpBuilder(runOptions.vhost)
+                    .setLocalAddr(runOptions.localAddr)
+                    .setLocalPort(runOptions.localPort)
+                    .setOption("token", runOptions.token)
+                    .build();
+                break;
             default:
                 break;
         }
         SslContext sslContext = null;
-        if (runOptions.ssl) {
+        if (runOptions.sslEnable) {
             sslContext = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);
         }
         if (protoRequest != null) {

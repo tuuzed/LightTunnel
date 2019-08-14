@@ -3,20 +3,23 @@ package com.tuuzed.tunnel.cli.client;
 import com.tuuzed.tunnel.cli.common.Option;
 import com.tuuzed.tunnel.common.proto.Proto;
 
+import java.util.Collections;
+import java.util.Map;
+
 public final class RunOptions {
 
-    @Option(name = "c", longName = "config-file", help = "配置文件，当设置了配置文件时优先使用配置文件配置项", order = 10)
+    @Option(name = "c", longName = "config-file", help = "配置文件，当设置了配置文件时优先使用配置文件配置项", order = -1)
     public String configFile = "";
 
-    @Option(name = "pt", longName = "proto", help = "协议", order = 20, excludeEnums = {"UNKNOWN"})
-    public Proto proto = Proto.TCP;
-
-    @Option(name = "wt", longName = "worker-threads", help = "Worker线程数量", order = 30)
+    @Option(name = "wt", longName = "worker-threads", help = "Worker线程数量", order = 10)
     public int workerThreads = -1;
+
+    @Option(name = "pro", longName = "proto", help = "协议", order = 20, excludeEnums = {"UNKNOWN"})
+    public Proto proto = Proto.TCP;
 
     // ssl
     @Option(name = "ssl", longName = "ssl", help = "是否启用SSL", order = 40)
-    public boolean ssl = false;
+    public boolean sslEnable = false;
 
     @Option(name = "sj", longName = "ssl-jks", help = "jks签名文件", order = 50)
     public String sslJks = "";
@@ -43,9 +46,15 @@ public final class RunOptions {
     @Option(name = "t", longName = "token", help = "令牌", order = 120)
     public String token = "";
 
-    // http
+    // http and https
     @Option(name = "vh", longName = "vhost", help = "域名", order = 130)
     public String vhost = "";
+
+    @Option(name = "sh", longName = "set-headers", help = "设置HTTP响应头", order = 140)
+    public Map<String, String> SetHeaders = Collections.emptyMap();
+
+    @Option(name = "ah", longName = "add-headers", help = "新增HTTP响应头", order = 150)
+    public Map<String, String> AddHeaders = Collections.emptyMap();
 
 
 }

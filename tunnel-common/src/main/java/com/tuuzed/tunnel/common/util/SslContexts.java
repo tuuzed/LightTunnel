@@ -20,11 +20,12 @@ import java.security.KeyStore;
  * keytool -import -trustcacerts -alias stunnalalias -file tunnel-server.cer -storepass ctunnelpass -keystore tunnel-client.jks
  */
 public final class SslContexts {
+
     @NotNull
     public static SslContext forServer(
-            @NotNull String jks,
-            @NotNull String storepass,
-            @NotNull String keypass
+        @NotNull String jks,
+        @NotNull String storepass,
+        @NotNull String keypass
     ) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(new FileInputStream(jks), storepass.toCharArray());
@@ -35,8 +36,8 @@ public final class SslContexts {
 
     @NotNull
     public static SslContext forClient(
-            @NotNull String jks,
-            @NotNull String storepass
+        @NotNull String jks,
+        @NotNull String storepass
     ) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(new FileInputStream(jks), storepass.toCharArray());

@@ -6,6 +6,7 @@ public enum Proto {
     UNKNOWN((byte) 0x00),
     TCP((byte) 0x01),
     HTTP((byte) 0x02),
+    HTTPS((byte) 0x03),
     ;
 
     private byte value;

@@ -15,6 +15,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 
@@ -23,8 +24,10 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
     @NotNull
     private final TcpServer tcpServer;
-    @NotNull
+    @Nullable
     private final HttpServer httpServer;
+    @Nullable
+    private final HttpServer httpsServer;
     @NotNull
     private final ProtoRequestInterceptor protoRequestInterceptor;
     @NotNull
@@ -32,12 +35,14 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
 
     public TunnelServerChannelHandler(
         @NotNull TcpServer tcpServer,
-        @NotNull HttpServer httpServer,
+        @Nullable HttpServer httpServer,
+        @Nullable HttpServer httpsServer,
         @NotNull ProtoRequestInterceptor protoRequestInterceptor,
         @NotNull TokenProducer tunnelTokenProducer
     ) {
         this.tcpServer = tcpServer;
         this.httpServer = httpServer;
+        this.httpsServer = httpsServer;
         this.protoRequestInterceptor = protoRequestInterceptor;
         this.tunnelTokenProducer = tunnelTokenProducer;
     }
@@ -58,8 +63,14 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
                     tcpServer.shutdownTunnel(tunnelToken);
                     break;
                 case HTTP:
-                    final String vhost = tunnelSessions.protoRequest().vhost();
-                    httpServer.unregister(vhost);
+                    if (httpServer != null) {
+                        httpServer.unregister(tunnelSessions.protoRequest().vhost());
+                    }
+                    break;
+                case HTTPS:
+                    if (httpsServer != null) {
+                        httpsServer.unregister(tunnelSessions.protoRequest().vhost());
+                    }
                     break;
                 default:
                     break;
@@ -112,71 +123,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         ProtoRequest protoRequest = ProtoRequest.fromBytes(msg.getHead());
         switch (protoRequest.proto()) {
             case TCP:
-                try {
-                    protoRequest = protoRequestInterceptor.proceed(protoRequest);
-                    final long tunnelToken = tunnelTokenProducer.nextToken();
-                    final ServerTunnelSessions tunnelSessions = new ServerTunnelSessions(tunnelToken, protoRequest, ctx.channel());
-
-                    ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(tunnelSessions);
-
-                    tcpServer.startTunnel(null, protoRequest.remotePort(), tunnelSessions);
-
-                    final ByteBuf head = Unpooled.buffer(9);
-                    head.writeBoolean(true);
-                    head.writeLong(tunnelToken);
-                    ctx.channel().writeAndFlush(
-                        new ProtoMessage(
-                            ProtoMessage.Type.RESPONSE,
-                            head.array(),
-                            protoRequest.toBytes()
-                        )
-                    );
-                    head.release();
-
-                } catch (ProtoException e) {
-                    final ByteBuf head = Unpooled.copyBoolean(false);
-                    ctx.channel().writeAndFlush(
-                        new ProtoMessage(
-                            ProtoMessage.Type.RESPONSE,
-                            head.array(),
-                            e.getMessage().getBytes(StandardCharsets.UTF_8)
-                        )
-                    ).addListener(ChannelFutureListener.CLOSE);
-                    head.release();
-                }
+                handleTcpRequestMessage(ctx, tcpServer, protoRequest);
                 break;
             case HTTP:
-                try {
-                    protoRequest = protoRequestInterceptor.proceed(protoRequest);
-                    if (httpServer.isRegistered(protoRequest.vhost())) {
-                        throw new ProtoException("vhost(" + protoRequest.vhost() + ") already used");
-                    }
-                    final long tunnelToken = tunnelTokenProducer.nextToken();
-                    final ServerTunnelSessions tunnelSessions = new ServerTunnelSessions(tunnelToken, protoRequest, ctx.channel());
-                    ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(tunnelSessions);
-                    httpServer.register(protoRequest.vhost(), tunnelSessions);
-                    final ByteBuf head = Unpooled.buffer(9);
-                    head.writeBoolean(true);
-                    head.writeLong(tunnelToken);
-                    ctx.channel().writeAndFlush(
-                        new ProtoMessage(
-                            ProtoMessage.Type.RESPONSE,
-                            head.array(),
-                            protoRequest.toBytes()
-                        )
-                    );
-                    head.release();
-
-                } catch (ProtoException e) {
-                    final ByteBuf head = Unpooled.copyBoolean(false);
-                    ctx.channel().writeAndFlush(
-                        new ProtoMessage(
-                            ProtoMessage.Type.RESPONSE,
-                            head.array(),
-                            e.getMessage().getBytes(StandardCharsets.UTF_8)
-                        )
-                    ).addListener(ChannelFutureListener.CLOSE);
-                    head.release();
+                if (httpServer != null) {
+                    handleHttpRequestMessage(ctx, httpServer, protoRequest);
+                }
+                break;
+            case HTTPS:
+                if (httpsServer != null) {
+                    handleHttpRequestMessage(ctx, httpsServer, protoRequest);
                 }
                 break;
             default:
@@ -192,6 +148,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
                 break;
         }
     }
+
 
     /**
      * 处理数据传输消息
@@ -212,9 +169,21 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
                     }
                     break;
                 case HTTP:
+                    if (httpServer == null) {
+                        break;
+                    }
                     final Channel httpSessionChannel = httpServer.getSessionChannel(tunnelToken, sessionToken);
                     if (httpSessionChannel != null) {
                         httpSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
+                    }
+                    break;
+                case HTTPS:
+                    if (httpsServer == null) {
+                        break;
+                    }
+                    final Channel httpsSessionChannel = httpsServer.getSessionChannel(tunnelToken, sessionToken);
+                    if (httpsSessionChannel != null) {
+                        httpsSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
                     break;
                 default:
@@ -247,6 +216,83 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         if (sessionChannel != null) {
             // 解决 HTTP/1.x 数据传输问题
             sessionChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
+    private void handleTcpRequestMessage(
+        @NotNull ChannelHandlerContext ctx,
+        @NotNull TcpServer tcpServer,
+        @NotNull ProtoRequest protoRequest
+    ) throws Exception {
+        try {
+            protoRequest = protoRequestInterceptor.proceed(protoRequest);
+            final long tunnelToken = tunnelTokenProducer.nextToken();
+            final ServerTunnelSessions tunnelSessions = new ServerTunnelSessions(tunnelToken, protoRequest, ctx.channel());
+
+            ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(tunnelSessions);
+
+            tcpServer.startTunnel(null, protoRequest.remotePort(), tunnelSessions);
+
+            final ByteBuf head = Unpooled.buffer(9);
+            head.writeBoolean(true);
+            head.writeLong(tunnelToken);
+            ctx.channel().writeAndFlush(
+                new ProtoMessage(
+                    ProtoMessage.Type.RESPONSE,
+                    head.array(),
+                    protoRequest.toBytes()
+                )
+            );
+            head.release();
+
+        } catch (ProtoException e) {
+            final ByteBuf head = Unpooled.copyBoolean(false);
+            ctx.channel().writeAndFlush(
+                new ProtoMessage(
+                    ProtoMessage.Type.RESPONSE,
+                    head.array(),
+                    e.getMessage().getBytes(StandardCharsets.UTF_8)
+                )
+            ).addListener(ChannelFutureListener.CLOSE);
+            head.release();
+        }
+    }
+
+    private void handleHttpRequestMessage(
+        @NotNull ChannelHandlerContext ctx,
+        @NotNull HttpServer server,
+        @NotNull ProtoRequest protoRequest
+    ) throws Exception {
+        try {
+            protoRequest = protoRequestInterceptor.proceed(protoRequest);
+            if (server.isRegistered(protoRequest.vhost())) {
+                throw new ProtoException("vhost(" + protoRequest.vhost() + ") already used");
+            }
+            final long tunnelToken = tunnelTokenProducer.nextToken();
+            final ServerTunnelSessions tunnelSessions = new ServerTunnelSessions(tunnelToken, protoRequest, ctx.channel());
+            ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(tunnelSessions);
+            server.register(protoRequest.vhost(), tunnelSessions);
+            final ByteBuf head = Unpooled.buffer(9);
+            head.writeBoolean(true);
+            head.writeLong(tunnelToken);
+            ctx.channel().writeAndFlush(
+                new ProtoMessage(
+                    ProtoMessage.Type.RESPONSE,
+                    head.array(),
+                    protoRequest.toBytes()
+                )
+            );
+            head.release();
+        } catch (ProtoException e) {
+            final ByteBuf head = Unpooled.copyBoolean(false);
+            ctx.channel().writeAndFlush(
+                new ProtoMessage(
+                    ProtoMessage.Type.RESPONSE,
+                    head.array(),
+                    e.getMessage().getBytes(StandardCharsets.UTF_8)
+                )
+            ).addListener(ChannelFutureListener.CLOSE);
+            head.release();
         }
     }
 

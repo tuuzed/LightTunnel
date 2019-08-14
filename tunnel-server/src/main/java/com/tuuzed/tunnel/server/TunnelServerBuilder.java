@@ -7,29 +7,52 @@ import org.jetbrains.annotations.NotNull;
 
 public class TunnelServerBuilder {
 
-    int bossThreads = -1;
-    int workerThreads = -1;
+    // common
+    /* package */ int bossThreads = -1;
+    /* package */ int workerThreads = -1;
 
-    String bindAddr = null;
-    int bindPort = 5000;
+    // auth
+    /* package */ String bindAddr = null;
+    /* package */ int bindPort = 5000;
+    /* package */ ProtoRequestInterceptor protoRequestInterceptor = ProtoRequestInterceptor.DEFAULT;
 
-    // ssl
-    boolean enableSsl;
-    SslContext sslContext;
-    String sslBindAddr = null;
-    int sslBindPort = 5001;
+    // ssl auth
+    /* package */ boolean sslEnable;
+    /* package */ SslContext sslContext;
+    /* package */ String sslBindAddr = null;
+    /* package */ int sslBindPort = 5001;
+
     // http
-    String httpBindAddr = null;
-    int httpBindPort = 5080;
+    /* package */ boolean httpEnable;
+    /* package */ String httpBindAddr = null;
+    /* package */ int httpBindPort = 5080;
+    /* package */ HttpRequestInterceptor httpRequestInterceptor = HttpRequestInterceptor.DEFAULT;
 
-    //
-    ProtoRequestInterceptor protoRequestInterceptor = ProtoRequestInterceptor.DEFAULT;
+    // https
+    /* package */ boolean httpsEnable;
+    /* package */ SslContext httpsContext;
+    /* package */ String httpsBindAddr = null;
+    /* package */ int httpsBindPort = 5443;
+    /* package */ HttpRequestInterceptor httpsRequestInterceptor = HttpRequestInterceptor.DEFAULT;
 
-    HttpRequestInterceptor httpRequestInterceptor = HttpRequestInterceptor.DEFAULT;
 
-    TunnelServerBuilder() {
+    /* package */ TunnelServerBuilder() {
     }
 
+    // ============================= common =============================== //
+    @NotNull
+    public TunnelServerBuilder setBossThreads(int bossThreads) {
+        this.bossThreads = bossThreads;
+        return this;
+    }
+
+    @NotNull
+    public TunnelServerBuilder setWorkerThreads(int workerThreads) {
+        this.workerThreads = workerThreads;
+        return this;
+    }
+
+    // ============================= tcp auth =============================== //
     @NotNull
     public TunnelServerBuilder setBindAddr(String bindAddr) {
         this.bindAddr = bindAddr;
@@ -43,32 +66,43 @@ public class TunnelServerBuilder {
     }
 
     @NotNull
-    public TunnelServerBuilder setBossThreads(int bossThreads) {
-        this.bossThreads = bossThreads;
-        return this;
-    }
-
-    @NotNull
-    public TunnelServerBuilder setWorkerThreads(int workerThreads) {
-        this.workerThreads = workerThreads;
+    public TunnelServerBuilder setProtoRequestInterceptor(@NotNull ProtoRequestInterceptor interceptor) {
+        this.protoRequestInterceptor = interceptor;
         return this;
     }
 
 
+    // ============================= ssl tcp auth =============================== //
+
     @NotNull
-    public TunnelServerBuilder enableSsl(@NotNull SslContext sslContext, int bindPort) {
-        this.enableSsl = true;
-        this.sslContext = sslContext;
-        this.sslBindPort = bindPort;
+    public TunnelServerBuilder setSslEnable(boolean enable) {
+        this.sslEnable = enable;
         return this;
     }
 
     @NotNull
-    public TunnelServerBuilder enableSsl(@NotNull SslContext sslContext, String bindAddr, int bindPort) {
-        this.enableSsl = true;
-        this.sslContext = sslContext;
+    public TunnelServerBuilder setSslContext(SslContext context) {
+        this.sslContext = context;
+        return this;
+    }
+
+    @NotNull
+    public TunnelServerBuilder setSslBindAddr(String bindAddr) {
         this.sslBindAddr = bindAddr;
+        return this;
+    }
+
+    @NotNull
+    public TunnelServerBuilder setSslBindPort(int bindPort) {
         this.sslBindPort = bindPort;
+        return this;
+    }
+
+    // ============================= http =============================== //
+
+    @NotNull
+    public TunnelServerBuilder setHttpEnable(boolean enable) {
+        this.httpEnable = enable;
         return this;
     }
 
@@ -85,14 +119,39 @@ public class TunnelServerBuilder {
     }
 
     @NotNull
-    public TunnelServerBuilder setProtoRequestInterceptor(@NotNull ProtoRequestInterceptor interceptor) {
-        this.protoRequestInterceptor = interceptor;
+    public TunnelServerBuilder setHttpRequestInterceptor(@NotNull HttpRequestInterceptor interceptor) {
+        this.httpsRequestInterceptor = interceptor;
+        return this;
+    }
+
+    // ============================= https =============================== //
+    @NotNull
+    public TunnelServerBuilder setHttpsEnable(boolean enable) {
+        this.httpsEnable = enable;
         return this;
     }
 
     @NotNull
-    public TunnelServerBuilder setHttpRequestInterceptor(@NotNull HttpRequestInterceptor interceptor) {
-        this.httpRequestInterceptor = interceptor;
+    public TunnelServerBuilder setHttpsContext(SslContext context) {
+        this.httpsContext = context;
+        return this;
+    }
+
+    @NotNull
+    public TunnelServerBuilder setHttpsBindAddr(String bindAddr) {
+        this.httpsBindAddr = bindAddr;
+        return this;
+    }
+
+    @NotNull
+    public TunnelServerBuilder setHttpsBindPort(int bindPort) {
+        this.httpsBindPort = bindPort;
+        return this;
+    }
+
+    @NotNull
+    public TunnelServerBuilder setHttpsRequestInterceptor(@NotNull HttpRequestInterceptor interceptor) {
+        this.httpsRequestInterceptor = interceptor;
         return this;
     }
 

@@ -29,31 +29,47 @@ public class TunnelServer {
     private final NioEventLoopGroup bossGroup;
     @NotNull
     private final NioEventLoopGroup workerGroup;
+
+    @NotNull
+    private final ProtoRequestInterceptor protoRequestInterceptor;
+    //
     @Nullable
     private final String bindAddr;
     private final int bindPort;
     // ssl
-    private final boolean enableSsl;
+    private final boolean sslEnable;
     @Nullable
     private final SslContext sslContext;
     @Nullable
     private final String sslBindAddr;
     private final int sslBindPort;
+
     // http
+    private final boolean httpEnable;
     private final String httpBindAddr;
     private final int httpBindPort;
-    //
-    @NotNull
-    private final ProtoRequestInterceptor protoRequestInterceptor;
     @NotNull
     private final HttpRequestInterceptor httpRequestInterceptor;
 
+    // https
+    private final boolean httpsEnable;
+    @Nullable
+    private final SslContext httpsContext;
+    @Nullable
+    private final String httpsBindAddr;
+    private final int httpsBindPort;
+    @NotNull
+    private final HttpRequestInterceptor httpsRequestInterceptor;
+
+    //
     @NotNull
     private final TcpStats tcpStats;
     @NotNull
     private final TcpServer tcpServer;
-    @NotNull
-    private final HttpServer httpServer;
+    @Nullable
+    private HttpServer httpServer = null;
+    @Nullable
+    private HttpServer httpsServer = null;
     @NotNull
     private final TokenProducer tunnelTokenProducer;
 
@@ -65,22 +81,36 @@ public class TunnelServer {
             ? new NioEventLoopGroup(builder.workerThreads)
             : new NioEventLoopGroup();
 
+        this.protoRequestInterceptor = builder.protoRequestInterceptor;
+        // auth
         this.bindAddr = builder.bindAddr;
         this.bindPort = builder.bindPort;
-
-        this.enableSsl = builder.enableSsl;
+        // ssl auth
+        this.sslEnable = builder.sslEnable;
         this.sslContext = builder.sslContext;
         this.sslBindAddr = builder.sslBindAddr;
         this.sslBindPort = builder.sslBindPort;
 
+        // http
+        this.httpEnable = builder.httpEnable;
         this.httpBindAddr = builder.httpBindAddr;
         this.httpBindPort = builder.httpBindPort;
-
-        this.protoRequestInterceptor = builder.protoRequestInterceptor;
         this.httpRequestInterceptor = builder.httpRequestInterceptor;
+        // https
+        this.httpsEnable = builder.httpsEnable;
+        this.httpsContext = builder.httpsContext;
+        this.httpsBindAddr = builder.httpsBindAddr;
+        this.httpsBindPort = builder.httpsBindPort;
+        this.httpsRequestInterceptor = builder.httpsRequestInterceptor;
+
         this.tcpStats = new TcpStats();
         this.tcpServer = new TcpServer(bossGroup, workerGroup, tcpStats);
-        this.httpServer = new HttpServer(bossGroup, workerGroup, httpRequestInterceptor);
+        if (httpEnable) {
+            this.httpServer = new HttpServer(bossGroup, workerGroup, httpRequestInterceptor, null);
+        }
+        if (httpsEnable) {
+            this.httpsServer = new HttpServer(bossGroup, workerGroup, httpsRequestInterceptor, httpsContext);
+        }
         this.tunnelTokenProducer = new TokenProducer();
     }
 
@@ -96,18 +126,34 @@ public class TunnelServer {
 
     public void start() throws Exception {
         serve();
-        if (enableSsl) {
+        if (sslEnable) {
             serveWithSsl();
         }
         httpServe();
+        httpsServe();
     }
 
     private void httpServe() throws Exception {
+        if (httpServer == null) {
+            return;
+        }
         httpServer.serve(httpBindAddr, httpBindPort);
         if (httpBindAddr == null) {
             logger.info("Serving Http on any address port {}", httpBindPort);
         } else {
             logger.info("Serving Http on {} port {}", httpBindAddr, httpBindPort);
+        }
+    }
+
+    private void httpsServe() throws Exception {
+        if (httpsServer == null) {
+            return;
+        }
+        httpsServer.serve(httpsBindAddr, httpsBindPort);
+        if (httpsBindAddr == null) {
+            logger.info("Serving Https on any address port {}", httpsBindPort);
+        } else {
+            logger.info("Serving Https on {} port {}", httpsBindAddr, httpsBindPort);
         }
     }
 
@@ -125,7 +171,7 @@ public class TunnelServer {
                         .addLast(new ProtoMessageEncoder())
                         .addLast(new ProtoHeartbeatHandler())
                         .addLast(new TunnelServerChannelHandler(
-                            tcpServer, httpServer, protoRequestInterceptor, tunnelTokenProducer
+                            tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
                         ))
                     ;
                 }
@@ -155,7 +201,7 @@ public class TunnelServer {
                         .addLast(new ProtoMessageEncoder())
                         .addLast(new ProtoHeartbeatHandler())
                         .addLast(new TunnelServerChannelHandler(
-                            tcpServer, httpServer, protoRequestInterceptor, tunnelTokenProducer
+                            tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
                         ))
                     ;
                 }
@@ -171,7 +217,12 @@ public class TunnelServer {
 
     public void destroy() {
         tcpServer.destroy();
-        httpServer.destroy();
+        if (httpServer != null) {
+            httpServer.destroy();
+        }
+        if (httpsServer != null) {
+            httpsServer.destroy();
+        }
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
     }
