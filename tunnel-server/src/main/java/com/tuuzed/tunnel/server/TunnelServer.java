@@ -2,12 +2,18 @@ package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.OpenTunnelRequestInterceptor;
-import com.tuuzed.tunnel.common.protocol.TunnelHeartbeatHandler;
-import com.tuuzed.tunnel.common.protocol.TunnelMessageDecoder;
-import com.tuuzed.tunnel.common.protocol.TunnelMessageEncoder;
+import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
+import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
+import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
+import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
+import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
+import com.tuuzed.tunnel.server.http.HttpServer;
+import com.tuuzed.tunnel.server.internal.TokenProducer;
+import com.tuuzed.tunnel.server.tcp.TcpServer;
+import com.tuuzed.tunnel.server.tcp.TcpStats;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -23,72 +29,158 @@ public class TunnelServer {
     private final NioEventLoopGroup bossGroup;
     @NotNull
     private final NioEventLoopGroup workerGroup;
+
+    @NotNull
+    private final ProtoRequestInterceptor protoRequestInterceptor;
+    //
     @Nullable
     private final String bindAddr;
     private final int bindPort;
-    private final int sslBindPort;
-    @NotNull
-    private final UserTunnel userTunnelManager;
-    @NotNull
-    private final OpenTunnelRequestInterceptor openTunnelRequestInterceptor;
+    // ssl
+    private final boolean sslEnable;
     @Nullable
     private final SslContext sslContext;
-    // 数据统计
+    @Nullable
+    private final String sslBindAddr;
+    private final int sslBindPort;
+
+    // http
+    private final boolean httpEnable;
+    private final String httpBindAddr;
+    private final int httpBindPort;
     @NotNull
-    private final Stats stats;
+    private final HttpRequestInterceptor httpRequestInterceptor;
 
-    private TunnelServer(@NotNull final Builder builder) {
+    // https
+    private final boolean httpsEnable;
+    @Nullable
+    private final SslContext httpsContext;
+    @Nullable
+    private final String httpsBindAddr;
+    private final int httpsBindPort;
+    @NotNull
+    private final HttpRequestInterceptor httpsRequestInterceptor;
+
+    //
+    @NotNull
+    private final TcpStats tcpStats;
+    @NotNull
+    private final TcpServer tcpServer;
+    @Nullable
+    private HttpServer httpServer = null;
+    @Nullable
+    private HttpServer httpsServer = null;
+    @NotNull
+    private final TokenProducer tunnelTokenProducer;
+
+    TunnelServer(@NotNull TunnelServerBuilder builder) {
         this.bossGroup = (builder.bossThreads > 0)
-                ? new NioEventLoopGroup(builder.bossThreads)
-                : new NioEventLoopGroup();
+            ? new NioEventLoopGroup(builder.bossThreads)
+            : new NioEventLoopGroup();
         this.workerGroup = (builder.workerThreads > 0)
-                ? new NioEventLoopGroup(builder.workerThreads)
-                : new NioEventLoopGroup();
-        this.stats = new Stats();
+            ? new NioEventLoopGroup(builder.workerThreads)
+            : new NioEventLoopGroup();
 
-        this.userTunnelManager = new UserTunnel(this.bossGroup, this.workerGroup, stats);
-        this.openTunnelRequestInterceptor = builder.interceptor;
+        this.protoRequestInterceptor = builder.protoRequestInterceptor;
+        // auth
         this.bindAddr = builder.bindAddr;
         this.bindPort = builder.bindPort;
+        // ssl auth
+        this.sslEnable = builder.sslEnable;
+        this.sslContext = builder.sslContext;
+        this.sslBindAddr = builder.sslBindAddr;
         this.sslBindPort = builder.sslBindPort;
-        if (builder.ssl) {
-            this.sslContext = builder.context;
-        } else {
-            this.sslContext = null;
+
+        // http
+        this.httpEnable = builder.httpEnable;
+        this.httpBindAddr = builder.httpBindAddr;
+        this.httpBindPort = builder.httpBindPort;
+        this.httpRequestInterceptor = builder.httpRequestInterceptor;
+        // https
+        this.httpsEnable = builder.httpsEnable;
+        this.httpsContext = builder.httpsContext;
+        this.httpsBindAddr = builder.httpsBindAddr;
+        this.httpsBindPort = builder.httpsBindPort;
+        this.httpsRequestInterceptor = builder.httpsRequestInterceptor;
+
+        this.tcpStats = new TcpStats();
+        this.tcpServer = new TcpServer(bossGroup, workerGroup, tcpStats);
+        if (httpEnable) {
+            this.httpServer = new HttpServer(bossGroup, workerGroup, httpRequestInterceptor, null);
         }
+        if (httpsEnable) {
+            this.httpsServer = new HttpServer(bossGroup, workerGroup, httpsRequestInterceptor, httpsContext);
+        }
+        this.tunnelTokenProducer = new TokenProducer();
     }
 
     @NotNull
-    public Stats getStats() {
-        return stats;
+    public static TunnelServerBuilder builder() {
+        return new TunnelServerBuilder();
+    }
+
+    @NotNull
+    public TcpStats tcpStats() {
+        return tcpStats;
     }
 
     public void start() throws Exception {
         serve();
-        serveWithSsl();
+        if (sslEnable) {
+            serveWithSsl();
+        }
+        httpServe();
+        httpsServe();
     }
 
+    private void httpServe() throws Exception {
+        if (httpServer == null) {
+            return;
+        }
+        httpServer.serve(httpBindAddr, httpBindPort);
+        if (httpBindAddr == null) {
+            logger.info("Serving Http on any address port {}", httpBindPort);
+        } else {
+            logger.info("Serving Http on {} port {}", httpBindAddr, httpBindPort);
+        }
+    }
+
+    private void httpsServe() throws Exception {
+        if (httpsServer == null) {
+            return;
+        }
+        httpsServer.serve(httpsBindAddr, httpsBindPort);
+        if (httpsBindAddr == null) {
+            logger.info("Serving Https on any address port {}", httpsBindPort);
+        } else {
+            logger.info("Serving Https on {} port {}", httpsBindAddr, httpsBindPort);
+        }
+    }
 
     private void serve() throws Exception {
-        ServerBootstrap bootstrap = new ServerBootstrap();
-        bootstrap.group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline()
-                                .addLast(new TunnelMessageDecoder())
-                                .addLast(new TunnelMessageEncoder())
-                                .addLast(new TunnelHeartbeatHandler())
-                                .addLast(new TunnelServerChannelHandler(userTunnelManager, openTunnelRequestInterceptor))
-                        ;
-                    }
-                });
+        final ServerBootstrap serverBootstrap = new ServerBootstrap();
+        serverBootstrap.group(bossGroup, workerGroup)
+            .channel(NioServerSocketChannel.class)
+            .childOption(ChannelOption.AUTO_READ, true)
+            .childOption(ChannelOption.SO_KEEPALIVE, true)
+            .childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline()
+                        .addLast(new ProtoMessageDecoder())
+                        .addLast(new ProtoMessageEncoder())
+                        .addLast(new ProtoHeartbeatHandler())
+                        .addLast(new TunnelServerChannelHandler(
+                            tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
+                        ))
+                    ;
+                }
+            });
         if (bindAddr == null) {
-            bootstrap.bind(bindPort).get();
+            serverBootstrap.bind(bindPort).get();
             logger.info("Serving Tunnel on any address port {}", bindPort);
         } else {
-            bootstrap.bind(bindAddr, bindPort).sync();
+            serverBootstrap.bind(bindAddr, bindPort).get();
             logger.info("Serving Tunnel on {} port {}", bindAddr, bindPort);
         }
     }
@@ -97,90 +189,42 @@ public class TunnelServer {
         if (sslContext == null) {
             return;
         }
-        ServerBootstrap bootstrap = new ServerBootstrap();
-        bootstrap.group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline()
-                                .addLast(new SslHandler(sslContext.newEngine(ch.alloc())))
-                                .addLast(new TunnelMessageDecoder())
-                                .addLast(new TunnelMessageEncoder())
-                                .addLast(new TunnelHeartbeatHandler())
-                                .addLast(new TunnelServerChannelHandler(userTunnelManager, openTunnelRequestInterceptor))
-                        ;
-                    }
-                });
-        if (bindAddr == null) {
-            bootstrap.bind(sslBindPort).get();
+        final ServerBootstrap serverBootstrap = new ServerBootstrap();
+        serverBootstrap.group(bossGroup, workerGroup)
+            .channel(NioServerSocketChannel.class)
+            .childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline()
+                        .addLast(new SslHandler(sslContext.newEngine(ch.alloc())))
+                        .addLast(new ProtoMessageDecoder())
+                        .addLast(new ProtoMessageEncoder())
+                        .addLast(new ProtoHeartbeatHandler())
+                        .addLast(new TunnelServerChannelHandler(
+                            tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
+                        ))
+                    ;
+                }
+            });
+        if (sslBindAddr == null) {
+            serverBootstrap.bind(sslBindPort).get();
             logger.info("Serving SSL Tunnel on any address port {}", sslBindPort);
         } else {
-            bootstrap.bind(bindAddr, sslBindPort).sync();
-            logger.info("Serving SSL Tunnel on {} port {}", bindAddr, sslBindPort);
+            serverBootstrap.bind(sslBindAddr, sslBindPort).get();
+            logger.info("Serving SSL Tunnel on {} port {}", sslBindAddr, sslBindPort);
         }
     }
 
     public void destroy() {
+        tcpServer.destroy();
+        if (httpServer != null) {
+            httpServer.destroy();
+        }
+        if (httpsServer != null) {
+            httpsServer.destroy();
+        }
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
-        userTunnelManager.destroy();
-    }
-
-    public static class Builder {
-        private String bindAddr = null;
-        private int bindPort = 5000;
-        private OpenTunnelRequestInterceptor interceptor;
-        private int bossThreads = -1;
-        private int workerThreads = -1;
-
-        // ssl
-        private boolean ssl;
-        private SslContext context;
-        private int sslBindPort = 5001;
-
-        @NotNull
-        public Builder setBindAddr(String bindAddr) {
-            this.bindAddr = bindAddr;
-            return this;
-        }
-
-        @NotNull
-        public Builder setBindPort(int bindPort) {
-            this.bindPort = bindPort;
-            return this;
-        }
-
-        @NotNull
-        public Builder setBossThreads(int bossThreads) {
-            this.bossThreads = bossThreads;
-            return this;
-        }
-
-        @NotNull
-        public Builder setWorkerThreads(int workerThreads) {
-            this.workerThreads = workerThreads;
-            return this;
-        }
-
-        @NotNull
-        public Builder setInterceptor(@Nullable OpenTunnelRequestInterceptor interceptor) {
-            this.interceptor = interceptor;
-            return this;
-        }
-
-        @NotNull
-        public Builder enableSsl(@NotNull SslContext context, int bindPort) {
-            this.ssl = true;
-            this.context = context;
-            this.sslBindPort = bindPort;
-            return this;
-        }
-
-        @NotNull
-        public TunnelServer build() {
-            return new TunnelServer(this);
-        }
     }
 
 }

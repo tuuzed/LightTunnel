@@ -1,12 +1,12 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
-import com.tuuzed.tunnel.common.protocol.OpenTunnelRequestInterceptor;
-import com.tuuzed.tunnel.common.protocol.TunnelProtocolException;
-import com.tuuzed.tunnel.common.ssl.SslContexts;
-import com.tuuzed.tunnel.common.util.PortUtils;
+import com.tuuzed.tunnel.common.logging.LogAdapter;
+import com.tuuzed.tunnel.common.logging.Logger;
+import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
+import com.tuuzed.tunnel.common.util.SslContexts;
+import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import io.netty.handler.ssl.SslContext;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,39 +15,51 @@ public class TunnelServerTest {
 
     private TunnelServer tunnelServer;
 
+    @Test
+    public void start() throws Exception {
+        tunnelServer.start();
+        System.in.read();
+    }
+
     @Before
     public void setUp() throws Exception {
-        OpenTunnelRequestInterceptor interceptor = new OpenTunnelRequestInterceptor() {
-            @NotNull
-            @Override
-            public OpenTunnelRequest proceed(@NotNull OpenTunnelRequest request) throws TunnelProtocolException {
-                String token = request.arguments.get("token");
-                if (!"tk123456".equals(token)) {
-                    throw new TunnelProtocolException(String.format("request(%s), Bad Token(%s)", request.toString(), token));
-                }
-                if (!PortUtils.inPortRule("1024-60000", request.remotePort)) {
-                    throw new TunnelProtocolException(String.format("request(%s), remotePort(%s) Not allowed to use.", request.toString(), request.remotePort));
-                }
-                if (request.remotePort == 20000) {
-                    // 替换远程端口
-                    return new OpenTunnelRequest(
-                            request.type,
-                            request.localAddr, request.localPort,
-                            20080,
-                            request.arguments
-                    );
-                }
-                return request;
-            }
-        };
-        SslContext context = SslContexts.forServer("../jks/tunnel-server.jks", "stunnelpass", "stunnelpass");
-        this.tunnelServer = new TunnelServer.Builder()
-                .setBindPort(5000)
-                .setInterceptor(interceptor)
-                .enableSsl(context, 5001)
-                .setBossThreads(2)
-                .setWorkerThreads(Runtime.getRuntime().availableProcessors() * 2 + 1)
-                .build();
+        LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
+        if (logcat != null) {
+            logcat.setLevel(Logger.ALL);
+        }
+        ProtoRequestInterceptor protoRequestInterceptor = new ProtoRequestInterceptorImpl();
+        HttpRequestInterceptor httpRequestInterceptor = new HttpRequestInterceptorImpl();
+        HttpRequestInterceptor httpsRequestInterceptor = new HttpRequestInterceptorImpl();
+        SslContext sslContext = SslContexts.forServer(
+            "../resources/jks/server.jks",
+            "stunnelpass",
+            "stunnelpass"
+        );
+        this.tunnelServer = TunnelServer.builder()
+            .setBossThreads(1)
+            .setWorkerThreads(-1)
+            .setProtoRequestInterceptor(protoRequestInterceptor)
+
+            .setBindAddr(null)
+            .setBindPort(5000)
+
+            .setSslEnable(true)
+            .setSslContext(sslContext)
+            .setSslBindAddr(null)
+            .setSslBindPort(5001)
+
+            .setHttpEnable(true)
+            .setHttpBindAddr(null)
+            .setHttpBindPort(5080)
+            .setHttpRequestInterceptor(httpRequestInterceptor)
+
+            .setHttpsEnable(true)
+            .setHttpsContext(sslContext)
+            .setHttpsBindAddr(null)
+            .setHttpsBindPort(5443)
+            .setHttpsRequestInterceptor(httpsRequestInterceptor)
+
+            .build();
     }
 
     @After
@@ -55,10 +67,5 @@ public class TunnelServerTest {
         this.tunnelServer.destroy();
     }
 
-    @Test
-    public void start() throws Exception {
-        tunnelServer.start();
-        System.in.read();
-    }
 
 }

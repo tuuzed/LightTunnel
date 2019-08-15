@@ -8,7 +8,7 @@ import static org.junit.Assert.assertTrue;
 public class PortUtilsTest {
 
     @Test
-    public void portInPortRule() {
+    public void inPortRule() {
         assertFalse(PortUtils.inPortRule("10000-21000", 40000));
         assertFalse(PortUtils.inPortRule("10000-21000,30000", 40000));
         assertFalse(PortUtils.inPortRule("10000-21000,30000", 1024));

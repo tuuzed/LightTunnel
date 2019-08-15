@@ -1,18 +1,18 @@
 package com.tuuzed.tunnel.common.logging;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-import static com.tuuzed.tunnel.common.logging.LogConfigurator.isPrintLog;
+import static com.tuuzed.tunnel.common.logging.LoggerFactory.logAdapters;
+import static com.tuuzed.tunnel.common.logging.Utils.*;
 
-public class DefaultLogger implements Logger {
 
+public class DefaultLogger extends AbstractLogger {
     @NotNull
     private String name;
-
     private String shortName;
-
     private final Date date = new Date();
 
     public DefaultLogger(@NotNull String name) {
@@ -21,140 +21,68 @@ public class DefaultLogger implements Logger {
     }
 
     @Override
-    public void trace(@NotNull String format, Object... args) {
-        log(TRACE, format, args);
-    }
-
-    @Override
-    public void trace(@NotNull String msg, Throwable cause) {
-        log(TRACE, msg, cause);
-    }
-
-    @Override
-    public void debug(@NotNull String format, Object... args) {
-        log(DEBUG, format, args);
-    }
-
-    @Override
-    public void debug(@NotNull String msg, Throwable cause) {
-        log(DEBUG, msg, cause);
-    }
-
-    @Override
-    public void info(@NotNull String format, Object... args) {
-        log(INFO, format, args);
-    }
-
-    @Override
-    public void info(@NotNull String msg, Throwable cause) {
-        log(INFO, msg, cause);
-    }
-
-    @Override
-    public void warn(@NotNull String format, Object... args) {
-        log(WARN, format, args);
-    }
-
-    @Override
-    public void warn(@NotNull String msg, Throwable cause) {
-        log(WARN, msg, cause);
-    }
-
-    @Override
-    public void error(@NotNull String format, Object... args) {
-        log(ERROR, format, args);
-    }
-
-    @Override
-    public void error(@NotNull String msg, Throwable cause) {
-        log(ERROR, msg, cause);
-    }
-
-    private synchronized void log(int level, @NotNull String format, Object... args) {
-        if (!isPrintLog(level)) {
-            return;
-        }
-        date.setTime(System.currentTimeMillis());
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        if (stackTrace.length >= 3) {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s#%5$s=> %6$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    getShortClassName(stackTrace[3].getClassName()),
-                    stackTrace[3].getMethodName(),
-                    LogFormatter.format(format, args)
-            );
+    void log(int level, @NotNull String format, Object... args) {
+        StackTraceElement[] traces = Thread.currentThread().getStackTrace();
+        if (traces.length >= 3) {
+            log(level, formatPlaceholderMsg(format, args), null, traces[3]);
         } else {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s=> %5$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    shortName,
-                    LogFormatter.format(format, args)
-            );
+            log(level, formatPlaceholderMsg(format, args), null, null);
         }
     }
 
-    private synchronized void log(int level, @NotNull String msg, Throwable cause) {
-        if (!isPrintLog(level)) {
-            return;
-        }
-        date.setTime(System.currentTimeMillis());
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        if (stackTrace.length >= 3) {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s#%5$s=> %6$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    getShortClassName(stackTrace[3].getClassName()),
-                    stackTrace[3].getMethodName(),
-                    msg
-            );
+    @Override
+    void log(int level, @NotNull String msg, @Nullable Throwable cause) {
+        StackTraceElement[] traces = Thread.currentThread().getStackTrace();
+        if (traces.length >= 3) {
+            log(level, msg, cause, traces[3]);
         } else {
-            System.err.printf("%1$tF %1$tT [%2$s] %3$s %4$s=> %5$s%n",
-                    date,
-                    getLevenName(level),
-                    Thread.currentThread().getName(),
-                    shortName,
-                    msg
-            );
-        }
-        if (cause != null) {
-            cause.printStackTrace(System.err);
+            log(level, msg, cause, null);
         }
     }
 
-    private String getShortClassName(String className) {
-        if (className.length() > 20) {
-            String[] array = className.split("\\.");
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < array.length - 1; i++) {
-                sb.append(array[i], 0, 1);
-                sb.append(".");
+    private synchronized void log(
+        int level,
+        @NotNull String msg,
+        @Nullable Throwable cause,
+        @Nullable StackTraceElement trace
+    ) {
+        String message = createMessage(level, msg, trace);
+        for (LogAdapter logAdapter : logAdapters.values()) {
+            if (logAdapter.isLoggable(level)) {
+                logAdapter.log(level, message, cause);
             }
-            sb.append(array[array.length - 1]);
-            return sb.toString();
-        } else {
-            return className;
         }
     }
 
     @NotNull
-    private String getLevenName(int level) {
-        switch (level) {
-            case TRACE:
-                return "TRACE";
-            case DEBUG:
-                return "DEBUG";
-            case INFO:
-                return "INFO ";
-            case WARN:
-                return "WARN ";
-            case ERROR:
-                return "ERROR";
-            default:
-                return "     ";
+    private String createMessage(
+        int level,
+        @NotNull String msg,
+        @Nullable StackTraceElement trace
+    ) {
+        StringBuilder log = new StringBuilder();
+        log
+            .append(takeDate()).append(" [")
+            .append(getLevelName(level)).append("] ")
+            .append(Thread.currentThread().getName()).append(" ");
+
+        if (trace != null) {
+            log
+                .append(getShortClassName(trace.getClassName())).append("#")
+                .append(trace.getMethodName()).append(": ");
+        } else {
+            log
+                .append(shortName).append(": ");
         }
+        log.append(msg);
+        return log.toString();
     }
+
+    @NotNull
+    private synchronized String takeDate() {
+        date.setTime(System.currentTimeMillis());
+        return formatDate(date);
+    }
+
+
 }

@@ -10,7 +10,10 @@ public interface Logger {
     int INFO = 300;
     int WARN = 400;
     int ERROR = 500;
+    int FATAL = 600;
+    int PROMPT = 700;
     int OFF = Integer.MAX_VALUE;
+
 
 
     void trace(@NotNull String format, Object... args);
@@ -32,5 +35,14 @@ public interface Logger {
     void error(@NotNull String format, Object... args);
 
     void error(@NotNull String msg, Throwable cause);
+
+    void fatal(@NotNull String format, Object... args);
+
+    void fatal(@NotNull String msg, Throwable cause);
+
+    void prompt(@NotNull String format, Object... args);
+
+    void prompt(@NotNull String msg, Throwable cause);
+
 
 }

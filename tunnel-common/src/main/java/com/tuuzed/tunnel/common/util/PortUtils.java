@@ -2,7 +2,7 @@ package com.tuuzed.tunnel.common.util;
 
 import org.jetbrains.annotations.NotNull;
 
-public class PortUtils {
+public final class PortUtils {
 
     /**
      * 判断端口是否在指定的端口规则内

@@ -1,0 +1,13 @@
+
+# Linux => /etc/hosts
+
+# Windows => C:\WINDOWS\System32\drivers\etc\hosts
+
+
+127.0.0.1  tunnel.lo
+127.0.0.1  t1.tunnel.lo
+127.0.0.1  t2.tunnel.lo
+127.0.0.1  t3.tunnel.lo
+127.0.0.1  t4.tunnel.lo
+127.0.0.1  t5.tunnel.lo
+127.0.0.1  t6.tunnel.lo
