@@ -1,5 +1,7 @@
 package com.tuuzed.tunnel.server;
 
+import com.tuuzed.tunnel.cli.server.DefaultHttpRequestInterceptor;
+import com.tuuzed.tunnel.cli.server.DefaultProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.logging.LogAdapter;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
@@ -27,9 +29,9 @@ public class TunnelServerTest {
         if (logcat != null) {
             logcat.setLevel(Logger.ALL);
         }
-        ProtoRequestInterceptor protoRequestInterceptor = new ProtoRequestInterceptorImpl();
-        HttpRequestInterceptor httpRequestInterceptor = new HttpRequestInterceptorImpl();
-        HttpRequestInterceptor httpsRequestInterceptor = new HttpRequestInterceptorImpl();
+        ProtoRequestInterceptor protoRequestInterceptor = new DefaultProtoRequestInterceptor("tk123456", "1024-60000");
+        HttpRequestInterceptor httpRequestInterceptor = new DefaultHttpRequestInterceptor();
+        HttpRequestInterceptor httpsRequestInterceptor = new DefaultHttpRequestInterceptor();
         SslContext sslContext = SslContexts.forServer(
             "../resources/jks/server.jks",
             "stunnelpass",

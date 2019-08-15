@@ -3,7 +3,7 @@ package com.tuuzed.tunnel.common.proto;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -13,7 +13,7 @@ public class ProtoRequestBuilder {
     int localPort;
     Map<String, String> options;
 
-    public ProtoRequestBuilder(@NotNull Proto proto) {
+    ProtoRequestBuilder(@NotNull Proto proto) {
         this.proto = proto;
     }
 
@@ -30,9 +30,72 @@ public class ProtoRequestBuilder {
     }
 
     @NotNull
+    public ProtoRequestBuilder setToken(@NotNull String token) {
+        setOptionInternal(ProtoRequest.TOKEN, token);
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setBasicAuth(boolean enable) {
+        setOptionInternal(ProtoRequest.BASIC_AUTH, enable ? "1" : "0");
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setBasicAuthUsername(@NotNull String username) {
+        setOptionInternal(ProtoRequest.BASIC_AUTH_USERNAME, username);
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setBasicAuthPassword(@NotNull String password) {
+        setOptionInternal(ProtoRequest.BASIC_AUTH_PASSWORD, password);
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setAddHeaders(@NotNull Map<String, String> headers) {
+        setHeadersOption(ProtoRequest.ADD_HEADERS, headers);
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setAddHeaders(@NotNull String headers) {
+        setOptionInternal(ProtoRequest.ADD_HEADERS, headers);
+        return this;
+    }
+
+
+    @NotNull
+    public ProtoRequestBuilder setSetHeaders(@NotNull Map<String, String> headers) {
+        setHeadersOption(ProtoRequest.SET_HEADERS, headers);
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setSetHeaders(@NotNull String headers) {
+        setOptionInternal(ProtoRequest.SET_HEADERS, headers);
+        return this;
+    }
+
+    private void setHeadersOption(@NotNull String option, @NotNull Map<String, String> headers) {
+        boolean isFirst = true;
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> it : headers.entrySet()) {
+            if (!isFirst) {
+                sb.append(";");
+            }
+            sb.append(it.getKey()).append(":").append(it.getValue());
+            isFirst = false;
+        }
+        setOptionInternal(option, sb.toString());
+    }
+
+
+    @NotNull
     ProtoRequestBuilder setOptionInternal(@NotNull String key, @NotNull String value) {
         if (options == null) {
-            options = new HashMap<>();
+            options = new LinkedHashMap<>();
         }
         options.put(key, value);
         return this;

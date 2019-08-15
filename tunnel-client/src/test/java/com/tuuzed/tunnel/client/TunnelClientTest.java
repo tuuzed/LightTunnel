@@ -58,13 +58,13 @@ public class TunnelClientTest {
         ProtoRequest portError = ProtoRequest.tcpBuilder(65000)
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
 
         ProtoRequest portReplaced = ProtoRequest.tcpBuilder(20000) // 20080
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
 
         ProtoRequest tcpHttp = ProtoRequest.tcpBuilder(10080) // 20080
@@ -76,47 +76,46 @@ public class TunnelClientTest {
         ProtoRequest vnc = ProtoRequest.tcpBuilder(15900) // 20080
             .setLocalAddr("192.168.1.33")
             .setLocalPort(5900)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
 
         ProtoRequest ssh = ProtoRequest.tcpBuilder(10022) // 20080
             .setLocalAddr("192.168.1.10")
             .setLocalPort(22)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
-
 
         ProtoRequest vhostHttp1 = ProtoRequest.httpBuilder("t1.tunnel.lo")
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:192.168.1.1")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setToken("tk123456")
+            .setSetHeaders("X-Real-IP:$remote_addr;Host:192.168.1.1")
+            .setAddHeaders("X-User-Agent:Tunnel")
             .build();
 
         ProtoRequest vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
-            .setLocalAddr("apache.org")
-            .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:apache.org")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
+            .setSetHeaders("X-Real-IP:$remote_addr;Host:111.230.198.37")
+            .setAddHeaders("X-User-Agent:Tunnel")
             .build();
 
 
         ProtoRequest vhostHttps1 = ProtoRequest.httpsBuilder("t1.tunnel.lo")
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:192.168.1.1")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setToken("tk123456")
+            .setSetHeaders("X-Real-IP:$remote_addr;Host:192.168.1.1")
+            .setAddHeaders("X-User-Agent:Tunnel")
             .build();
 
         ProtoRequest vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
-            .setLocalAddr("apache.org")
-            .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:apache.org")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
+            .setSetHeaders("X-Real-IP:$remote_addr;Host:111.230.198.37")
+            .setAddHeaders("X-User-Agent:Tunnel")
             .build();
 
 

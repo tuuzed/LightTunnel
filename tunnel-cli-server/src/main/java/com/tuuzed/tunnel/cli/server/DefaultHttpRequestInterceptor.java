@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Map;
 
 public final class DefaultHttpRequestInterceptor implements HttpRequestInterceptor {
     @Override
@@ -16,19 +17,9 @@ public final class DefaultHttpRequestInterceptor implements HttpRequestIntercept
         @NotNull ProtoRequest protoRequest,
         @NotNull HttpRequest httpRequest
     ) throws Exception {
-
-        handleSetHeaders(localAddress, remoteAddress, protoRequest, httpRequest);
-        handleAddHeaders(localAddress, remoteAddress, protoRequest, httpRequest);
-    }
-
-    private void handleAddHeaders(SocketAddress localAddress, SocketAddress remoteAddress, ProtoRequest protoRequest, HttpRequest httpRequest) {
         handleHeaders(false, localAddress, remoteAddress, protoRequest, httpRequest);
-    }
-
-    private void handleSetHeaders(SocketAddress localAddress, SocketAddress remoteAddress, ProtoRequest protoRequest, HttpRequest httpRequest) {
         handleHeaders(true, localAddress, remoteAddress, protoRequest, httpRequest);
     }
-
 
     private void handleHeaders(
         boolean setHeaders,
@@ -38,32 +29,25 @@ public final class DefaultHttpRequestInterceptor implements HttpRequestIntercept
         @NotNull HttpRequest httpRequest
     ) {
 
-        String line = setHeaders
-            ? protoRequest.option("set_headers")
-            : protoRequest.option("add_headers");
+        Map<String, String> headers = setHeaders
+            ? protoRequest.setHeaders()
+            : protoRequest.addHeaders();
 
-        if (line == null) {
-            return;
-        }
-        String[] headers = line.split(";");
-        for (String header : headers) {
-            String[] kv = header.split(":");
-            if (kv.length == 2) {
-                String name = kv[0];
-                String value = kv[1];
-                if ("$remote_addr".equals(value)) {
-                    if (remoteAddress instanceof InetSocketAddress) {
-                        if (setHeaders) {
-                            httpRequest.headers().remove(name);
-                        }
-                        httpRequest.headers().add(name, ((InetSocketAddress) remoteAddress).getAddress().toString());
-                    }
-                } else {
+        for (Map.Entry<String, String> it : headers.entrySet()) {
+            String name = it.getKey();
+            String value = it.getValue();
+            if ("$remote_addr".equals(value)) {
+                if (remoteAddress instanceof InetSocketAddress) {
                     if (setHeaders) {
                         httpRequest.headers().remove(name);
                     }
-                    httpRequest.headers().add(name, value);
+                    httpRequest.headers().add(name, ((InetSocketAddress) remoteAddress).getAddress().toString());
                 }
+            } else {
+                if (setHeaders) {
+                    httpRequest.headers().remove(name);
+                }
+                httpRequest.headers().add(name, value);
             }
         }
     }
