@@ -3,13 +3,13 @@ apply plugin: "java"
 group rootProject.group
 version rootProject.version
 
-targetCompatibility = jdk_version
-sourceCompatibility = jdk_version
+targetCompatibility = rootProject.targetCompatibility
+sourceCompatibility = rootProject.sourceCompatibility
 
 dependencies {
     compile project(":tunnel-common")
     // 单元测试
-    testImplementation "junit:junit:4.12"
+    testCompile "junit:junit:4.12"
 }
 
-apply from: "../BuildPackage.gradle"
+apply from: "../gradle/BuildPackage.gradle"

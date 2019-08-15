@@ -1,6 +1,4 @@
 buildscript {
-    ext.netty_version = '4.1.37.Final'
-    ext.jdk_version = JavaVersion.VERSION_1_7
     repositories {
         maven { url 'https://maven.aliyun.com/repository/public' }
         jcenter()
@@ -22,10 +20,17 @@ buildscript {
         }
     }
 }
+
+apply plugin: "java"
 apply plugin: 'gitvc-gradle-plugin'
 
-group = 'com.tuuzed.tunnel'
+
+group 'com.tuuzed.tunnel'
 version = String.valueOf(GitVC.VERSION_NAME)
 
+targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_7
 
-
+dependencies {
+    testCompile 'junit:junit:4.12'
+}

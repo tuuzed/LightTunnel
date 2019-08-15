@@ -1,0 +1,39 @@
+# 绑定地址
+bind_addr: 0.0.0.0
+
+# 绑定端口
+bind_port: 5000
+
+# 令牌
+token: tk123456
+
+# 允许使用端口（端口白名单）
+allow_ports: 10000-50000
+
+# 线程数量
+boss_threads: -1
+worker_threads: -1
+
+# ssl
+ssl:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 5001
+  jks: server.jks
+  storepass: stunnelpass
+  keypass: stunnelpass
+
+# http
+http:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 5080
+
+# https
+https:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 5443
+  jks: server.jks
+  storepass: stunnelpass
+  keypass: stunnelpass

@@ -1,6 +1,6 @@
 import com.tuuzed.tunnel.cli.server.TunnelServerApp;
 
-public class ServerBootstrap {
+public final class ServerBootstrap {
 
     public static void main(String[] args) {
         new TunnelServerApp().doMain(args);

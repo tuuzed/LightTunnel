@@ -1,9 +1,6 @@
 package com.tuuzed.tunnel.cli.common;
 
 import org.jetbrains.annotations.NotNull;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.OptionHandlerFilter;
-import org.kohsuke.args4j.spi.OptionHandler;
 
 public abstract class AbstractApp<Options> {
     @NotNull
@@ -13,25 +10,23 @@ public abstract class AbstractApp<Options> {
 
     public final void doMain(String[] args) {
         Options runOptions = newRunOptions();
-        CmdLineParser parser = new CmdLineParser(runOptions);
-        parser.printExample(new OptionHandlerFilter() {
-            @Override
-            public boolean select(OptionHandler o) {
-                return true;
-            }
-        });
         try {
             if (args == null || args.length == 0) {
-                throw new Exception();
+                System.err.println("Usage: ");
+                CmdLineParser.printHelp(runOptions, System.err);
+            } else {
+                CmdLineParser.parse(runOptions, args);
+                runApp(runOptions);
             }
-            parser.parseArgument(args);
         } catch (Exception e) {
             System.err.println("Usage: ");
-            parser.printUsage(System.err);
+            try {
+                CmdLineParser.printHelp(runOptions, System.err);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
             System.exit(0);
         }
-        runApp(runOptions);
     }
-
 
 }

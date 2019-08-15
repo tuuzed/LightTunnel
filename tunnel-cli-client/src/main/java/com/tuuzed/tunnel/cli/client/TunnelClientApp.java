@@ -1,21 +1,24 @@
 package com.tuuzed.tunnel.cli.client;
 
-import com.esotericsoftware.yamlbeans.YamlReader;
 import com.tuuzed.tunnel.cli.common.AbstractApp;
+import com.tuuzed.tunnel.cli.common.CfgUtils;
 import com.tuuzed.tunnel.client.TunnelClient;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.protocol.OpenTunnelRequest;
-import com.tuuzed.tunnel.common.ssl.SslContexts;
+import com.tuuzed.tunnel.common.proto.Proto;
+import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TunnelClientApp extends AbstractApp<RunOptions> {
+@SuppressWarnings("Duplicates")
+public final class TunnelClientApp extends AbstractApp<RunOptions> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClientApp.class);
 
     @NotNull
@@ -39,85 +42,193 @@ public class TunnelClientApp extends AbstractApp<RunOptions> {
     }
 
     private void runAppAtCfg(@NotNull RunOptions runOptions) throws Exception {
-        YamlReader reader = new YamlReader(new FileReader(runOptions.configFile));
-        Map cfgOptions = (Map) reader.read();
-        logger.info("cfgOptions: {}", cfgOptions);
+        final Map globalOptions = new Yaml().loadAs(new FileReader(runOptions.configFile), Map.class);
+        // common
+        final String serverAddr = CfgUtils.getString(globalOptions, "server_addr", "0.0.0.0");
+        final int serverPort = CfgUtils.getInt(globalOptions, "server_addr", 5000);
+        final String token = CfgUtils.getString(globalOptions, "token", "");
+        final int workerThreads = CfgUtils.getInt(globalOptions, "worker_threads", -1);
 
-        final String serverAddr = cfgOptions.get("server_addr").toString();
-
-        int serverPort;
-        try {
-            serverPort = Integer.parseInt(cfgOptions.get("server_port").toString());
-        } catch (Exception e) {
-            serverPort = 5000;
-        }
-
-        final String token = cfgOptions.get("token").toString();
-
-        final Map<String, String> arguments = new HashMap<>();
-        arguments.put("token", token);
-        @SuppressWarnings("unchecked") final List<Map> tunnels = (List) cfgOptions.get("tunnels");
-
-        int workerThreads;
-        try {
-            workerThreads = Integer.parseInt(cfgOptions.get("worker_threads").toString());
-        } catch (Exception e) {
-            workerThreads = -1;
-        }
-
-        final TunnelClient tunnelClient = new TunnelClient.Builder()
-                .setWorkerThreads(workerThreads)
-                .setAutoReconnect(true)
-                .build();
-
-        SslContext context = null;
+        // ssl
+        @Nullable SslContext sslContext = null;
         int sslServerPort = serverPort;
-        final Map sslOptions = (Map) cfgOptions.get("ssl");
-        if (sslOptions != null) {
-            context = SslContexts.forClient(
-                    (String) sslOptions.get("jks"),
-                    (String) sslOptions.get("storepass")
+        final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
+        if (!sslOptions.isEmpty()) {
+            sslContext = SslContexts.forClient(
+                CfgUtils.getString(sslOptions, "jks", ""),
+                CfgUtils.getString(sslOptions, "storepass", "")
             );
-            sslServerPort = Integer.parseInt(sslOptions.get("server_port").toString());
+            sslServerPort = CfgUtils.getInt(sslOptions, "server_port", 5001);
         }
+
+        final TunnelClient tunnelClient = TunnelClient.builder()
+            .setWorkerThreads(workerThreads)
+            .setAutoReconnect(true)
+            .build();
+
+        final List<Map> tunnels = CfgUtils.getListMap(globalOptions, "tunnels");
+
         for (Map tunnel : tunnels) {
-            final String localAddr = tunnel.get("local_addr").toString();
-            final int localPort = Integer.parseInt(tunnel.get("local_port").toString());
-            final int remotePort = Integer.parseInt(tunnel.get("remote_port").toString());
-            final boolean enableSsl = Boolean.parseBoolean(tunnel.get("enable_ssl").toString());
-            OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                    localAddr,
-                    localPort,
-                    remotePort,
-                    arguments
+            final Proto proto = Proto.valueOf(
+                CfgUtils.getString(tunnel, "proto", "unknown").toUpperCase()
             );
-            tunnelClient.connect(
+            final boolean enableSsl = CfgUtils.getBoolean(tunnel, "enable_ssl", false);
+            final String localAddr = CfgUtils.getString(tunnel, "local_addr", "");
+            final int localPort = CfgUtils.getInt(tunnel, "local_port", 0);
+
+            ProtoRequest protoRequest = null;
+            switch (proto) {
+                case TCP:
+                    final int remotePort = CfgUtils.getInt(tunnel, "remote_port", 0);
+                    protoRequest = ProtoRequest.tcpBuilder(remotePort)
+                        .setLocalAddr(localAddr)
+                        .setLocalPort(localPort)
+                        .setOption("token", token)
+                        .build();
+                    break;
+                case HTTP:
+                case HTTPS:
+                    final String vhost = CfgUtils.getString(tunnel, "vhost", "");
+
+                    StringBuilder setHeaders = new StringBuilder();
+                    StringBuilder addHeaders = new StringBuilder();
+                    boolean isFirst = true;
+                    for (Object header : CfgUtils.getMap(tunnel, "set_headers").entrySet()) {
+                        if (header instanceof Map.Entry) {
+                            String key = ((Map.Entry) header).getKey().toString();
+                            String value = ((Map.Entry) header).getValue().toString();
+                            setHeaders.append(key).append(":").append(value);
+                            if (!isFirst) {
+                                setHeaders.append(";");
+                            }
+                            isFirst = false;
+                        }
+                    }
+                    isFirst = true;
+                    for (Object header : CfgUtils.getMap(tunnel, "add_headers").entrySet()) {
+                        if (header instanceof Map.Entry) {
+                            String key = ((Map.Entry) header).getKey().toString();
+                            String value = ((Map.Entry) header).getValue().toString();
+                            addHeaders.append(key).append(":").append(value);
+                            if (!isFirst) {
+                                addHeaders.append(";");
+                            }
+                            isFirst = false;
+                        }
+                    }
+                    switch (proto) {
+                        case HTTP:
+                            protoRequest = ProtoRequest.httpBuilder(vhost)
+                                .setLocalAddr(localAddr)
+                                .setLocalPort(localPort)
+                                .setOption("token", token)
+                                .setOption("set_headers", setHeaders.toString())
+                                .setOption("add_headers", addHeaders.toString())
+                                .build();
+                            break;
+                        case HTTPS:
+                            protoRequest = ProtoRequest.httpsBuilder(vhost)
+                                .setLocalAddr(localAddr)
+                                .setLocalPort(localPort)
+                                .setOption("token", token)
+                                .setOption("set_headers", setHeaders.toString())
+                                .setOption("add_headers", addHeaders.toString())
+                                .build();
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if (protoRequest != null) {
+                tunnelClient.connect(
                     serverAddr,
                     (enableSsl) ? sslServerPort : serverPort,
-                    request,
-                    (enableSsl) ? context : null
-            );
+                    protoRequest,
+                    (enableSsl) ? sslContext : null
+                );
+            }
         }
     }
 
     private void runAppAtArgs(@NotNull RunOptions runOptions) throws Exception {
-        Map<String, String> arguments = new HashMap<>();
-        arguments.put("token", runOptions.token);
-        TunnelClient tunnelClient = new TunnelClient.Builder()
-                .setWorkerThreads(runOptions.workerThreads)
-                .setAutoReconnect(true)
-                .build();
-        OpenTunnelRequest request = new OpenTunnelRequest(OpenTunnelRequest.TYPE_TCP,
-                runOptions.localAddr,
-                runOptions.localPort,
-                runOptions.remotePort,
-                arguments
-        );
-        SslContext context = null;
-        if (runOptions.ssl) {
-            context = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);
+        TunnelClient tunnelClient = TunnelClient.builder()
+            .setWorkerThreads(runOptions.workerThreads)
+            .setAutoReconnect(true)
+            .build();
+
+
+        ProtoRequest protoRequest = null;
+        switch (runOptions.proto) {
+            case TCP:
+                protoRequest = ProtoRequest.tcpBuilder(runOptions.remotePort)
+                    .setLocalAddr(runOptions.localAddr)
+                    .setLocalPort(runOptions.localPort)
+                    .setOption("token", runOptions.token)
+                    .build();
+
+                break;
+            case HTTP:
+            case HTTPS:
+                final String vhost = runOptions.vhost;
+
+                StringBuilder setHeaders = new StringBuilder();
+                StringBuilder addHeaders = new StringBuilder();
+                boolean isFirst = true;
+                for (Object header : runOptions.setHeaders.entrySet()) {
+                    if (header instanceof Map.Entry) {
+                        String key = ((Map.Entry) header).getKey().toString();
+                        String value = ((Map.Entry) header).getValue().toString();
+                        setHeaders.append(key).append(":").append(value);
+                        if (!isFirst) {
+                            setHeaders.append(";");
+                        }
+                        isFirst = false;
+                    }
+                }
+                isFirst = true;
+                for (Object header : runOptions.addHeaders.entrySet()) {
+                    if (header instanceof Map.Entry) {
+                        String key = ((Map.Entry) header).getKey().toString();
+                        String value = ((Map.Entry) header).getValue().toString();
+                        addHeaders.append(key).append(":").append(value);
+                        if (!isFirst) {
+                            addHeaders.append(";");
+                        }
+                        isFirst = false;
+                    }
+                }
+                switch (runOptions.proto) {
+                    case HTTP:
+                        protoRequest = ProtoRequest.httpBuilder(vhost)
+                            .setLocalAddr(runOptions.localAddr)
+                            .setLocalPort(runOptions.localPort)
+                            .setOption("token", runOptions.token)
+                            .setOption("set_headers", setHeaders.toString())
+                            .setOption("add_headers", addHeaders.toString())
+                            .build();
+                        break;
+                    case HTTPS:
+                        protoRequest = ProtoRequest.httpsBuilder(vhost)
+                            .setLocalAddr(runOptions.localAddr)
+                            .setLocalPort(runOptions.localPort)
+                            .setOption("token", runOptions.token)
+                            .setOption("set_headers", setHeaders.toString())
+                            .setOption("add_headers", addHeaders.toString())
+                            .build();
+                        break;
+                }
+                break;
+            default:
+                break;
         }
-        tunnelClient.connect(runOptions.serverAddr, runOptions.serverPort, request, context);
+        SslContext sslContext = null;
+        if (runOptions.sslEnable) {
+            sslContext = SslContexts.forClient(runOptions.sslJks, runOptions.sslStorepass);
+        }
+        if (protoRequest != null) {
+            tunnelClient.connect(runOptions.serverAddr, runOptions.serverPort, protoRequest, sslContext);
+        }
     }
 
 

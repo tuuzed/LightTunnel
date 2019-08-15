@@ -1,5 +1,5 @@
-#-injars tunnel-cli.jar
-#-outjars tunnel-cli.out.jar
+#-injars in.jar
+#-outjars out.jar
 
 -libraryjars  <java.home>/lib/rt.jar
 
@@ -14,13 +14,10 @@
 -printmapping build/libs/proguard.map
 
 # Netty
--keep class io.netty.** { *;}
+#-keep class io.netty.** { *;}
+#-dontwarn io.netty.**
+-keepclasseswithmembers class io.netty.** { *; }
 -dontwarn io.netty.**
-
-# Args4j
--keep class org.kohsuke.args4j.** { *;}
--dontwarn org.kohsuke.args4j.**
-
 
 -keepclassmembernames class * {
     java.lang.Class class$(java.lang.String);
@@ -48,7 +45,10 @@
     public static void main(java.lang.String[]);
 }
 
+
+
 # Keep filenames and line numbers
+
 -keepattributes SourceFile, LineNumberTable
 -keepattributes *Annotation*
 -keepattributes Signature,InnerClasses
