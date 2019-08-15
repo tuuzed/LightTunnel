@@ -4,6 +4,7 @@ import com.tuuzed.tunnel.common.logging.LogAdapter;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.util.HttpUtils;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
@@ -89,16 +90,18 @@ public class TunnelClientTest {
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
             .setToken("tk123456")
-            .setSetHeaders("X-Real-IP:$remote_addr;Host:192.168.1.1")
-            .setAddHeaders("X-User-Agent:Tunnel")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .build();
 
         ProtoRequest vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
             .setLocalAddr("111.230.198.37")
             .setLocalPort(10080)
             .setToken("tk123456")
-            .setSetHeaders("X-Real-IP:$remote_addr;Host:111.230.198.37")
-            .setAddHeaders("X-User-Agent:Tunnel")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setBasicAuth(true)
+            .setBasicAuthAccount("admin", "admin")
             .build();
 
 
@@ -106,16 +109,18 @@ public class TunnelClientTest {
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
             .setToken("tk123456")
-            .setSetHeaders("X-Real-IP:$remote_addr;Host:192.168.1.1")
-            .setAddHeaders("X-User-Agent:Tunnel")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .build();
 
         ProtoRequest vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
             .setLocalAddr("111.230.198.37")
             .setLocalPort(10080)
             .setToken("tk123456")
-            .setSetHeaders("X-Real-IP:$remote_addr;Host:111.230.198.37")
-            .setAddHeaders("X-User-Agent:Tunnel")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setBasicAuth(true)
+            .setBasicAuthAccount("admin", "admin")
             .build();
 
 

@@ -1,5 +1,6 @@
 package com.tuuzed.tunnel.server;
 
+import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.*;
@@ -225,7 +226,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         @NotNull ProtoRequest protoRequest
     ) throws Exception {
         try {
-            protoRequest = protoRequestInterceptor.proceed(protoRequest);
+            protoRequest = protoRequestInterceptor.handleProtoRequest(protoRequest);
             final long tunnelToken = tunnelTokenProducer.nextToken();
             final ServerTunnelSessions tunnelSessions = new ServerTunnelSessions(tunnelToken, protoRequest, ctx.channel());
 
@@ -264,7 +265,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         @NotNull ProtoRequest protoRequest
     ) throws Exception {
         try {
-            protoRequest = protoRequestInterceptor.proceed(protoRequest);
+            protoRequest = protoRequestInterceptor.handleProtoRequest(protoRequest);
             if (server.isRegistered(protoRequest.vhost())) {
                 throw new ProtoException("vhost(" + protoRequest.vhost() + ") already used");
             }

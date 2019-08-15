@@ -1,7 +1,7 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
-import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
+import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
+import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,7 +120,7 @@ public class TunnelServerBuilder {
 
     @NotNull
     public TunnelServerBuilder setHttpRequestInterceptor(@NotNull HttpRequestInterceptor interceptor) {
-        this.httpsRequestInterceptor = interceptor;
+        this.httpRequestInterceptor = interceptor;
         return this;
     }
 

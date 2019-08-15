@@ -2,13 +2,12 @@ package com.tuuzed.tunnel.cli.server;
 
 import com.tuuzed.tunnel.cli.common.AbstractApp;
 import com.tuuzed.tunnel.cli.common.CfgUtils;
+import com.tuuzed.tunnel.common.interceptor.SimpleRequestInterceptor;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.server.TunnelServer;
 import com.tuuzed.tunnel.server.TunnelServerBuilder;
-import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,17 +86,16 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
         }
 
 
-        final ProtoRequestInterceptor protoRequestInterceptor = new DefaultProtoRequestInterceptor(
+        final SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             token,
             allowPorts
         );
-        final HttpRequestInterceptor httpRequestInterceptor = new DefaultHttpRequestInterceptor();
 
         final TunnelServerBuilder builder = TunnelServer.builder()
             .setBossThreads(bossThreads)
             .setWorkerThreads(workerThreads)
             //
-            .setProtoRequestInterceptor(protoRequestInterceptor)
+            .setProtoRequestInterceptor(simpleRequestInterceptor)
             //
             .setBindAddr(bindAddr.length() == 0 ? null : bindAddr)
             .setBindPort(bindPort)
@@ -111,23 +109,22 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
             .setHttpEnable(httpEnable)
             .setHttpBindAddr(httpBindAddr.length() == 0 ? null : httpBindAddr)
             .setHttpBindPort(httpBindPort)
-            .setHttpRequestInterceptor(httpRequestInterceptor)
+            .setHttpRequestInterceptor(simpleRequestInterceptor)
             // https
             .setHttpsEnable(httpsEnable)
             .setHttpsContext(httpsContext)
             .setHttpsBindAddr(httpsBindAddr.length() == 0 ? null : httpsBindAddr)
             .setHttpsBindPort(httpsBindPort)
-            .setHttpsRequestInterceptor(httpRequestInterceptor);
+            .setHttpsRequestInterceptor(simpleRequestInterceptor);
 
         builder.build().start();
     }
 
     private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
-        final ProtoRequestInterceptor protoRequestInterceptor = new DefaultProtoRequestInterceptor(
+        final SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             runOptions.token,
             runOptions.allowPorts
         );
-        final HttpRequestInterceptor httpRequestInterceptor = new DefaultHttpRequestInterceptor();
 
         @Nullable SslContext sslContext = null;
         if (runOptions.sslEnable) {
@@ -151,7 +148,7 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
             .setBossThreads(runOptions.bossThreads)
             .setWorkerThreads(runOptions.workerThreads)
             //
-            .setProtoRequestInterceptor(protoRequestInterceptor)
+            .setProtoRequestInterceptor(simpleRequestInterceptor)
             //
             .setBindAddr(runOptions.bindAddr.length() == 0 ? null : runOptions.bindAddr)
             .setBindPort(runOptions.bindPort)
@@ -165,13 +162,13 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
             .setHttpEnable(runOptions.httpEnable)
             .setHttpBindAddr(runOptions.httpBindAddr.length() == 0 ? null : runOptions.httpBindAddr)
             .setHttpBindPort(runOptions.httpBindPort)
-            .setHttpRequestInterceptor(httpRequestInterceptor)
+            .setHttpRequestInterceptor(simpleRequestInterceptor)
             // https
             .setHttpsEnable(runOptions.httpsEnable)
             .setHttpsContext(httpsContext)
             .setHttpsBindAddr(runOptions.httpsBindAddr.length() == 0 ? null : runOptions.httpsBindAddr)
             .setHttpsBindPort(runOptions.httpsBindPort)
-            .setHttpsRequestInterceptor(httpRequestInterceptor);
+            .setHttpsRequestInterceptor(simpleRequestInterceptor);
 
         builder.build().start();
     }

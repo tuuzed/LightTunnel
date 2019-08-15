@@ -42,13 +42,8 @@ public class ProtoRequestBuilder {
     }
 
     @NotNull
-    public ProtoRequestBuilder setBasicAuthUsername(@NotNull String username) {
+    public ProtoRequestBuilder setBasicAuthAccount(@NotNull String username, @NotNull String password) {
         setOptionInternal(ProtoRequest.BASIC_AUTH_USERNAME, username);
-        return this;
-    }
-
-    @NotNull
-    public ProtoRequestBuilder setBasicAuthPassword(@NotNull String password) {
         setOptionInternal(ProtoRequest.BASIC_AUTH_PASSWORD, password);
         return this;
     }
@@ -60,23 +55,11 @@ public class ProtoRequestBuilder {
     }
 
     @NotNull
-    public ProtoRequestBuilder setAddHeaders(@NotNull String headers) {
-        setOptionInternal(ProtoRequest.ADD_HEADERS, headers);
-        return this;
-    }
-
-
-    @NotNull
     public ProtoRequestBuilder setSetHeaders(@NotNull Map<String, String> headers) {
         setHeadersOption(ProtoRequest.SET_HEADERS, headers);
         return this;
     }
 
-    @NotNull
-    public ProtoRequestBuilder setSetHeaders(@NotNull String headers) {
-        setOptionInternal(ProtoRequest.SET_HEADERS, headers);
-        return this;
-    }
 
     private void setHeadersOption(@NotNull String option, @NotNull Map<String, String> headers) {
         boolean isFirst = true;
