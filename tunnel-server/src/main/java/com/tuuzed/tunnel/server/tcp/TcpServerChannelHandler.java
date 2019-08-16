@@ -82,7 +82,7 @@ public class TcpServerChannelHandler extends SimpleChannelInboundHandler<ByteBuf
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.trace("exceptionCaught: ", cause);
+        logger.trace("exceptionCaught: {}", ctx, cause);
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 

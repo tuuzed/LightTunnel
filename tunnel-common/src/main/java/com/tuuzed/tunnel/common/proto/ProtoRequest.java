@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -14,6 +15,14 @@ import java.util.Objects;
 public class ProtoRequest {
     static final String REMOTE_PORT = "$r";
     static final String VHOST = "$v";
+    static final String TOKEN = "$t";
+    // http & https
+    static final String BASIC_AUTH = "$a";
+    static final String BASIC_AUTH_REALM = "$r";
+    static final String BASIC_AUTH_USERNAME = "$u";
+    static final String BASIC_AUTH_PASSWORD = "$p";
+    static final String SET_HEADERS = "$sh";
+    static final String ADD_HEADERS = "$ah";
 
     @NotNull
     private Proto proto;
@@ -62,14 +71,64 @@ public class ProtoRequest {
         return Integer.parseInt(remotePort);
     }
 
-
     @NotNull
     public String vhost() {
+        if (!isHttp() && !isHttps()) {
+            throw new NullPointerException(String.format("proto(%s) unsupported", proto));
+        }
         final String vhost = option(VHOST);
         if (vhost == null) {
             throw new NullPointerException("vhost == null");
         }
         return vhost;
+    }
+
+    @Nullable
+    public String token() {
+        return option(TOKEN);
+    }
+
+    public boolean isEnableBasicAuth() {
+        return "1".equals(option(BASIC_AUTH));
+    }
+
+    @Nullable
+    public String basicAuthRealm() {
+        return option(BASIC_AUTH_REALM);
+    }
+
+    @Nullable
+    public String basicAuthUsername() {
+        return option(BASIC_AUTH_USERNAME);
+    }
+
+    @Nullable
+    public String basicAuthPassword() {
+        return option(BASIC_AUTH_PASSWORD);
+    }
+
+    @NotNull
+    public Map<String, String> setHeaders() {
+        return parseHeaders(option(SET_HEADERS));
+    }
+
+    @NotNull
+    public Map<String, String> addHeaders() {
+        return parseHeaders(option(ADD_HEADERS));
+    }
+
+    @NotNull
+    private Map<String, String> parseHeaders(@Nullable String headers) {
+        Map<String, String> map = new LinkedHashMap<>();
+        if (headers != null) {
+            for (String it : headers.split(";")) {
+                String[] line = it.split(":");
+                if (line.length == 2) {
+                    map.put(line[0], line[1]);
+                }
+            }
+        }
+        return map;
     }
 
 
@@ -84,7 +143,6 @@ public class ProtoRequest {
     public boolean isHttps() {
         return proto == Proto.HTTPS;
     }
-
 
     @NotNull
     public static ProtoRequest fromBytes(@NotNull byte[] bytes) throws ProtoException {

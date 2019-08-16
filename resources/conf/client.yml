@@ -48,6 +48,11 @@ tunnels:
       Host: 192.168.1.1
     add_headers:
       X-User-Agent: Tunnel
+    auth:
+      enable: true
+      realm: User
+      username: admin
+      password: admin
 
   # http-vhost
   - proto: http
@@ -60,6 +65,11 @@ tunnels:
       Host: apache.org
     add_headers:
       X-User-Agent: Tunnel
+    auth:
+      enable: true
+      realm: User
+      username: admin
+      password: admin
 
   # https-vhost
   - proto: https
@@ -72,6 +82,11 @@ tunnels:
       Host: 192.168.1.1
     add_headers:
       X-User-Agent: Tunnel
+    auth:
+      enable: true
+      realm: User
+      username: admin
+      password: admin
 
   # https-vhost
   - proto: https
@@ -84,3 +99,8 @@ tunnels:
       Host: apache.org
     add_headers:
       X-User-Agent: Tunnel
+    auth:
+      enable: true
+      realm: User
+      username: admin
+      password: admin

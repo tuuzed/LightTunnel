@@ -4,6 +4,7 @@ import com.tuuzed.tunnel.common.logging.LogAdapter;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.util.HttpUtils;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +59,13 @@ public class TunnelClientTest {
         ProtoRequest portError = ProtoRequest.tcpBuilder(65000)
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
 
         ProtoRequest portReplaced = ProtoRequest.tcpBuilder(20000) // 20080
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
 
         ProtoRequest tcpHttp = ProtoRequest.tcpBuilder(10080) // 20080
@@ -76,47 +77,50 @@ public class TunnelClientTest {
         ProtoRequest vnc = ProtoRequest.tcpBuilder(15900) // 20080
             .setLocalAddr("192.168.1.33")
             .setLocalPort(5900)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
 
         ProtoRequest ssh = ProtoRequest.tcpBuilder(10022) // 20080
             .setLocalAddr("192.168.1.10")
             .setLocalPort(22)
-            .setOption("token", "tk123456")
+            .setToken("tk123456")
             .build();
-
 
         ProtoRequest vhostHttp1 = ProtoRequest.httpBuilder("t1.tunnel.lo")
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:192.168.1.1")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setToken("tk123456")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .build();
 
         ProtoRequest vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
-            .setLocalAddr("apache.org")
-            .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:apache.org")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setBasicAuth(true, "OCR")
+            .setBasicAuthAccount("admin", "admin")
             .build();
 
 
         ProtoRequest vhostHttps1 = ProtoRequest.httpsBuilder("t1.tunnel.lo")
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:192.168.1.1")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setToken("tk123456")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .build();
 
         ProtoRequest vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
-            .setLocalAddr("apache.org")
-            .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .setOption("set_headers", "X-Real-IP:$remote_addr;Host:apache.org")
-            .setOption("add_headers", "X-User-Agent:Tunnel")
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
+            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setBasicAuth(true, "OCR")
+            .setBasicAuthAccount("admin", "admin")
             .build();
 
 

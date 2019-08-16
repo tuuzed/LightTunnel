@@ -10,6 +10,7 @@ dependencies {
     compile project(":tunnel-common")
     // 单元测试
     testCompile "junit:junit:4.12"
+    testCompile project(":tunnel-cli-server")
 }
 
 apply from: "../gradle/BuildPackage.gradle"

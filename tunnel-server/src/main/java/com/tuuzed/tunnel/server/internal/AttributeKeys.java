@@ -10,6 +10,8 @@ public final class AttributeKeys {
     @NotNull
     public static final AttributeKey<String> VHOST = AttributeKey.newInstance("$VHOST");
     @NotNull
+    public static final AttributeKey<Boolean> PASS = AttributeKey.newInstance("$PASS");
+    @NotNull
     public static final AttributeKey<ServerTunnelSessions> SERVER_TUNNEL_SESSIONS
         = AttributeKey.newInstance("$SERVER_TUNNEL_SESSIONS");
 

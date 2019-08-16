@@ -1,11 +1,10 @@
 package com.tuuzed.tunnel.server;
 
+import com.tuuzed.tunnel.common.interceptor.SimpleRequestInterceptor;
 import com.tuuzed.tunnel.common.logging.LogAdapter;
 import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
-import com.tuuzed.tunnel.common.proto.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.util.SslContexts;
-import com.tuuzed.tunnel.server.http.HttpRequestInterceptor;
 import io.netty.handler.ssl.SslContext;
 import org.junit.After;
 import org.junit.Before;
@@ -27,9 +26,9 @@ public class TunnelServerTest {
         if (logcat != null) {
             logcat.setLevel(Logger.ALL);
         }
-        ProtoRequestInterceptor protoRequestInterceptor = new ProtoRequestInterceptorImpl();
-        HttpRequestInterceptor httpRequestInterceptor = new HttpRequestInterceptorImpl();
-        HttpRequestInterceptor httpsRequestInterceptor = new HttpRequestInterceptorImpl();
+        SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
+            "tk123456", "1024-60000"
+        );
         SslContext sslContext = SslContexts.forServer(
             "../resources/jks/server.jks",
             "stunnelpass",
@@ -38,7 +37,7 @@ public class TunnelServerTest {
         this.tunnelServer = TunnelServer.builder()
             .setBossThreads(1)
             .setWorkerThreads(-1)
-            .setProtoRequestInterceptor(protoRequestInterceptor)
+            .setProtoRequestInterceptor(simpleRequestInterceptor)
 
             .setBindAddr(null)
             .setBindPort(5000)
@@ -51,13 +50,13 @@ public class TunnelServerTest {
             .setHttpEnable(true)
             .setHttpBindAddr(null)
             .setHttpBindPort(5080)
-            .setHttpRequestInterceptor(httpRequestInterceptor)
+            .setHttpRequestInterceptor(simpleRequestInterceptor)
 
             .setHttpsEnable(true)
             .setHttpsContext(sslContext)
             .setHttpsBindAddr(null)
             .setHttpsBindPort(5443)
-            .setHttpsRequestInterceptor(httpsRequestInterceptor)
+            .setHttpsRequestInterceptor(simpleRequestInterceptor)
 
             .build();
     }

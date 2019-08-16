@@ -7,6 +7,7 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.Proto;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.proto.ProtoRequestBuilder;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
@@ -83,59 +84,39 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                     protoRequest = ProtoRequest.tcpBuilder(remotePort)
                         .setLocalAddr(localAddr)
                         .setLocalPort(localPort)
-                        .setOption("token", token)
+                        .setToken(token)
                         .build();
                     break;
                 case HTTP:
                 case HTTPS:
                     final String vhost = CfgUtils.getString(tunnel, "vhost", "");
-
-                    StringBuilder setHeaders = new StringBuilder();
-                    StringBuilder addHeaders = new StringBuilder();
-                    boolean isFirst = true;
-                    for (Object header : CfgUtils.getMap(tunnel, "set_headers").entrySet()) {
-                        if (header instanceof Map.Entry) {
-                            String key = ((Map.Entry) header).getKey().toString();
-                            String value = ((Map.Entry) header).getValue().toString();
-                            setHeaders.append(key).append(":").append(value);
-                            if (!isFirst) {
-                                setHeaders.append(";");
-                            }
-                            isFirst = false;
-                        }
-                    }
-                    isFirst = true;
-                    for (Object header : CfgUtils.getMap(tunnel, "add_headers").entrySet()) {
-                        if (header instanceof Map.Entry) {
-                            String key = ((Map.Entry) header).getKey().toString();
-                            String value = ((Map.Entry) header).getValue().toString();
-                            addHeaders.append(key).append(":").append(value);
-                            if (!isFirst) {
-                                addHeaders.append(";");
-                            }
-                            isFirst = false;
-                        }
-                    }
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> setHeaders = CfgUtils.getMap(tunnel, "set_headers");
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> addHeaders = CfgUtils.getMap(tunnel, "add_headers");
+                    Map auth = CfgUtils.getMap(tunnel, "auth");
+                    boolean authEnable = CfgUtils.getBoolean(auth, "enable", false);
+                    String authRealm = CfgUtils.getString(auth, "realm", ".");
+                    String authUsername = CfgUtils.getString(auth, "username", "");
+                    String authPassword = CfgUtils.getString(auth, "password", "");
+                    ProtoRequestBuilder builder = null;
                     switch (proto) {
                         case HTTP:
-                            protoRequest = ProtoRequest.httpBuilder(vhost)
-                                .setLocalAddr(localAddr)
-                                .setLocalPort(localPort)
-                                .setOption("token", token)
-                                .setOption("set_headers", setHeaders.toString())
-                                .setOption("add_headers", addHeaders.toString())
-                                .build();
+                            builder = ProtoRequest.httpBuilder(vhost);
                             break;
                         case HTTPS:
-                            protoRequest = ProtoRequest.httpsBuilder(vhost)
-                                .setLocalAddr(localAddr)
-                                .setLocalPort(localPort)
-                                .setOption("token", token)
-                                .setOption("set_headers", setHeaders.toString())
-                                .setOption("add_headers", addHeaders.toString())
-                                .build();
+                            builder = ProtoRequest.httpsBuilder(vhost);
                             break;
                     }
+                    protoRequest = builder
+                        .setLocalAddr(localAddr)
+                        .setLocalPort(localPort)
+                        .setToken(token)
+                        .setSetHeaders(setHeaders)
+                        .setAddHeaders(addHeaders)
+                        .setBasicAuth(authEnable, authRealm)
+                        .setBasicAuthAccount(authUsername, authPassword)
+                        .build();
                     break;
                 default:
                     break;
@@ -164,60 +145,31 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                 protoRequest = ProtoRequest.tcpBuilder(runOptions.remotePort)
                     .setLocalAddr(runOptions.localAddr)
                     .setLocalPort(runOptions.localPort)
-                    .setOption("token", runOptions.token)
+                    .setToken(runOptions.token)
                     .build();
 
                 break;
             case HTTP:
             case HTTPS:
                 final String vhost = runOptions.vhost;
-
-                StringBuilder setHeaders = new StringBuilder();
-                StringBuilder addHeaders = new StringBuilder();
-                boolean isFirst = true;
-                for (Object header : runOptions.setHeaders.entrySet()) {
-                    if (header instanceof Map.Entry) {
-                        String key = ((Map.Entry) header).getKey().toString();
-                        String value = ((Map.Entry) header).getValue().toString();
-                        setHeaders.append(key).append(":").append(value);
-                        if (!isFirst) {
-                            setHeaders.append(";");
-                        }
-                        isFirst = false;
-                    }
-                }
-                isFirst = true;
-                for (Object header : runOptions.addHeaders.entrySet()) {
-                    if (header instanceof Map.Entry) {
-                        String key = ((Map.Entry) header).getKey().toString();
-                        String value = ((Map.Entry) header).getValue().toString();
-                        addHeaders.append(key).append(":").append(value);
-                        if (!isFirst) {
-                            addHeaders.append(";");
-                        }
-                        isFirst = false;
-                    }
-                }
+                ProtoRequestBuilder builder = null;
                 switch (runOptions.proto) {
                     case HTTP:
-                        protoRequest = ProtoRequest.httpBuilder(vhost)
-                            .setLocalAddr(runOptions.localAddr)
-                            .setLocalPort(runOptions.localPort)
-                            .setOption("token", runOptions.token)
-                            .setOption("set_headers", setHeaders.toString())
-                            .setOption("add_headers", addHeaders.toString())
-                            .build();
+                        builder = ProtoRequest.httpBuilder(vhost);
                         break;
                     case HTTPS:
-                        protoRequest = ProtoRequest.httpsBuilder(vhost)
-                            .setLocalAddr(runOptions.localAddr)
-                            .setLocalPort(runOptions.localPort)
-                            .setOption("token", runOptions.token)
-                            .setOption("set_headers", setHeaders.toString())
-                            .setOption("add_headers", addHeaders.toString())
-                            .build();
+                        builder = ProtoRequest.httpsBuilder(vhost);
                         break;
                 }
+                protoRequest = builder
+                    .setLocalAddr(runOptions.localAddr)
+                    .setLocalPort(runOptions.localPort)
+                    .setToken(runOptions.token)
+                    .setSetHeaders(runOptions.setHeaders)
+                    .setAddHeaders(runOptions.addHeaders)
+                    .setBasicAuth(runOptions.authEnable, runOptions.authRealm)
+                    .setBasicAuthAccount(runOptions.authUsername, runOptions.authPassword)
+                    .build();
                 break;
             default:
                 break;
