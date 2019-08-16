@@ -27,13 +27,13 @@ public class DefaultLogger extends AbstractLogger {
             if (args.length != 0 && args[args.length - 1] instanceof Throwable) {
                 log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], traces[3]);
             } else {
-                log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], traces[3]);
+                log(level, formatPlaceholderMsg(format, args), null, traces[3]);
             }
         } else {
             if (args.length != 0 && args[args.length - 1] instanceof Throwable) {
                 log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], null);
             } else {
-                log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], null);
+                log(level, formatPlaceholderMsg(format, args), null, null);
             }
         }
     }
