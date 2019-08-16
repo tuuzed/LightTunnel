@@ -75,7 +75,7 @@ public class TunnelClient {
                             listener.onDisconnect(descriptor, true);
                         }
                     }
-                    logger.prompt("{}", fatalCause.getMessage(), fatalCause);
+                    logger.debug("{}", fatalCause.getMessage(), fatalCause);
                 } else {
                     if (descriptor != null) {
                         if (listener != null) {

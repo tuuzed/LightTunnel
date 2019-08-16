@@ -36,12 +36,6 @@ public class ProtoRequestBuilder {
     }
 
     @NotNull
-    public ProtoRequestBuilder setBasicAuth(boolean enable) {
-        setBasicAuth(enable, ".");
-        return this;
-    }
-
-    @NotNull
     public ProtoRequestBuilder setBasicAuth(boolean enable, @NotNull String realm) {
         setOptionInternal(ProtoRequest.BASIC_AUTH, enable ? "1" : "0");
         setOptionInternal(ProtoRequest.BASIC_AUTH_REALM, realm);
@@ -56,14 +50,14 @@ public class ProtoRequestBuilder {
     }
 
     @NotNull
-    public ProtoRequestBuilder setAddHeaders(@NotNull Map<String, String> headers) {
-        setHeadersOption(ProtoRequest.ADD_HEADERS, headers);
+    public ProtoRequestBuilder setWriteHeaders(@NotNull Map<String, String> headers) {
+        setHeadersOption(ProtoRequest.WRITE_HEADERS, headers);
         return this;
     }
 
     @NotNull
-    public ProtoRequestBuilder setSetHeaders(@NotNull Map<String, String> headers) {
-        setHeadersOption(ProtoRequest.SET_HEADERS, headers);
+    public ProtoRequestBuilder setRewriteHeaders(@NotNull Map<String, String> headers) {
+        setHeadersOption(ProtoRequest.REWRITE_HEADERS, headers);
         return this;
     }
 
@@ -93,8 +87,8 @@ public class ProtoRequestBuilder {
 
     @NotNull
     public ProtoRequestBuilder setOption(@NotNull String key, @NotNull String value) {
-        if (key.startsWith("$")) {
-            throw new IllegalArgumentException("$打头的key为系统保留的key");
+        if (key.startsWith("$$")) {
+            throw new IllegalArgumentException("$$打头的key为系统保留的key");
         }
         setOptionInternal(key, value);
         return this;

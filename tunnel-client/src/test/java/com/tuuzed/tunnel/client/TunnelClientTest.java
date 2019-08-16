@@ -20,7 +20,7 @@ public class TunnelClientTest {
     public void setUp() {
         LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
         if (logcat != null) {
-            logcat.setLevel(Logger.ALL);
+            logcat.setLevel(Logger.INFO);
         }
         client = TunnelClient.builder()
             .setAutoReconnect(true)
@@ -33,12 +33,12 @@ public class TunnelClientTest {
 
                 @Override
                 public void onConnected(@NotNull TunnelClientDescriptor descriptor) {
-                    logger.info("{}", descriptor);
+                    logger.prompt("{}", descriptor);
                 }
 
                 @Override
                 public void onDisconnect(@NotNull TunnelClientDescriptor descriptor, boolean fatal) {
-                    logger.info("tunnel: {}, deadly: {}", descriptor, fatal);
+                    logger.prompt("tunnel: {}, deadly: {}", descriptor, fatal);
                 }
             })
             .build();
@@ -90,16 +90,16 @@ public class TunnelClientTest {
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
             .setToken("tk123456")
-            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .build();
 
         ProtoRequest vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
             .setLocalAddr("111.230.198.37")
             .setLocalPort(10080)
             .setToken("tk123456")
-            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .setBasicAuth(true, "OCR")
             .setBasicAuthAccount("admin", "admin")
             .build();
@@ -109,16 +109,16 @@ public class TunnelClientTest {
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
             .setToken("tk123456")
-            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .build();
 
         ProtoRequest vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
             .setLocalAddr("111.230.198.37")
             .setLocalPort(10080)
             .setToken("tk123456")
-            .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
             .setBasicAuth(true, "OCR")
             .setBasicAuthAccount("admin", "admin")
             .build();

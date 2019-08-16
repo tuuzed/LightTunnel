@@ -46,14 +46,14 @@ public final class RunOptions {
     @Option(name = "t", longName = "token", help = "令牌", order = 120)
     public String token = "";
 
-    // http and https
+    // http(s)
     @Option(name = "vh", longName = "vhost", help = "域名", order = 130)
     public String vhost = "";
 
-    @Option(name = "sh", longName = "set-headers", help = "设置HTTP头", order = 140)
+    @Option(name = "rwh", longName = "rewrite-headers", help = "设置HTTP头", order = 140)
     public Map<String, String> setHeaders = Collections.emptyMap();
 
-    @Option(name = "ah", longName = "add-headers", help = "新增HTTP头", order = 150)
+    @Option(name = "wh", longName = "write-headers", help = "新增HTTP头", order = 150)
     public Map<String, String> addHeaders = Collections.emptyMap();
 
     @Option(name = "auth", longName = "auth", help = "是否启用HTTP登录验证", order = 160)

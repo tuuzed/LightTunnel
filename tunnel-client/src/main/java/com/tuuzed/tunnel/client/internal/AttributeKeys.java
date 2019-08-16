@@ -9,25 +9,25 @@ import org.jetbrains.annotations.NotNull;
 public final class AttributeKeys {
 
     @NotNull
-    public static final AttributeKey<Long> SESSION_TOKEN = AttributeKey.newInstance("$SESSION_TOKEN");
+    public static final AttributeKey<Long> SESSION_TOKEN = AttributeKey.newInstance("$$SESSION_TOKEN");
 
     @NotNull
-    public static final AttributeKey<Channel> NEXT_CHANNEL = AttributeKey.newInstance("$NEXT_CHANNEL");
+    public static final AttributeKey<Channel> NEXT_CHANNEL = AttributeKey.newInstance("$$NEXT_CHANNEL");
 
     @NotNull
-    public static final AttributeKey<Long> TUNNEL_TOKEN = AttributeKey.newInstance("$TUNNEL_TOKEN");
+    public static final AttributeKey<Long> TUNNEL_TOKEN = AttributeKey.newInstance("$$TUNNEL_TOKEN");
 
     @NotNull
-    public static final AttributeKey<ProtoRequest> PROTO_REQUEST = AttributeKey.newInstance("$PROTO_REQUEST");
+    public static final AttributeKey<ProtoRequest> PROTO_REQUEST = AttributeKey.newInstance("$$PROTO_REQUEST");
 
     @NotNull
-    public static final AttributeKey<Boolean> FATAL_FLAG = AttributeKey.newInstance("$FATAL_FLAG");
+    public static final AttributeKey<Boolean> FATAL_FLAG = AttributeKey.newInstance("$$FATAL_FLAG");
 
     @NotNull
-    public static final AttributeKey<Throwable> FATAL_CAUSE = AttributeKey.newInstance("$FATAL_CAUSE");
+    public static final AttributeKey<Throwable> FATAL_CAUSE = AttributeKey.newInstance("$$FATAL_CAUSE");
 
-
-    public static final AttributeKey<TunnelClientDescriptor> TUNNEL_CLIENT_DESCRIPTOR = AttributeKey.newInstance("$TUNNEL_CLIENT_DESCRIPTOR");
+    @NotNull
+    public static final AttributeKey<TunnelClientDescriptor> TUNNEL_CLIENT_DESCRIPTOR = AttributeKey.newInstance("$$TUNNEL_CLIENT_DESCRIPTOR");
 
 
 }

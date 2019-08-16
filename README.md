@@ -11,20 +11,26 @@ tunnels:
     remote_port: 10022         # 映射远程端口
 ```
 
-## HTTP Tunnel
+## HTTP(S) Tunnel
 
 ```yml
 tunnels:
-  - proto: http                # 指定协议为HTTP
+  - proto: [http|https]        # 指定协议为HTTPS
     enable_ssl: false          # 是否启用SSL
     local_addr: apache.org     # 映射本地地址
     local_port: 80             # 映射本地端口
     vhost: t2.tunnel.lo        # 映射域名
-    set_headers:               # 设置HTTP响应头
+    write_headers:             # 添加HTTP响应头
+      X-User-Agent: Tunnel
+    rewrite_headers:           # 设置HTTP响应头
       X-Real-IP: $remote_addr  # $remote_addr 将被替换成发起请求的客户端IP
       Host: apache.org
-    add_headers:               # 添加HTTP响应头
-      X-User-Agent: Tunnel
+    auth:                      # 登录验证
+      enable: true
+      realm: User
+      username: admin
+      password: admin
+
 ```
 
 ## SSL证书生成

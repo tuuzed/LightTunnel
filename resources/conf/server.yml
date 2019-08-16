@@ -7,8 +7,9 @@ bind_port: 5000
 # 令牌
 token: tk123456
 
-# 允许使用端口（端口白名单）
-allow_ports: 10000-50000
+
+# TCP端口白名单
+allow_ports: 10000,10001,10002-50000
 
 # 线程数量
 boss_threads: -1
@@ -27,13 +28,13 @@ ssl:
 http:
   enable: true
   bind_addr: 0.0.0.0
-  bind_port: 5080
+  bind_port: 80
 
 # https
 https:
   enable: true
   bind_addr: 0.0.0.0
-  bind_port: 5443
+  bind_port: 443
   jks: server.jks
   storepass: stunnelpass
   keypass: stunnelpass

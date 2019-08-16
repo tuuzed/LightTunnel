@@ -82,29 +82,29 @@ public final class SimpleRequestInterceptor implements ProtoRequestInterceptor, 
 
 
     private void handleHttpHeaders(
-        boolean setHeaders,
+        boolean rewirte,
         @NotNull SocketAddress localAddress,
         @NotNull SocketAddress remoteAddress,
         @NotNull ProtoRequest protoRequest,
         @NotNull HttpRequest httpRequest
     ) {
 
-        Map<String, String> headers = setHeaders
-            ? protoRequest.setHeaders()
-            : protoRequest.addHeaders();
+        Map<String, String> headers = rewirte
+            ? protoRequest.rewriteHeaders()
+            : protoRequest.writeHeaders();
 
         for (Map.Entry<String, String> it : headers.entrySet()) {
             String name = it.getKey();
             String value = it.getValue();
             if ("$remote_addr".equals(value)) {
                 if (remoteAddress instanceof InetSocketAddress) {
-                    if (setHeaders) {
+                    if (rewirte) {
                         httpRequest.headers().remove(name);
                     }
                     httpRequest.headers().add(name, ((InetSocketAddress) remoteAddress).getAddress().toString());
                 }
             } else {
-                if (setHeaders) {
+                if (rewirte) {
                     httpRequest.headers().remove(name);
                 }
                 httpRequest.headers().add(name, value);

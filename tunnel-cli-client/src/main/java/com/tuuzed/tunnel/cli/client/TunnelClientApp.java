@@ -91,9 +91,9 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                 case HTTPS:
                     final String vhost = CfgUtils.getString(tunnel, "vhost", "");
                     @SuppressWarnings("unchecked")
-                    Map<String, String> setHeaders = CfgUtils.getMap(tunnel, "set_headers");
+                    Map<String, String> rewriteHeaders = CfgUtils.getMap(tunnel, "rewrite_headers");
                     @SuppressWarnings("unchecked")
-                    Map<String, String> addHeaders = CfgUtils.getMap(tunnel, "add_headers");
+                    Map<String, String> writeHeaders = CfgUtils.getMap(tunnel, "write_headers");
                     Map auth = CfgUtils.getMap(tunnel, "auth");
                     boolean authEnable = CfgUtils.getBoolean(auth, "enable", false);
                     String authRealm = CfgUtils.getString(auth, "realm", ".");
@@ -112,8 +112,8 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                         .setLocalAddr(localAddr)
                         .setLocalPort(localPort)
                         .setToken(token)
-                        .setSetHeaders(setHeaders)
-                        .setAddHeaders(addHeaders)
+                        .setRewriteHeaders(rewriteHeaders)
+                        .setWriteHeaders(writeHeaders)
                         .setBasicAuth(authEnable, authRealm)
                         .setBasicAuthAccount(authUsername, authPassword)
                         .build();
@@ -165,8 +165,8 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                     .setLocalAddr(runOptions.localAddr)
                     .setLocalPort(runOptions.localPort)
                     .setToken(runOptions.token)
-                    .setSetHeaders(runOptions.setHeaders)
-                    .setAddHeaders(runOptions.addHeaders)
+                    .setRewriteHeaders(runOptions.setHeaders)
+                    .setWriteHeaders(runOptions.addHeaders)
                     .setBasicAuth(runOptions.authEnable, runOptions.authRealm)
                     .setBasicAuthAccount(runOptions.authUsername, runOptions.authPassword)
                     .build();

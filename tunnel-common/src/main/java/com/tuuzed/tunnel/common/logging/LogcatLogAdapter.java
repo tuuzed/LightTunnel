@@ -11,7 +11,7 @@ public class LogcatLogAdapter implements LogAdapter {
 
     @Override
     public boolean isLoggable(int level) {
-        return this.level < level;
+        return this.level <= level;
     }
 
     @Override

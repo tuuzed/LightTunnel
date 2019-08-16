@@ -13,16 +13,16 @@ import java.util.Objects;
 
 @SuppressWarnings("Duplicates")
 public class ProtoRequest {
-    static final String REMOTE_PORT = "$r";
-    static final String VHOST = "$v";
-    static final String TOKEN = "$t";
+    static final String REMOTE_PORT = "$$r";
+    static final String VHOST = "$$v";
+    static final String TOKEN = "$$t";
     // http & https
-    static final String BASIC_AUTH = "$a";
-    static final String BASIC_AUTH_REALM = "$r";
-    static final String BASIC_AUTH_USERNAME = "$u";
-    static final String BASIC_AUTH_PASSWORD = "$p";
-    static final String SET_HEADERS = "$sh";
-    static final String ADD_HEADERS = "$ah";
+    static final String BASIC_AUTH = "$$a";
+    static final String BASIC_AUTH_REALM = "$$r";
+    static final String BASIC_AUTH_USERNAME = "$$u";
+    static final String BASIC_AUTH_PASSWORD = "$$p";
+    static final String REWRITE_HEADERS = "$$rwh";
+    static final String WRITE_HEADERS = "$$wh";
 
     @NotNull
     private Proto proto;
@@ -108,13 +108,13 @@ public class ProtoRequest {
     }
 
     @NotNull
-    public Map<String, String> setHeaders() {
-        return parseHeaders(option(SET_HEADERS));
+    public Map<String, String> rewriteHeaders() {
+        return parseHeaders(option(REWRITE_HEADERS));
     }
 
     @NotNull
-    public Map<String, String> addHeaders() {
-        return parseHeaders(option(ADD_HEADERS));
+    public Map<String, String> writeHeaders() {
+        return parseHeaders(option(WRITE_HEADERS));
     }
 
     @NotNull
@@ -130,7 +130,6 @@ public class ProtoRequest {
         }
         return map;
     }
-
 
     public boolean isTcp() {
         return proto == Proto.TCP;
@@ -252,11 +251,11 @@ public class ProtoRequest {
     public String toString() {
         switch (proto) {
             case TCP:
-                return String.format("[%s:%d<-tcp://tunnel.server:%d?%s]", localAddr, localPort, remotePort(), ProtoUtils.map2String(options));
+                return String.format("[%s:%d<-tcp://{server}:%d <%s>]", localAddr, localPort, remotePort(), ProtoUtils.map2String(options));
             case HTTP:
-                return String.format("[%s:%d<-http://%s?%s]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
+                return String.format("[%s:%d<-http://%s <%s>]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
             case HTTPS:
-                return String.format("[%s:%d<-https://%s?%s]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
+                return String.format("[%s:%d<-https://%s <%s>]", localAddr, localPort, vhost(), ProtoUtils.map2String(options));
             default:
                 return "";
         }
