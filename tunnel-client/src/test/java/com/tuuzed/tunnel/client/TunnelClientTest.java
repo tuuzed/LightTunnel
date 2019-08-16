@@ -100,7 +100,7 @@ public class TunnelClientTest {
             .setToken("tk123456")
             .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
             .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
-            .setBasicAuth(true)
+            .setBasicAuth(true, "OCR")
             .setBasicAuthAccount("admin", "admin")
             .build();
 
@@ -119,7 +119,7 @@ public class TunnelClientTest {
             .setToken("tk123456")
             .setSetHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
             .setAddHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
-            .setBasicAuth(true)
+            .setBasicAuth(true, "OCR")
             .setBasicAuthAccount("admin", "admin")
             .build();
 

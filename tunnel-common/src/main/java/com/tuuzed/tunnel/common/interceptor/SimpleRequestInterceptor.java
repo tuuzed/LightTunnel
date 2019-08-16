@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.common.interceptor;
 
 import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.util.HttpUtils;
 import com.tuuzed.tunnel.common.util.PortUtils;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.Map;
 
 public final class SimpleRequestInterceptor implements ProtoRequestInterceptor, HttpRequestInterceptor {
@@ -52,13 +54,26 @@ public final class SimpleRequestInterceptor implements ProtoRequestInterceptor, 
         handleHttpHeaders(true, localAddress, remoteAddress, protoRequest, httpRequest);
         if (protoRequest.isEnableBasicAuth()) {
             final String authorization = httpRequest.headers().get(HttpHeaderNames.AUTHORIZATION);
-            if (authorization == null) {
+            final String[] account = HttpUtils.parseBasicAuthorization(authorization);
+            final String username = protoRequest.basicAuthUsername();
+            final String password = protoRequest.basicAuthPassword();
+            if (account == null ||
+                username == null || password == null ||
+                !username.equals(account[0]) || !password.equals(account[1])
+            ) {
                 FullHttpResponse httpResponse = new DefaultFullHttpResponse(
                     httpRequest.protocolVersion(),
                     HttpResponseStatus.UNAUTHORIZED
                 );
-                httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"Login\"");
-                httpResponse.content().writeBytes("UNAUTHORIZED".getBytes(StandardCharsets.UTF_8));
+                byte[] content = "UNAUTHORIZED".getBytes(StandardCharsets.UTF_8);
+                httpResponse.headers().add(HttpHeaderNames.SERVER, "Tunnel/x");
+                httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, String.format("Basic realm=\"%s\"", protoRequest.basicAuthRealm()));
+                httpResponse.headers().add(HttpHeaderNames.CONNECTION, "keep-alive");
+                httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, "bytes");
+
+                httpResponse.headers().add(HttpHeaderNames.DATE, new Date().toString());
+                httpResponse.headers().add(HttpHeaderNames.CONTENT_LENGTH, content.length);
+                httpResponse.content().writeBytes(content);
                 return httpResponse;
             }
         }

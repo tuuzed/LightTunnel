@@ -18,6 +18,7 @@ public class ProtoRequest {
     static final String TOKEN = "$t";
     // http & https
     static final String BASIC_AUTH = "$a";
+    static final String BASIC_AUTH_REALM = "$r";
     static final String BASIC_AUTH_USERNAME = "$u";
     static final String BASIC_AUTH_PASSWORD = "$p";
     static final String SET_HEADERS = "$sh";
@@ -89,6 +90,11 @@ public class ProtoRequest {
 
     public boolean isEnableBasicAuth() {
         return "1".equals(option(BASIC_AUTH));
+    }
+
+    @Nullable
+    public String basicAuthRealm() {
+        return option(BASIC_AUTH_REALM);
     }
 
     @Nullable

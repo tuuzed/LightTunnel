@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.common.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.base64.Base64;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,6 @@ public final class HttpUtils {
         }
         return headers;
     }
-
 
     @NotNull
     public static byte[] httpRequestToBytes(@NotNull HttpRequest request) {
@@ -63,11 +63,35 @@ public final class HttpUtils {
         }
         raw.append(CRLF);
         if (response instanceof FullHttpResponse) {
-            return Unpooled.wrappedBuffer(raw.toString().getBytes(StandardCharsets.UTF_8))
-                .writeBytes(((FullHttpResponse) response).content());
+            byte[] responseLineAndHeader = raw.toString().getBytes(StandardCharsets.UTF_8);
+            ByteBuf content = ((FullHttpResponse) response).content();
+            ByteBuf buffer = Unpooled.buffer(responseLineAndHeader.length + content.readableBytes());
+            buffer.writeBytes(responseLineAndHeader).writeBytes(content);
+            return buffer;
         } else {
             return Unpooled.wrappedBuffer(raw.toString().getBytes(StandardCharsets.UTF_8));
         }
+    }
+
+
+    @Nullable
+    public static String[] parseBasicAuthorization(@Nullable String authorization) {
+        // Basic Z3Vlc3Q6Z3Vlc3Q=
+        if (authorization == null) {
+            return null;
+        }
+        String[] tmp = authorization.split(" ");
+        if (tmp.length != 2) {
+            return null;
+        }
+        final String account = Base64.decode(
+            Unpooled.wrappedBuffer(tmp[1].getBytes(StandardCharsets.UTF_8))
+        ).toString(StandardCharsets.UTF_8);
+        tmp = account.split(":");
+        if (tmp.length != 2) {
+            return null;
+        }
+        return tmp;
     }
 
 

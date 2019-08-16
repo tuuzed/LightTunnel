@@ -7,6 +7,7 @@ import com.tuuzed.tunnel.common.logging.Logger;
 import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.Proto;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.common.proto.ProtoRequestBuilder;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
@@ -93,26 +94,29 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                     Map<String, String> setHeaders = CfgUtils.getMap(tunnel, "set_headers");
                     @SuppressWarnings("unchecked")
                     Map<String, String> addHeaders = CfgUtils.getMap(tunnel, "add_headers");
+                    Map auth = CfgUtils.getMap(tunnel, "auth");
+                    boolean authEnable = CfgUtils.getBoolean(auth, "enable", false);
+                    String authRealm = CfgUtils.getString(auth, "realm", ".");
+                    String authUsername = CfgUtils.getString(auth, "username", "");
+                    String authPassword = CfgUtils.getString(auth, "password", "");
+                    ProtoRequestBuilder builder = null;
                     switch (proto) {
                         case HTTP:
-                            protoRequest = ProtoRequest.httpBuilder(vhost)
-                                .setLocalAddr(localAddr)
-                                .setLocalPort(localPort)
-                                .setToken(token)
-                                .setSetHeaders(setHeaders)
-                                .setAddHeaders(addHeaders)
-                                .build();
+                            builder = ProtoRequest.httpBuilder(vhost);
                             break;
                         case HTTPS:
-                            protoRequest = ProtoRequest.httpsBuilder(vhost)
-                                .setLocalAddr(localAddr)
-                                .setLocalPort(localPort)
-                                .setToken(token)
-                                .setSetHeaders(setHeaders)
-                                .setAddHeaders(addHeaders)
-                                .build();
+                            builder = ProtoRequest.httpsBuilder(vhost);
                             break;
                     }
+                    protoRequest = builder
+                        .setLocalAddr(localAddr)
+                        .setLocalPort(localPort)
+                        .setToken(token)
+                        .setSetHeaders(setHeaders)
+                        .setAddHeaders(addHeaders)
+                        .setBasicAuth(authEnable, authRealm)
+                        .setBasicAuthAccount(authUsername, authPassword)
+                        .build();
                     break;
                 default:
                     break;
@@ -148,26 +152,24 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
             case HTTP:
             case HTTPS:
                 final String vhost = runOptions.vhost;
+                ProtoRequestBuilder builder = null;
                 switch (runOptions.proto) {
                     case HTTP:
-                        protoRequest = ProtoRequest.httpBuilder(vhost)
-                            .setLocalAddr(runOptions.localAddr)
-                            .setLocalPort(runOptions.localPort)
-                            .setToken(runOptions.token)
-                            .setSetHeaders(runOptions.setHeaders)
-                            .setAddHeaders(runOptions.addHeaders)
-                            .build();
+                        builder = ProtoRequest.httpBuilder(vhost);
                         break;
                     case HTTPS:
-                        protoRequest = ProtoRequest.httpsBuilder(vhost)
-                            .setLocalAddr(runOptions.localAddr)
-                            .setLocalPort(runOptions.localPort)
-                            .setToken(runOptions.token)
-                            .setSetHeaders(runOptions.setHeaders)
-                            .setAddHeaders(runOptions.addHeaders)
-                            .build();
+                        builder = ProtoRequest.httpsBuilder(vhost);
                         break;
                 }
+                protoRequest = builder
+                    .setLocalAddr(runOptions.localAddr)
+                    .setLocalPort(runOptions.localPort)
+                    .setToken(runOptions.token)
+                    .setSetHeaders(runOptions.setHeaders)
+                    .setAddHeaders(runOptions.addHeaders)
+                    .setBasicAuth(runOptions.authEnable, runOptions.authRealm)
+                    .setBasicAuthAccount(runOptions.authUsername, runOptions.authPassword)
+                    .build();
                 break;
             default:
                 break;

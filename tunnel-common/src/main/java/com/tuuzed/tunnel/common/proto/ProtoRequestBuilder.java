@@ -37,7 +37,14 @@ public class ProtoRequestBuilder {
 
     @NotNull
     public ProtoRequestBuilder setBasicAuth(boolean enable) {
+        setBasicAuth(enable, ".");
+        return this;
+    }
+
+    @NotNull
+    public ProtoRequestBuilder setBasicAuth(boolean enable, @NotNull String realm) {
         setOptionInternal(ProtoRequest.BASIC_AUTH, enable ? "1" : "0");
+        setOptionInternal(ProtoRequest.BASIC_AUTH_REALM, realm);
         return this;
     }
 

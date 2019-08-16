@@ -56,5 +56,17 @@ public final class RunOptions {
     @Option(name = "ah", longName = "add-headers", help = "新增HTTP头", order = 150)
     public Map<String, String> addHeaders = Collections.emptyMap();
 
+    @Option(name = "auth", longName = "auth", help = "是否启用HTTP登录验证", order = 160)
+    public boolean authEnable = false;
+
+    @Option(name = "ar", longName = "auth-realm", help = "HTTP登录验证Realm", order = 170)
+    public String authRealm = ".";
+
+    @Option(name = "au", longName = "auth-username", help = "HTTP登录验证用户名", order = 180)
+    public String authUsername = ".";
+
+    @Option(name = "ap", longName = "auth-password", help = "HTTP登录验证用户名", order = 190)
+    public String authPassword = ".";
+
 
 }

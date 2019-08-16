@@ -96,22 +96,26 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
         final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+            ctx.channel().attr(AttributeKeys.PASS).set(false);
+            return;
+        }
+        ctx.channel().attr(AttributeKeys.PASS).set(true);
+        final ProtoRequest protoRequest = descriptor.tunnelSessions().protoRequest();
+        final SocketAddress localAddress = ctx.channel().localAddress();
+        final SocketAddress remoteAddress = ctx.channel().remoteAddress();
+
+        final HttpResponse httpResponse = httpRequestInterceptor.handleHttpRequest(
+            localAddress, remoteAddress,
+            protoRequest, msg
+        );
+        if (httpResponse != null) {
+            final ByteBuf byteBuf = HttpUtils.httpResponseToBytes(httpResponse);
+            ctx.channel().writeAndFlush(byteBuf);
             return;
         }
         final long sessionToken = descriptor.tunnelSessions().putSessionChannel(ctx.channel());
         ctx.channel().attr(AttributeKeys.SESSION_TOKEN).set(sessionToken);
         final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
-        final ProtoRequest protoRequest = descriptor.tunnelSessions().protoRequest();
-        final SocketAddress localAddress = ctx.channel().localAddress();
-        final SocketAddress remoteAddress = ctx.channel().remoteAddress();
-        final HttpResponse httpResponse = httpRequestInterceptor.handleHttpRequest(
-            localAddress, remoteAddress,
-            protoRequest, msg
-        );
-//        if (httpResponse != null) {
-//            ctx.channel().writeAndFlush(HttpUtils.httpResponseToBytes(httpResponse));
-//            return;
-//        }
         final byte[] requestBytes = HttpUtils.httpRequestToBytes(msg);
         descriptor.tunnelSessions().tunnelChannel().writeAndFlush(
             new ProtoMessage(ProtoMessage.Type.TRANSFER,
@@ -125,9 +129,12 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
      * 处理读取到的HttpContent类型的消息
      */
     private void channelReadHttpContent(ChannelHandlerContext ctx, HttpContent msg) throws Exception {
+        final Boolean pass = ctx.channel().attr(AttributeKeys.PASS).get();
+        if (!(pass != null && pass)) { // 如果没有放行
+            return;
+        }
         final String vhost = ctx.channel().attr(AttributeKeys.VHOST).get();
         final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
-
         if (vhost == null || sessionToken == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             return;

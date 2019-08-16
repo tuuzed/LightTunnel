@@ -24,9 +24,17 @@ public class DefaultLogger extends AbstractLogger {
     void log(int level, @NotNull String format, Object... args) {
         StackTraceElement[] traces = Thread.currentThread().getStackTrace();
         if (traces.length >= 3) {
-            log(level, formatPlaceholderMsg(format, args), null, traces[3]);
+            if (args.length != 0 && args[args.length - 1] instanceof Throwable) {
+                log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], traces[3]);
+            } else {
+                log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], traces[3]);
+            }
         } else {
-            log(level, formatPlaceholderMsg(format, args), null, null);
+            if (args.length != 0 && args[args.length - 1] instanceof Throwable) {
+                log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], null);
+            } else {
+                log(level, formatPlaceholderMsg(format, args), (Throwable) args[args.length - 1], null);
+            }
         }
     }
 
