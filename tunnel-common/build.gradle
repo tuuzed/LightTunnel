@@ -16,6 +16,10 @@ dependencies {
     compile "io.netty:netty-handler:$netty_version"
     compile "io.netty:netty-resolver:$netty_version"
     compile "io.netty:netty-transport:$netty_version"
+
+    def slf4j_version = '1.7.25'
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+    compile "org.slf4j:slf4j-log4j12:$slf4j_version"
     // 单元测试
     testCompile "junit:junit:4.12"
 }

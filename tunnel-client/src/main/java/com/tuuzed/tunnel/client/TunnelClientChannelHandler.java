@@ -2,8 +2,6 @@ package com.tuuzed.tunnel.client;
 
 import com.tuuzed.tunnel.client.internal.AttributeKeys;
 import com.tuuzed.tunnel.client.local.LocalConnect;
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoMessage;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import io.netty.buffer.ByteBuf;
@@ -13,6 +11,8 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
@@ -94,7 +94,7 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<ProtoMessag
             ctx.channel().attr(AttributeKeys.PROTO_REQUEST).set(protoRequest);
             ctx.channel().attr(AttributeKeys.FATAL_FLAG).set(null);
             ctx.channel().attr(AttributeKeys.FATAL_CAUSE).set(null);
-            logger.debug("Opened Tunnel: {}", protoRequest);
+            logger.info("Opened Tunnel: {}", protoRequest);
             channelListener.tunnelConnected(ctx);
         } else {
             // 开启隧道失败
@@ -104,7 +104,7 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<ProtoMessag
             ctx.channel().attr(AttributeKeys.FATAL_FLAG).set(true);
             ctx.channel().attr(AttributeKeys.FATAL_CAUSE).set(new Exception(fatalMessage));
             ctx.channel().close();
-            logger.debug("Open Tunnel Error: {}", fatalMessage);
+            logger.warn("Open Tunnel Error: {}", fatalMessage);
         }
         head.release();
     }

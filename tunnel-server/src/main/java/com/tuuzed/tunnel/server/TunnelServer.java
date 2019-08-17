@@ -1,7 +1,5 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
 import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
 import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
@@ -21,6 +19,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TunnelServer {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServer.class);

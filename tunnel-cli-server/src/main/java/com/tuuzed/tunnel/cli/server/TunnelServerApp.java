@@ -1,16 +1,19 @@
 package com.tuuzed.tunnel.cli.server;
 
 import com.tuuzed.tunnel.cli.common.AbstractApp;
-import com.tuuzed.tunnel.cli.common.CfgUtils;
+import com.tuuzed.tunnel.cli.common.LogLevel;
+import com.tuuzed.tunnel.cli.common.Maps;
 import com.tuuzed.tunnel.common.interceptor.SimpleRequestInterceptor;
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.server.TunnelServer;
 import com.tuuzed.tunnel.server.TunnelServerBuilder;
 import io.netty.handler.ssl.SslContext;
+import org.apache.log4j.Level;
+import org.apache.log4j.helpers.OptionConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
@@ -18,7 +21,6 @@ import java.util.Map;
 
 @SuppressWarnings("Duplicates")
 public final class TunnelServerApp extends AbstractApp<RunOptions> {
-    private static final Logger logger = LoggerFactory.getLogger(TunnelServerApp.class);
 
     @NotNull
     @Override
@@ -30,62 +32,78 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
     public void runApp(@NotNull RunOptions runOptions) {
         try {
             if (runOptions.configFile.length() != 0) {
-                runAppAtCfg(runOptions);
+                runAppByCfg(runOptions.configFile);
             } else {
-                runAppAtArgs(runOptions);
+                runAppByArgs(runOptions);
             }
         } catch (Exception e) {
-            logger.error("runApp Error", e);
+            LoggerFactory.getLogger(TunnelServerApp.class).error("runApp Error", e);
         }
     }
 
-    private void runAppAtCfg(@NotNull final RunOptions runOptions) throws Exception {
-        final Map globalOptions = new Yaml().loadAs(new FileReader(runOptions.configFile), Map.class);
+    private void runAppByCfg(@NotNull final String cfgFile) throws Exception {
+        final Map globalCfg = new Yaml().loadAs(new FileReader(cfgFile), Map.class);
 
-        // common
-        final int bossThreads = CfgUtils.getInt(globalOptions, "boss_threads", -1);
-        final int workerThreads = CfgUtils.getInt(globalOptions, "worker_threads", -1);
-        //
-        final String token = CfgUtils.getString(globalOptions, "token", "");
-        final String allowPorts = CfgUtils.getString(globalOptions, "allow_ports", "1024-65535");
+        // ================================== logCfg ================================== //
+        final Map logCfg = Maps.getMap(globalCfg, "log");
+        Log4jInitializer.initializeThirdLibrary(Level.OFF);
+        // 设置控制台日志
+        Log4jInitializer.builder()
+            .setConsole(true)
+            .setLevel(LogLevel.valueOf(Maps.getString(logCfg, "level", "OFF").toUpperCase()).level)
+            .initialize();
+        // 配置文件日志
+        Log4jInitializer.builder()
+            .setConsole(false)
+            .setLevel(LogLevel.valueOf(Maps.getString(logCfg, "level", "OFF").toUpperCase()).level)
+            .setFile(Maps.getString(logCfg, "file", "./logs/tunnel-server.log"))
+            .setMaxFileSize(OptionConverter.toFileSize(Maps.getString(logCfg, "max_file_size", "1MB"), 1))
+            .setMaxBackupIndex(Maps.getInt(logCfg, "max_backup_index", 3))
+            .initialize();
 
+        // ================================== common ================================== //
+        final int bossThreads = Maps.getInt(globalCfg, "boss_threads", -1);
+        final int workerThreads = Maps.getInt(globalCfg, "worker_threads", -1);
+        final String token = Maps.getString(globalCfg, "token", "");
+        final String allowPorts = Maps.getString(globalCfg, "allow_ports", "1024-65535");
+        final String bindAddr = Maps.getString(globalCfg, "bind_addr", "0.0.0.0");
+        final int bindPort = Maps.getInt(globalCfg, "bind_port", 5000);
 
-        // auth
-        final String bindAddr = CfgUtils.getString(globalOptions, "bind_addr", "0.0.0.0");
-        final int bindPort = CfgUtils.getInt(globalOptions, "bind_port", 5000);
-        // ssl auth
-        final Map sslOptions = CfgUtils.getMap(globalOptions, "ssl");
-        final boolean sslEnable = CfgUtils.getBoolean(sslOptions, "enable", false);
-        final String sslBindAddr = CfgUtils.getString(sslOptions, "bind_addr", "0.0.0.0");
-        final int sslBindPort = CfgUtils.getInt(sslOptions, "bind_port", 5001);
+        // ================================== sslCfg ================================== //
+        final Map sslCfg = Maps.getMap(globalCfg, "ssl");
+        final boolean sslEnable = Maps.getBoolean(sslCfg, "enable", false);
+        final String sslBindAddr = Maps.getString(sslCfg, "bind_addr", "0.0.0.0");
+        final int sslBindPort = Maps.getInt(sslCfg, "bind_port", 5001);
         @Nullable SslContext sslContext = null;
-        if (!sslOptions.isEmpty() && sslEnable) {
+        if (!sslCfg.isEmpty() && sslEnable) {
             sslContext = SslContexts.forServer(
-                CfgUtils.getString(sslOptions, "jks", ""),
-                CfgUtils.getString(sslOptions, "storepass", ""),
-                CfgUtils.getString(sslOptions, "keypass", "")
+                Maps.getString(sslCfg, "jks", ""),
+                Maps.getString(sslCfg, "storepass", ""),
+                Maps.getString(sslCfg, "keypass", "")
             );
         }
-        // http
-        final Map httpOptions = CfgUtils.getMap(globalOptions, "http");
-        final boolean httpEnable = CfgUtils.getBoolean(httpOptions, "enable", false);
-        final String httpBindAddr = CfgUtils.getString(httpOptions, "bind_addr", "0.0.0.0");
-        final int httpBindPort = CfgUtils.getInt(httpOptions, "bind_port", 5080);
-        // https
-        final Map httpsOptions = CfgUtils.getMap(globalOptions, "https");
-        final boolean httpsEnable = CfgUtils.getBoolean(httpsOptions, "enable", false);
-        final String httpsBindAddr = CfgUtils.getString(httpsOptions, "bind_addr", "0.0.0.0");
-        final int httpsBindPort = CfgUtils.getInt(httpsOptions, "bind_port", 5443);
+
+        // ================================== httpCfg ================================== //
+        final Map httpCfg = Maps.getMap(globalCfg, "http");
+        final boolean httpEnable = Maps.getBoolean(httpCfg, "enable", false);
+        final String httpBindAddr = Maps.getString(httpCfg, "bind_addr", "0.0.0.0");
+        final int httpBindPort = Maps.getInt(httpCfg, "bind_port", 5080);
+
+        // ================================== https ================================== //
+        final Map httpsCfg = Maps.getMap(globalCfg, "https");
+        final boolean httpsEnable = Maps.getBoolean(httpsCfg, "enable", false);
+        final String httpsBindAddr = Maps.getString(httpsCfg, "bind_addr", "0.0.0.0");
+        final int httpsBindPort = Maps.getInt(httpsCfg, "bind_port", 5443);
         @Nullable SslContext httpsContext = null;
-        if (!sslOptions.isEmpty() && sslEnable) {
+        if (!httpsCfg.isEmpty() && httpsEnable) {
             httpsContext = SslContexts.forServer(
-                CfgUtils.getString(httpsOptions, "jks", ""),
-                CfgUtils.getString(httpsOptions, "storepass", ""),
-                CfgUtils.getString(httpsOptions, "keypass", "")
+                Maps.getString(httpsCfg, "jks", ""),
+                Maps.getString(httpsCfg, "storepass", ""),
+                Maps.getString(httpsCfg, "keypass", "")
             );
         }
 
-
+        // ==============================================================================
         final SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             token,
             allowPorts
@@ -120,7 +138,23 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
         builder.build().start();
     }
 
-    private void runAppAtArgs(@NotNull final RunOptions runOptions) throws Exception {
+    private void runAppByArgs(@NotNull final RunOptions runOptions) throws Exception {
+
+        Log4jInitializer.initializeThirdLibrary(Level.OFF);
+        // 设置控制台日志
+        Log4jInitializer.builder()
+            .setConsole(true)
+            .setLevel(runOptions.logLevel.level)
+            .initialize();
+        // 配置文件日志
+        Log4jInitializer.builder()
+            .setConsole(false)
+            .setLevel(runOptions.logLevel.level)
+            .setFile(runOptions.logFile)
+            .setMaxFileSize(OptionConverter.toFileSize(runOptions.logMaxFileSize, 1))
+            .setMaxBackupIndex(runOptions.logMaxBackupIndex)
+            .initialize();
+
         final SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             runOptions.token,
             runOptions.allowPorts

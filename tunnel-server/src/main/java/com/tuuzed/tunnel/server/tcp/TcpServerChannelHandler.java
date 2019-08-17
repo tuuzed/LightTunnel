@@ -1,13 +1,13 @@
 package com.tuuzed.tunnel.server.tcp;
 
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
 import com.tuuzed.tunnel.common.proto.ProtoMessage;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 

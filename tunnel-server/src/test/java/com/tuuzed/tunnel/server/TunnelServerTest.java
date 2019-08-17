@@ -1,11 +1,10 @@
 package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.interceptor.SimpleRequestInterceptor;
-import com.tuuzed.tunnel.common.logging.LogAdapter;
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
+import org.apache.log4j.Level;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,10 +21,19 @@ public class TunnelServerTest {
 
     @Before
     public void setUp() throws Exception {
-        LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
-        if (logcat != null) {
-            logcat.setLevel(Logger.ALL);
-        }
+        Log4jInitializer.initializeThirdLibrary(Level.WARN);
+        // 设置控制台日志
+        Log4jInitializer.builder()
+            .setConsole(true)
+            .setLevel(Level.ALL)
+            .initialize();
+        // 配置文件日志
+        Log4jInitializer.builder()
+            .setConsole(false)
+            .setFile("../logs/tunnel-server.log")
+            .setLevel(Level.ALL)
+            .initialize();
+
         SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             "tk123456", "1024-60000"
         );

@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public final class CfgUtils {
+public final class Maps {
 
     @NotNull
     public static String getString(@NotNull Map src, @NotNull String key, @NotNull String def) {

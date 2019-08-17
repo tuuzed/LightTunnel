@@ -1,128 +1,35 @@
 package com.tuuzed.tunnel.client;
 
-import com.tuuzed.tunnel.common.logging.LogAdapter;
-import com.tuuzed.tunnel.common.logging.Logger;
-import com.tuuzed.tunnel.common.logging.LoggerFactory;
+import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import com.tuuzed.tunnel.common.util.HttpUtils;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
+import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TunnelClientTest {
-    private static final Logger logger = LoggerFactory.getLogger(TunnelClientTest.class);
     private TunnelClient client;
-
-    @Before
-    public void setUp() {
-        LogAdapter logcat = LoggerFactory.getLogAdapter(LoggerFactory.LOGCAT);
-        if (logcat != null) {
-            logcat.setLevel(Logger.INFO);
-        }
-        client = TunnelClient.builder()
-            .setAutoReconnect(true)
-            .setWorkerThreads(4)
-            .setListener(new TunnelClientListener() {
-                @Override
-                public void onConnecting(@NotNull TunnelClientDescriptor descriptor, boolean reconnect) {
-                    logger.info("tunnel: {}, reconnect: {}", descriptor, reconnect);
-                }
-
-                @Override
-                public void onConnected(@NotNull TunnelClientDescriptor descriptor) {
-                    logger.prompt("{}", descriptor);
-                }
-
-                @Override
-                public void onDisconnect(@NotNull TunnelClientDescriptor descriptor, boolean fatal) {
-                    logger.prompt("tunnel: {}, deadly: {}", descriptor, fatal);
-                }
-            })
-            .build();
-    }
-
-    @After
-    public void shutDown() {
-        client.destroy();
-    }
+    private ProtoRequest portError;
+    private ProtoRequest portReplaced;
+    private ProtoRequest tcpHttp;
+    private ProtoRequest vnc;
+    private ProtoRequest ssh;
+    private ProtoRequest vhostHttp1;
+    private ProtoRequest vhostHttp2;
+    private ProtoRequest vhostHttps1;
+    private ProtoRequest vhostHttps2;
 
     @Test
     public void start() throws Exception {
         final String serverAddr = "127.0.0.1";
         final int serverPort = 5001;
         final SslContext sslContext = SslContexts.forClient("../resources/jks/client.jks", "ctunnelpass");
-
-
-        ProtoRequest portError = ProtoRequest.tcpBuilder(65000)
-            .setLocalAddr("192.168.1.1")
-            .setLocalPort(80)
-            .setToken("tk123456")
-            .build();
-
-        ProtoRequest portReplaced = ProtoRequest.tcpBuilder(20000) // 20080
-            .setLocalAddr("192.168.1.1")
-            .setLocalPort(80)
-            .setToken("tk123456")
-            .build();
-
-        ProtoRequest tcpHttp = ProtoRequest.tcpBuilder(10080) // 20080
-            .setLocalAddr("192.168.1.1")
-            .setLocalPort(80)
-            .setOption("token", "tk123456")
-            .build();
-
-        ProtoRequest vnc = ProtoRequest.tcpBuilder(15900) // 20080
-            .setLocalAddr("192.168.1.33")
-            .setLocalPort(5900)
-            .setToken("tk123456")
-            .build();
-
-        ProtoRequest ssh = ProtoRequest.tcpBuilder(10022) // 20080
-            .setLocalAddr("192.168.1.10")
-            .setLocalPort(22)
-            .setToken("tk123456")
-            .build();
-
-        ProtoRequest vhostHttp1 = ProtoRequest.httpBuilder("t1.tunnel.lo")
-            .setLocalAddr("192.168.1.1")
-            .setLocalPort(80)
-            .setToken("tk123456")
-            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
-            .build();
-
-        ProtoRequest vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
-            .setLocalAddr("111.230.198.37")
-            .setLocalPort(10080)
-            .setToken("tk123456")
-            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
-            .setBasicAuth(true, "OCR")
-            .setBasicAuthAccount("admin", "admin")
-            .build();
-
-
-        ProtoRequest vhostHttps1 = ProtoRequest.httpsBuilder("t1.tunnel.lo")
-            .setLocalAddr("192.168.1.1")
-            .setLocalPort(80)
-            .setToken("tk123456")
-            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
-            .build();
-
-        ProtoRequest vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
-            .setLocalAddr("111.230.198.37")
-            .setLocalPort(10080)
-            .setToken("tk123456")
-            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
-            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
-            .setBasicAuth(true, "OCR")
-            .setBasicAuthAccount("admin", "admin")
-            .build();
-
 
         client.connect(serverAddr, serverPort, portError, sslContext);
         final TunnelClientDescriptor portReplacedDescriptor =
@@ -150,4 +57,118 @@ public class TunnelClientTest {
         }).start();
         System.in.read();
     }
+
+    @Before
+    public void setUp() {
+        Log4jInitializer.initializeThirdLibrary(Level.WARN);
+        // 设置控制台日志
+        Log4jInitializer.builder()
+            .setConsole(true)
+            .setLevel(Level.ALL)
+            .initialize();
+        // 配置文件日志
+        Log4jInitializer.builder()
+            .setConsole(false)
+            .setFile("../logs/tunnel-client.log")
+            .setLevel(Level.ALL)
+            .initialize();
+
+
+        client = TunnelClient.builder()
+            .setAutoReconnect(true)
+            .setWorkerThreads(4)
+            .setListener(new TunnelClientListener() {
+                private final Logger logger = LoggerFactory.getLogger(TunnelClientListener.class);
+
+                @Override
+                public void onConnecting(@NotNull TunnelClientDescriptor descriptor, boolean reconnect) {
+                    logger.warn("tunnel: {}, reconnect: {}", descriptor, reconnect);
+                }
+
+                @Override
+                public void onConnected(@NotNull TunnelClientDescriptor descriptor) {
+                    logger.error("{}", descriptor);
+                }
+
+                @Override
+                public void onDisconnect(@NotNull TunnelClientDescriptor descriptor, boolean fatal) {
+                    logger.error("tunnel: {}, deadly: {}", descriptor, fatal);
+                }
+            })
+            .build();
+
+        portError = ProtoRequest.tcpBuilder(65000)
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setToken("tk123456")
+            .build();
+
+        portReplaced = ProtoRequest.tcpBuilder(20000) // 20080
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setToken("tk123456")
+            .build();
+
+        tcpHttp = ProtoRequest.tcpBuilder(10080) // 20080
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setOption("token", "tk123456")
+            .build();
+
+        vnc = ProtoRequest.tcpBuilder(15900) // 20080
+            .setLocalAddr("192.168.1.33")
+            .setLocalPort(5900)
+            .setToken("tk123456")
+            .build();
+
+        ssh = ProtoRequest.tcpBuilder(10022) // 20080
+            .setLocalAddr("192.168.1.10")
+            .setLocalPort(22)
+            .setToken("tk123456")
+            .build();
+
+        vhostHttp1 = ProtoRequest.httpBuilder("t1.tunnel.lo")
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setToken("tk123456")
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .build();
+
+        vhostHttp2 = ProtoRequest.httpBuilder("t2.tunnel.lo")
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setBasicAuth(true, "OCR")
+            .setBasicAuthAccount("admin", "admin")
+            .build();
+
+
+        vhostHttps1 = ProtoRequest.httpsBuilder("t1.tunnel.lo")
+            .setLocalAddr("192.168.1.1")
+            .setLocalPort(80)
+            .setToken("tk123456")
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .build();
+
+        vhostHttps2 = ProtoRequest.httpsBuilder("t2.tunnel.lo")
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
+            .setRewriteHeaders(HttpUtils.headersOf("X-Real-IP", "$remote_addr"))
+            .setWriteHeaders(HttpUtils.headersOf("X-User-Agent", "Tunnel"))
+            .setBasicAuth(true, "OCR")
+            .setBasicAuthAccount("admin", "admin")
+            .build();
+    }
+
+    @After
+    public void shutDown() {
+        client.destroy();
+    }
+
+
 }

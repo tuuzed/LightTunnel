@@ -13,11 +13,18 @@
 # Output a source map file
 -printmapping build/libs/proguard.map
 
-# Netty
-#-keep class io.netty.** { *;}
-#-dontwarn io.netty.**
+### Netty
 -keepclasseswithmembers class io.netty.** { *; }
 -dontwarn io.netty.**
+#-keep class io.netty.** { *;}
+#-dontwarn io.netty.**
+
+### slf4j & log4j
+-keepclasseswithmembers class org.slf4j.** { *; }
+-dontwarn org.slf4j.**
+-keepclasseswithmembers class org.apache.log4j.** { *; }
+-dontwarn org.apache.log4j.**
+
 
 -keepclassmembernames class * {
     java.lang.Class class$(java.lang.String);

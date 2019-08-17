@@ -7,6 +7,14 @@ token: tk123456
 # 线程数量
 worker_threads: -1
 
+log:
+  # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
+  level: INFO
+  file: ./logs/tunnel-client.log
+  # KB, MB, GB
+  max_file_size: 1MB
+  max_backup_index: 3
+
 # ssl
 ssl:
   server_port: 5001

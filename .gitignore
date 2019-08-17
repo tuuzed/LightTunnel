@@ -3,6 +3,7 @@
 /.repo/
 /distribution/
 /dists/
+/logs/
 
 HELP.md
 .gradle
