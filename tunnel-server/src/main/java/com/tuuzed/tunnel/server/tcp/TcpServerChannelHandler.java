@@ -16,17 +16,17 @@ public class TcpServerChannelHandler extends SimpleChannelInboundHandler<ByteBuf
     private static final Logger logger = LoggerFactory.getLogger(TcpServerChannelHandler.class);
 
     @NotNull
-    private final TcpServer tcpServer;
+    private final TcpTunnelRegistry tcpTunnelRegistry;
 
-    public TcpServerChannelHandler(@NotNull TcpServer tcpServer) {
-        this.tcpServer = tcpServer;
+    public TcpServerChannelHandler(@NotNull TcpTunnelRegistry registry) {
+        this.tcpTunnelRegistry = registry;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         final InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
         final int port = sa.getPort();
-        final TcpTunnelDescriptor descriptor = tcpServer.getDescriptorByPort(port);
+        final TcpTunnelDescriptor descriptor = tcpTunnelRegistry.getDescriptorByPort(port);
         if (descriptor != null) {
             final Channel tunnelChannel = descriptor.tunnelSessions().tunnelChannel();
             final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
@@ -51,7 +51,7 @@ public class TcpServerChannelHandler extends SimpleChannelInboundHandler<ByteBuf
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
         int port = sa.getPort();
-        TcpTunnelDescriptor descriptor = tcpServer.getDescriptorByPort(port);
+        TcpTunnelDescriptor descriptor = tcpTunnelRegistry.getDescriptorByPort(port);
         if (descriptor != null) {
             final Channel tunnelChannel = descriptor.tunnelSessions().tunnelChannel();
             final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
@@ -91,7 +91,7 @@ public class TcpServerChannelHandler extends SimpleChannelInboundHandler<ByteBuf
         logger.trace("channelRead0: {}", ctx);
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
         int port = sa.getPort();
-        TcpTunnelDescriptor descriptor = tcpServer.getDescriptorByPort(port);
+        TcpTunnelDescriptor descriptor = tcpTunnelRegistry.getDescriptorByPort(port);
         if (descriptor != null) {
             final byte[] data = new byte[msg.readableBytes()];
             msg.readBytes(data);

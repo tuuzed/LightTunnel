@@ -4,14 +4,10 @@ import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,18 +29,7 @@ public class HttpServer {
             .channel(NioServerSocketChannel.class)
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childHandler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    if (sslContext != null) { // 启用SSL
-                        ch.pipeline().addFirst(new SslHandler(sslContext.newEngine(ch.alloc())));
-                    }
-                    ch.pipeline()
-                        .addLast(new HttpRequestDecoder())
-                        .addLast(new HttpServerChannelHandler(HttpServer.this, interceptor))
-                    ;
-                }
-            });
+            .childHandler(new HttpServerChannelInitializer(sslContext, registry, interceptor));
     }
 
     @NotNull
@@ -62,21 +47,7 @@ public class HttpServer {
 
     @Nullable
     public Channel getSessionChannel(long tunnelToken, long sessionToken) {
-        HttpTunnelDescriptor descriptor = getDescriptorByTunnelToken(tunnelToken);
-        if (descriptor == null) {
-            return null;
-        }
-        return descriptor.tunnelSessions().getSessionChannel(sessionToken);
-    }
-
-    @Nullable
-    public HttpTunnelDescriptor getDescriptorByTunnelToken(long tunnelToken) {
-        return registry.getDescriptorByTunnelToken(tunnelToken);
-    }
-
-    @Nullable
-    public HttpTunnelDescriptor getDescriptorByVhost(@NotNull String vhost) {
-        return registry.getDescriptorByVhost(vhost);
+        return registry.getSessionChannel(tunnelToken, sessionToken);
     }
 
     public boolean isRegistered(@NotNull String vhost) {
@@ -86,7 +57,6 @@ public class HttpServer {
     public void register(@NotNull String vhost, @NotNull ServerTunnelSessions tunnelSessions) throws Exception {
         registry.register(vhost, tunnelSessions);
     }
-
 
     public void unregister(@Nullable String vhost) {
         registry.unregister(vhost);

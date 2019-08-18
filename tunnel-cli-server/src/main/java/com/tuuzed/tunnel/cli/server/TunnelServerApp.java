@@ -33,6 +33,7 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
         } else {
             runAppByArgs(runOptions);
         }
+        Thread.currentThread().join();
     }
 
     private void runAppByCfg(@NotNull final String cfgFile) throws Exception {

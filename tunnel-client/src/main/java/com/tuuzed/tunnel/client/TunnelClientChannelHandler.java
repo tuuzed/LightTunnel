@@ -94,7 +94,7 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<ProtoMessag
             ctx.channel().attr(AttributeKeys.PROTO_REQUEST).set(protoRequest);
             ctx.channel().attr(AttributeKeys.FATAL_FLAG).set(null);
             ctx.channel().attr(AttributeKeys.FATAL_CAUSE).set(null);
-            logger.info("Opened Tunnel: {}", protoRequest);
+            logger.debug("Opened Tunnel: {}", protoRequest);
             channelListener.tunnelConnected(ctx);
         } else {
             // 开启隧道失败
@@ -104,7 +104,7 @@ class TunnelClientChannelHandler extends SimpleChannelInboundHandler<ProtoMessag
             ctx.channel().attr(AttributeKeys.FATAL_FLAG).set(true);
             ctx.channel().attr(AttributeKeys.FATAL_CAUSE).set(new Exception(fatalMessage));
             ctx.channel().close();
-            logger.warn("Open Tunnel Error: {}", fatalMessage);
+            logger.debug("Open Tunnel Error: {}", fatalMessage);
         }
         head.release();
     }

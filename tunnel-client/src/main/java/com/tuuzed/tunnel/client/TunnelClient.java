@@ -2,19 +2,14 @@ package com.tuuzed.tunnel.client;
 
 import com.tuuzed.tunnel.client.internal.AttributeKeys;
 import com.tuuzed.tunnel.client.local.LocalConnect;
-import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
-import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
-import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import com.tuuzed.tunnel.common.util.Function1;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -26,14 +21,12 @@ import java.util.concurrent.TimeUnit;
 
 public class TunnelClient {
     private static final Logger logger = LoggerFactory.getLogger(TunnelClient.class);
-
-
+    @NotNull
+    private final Map<SslContext, Bootstrap> cachedSslBootstraps = new ConcurrentHashMap<>();
     @NotNull
     private final NioEventLoopGroup workerGroup;
     @NotNull
     private final Bootstrap bootstrap;
-    @NotNull
-    private final Map<SslContext, Bootstrap> sslBootstraps = new ConcurrentHashMap<>();
     @NotNull
     private final TunnelClientChannelHandler.ChannelListener channelListener;
     @NotNull
@@ -54,7 +47,7 @@ public class TunnelClient {
         }
     };
 
-    TunnelClient(@NotNull final TunnelClientBuilder builder) {
+    private TunnelClient(@NotNull final Builder builder) {
         this.workerGroup = (builder.workerThreads > 0)
             ? new NioEventLoopGroup(builder.workerThreads)
             : new NioEventLoopGroup();
@@ -101,27 +94,18 @@ public class TunnelClient {
             }
         };
 
-        bootstrap.group(workerGroup)
+        bootstrap
+            .group(workerGroup)
             .channel(NioSocketChannel.class)
-            .handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline()
-                        .addLast(new ProtoMessageDecoder())
-                        .addLast(new ProtoMessageEncoder())
-                        .addLast(new ProtoHeartbeatHandler())
-                        .addLast(new TunnelClientChannelHandler(
-                            localConnect, channelListener
-                        ))
-                    ;
-                }
-            });
+            .option(ChannelOption.AUTO_READ, true)
+            .option(ChannelOption.SO_KEEPALIVE, true)
+            .handler(new TunnelClientChannelInitializer(null, localConnect, channelListener));
     }
 
 
     @NotNull
-    public static TunnelClientBuilder builder() {
-        return new TunnelClientBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
     @NotNull
@@ -141,32 +125,6 @@ public class TunnelClient {
         return descriptor;
     }
 
-    @NotNull
-    private Bootstrap getSslBootstrap(@NotNull final SslContext sslContext) {
-        Bootstrap sslBootstrap = sslBootstraps.get(sslContext);
-        if (sslBootstrap == null) {
-            sslBootstrap = new Bootstrap();
-            sslBootstrap.group(workerGroup)
-                .channel(NioSocketChannel.class)
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline()
-                            .addLast(new SslHandler(sslContext.newEngine(ch.alloc())))
-                            .addLast(new ProtoMessageDecoder())
-                            .addLast(new ProtoMessageEncoder())
-                            .addLast(new ProtoHeartbeatHandler())
-                            .addLast(new TunnelClientChannelHandler(
-                                localConnect, channelListener
-                            ))
-                        ;
-                    }
-                });
-            sslBootstraps.put(sslContext, sslBootstrap);
-        }
-        return sslBootstrap;
-    }
-
     public void shutdown(@NotNull final TunnelClientDescriptor descriptor) {
         descriptor.shutdown();
     }
@@ -174,8 +132,56 @@ public class TunnelClient {
     public void destroy() {
         workerGroup.shutdownGracefully();
         localConnect.destroy();
-        sslBootstraps.clear();
+        cachedSslBootstraps.clear();
+    }
+
+    @NotNull
+    private Bootstrap getSslBootstrap(@NotNull final SslContext sslContext) {
+        Bootstrap cachedSslBootstrap = cachedSslBootstraps.get(sslContext);
+        if (cachedSslBootstrap == null) {
+            cachedSslBootstrap = new Bootstrap();
+            cachedSslBootstrap
+                .group(workerGroup)
+                .channel(NioSocketChannel.class)
+                .option(ChannelOption.AUTO_READ, true)
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .handler(new TunnelClientChannelInitializer(sslContext, localConnect, channelListener));
+            cachedSslBootstraps.put(sslContext, cachedSslBootstrap);
+        }
+        return cachedSslBootstrap;
     }
 
 
+    public static class Builder {
+        @Nullable
+        private TunnelClientListener listener;
+        private boolean autoReconnect = true;
+        private int workerThreads = -1;
+
+        private Builder() {
+        }
+
+        @NotNull
+        public Builder setWorkerThreads(int workerThreads) {
+            this.workerThreads = workerThreads;
+            return this;
+        }
+
+        @NotNull
+        public Builder setListener(@Nullable TunnelClientListener listener) {
+            this.listener = listener;
+            return this;
+        }
+
+        @NotNull
+        public Builder setAutoReconnect(boolean autoReconnect) {
+            this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        @NotNull
+        public TunnelClient build() {
+            return new TunnelClient(this);
+        }
+    }
 }

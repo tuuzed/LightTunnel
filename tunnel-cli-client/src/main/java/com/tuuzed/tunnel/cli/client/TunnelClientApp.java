@@ -36,7 +36,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
         } else {
             runAppAtArgs(runOptions);
         }
-        System.in.read();
+        Thread.currentThread().join();
     }
 
     private void runAppAtCfg(@NotNull String cfgFile) throws Exception {

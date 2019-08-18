@@ -2,23 +2,17 @@ package com.tuuzed.tunnel.server;
 
 import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
 import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
-import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
-import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
-import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
 import com.tuuzed.tunnel.server.http.HttpServer;
 import com.tuuzed.tunnel.server.http.HttpTunnelRegistry;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
 import com.tuuzed.tunnel.server.tcp.TcpServer;
-import com.tuuzed.tunnel.server.tcp.TcpTunnelStats;
 import com.tuuzed.tunnel.server.tcp.TcpTunnelRegistry;
+import com.tuuzed.tunnel.server.tcp.TcpTunnelStats;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -34,7 +28,11 @@ public class TunnelServer {
 
     @NotNull
     private final ProtoRequestInterceptor protoRequestInterceptor;
-    //
+    @NotNull
+    private final HttpRequestInterceptor httpRequestInterceptor;
+    @NotNull
+    private final HttpRequestInterceptor httpsRequestInterceptor;
+
     @Nullable
     private final String bindAddr;
     private final int bindPort;
@@ -50,8 +48,6 @@ public class TunnelServer {
     private final boolean httpEnable;
     private final String httpBindAddr;
     private final int httpBindPort;
-    @NotNull
-    private final HttpRequestInterceptor httpRequestInterceptor;
 
     // https
     private final boolean httpsEnable;
@@ -60,8 +56,6 @@ public class TunnelServer {
     @Nullable
     private final String httpsBindAddr;
     private final int httpsBindPort;
-    @NotNull
-    private final HttpRequestInterceptor httpsRequestInterceptor;
 
     @NotNull
     private final TcpServer tcpServer;
@@ -79,6 +73,8 @@ public class TunnelServer {
         this.workerGroup = (builder.workerThreads > 0)
             ? new NioEventLoopGroup(builder.workerThreads)
             : new NioEventLoopGroup();
+
+        this.tunnelTokenProducer = new TokenProducer();
 
         this.protoRequestInterceptor = builder.protoRequestInterceptor;
         // auth
@@ -109,7 +105,7 @@ public class TunnelServer {
         if (httpsEnable) {
             this.httpsServer = new HttpServer(bossGroup, workerGroup, httpsContext, httpsRequestInterceptor);
         }
-        this.tunnelTokenProducer = new TokenProducer();
+
     }
 
     @NotNull
@@ -148,8 +144,25 @@ public class TunnelServer {
         if (sslEnable) {
             serveWithSsl();
         }
-        httpServe();
-        httpsServe();
+        if (httpEnable) {
+            httpServe();
+        }
+        if (httpsEnable) {
+            httpsServe();
+        }
+    }
+
+
+    public void destroy() {
+        tcpServer.destroy();
+        if (httpServer != null) {
+            httpServer.destroy();
+        }
+        if (httpsServer != null) {
+            httpsServer.destroy();
+        }
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
 
     private void httpServe() throws Exception {
@@ -182,19 +195,9 @@ public class TunnelServer {
             .channel(NioServerSocketChannel.class)
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childHandler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline()
-                        .addLast(new ProtoMessageDecoder())
-                        .addLast(new ProtoMessageEncoder())
-                        .addLast(new ProtoHeartbeatHandler())
-                        .addLast(new TunnelServerChannelHandler(
-                            tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
-                        ))
-                    ;
-                }
-            });
+            .childHandler(new TunnelServerChannelInitializer(
+                null, tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
+            ));
         if (bindAddr == null) {
             serverBootstrap.bind(bindPort).get();
             logger.info("Serving Tunnel on any address port {}", bindPort);
@@ -211,20 +214,11 @@ public class TunnelServer {
         final ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
-            .childHandler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline()
-                        .addLast(new SslHandler(sslContext.newEngine(ch.alloc())))
-                        .addLast(new ProtoMessageDecoder())
-                        .addLast(new ProtoMessageEncoder())
-                        .addLast(new ProtoHeartbeatHandler())
-                        .addLast(new TunnelServerChannelHandler(
-                            tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
-                        ))
-                    ;
-                }
-            });
+            .childOption(ChannelOption.AUTO_READ, true)
+            .childOption(ChannelOption.SO_KEEPALIVE, true)
+            .childHandler(new TunnelServerChannelInitializer(
+                sslContext, tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
+            ));
         if (sslBindAddr == null) {
             serverBootstrap.bind(sslBindPort).get();
             logger.info("Serving SSL Tunnel on any address port {}", sslBindPort);
@@ -232,18 +226,6 @@ public class TunnelServer {
             serverBootstrap.bind(sslBindAddr, sslBindPort).get();
             logger.info("Serving SSL Tunnel on {} port {}", sslBindAddr, sslBindPort);
         }
-    }
-
-    public void destroy() {
-        tcpServer.destroy();
-        if (httpServer != null) {
-            httpServer.destroy();
-        }
-        if (httpsServer != null) {
-            httpsServer.destroy();
-        }
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
     }
 
     public static class Builder {

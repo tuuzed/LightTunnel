@@ -2,6 +2,7 @@ package com.tuuzed.tunnel.server.http;
 
 import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
+import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -46,6 +47,15 @@ public final class HttpTunnelRegistry {
             descriptor.close();
             logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions().protoRequest());
         }
+    }
+
+    @Nullable
+    /* package */ synchronized Channel getSessionChannel(long tunnelToken, long sessionToken) {
+        HttpTunnelDescriptor descriptor = tunnelTokenDescriptors.get(tunnelToken);
+        if (descriptor == null) {
+            return null;
+        }
+        return descriptor.tunnelSessions().getSessionChannel(sessionToken);
     }
 
     @Nullable

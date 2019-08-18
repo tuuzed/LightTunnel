@@ -3,8 +3,6 @@ package com.tuuzed.tunnel.common.proto;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 public class ProtoMessage {
     @NotNull
     private static final byte[] EMPTY_BYTES = new byte[0];

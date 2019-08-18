@@ -16,23 +16,13 @@ public class TunnelServerTest {
     @Test
     public void start() throws Exception {
         tunnelServer.start();
-        System.in.read();
+        Thread.currentThread().join();
     }
 
     @Before
     public void setUp() throws Exception {
         Log4jInitializer.initializeThirdLibrary(Level.WARN);
-        // 设置控制台日志
-        Log4jInitializer.builder()
-            .setConsole(true)
-            .setLevel(Level.ALL)
-            .initialize();
-        // 配置文件日志
-        Log4jInitializer.builder()
-            .setConsole(false)
-            .setFile("../logs/tunnel-server.log")
-            .setLevel(Level.ALL)
-            .initialize();
+        Log4jInitializer.builder().initialize();
 
         SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             "tk123456", "1024-60000"
@@ -57,13 +47,13 @@ public class TunnelServerTest {
 
             .setHttpEnable(true)
             .setHttpBindAddr(null)
-            .setHttpBindPort(5080)
+            .setHttpBindPort(80)
             .setHttpRequestInterceptor(simpleRequestInterceptor)
 
             .setHttpsEnable(true)
             .setHttpsContext(sslContext)
             .setHttpsBindAddr(null)
-            .setHttpsBindPort(5443)
+            .setHttpsBindPort(443)
             .setHttpsRequestInterceptor(simpleRequestInterceptor)
 
             .build();

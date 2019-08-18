@@ -5,9 +5,8 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,16 +27,12 @@ public class LocalConnect {
 
     public LocalConnect(@NotNull NioEventLoopGroup workerGroup) {
         bootstrap = new Bootstrap();
-        bootstrap.group(workerGroup)
+        bootstrap
+            .group(workerGroup)
             .channel(NioSocketChannel.class)
-            .handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline()
-                        .addLast(new LocalConnectChannelHandler(LocalConnect.this))
-                    ;
-                }
-            });
+            .option(ChannelOption.AUTO_READ, true)
+            .option(ChannelOption.SO_KEEPALIVE, true)
+            .handler(new LocalConnectChannelInitializer(this));
     }
 
     @Nullable

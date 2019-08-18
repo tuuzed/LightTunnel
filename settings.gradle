@@ -3,6 +3,7 @@ rootProject.name = 'tunnel-parent'
 include 'tunnel-common'
 include 'tunnel-client'
 include 'tunnel-server'
+include 'tunnel-server-web'
 
 include 'tunnel-cli-common'
 include 'tunnel-cli-client'

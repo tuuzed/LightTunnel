@@ -25,15 +25,15 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(HttpServerChannelHandler.class);
 
     @NotNull
-    private final HttpServer httpServer;
+    private final HttpTunnelRegistry httpTunnelRegistry;
     @NotNull
     private final HttpRequestInterceptor httpRequestInterceptor;
 
     public HttpServerChannelHandler(
-        @NotNull HttpServer httpServer,
+        @NotNull HttpTunnelRegistry registry,
         @NotNull HttpRequestInterceptor interceptor
     ) {
-        this.httpServer = httpServer;
+        this.httpTunnelRegistry = registry;
         this.httpRequestInterceptor = interceptor;
     }
 
@@ -49,7 +49,7 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
         final String vhost = ctx.channel().attr(AttributeKeys.VHOST).get();
         final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
         if (vhost != null && sessionToken != null) {
-            final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
+            final HttpTunnelDescriptor descriptor = httpTunnelRegistry.getDescriptorByVhost(vhost);
             if (descriptor != null) {
                 final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
                 final Channel tunnelChannel = descriptor.tunnelSessions().tunnelChannel();
@@ -93,7 +93,7 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         ctx.channel().attr(AttributeKeys.VHOST).set(vhost);
-        final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
+        final HttpTunnelDescriptor descriptor = httpTunnelRegistry.getDescriptorByVhost(vhost);
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             ctx.channel().attr(AttributeKeys.PASS).set(false);
@@ -140,7 +140,7 @@ public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
             return;
         }
 
-        final HttpTunnelDescriptor descriptor = httpServer.getDescriptorByVhost(vhost);
+        final HttpTunnelDescriptor descriptor = httpTunnelRegistry.getDescriptorByVhost(vhost);
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
             return;

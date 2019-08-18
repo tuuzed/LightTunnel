@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 public class TunnelClientTest {
     private TunnelClient client;
     private ProtoRequest portError;
-    private ProtoRequest portReplaced;
     private ProtoRequest tcpHttp;
     private ProtoRequest vnc;
     private ProtoRequest ssh;
@@ -24,6 +23,8 @@ public class TunnelClientTest {
     private ProtoRequest vhostHttp2;
     private ProtoRequest vhostHttps1;
     private ProtoRequest vhostHttps2;
+    private ProtoRequest portReplaced;
+
 
     @Test
     public void start() throws Exception {
@@ -32,8 +33,6 @@ public class TunnelClientTest {
         final SslContext sslContext = SslContexts.forClient("../resources/jks/client.jks", "ctunnelpass");
 
         client.connect(serverAddr, serverPort, portError, sslContext);
-        final TunnelClientDescriptor portReplacedDescriptor =
-            client.connect(serverAddr, serverPort, portReplaced, sslContext);
 
         client.connect(serverAddr, serverPort, tcpHttp, sslContext);
         client.connect(serverAddr, serverPort, vnc, sslContext);
@@ -44,6 +43,8 @@ public class TunnelClientTest {
         // vhostHttps
         client.connect(serverAddr, serverPort, vhostHttps1, sslContext);
         client.connect(serverAddr, serverPort, vhostHttps2, sslContext);
+
+        final TunnelClientDescriptor portReplacedDescriptor = client.connect(serverAddr, serverPort, portReplaced, sslContext);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -55,24 +56,13 @@ public class TunnelClientTest {
                 portReplacedDescriptor.shutdown();
             }
         }).start();
-        System.in.read();
+        Thread.currentThread().join();
     }
 
     @Before
     public void setUp() {
         Log4jInitializer.initializeThirdLibrary(Level.WARN);
-        // 设置控制台日志
-        Log4jInitializer.builder()
-            .setConsole(true)
-            .setLevel(Level.ALL)
-            .initialize();
-        // 配置文件日志
-        Log4jInitializer.builder()
-            .setConsole(false)
-            .setFile("../logs/tunnel-client.log")
-            .setLevel(Level.ALL)
-            .initialize();
-
+        Log4jInitializer.builder().initialize();
 
         client = TunnelClient.builder()
             .setAutoReconnect(true)

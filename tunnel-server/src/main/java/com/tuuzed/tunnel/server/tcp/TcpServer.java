@@ -3,10 +3,8 @@ package com.tuuzed.tunnel.server.tcp;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,15 +28,7 @@ public class TcpServer {
             .channel(NioServerSocketChannel.class)
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childHandler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline()
-                        .addFirst(new TcpTunnelStatsHandler(stats))
-                        .addLast(new TcpServerChannelHandler(TcpServer.this))
-                    ;
-                }
-            });
+            .childHandler(new TcpServerChannelInitializer(registry, stats));
     }
 
     @NotNull
@@ -64,11 +54,6 @@ public class TcpServer {
     @Nullable
     public Channel getSessionChannel(long tunnelToken, long sessionToken) {
         return registry.getSessionChannel(tunnelToken, sessionToken);
-    }
-
-    @Nullable
-    TcpTunnelDescriptor getDescriptorByPort(int port) {
-        return registry.getDescriptorByPort(port);
     }
 
     public void destroy() {
