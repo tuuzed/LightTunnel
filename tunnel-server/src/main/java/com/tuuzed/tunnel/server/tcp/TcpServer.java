@@ -10,30 +10,21 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class TcpServer {
-    private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
-
     @NotNull
-    private final Map<Long, TcpTunnelDescriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
+    private final TcpTunnelRegistry registry;
     @NotNull
-    private final Map<Integer, TcpTunnelDescriptor> portDescriptors = new ConcurrentHashMap<>();
-    @NotNull
-    private final Object descriptorsLock = new Object();
+    private final TcpTunnelStats stats;
     @NotNull
     private final ServerBootstrap serverBootstrap;
 
-
     public TcpServer(
         @NotNull final NioEventLoopGroup bossGroup,
-        @NotNull final NioEventLoopGroup workerGroup,
-        @NotNull final TcpStats stats
+        @NotNull final NioEventLoopGroup workerGroup
     ) {
+        this.registry = new TcpTunnelRegistry();
+        this.stats = new TcpTunnelStats();
         this.serverBootstrap = new ServerBootstrap();
         this.serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
@@ -43,64 +34,45 @@ public class TcpServer {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline()
-                        .addFirst(new TcpStatsHandler(stats))
+                        .addFirst(new TcpTunnelStatsHandler(stats))
                         .addLast(new TcpServerChannelHandler(TcpServer.this))
                     ;
                 }
             });
     }
 
-
-    public void startTunnel(
-        @Nullable String addr, int port,
-        @NotNull ServerTunnelSessions tunnelSessions
-    ) throws Exception {
-        final TcpTunnelDescriptor descriptor = new TcpTunnelDescriptor(addr, port, tunnelSessions);
-        descriptor.open(serverBootstrap);
-        synchronized (descriptorsLock) {
-            tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
-            portDescriptors.put(port, descriptor);
-        }
-        logger.info("Start Tunnel: {}", tunnelSessions.protoRequest());
+    @NotNull
+    public TcpTunnelRegistry registry() {
+        return registry;
     }
 
+    @NotNull
+    public TcpTunnelStats stats() {
+        return stats;
+    }
+
+    public void startTunnel(@Nullable String addr, int port, @NotNull ServerTunnelSessions tunnelSessions) throws Exception {
+        final TcpTunnelDescriptor descriptor = new TcpTunnelDescriptor(addr, port, tunnelSessions);
+        descriptor.open(serverBootstrap);
+        registry.register(port, tunnelSessions, descriptor);
+    }
 
     public void shutdownTunnel(long tunnelToken) {
-        synchronized (descriptorsLock) {
-            final TcpTunnelDescriptor descriptor = tunnelTokenDescriptors.remove(tunnelToken);
-            if (descriptor != null) {
-                portDescriptors.remove(descriptor.port());
-                descriptor.close();
-                logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions().protoRequest());
-            }
-        }
+        registry.unregister(tunnelToken);
     }
 
     @Nullable
     public Channel getSessionChannel(long tunnelToken, long sessionToken) {
-        TcpTunnelDescriptor descriptor;
-        synchronized (descriptorsLock) {
-            descriptor = tunnelTokenDescriptors.get(tunnelToken);
-        }
-        if (descriptor == null) {
-            return null;
-        }
-        return descriptor.tunnelSessions().getSessionChannel(sessionToken);
+        return registry.getSessionChannel(tunnelToken, sessionToken);
     }
-
 
     @Nullable
     TcpTunnelDescriptor getDescriptorByPort(int port) {
-        synchronized (descriptorsLock) {
-            return portDescriptors.get(port);
-        }
+        return registry.getDescriptorByPort(port);
     }
 
     public void destroy() {
-        synchronized (descriptorsLock) {
-            tunnelTokenDescriptors.clear();
-            portDescriptors.clear();
-        }
+        registry.destroy();
     }
 
 

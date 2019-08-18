@@ -11,19 +11,19 @@ import java.net.InetSocketAddress;
 /**
  * 数据统计
  */
-public class TcpStatsHandler extends ChannelDuplexHandler {
+public class TcpTunnelStatsHandler extends ChannelDuplexHandler {
 
     @NotNull
-    private final TcpStats stats;
+    private final TcpTunnelStats stats;
 
-    public TcpStatsHandler(@NotNull TcpStats stats) {
+    public TcpTunnelStatsHandler(@NotNull TcpTunnelStats stats) {
         this.stats = stats;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        TcpStats.Item item = stats.getItem(sa.getPort());
+        TcpTunnelStats.Item item = stats.getItem(sa.getPort());
         item.incrementReadBytes(((ByteBuf) msg).readableBytes());
         item.incrementReadMsgs(1);
         ctx.fireChannelRead(msg);
@@ -32,7 +32,7 @@ public class TcpStatsHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        TcpStats.Item item = stats.getItem(sa.getPort());
+        TcpTunnelStats.Item item = stats.getItem(sa.getPort());
         item.incrementWriteBytes(((ByteBuf) msg).readableBytes());
         item.incrementWriteMsgs(1);
         super.write(ctx, msg, promise);
@@ -41,7 +41,7 @@ public class TcpStatsHandler extends ChannelDuplexHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        TcpStats.Item item = stats.getItem(sa.getPort());
+        TcpTunnelStats.Item item = stats.getItem(sa.getPort());
         item.incrementChannels();
         super.channelActive(ctx);
     }
@@ -49,7 +49,7 @@ public class TcpStatsHandler extends ChannelDuplexHandler {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        TcpStats.Item item = stats.getItem(sa.getPort());
+        TcpTunnelStats.Item item = stats.getItem(sa.getPort());
         item.decrementChannels();
         super.channelInactive(ctx);
     }

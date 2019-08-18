@@ -7,13 +7,11 @@ import com.tuuzed.tunnel.common.interceptor.SimpleRequestInterceptor;
 import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.server.TunnelServer;
-import com.tuuzed.tunnel.server.TunnelServerBuilder;
 import io.netty.handler.ssl.SslContext;
 import org.apache.log4j.Level;
 import org.apache.log4j.helpers.OptionConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
@@ -29,15 +27,11 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
     }
 
     @Override
-    public void runApp(@NotNull RunOptions runOptions) {
-        try {
-            if (runOptions.configFile.length() != 0) {
-                runAppByCfg(runOptions.configFile);
-            } else {
-                runAppByArgs(runOptions);
-            }
-        } catch (Exception e) {
-            LoggerFactory.getLogger(TunnelServerApp.class).error("runApp Error", e);
+    public void runApp(@NotNull RunOptions runOptions) throws Exception {
+        if (runOptions.configFile.length() != 0) {
+            runAppByCfg(runOptions.configFile);
+        } else {
+            runAppByArgs(runOptions);
         }
     }
 
@@ -109,7 +103,7 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
             allowPorts
         );
 
-        final TunnelServerBuilder builder = TunnelServer.builder()
+        final TunnelServer.Builder builder = TunnelServer.builder()
             .setBossThreads(bossThreads)
             .setWorkerThreads(workerThreads)
             //
@@ -122,7 +116,6 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
             .setSslContext(sslContext)
             .setSslBindAddr(sslBindAddr.length() == 0 ? null : sslBindAddr)
             .setSslBindPort(sslBindPort)
-            //
             // http
             .setHttpEnable(httpEnable)
             .setHttpBindAddr(httpBindAddr.length() == 0 ? null : httpBindAddr)
@@ -178,7 +171,7 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
             );
         }
 
-        final TunnelServerBuilder builder = TunnelServer.builder()
+        final TunnelServer.Builder builder = TunnelServer.builder()
             .setBossThreads(runOptions.bossThreads)
             .setWorkerThreads(runOptions.workerThreads)
             //
@@ -206,6 +199,5 @@ public final class TunnelServerApp extends AbstractApp<RunOptions> {
 
         builder.build().start();
     }
-
 
 }

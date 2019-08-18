@@ -6,7 +6,7 @@ public abstract class AbstractApp<Options> {
     @NotNull
     public abstract Options newRunOptions();
 
-    public abstract void runApp(@NotNull Options runOptions);
+    public abstract void runApp(@NotNull Options runOptions) throws Exception;
 
     public final void doMain(String[] args) {
         Options runOptions = newRunOptions();
@@ -19,7 +19,8 @@ public abstract class AbstractApp<Options> {
                 runApp(runOptions);
             }
         } catch (Exception e) {
-            System.err.println("Usage: ");
+            e.printStackTrace();
+            System.err.println("\n\n\n\nUsage: ");
             try {
                 CmdLineParser.printHelp(runOptions, System.err);
             } catch (Exception e1) {

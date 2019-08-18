@@ -14,7 +14,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.helpers.OptionConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
@@ -31,17 +30,13 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
     }
 
     @Override
-    public void runApp(@NotNull RunOptions runOptions) {
-        try {
-            if (runOptions.configFile.length() != 0) {
-                runAppAtCfg(runOptions.configFile);
-            } else {
-                runAppAtArgs(runOptions);
-            }
-            System.in.read();
-        } catch (Exception e) {
-            LoggerFactory.getLogger(TunnelClientApp.class).error("runApp Error", e);
+    public void runApp(@NotNull RunOptions runOptions) throws Exception {
+        if (runOptions.configFile.length() != 0) {
+            runAppAtCfg(runOptions.configFile);
+        } else {
+            runAppAtArgs(runOptions);
         }
+        System.in.read();
     }
 
     private void runAppAtCfg(@NotNull String cfgFile) throws Exception {
@@ -70,16 +65,17 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
         final String token = Maps.getString(globalCfg, "token", "");
         final int workerThreads = Maps.getInt(globalCfg, "worker_threads", -1);
 
-        // ================================== ssl ================================== //
+        // ================================== sslCfg ================================== //
         @Nullable SslContext sslContext = null;
         int sslServerPort = serverPort;
-        final Map sslOptions = Maps.getMap(globalCfg, "ssl");
-        if (!sslOptions.isEmpty()) {
+        final Map sslCfg = Maps.getMap(globalCfg, "ssl");
+
+        if (!sslCfg.isEmpty()) {
             sslContext = SslContexts.forClient(
-                Maps.getString(sslOptions, "jks", ""),
-                Maps.getString(sslOptions, "storepass", "")
+                Maps.getString(sslCfg, "jks", ""),
+                Maps.getString(sslCfg, "storepass", "")
             );
-            sslServerPort = Maps.getInt(sslOptions, "server_port", 5001);
+            sslServerPort = Maps.getInt(sslCfg, "server_port", 5001);
         }
 
         final TunnelClient tunnelClient = TunnelClient.builder()

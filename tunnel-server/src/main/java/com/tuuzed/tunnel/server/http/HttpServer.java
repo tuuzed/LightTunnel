@@ -1,7 +1,6 @@
 package com.tuuzed.tunnel.server.http;
 
 import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
-import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -15,29 +14,20 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class HttpServer {
-    private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
+    @NotNull
+    private final HttpTunnelRegistry registry;
     @NotNull
     private final ServerBootstrap serverBootstrap;
-    @NotNull
-    private final Map<Long, HttpTunnelDescriptor> tunnelTokenDescriptors = new ConcurrentHashMap<>();
-    @NotNull
-    private final Map<String, HttpTunnelDescriptor> vhostDescriptors = new ConcurrentHashMap<>();
-    @NotNull
-    private final Object descriptorsLock = new Object();
 
     public HttpServer(
         @NotNull final NioEventLoopGroup bossGroup,
         @NotNull final NioEventLoopGroup workerGroup,
-        @NotNull final HttpRequestInterceptor interceptor,
-        @Nullable final SslContext sslContext
+        @Nullable final SslContext sslContext,
+        @NotNull final HttpRequestInterceptor interceptor
     ) {
+        this.registry = new HttpTunnelRegistry();
         this.serverBootstrap = new ServerBootstrap();
         this.serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
@@ -57,40 +47,16 @@ public class HttpServer {
             });
     }
 
-
-    public boolean isRegistered(@NotNull String vhost) {
-        synchronized (descriptorsLock) {
-            return vhostDescriptors.containsKey(vhost);
-        }
+    @NotNull
+    public HttpTunnelRegistry registry() {
+        return registry;
     }
 
-    public void register(@NotNull String vhost, @NotNull ServerTunnelSessions tunnelSessions) throws Exception {
-        if (isRegistered(vhost)) {
-            throw new ProtoException("vhost(" + vhost + ") already used");
-        }
-        final HttpTunnelDescriptor descriptor = new HttpTunnelDescriptor(vhost, tunnelSessions);
-        synchronized (descriptorsLock) {
-            tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
-            vhostDescriptors.put(vhost, descriptor);
-        }
-        logger.info("Start Tunnel: {}", tunnelSessions.protoRequest());
-        logger.trace("vhostDescriptors: {}", vhostDescriptors);
-        logger.trace("tunnelTokenDescriptors: {}", tunnelTokenDescriptors);
-
-    }
-
-
-    public void unregister(@Nullable String vhost) {
-        if (vhost == null) {
-            return;
-        }
-        synchronized (descriptorsLock) {
-            final HttpTunnelDescriptor descriptor = vhostDescriptors.remove(vhost);
-            if (descriptor != null) {
-                tunnelTokenDescriptors.remove(descriptor.tunnelSessions().tunnelToken());
-                descriptor.close();
-                logger.info("Shutdown Tunnel: {}", descriptor.tunnelSessions().protoRequest());
-            }
+    public void serve(@Nullable String bindAddr, int bindPort) throws Exception {
+        if (bindAddr != null) {
+            serverBootstrap.bind(bindAddr, bindPort).get();
+        } else {
+            serverBootstrap.bind(bindPort).get();
         }
     }
 
@@ -105,32 +71,29 @@ public class HttpServer {
 
     @Nullable
     public HttpTunnelDescriptor getDescriptorByTunnelToken(long tunnelToken) {
-        synchronized (descriptorsLock) {
-            return tunnelTokenDescriptors.get(tunnelToken);
-        }
+        return registry.getDescriptorByTunnelToken(tunnelToken);
     }
 
     @Nullable
     public HttpTunnelDescriptor getDescriptorByVhost(@NotNull String vhost) {
-        synchronized (descriptorsLock) {
-            return vhostDescriptors.get(vhost);
-        }
+        return registry.getDescriptorByVhost(vhost);
     }
 
-    public void serve(@Nullable String bindAddr, int bindPort) throws Exception {
-        if (bindAddr != null) {
-            serverBootstrap.bind(bindAddr, bindPort).get();
-        } else {
-            serverBootstrap.bind(bindPort).get();
-        }
+    public boolean isRegistered(@NotNull String vhost) {
+        return registry.isRegistered(vhost);
+    }
+
+    public void register(@NotNull String vhost, @NotNull ServerTunnelSessions tunnelSessions) throws Exception {
+        registry.register(vhost, tunnelSessions);
+    }
+
+
+    public void unregister(@Nullable String vhost) {
+        registry.unregister(vhost);
     }
 
     public void destroy() {
-        synchronized (descriptorsLock) {
-            tunnelTokenDescriptors.clear();
-            vhostDescriptors.clear();
-        }
+        registry.destroy();
     }
-
 
 }
