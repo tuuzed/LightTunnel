@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.SocketAddress;
 
 public interface HttpRequestInterceptor {
+
     HttpRequestInterceptor DEFAULT = new HttpRequestInterceptor() {
         @Nullable
         @Override
@@ -22,6 +23,7 @@ public interface HttpRequestInterceptor {
         @NotNull SocketAddress localAddress,
         @NotNull SocketAddress remoteAddress,
         @NotNull ProtoRequest protoRequest,
-        @NotNull HttpRequest httpRequest);
+        @NotNull HttpRequest httpRequest
+    );
 
 }

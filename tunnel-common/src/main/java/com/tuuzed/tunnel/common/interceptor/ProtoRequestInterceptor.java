@@ -5,6 +5,7 @@ import com.tuuzed.tunnel.common.proto.ProtoRequest;
 import org.jetbrains.annotations.NotNull;
 
 public interface ProtoRequestInterceptor {
+
     ProtoRequestInterceptor DEFAULT = new ProtoRequestInterceptor() {
         @NotNull
         @Override
@@ -12,7 +13,6 @@ public interface ProtoRequestInterceptor {
             return request;
         }
     };
-
 
     @NotNull
     ProtoRequest handleProtoRequest(@NotNull ProtoRequest request) throws ProtoException;
