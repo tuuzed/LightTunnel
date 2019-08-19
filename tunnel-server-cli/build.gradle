@@ -1,0 +1,18 @@
+apply plugin: "java"
+
+group rootProject.group
+version rootProject.version
+
+targetCompatibility = rootProject.targetCompatibility
+sourceCompatibility = rootProject.sourceCompatibility
+
+dependencies {
+    compile project(":tunnel-common-cli")
+    compile project(":tunnel-server")
+    // 单元测试
+    testImplementation "junit:junit:4.12"
+}
+
+project.ext.MainClass = "ServerBootstrap"
+
+apply from: "../gradle/BuildJar.gradle"
