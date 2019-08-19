@@ -1,6 +1,9 @@
-package com.tuuzed.tunnel.clientcli;
+package clientcli;
 
+import keep.RunOptions;
 import com.tuuzed.tunnel.client.TunnelClient;
+import com.tuuzed.tunnel.client.TunnelClientDescriptor;
+import com.tuuzed.tunnel.client.TunnelClientListener;
 import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
 import com.tuuzed.tunnel.common.proto.Proto;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
@@ -13,6 +16,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.helpers.OptionConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileReader;
@@ -21,11 +26,38 @@ import java.util.Map;
 
 @SuppressWarnings("Duplicates")
 public final class TunnelClientApp extends AbstractApp<RunOptions> {
+    private static final Logger logger = LoggerFactory.getLogger(TunnelClientApp.class);
 
     @NotNull
     @Override
     public RunOptions newRunOptions() {
         return new RunOptions();
+    }
+
+    @NotNull
+    private final TunnelClientListener tunnelClientListener = new TunnelClientListener() {
+        @Override
+        public void onConnecting(@NotNull TunnelClientDescriptor descriptor, boolean reconnect) {
+            logger.debug("onDisconnect: {}", descriptor.toString());
+        }
+
+        @Override
+        public void onConnected(@NotNull TunnelClientDescriptor descriptor) {
+            logger.info("onConnected: {}", descriptor.toString());
+        }
+
+        @Override
+        public void onDisconnect(@NotNull TunnelClientDescriptor descriptor, boolean fatal) {
+            logger.info("onDisconnect: {}", descriptor.toString());
+        }
+    };
+
+    private TunnelClient createTunnelClient(int workerThreads) {
+        return TunnelClient.builder()
+            .setWorkerThreads(workerThreads)
+            .setAutoReconnect(true)
+            .setListener(tunnelClientListener)
+            .build();
     }
 
     @Override
@@ -77,10 +109,6 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
             sslServerPort = Maps.getInt(sslCfg, "server_port", 5001);
         }
 
-        final TunnelClient tunnelClient = TunnelClient.builder()
-            .setWorkerThreads(workerThreads)
-            .setAutoReconnect(true)
-            .build();
 
         // ================================== tunnelsCfg ================================== //
 
@@ -137,6 +165,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                 default:
                     break;
             }
+            TunnelClient tunnelClient = createTunnelClient(workerThreads);
             if (protoRequest != null) {
                 tunnelClient.connect(
                     serverAddr,
@@ -165,11 +194,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
             .setMaxBackupIndex(runOptions.logMaxBackupIndex)
             .initialize();
 
-
-        TunnelClient tunnelClient = TunnelClient.builder()
-            .setWorkerThreads(runOptions.workerThreads)
-            .setAutoReconnect(true)
-            .build();
+        TunnelClient tunnelClient = createTunnelClient(runOptions.workerThreads);
         ProtoRequest protoRequest = null;
         switch (runOptions.proto) {
             case TCP:

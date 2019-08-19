@@ -1,6 +1,6 @@
-import com.tuuzed.tunnel.clientcli.TunnelClientApp;
+import clientcli.TunnelClientApp;
 
-public final class ClientBootstrap {
+public final class TunnelClientCliBootstrap {
 
     public static void main(String[] args) {
         new TunnelClientApp().doMain(args);
