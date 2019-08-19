@@ -9,14 +9,12 @@ sourceCompatibility = rootProject.sourceCompatibility
 dependencies {
     compile project(":tunnel-common")
     compile project(":tunnel-server")
+    compile 'org.json:json:20190722'
 
-    compile 'com.mchange:c3p0:0.9.5.4'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.4.3'
-    runtimeOnly 'com.h2database:h2:1.4.199'
+    // compile 'com.mchange:c3p0:0.9.5.4'
+    // runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.4.3'
+    // runtimeOnly 'com.h2database:h2:1.4.199'
 
-//    def vertx_version = '3.8.0'
-//    compile "io.vertx:vertx-web:$vertx_version"
-//    compile "io.vertx:vertx-jdbc-client:$vertx_version"
     // 单元测试
     testCompile "junit:junit:4.12"
 }

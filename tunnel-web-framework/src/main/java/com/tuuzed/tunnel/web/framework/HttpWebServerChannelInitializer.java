@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.webframework;
+package com.tuuzed.tunnel.web.framework;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;

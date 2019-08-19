@@ -105,13 +105,39 @@ public class TunnelServer {
         if (httpsEnable) {
             this.httpsServer = new HttpServer(bossGroup, workerGroup, httpsContext, httpsRequestInterceptor);
         }
-
     }
 
     @NotNull
     public static Builder builder() {
         return new Builder();
     }
+
+
+    public void start() throws Exception {
+        serve();
+        if (sslEnable) {
+            serveWithSsl();
+        }
+        if (httpEnable) {
+            httpServe();
+        }
+        if (httpsEnable) {
+            httpsServe();
+        }
+    }
+
+    public void destroy() {
+        tcpServer.destroy();
+        if (httpServer != null) {
+            httpServer.destroy();
+        }
+        if (httpsServer != null) {
+            httpsServer.destroy();
+        }
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
+    }
+
 
     @NotNull
     public TcpTunnelStats tcpTunnelStats() {
@@ -139,31 +165,6 @@ public class TunnelServer {
         return null;
     }
 
-    public void start() throws Exception {
-        serve();
-        if (sslEnable) {
-            serveWithSsl();
-        }
-        if (httpEnable) {
-            httpServe();
-        }
-        if (httpsEnable) {
-            httpsServe();
-        }
-    }
-
-
-    public void destroy() {
-        tcpServer.destroy();
-        if (httpServer != null) {
-            httpServer.destroy();
-        }
-        if (httpsServer != null) {
-            httpsServer.destroy();
-        }
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
-    }
 
     private void httpServe() throws Exception {
         if (httpServer == null) {

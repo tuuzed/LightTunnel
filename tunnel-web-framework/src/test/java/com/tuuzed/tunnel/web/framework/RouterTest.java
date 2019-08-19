@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.webframework;
+package com.tuuzed.tunnel.web.framework;
 
 import org.junit.Test;
 

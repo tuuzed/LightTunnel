@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.webframework;
+package com.tuuzed.tunnel.web.framework;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
@@ -23,18 +23,6 @@ public class HttpWebServer {
     private final int bindPort;
     private int maxContentLength;
 
-    public HttpWebServer(
-        @NotNull NioEventLoopGroup bossGroup,
-        @NotNull NioEventLoopGroup workerGroup
-    ) {
-        this(
-            bossGroup,
-            workerGroup,
-            null,
-            8080,
-            1024 * 1024 // 1MB
-        );
-    }
 
     public HttpWebServer(
         @NotNull NioEventLoopGroup bossGroup,
@@ -51,8 +39,24 @@ public class HttpWebServer {
     }
 
     @NotNull
-    public HttpWebServer routing(@NotNull String path, @NotNull HttpRequestHandler handler) {
-        router.routing(path, handler);
+    public HttpWebServer before(@NotNull String uriRegex, @NotNull HttpRequestHandler handler) {
+        return before(uriRegex, Integer.MIN_VALUE, handler);
+    }
+
+    @NotNull
+    public HttpWebServer before(@NotNull String uriRegex, int priority, @NotNull HttpRequestHandler handler) {
+        router.before(uriRegex, priority, handler);
+        return this;
+    }
+
+    @NotNull
+    public HttpWebServer routing(@NotNull String uriRegex, @NotNull HttpRequestHandler handler) {
+        return routing(uriRegex, Integer.MIN_VALUE, handler);
+    }
+
+    @NotNull
+    public HttpWebServer routing(@NotNull String uriRegex, int priority, @NotNull HttpRequestHandler handler) {
+        router.routing(uriRegex, priority, handler);
         return this;
     }
 

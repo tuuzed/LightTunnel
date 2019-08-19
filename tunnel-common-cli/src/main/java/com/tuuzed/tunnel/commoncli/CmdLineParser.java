@@ -63,17 +63,11 @@ public final class CmdLineParser {
                 items.add(new Item(field, option, field.get(t)));
             }
         }
-        Collections.sort(items, new Comparator<Item>() {
-            @Override
-            public int compare(Item o1, Item o2) {
-                // 倒序
-                return Integer.compare(o1.order, o2.order);
-            }
-        });
+        Collections.sort(items);
         return items;
     }
 
-    private static class Item {
+    private static class Item implements Comparable<Item> {
         Field field;
         String name;
         String longName;
@@ -86,7 +80,7 @@ public final class CmdLineParser {
         private String typeName;
 
 
-        public Item(@NotNull Field field, @NotNull Option option, Object def) throws Exception {
+        Item(@NotNull Field field, @NotNull Option option, Object def) throws Exception {
             this.field = field;
             this.name = option.name();
             this.longName = option.longName();
@@ -271,6 +265,12 @@ public final class CmdLineParser {
             } else {
                 return null;
             }
+        }
+
+        @Override
+        public int compareTo(@NotNull Item o) {
+            // 正序（小 -> 大）
+            return Integer.compare(this.order, o.order);
         }
     }
 

@@ -18,7 +18,6 @@ public class TcpTunnelRegistry {
     @NotNull
     private final Map<Integer, TcpTunnelDescriptor> portDescriptors = new ConcurrentHashMap<>();
 
-
     synchronized void register(int port, @NotNull ServerTunnelSessions tunnelSessions, TcpTunnelDescriptor descriptor) {
         tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
         portDescriptors.put(port, descriptor);
@@ -43,7 +42,6 @@ public class TcpTunnelRegistry {
         }
         return descriptor.tunnelSessions().getSessionChannel(sessionToken);
     }
-
 
     @Nullable
     synchronized TcpTunnelDescriptor getDescriptorByPort(int port) {
