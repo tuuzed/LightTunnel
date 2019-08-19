@@ -1,4 +1,4 @@
-package com.tuuzed.tunnel.serverweb.db;
+package com.tuuzed.tunnel.webframework;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
