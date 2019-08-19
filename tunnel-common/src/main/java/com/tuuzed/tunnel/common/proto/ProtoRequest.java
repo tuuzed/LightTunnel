@@ -7,22 +7,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@SuppressWarnings("Duplicates")
+@SuppressWarnings({"Duplicates", "unused"})
 public class ProtoRequest {
-    static final String REMOTE_PORT = "$$r";
-    static final String VHOST = "$$v";
-    static final String TOKEN = "$$t";
+    private static final String REMOTE_PORT = "$$r";
+    private static final String VHOST = "$$v";
+    private static final String TOKEN = "$$t";
     // http & https
-    static final String BASIC_AUTH = "$$a";
-    static final String BASIC_AUTH_REALM = "$$r";
-    static final String BASIC_AUTH_USERNAME = "$$u";
-    static final String BASIC_AUTH_PASSWORD = "$$p";
-    static final String REWRITE_HEADERS = "$$rwh";
-    static final String WRITE_HEADERS = "$$wh";
+    private static final String BASIC_AUTH = "$$a";
+    private static final String BASIC_AUTH_REALM = "$$r";
+    private static final String BASIC_AUTH_USERNAME = "$$u";
+    private static final String BASIC_AUTH_PASSWORD = "$$p";
+    private static final String REWRITE_HEADERS = "$$rwh";
+    private static final String WRITE_HEADERS = "$$wh";
 
     @NotNull
     private Proto proto;
@@ -32,7 +33,7 @@ public class ProtoRequest {
     @NotNull
     private Map<String, String> options;
 
-    ProtoRequest(
+    private ProtoRequest(
         @NotNull Proto proto,
         @NotNull String localAddr,
         int localPort,
@@ -188,28 +189,18 @@ public class ProtoRequest {
     }
 
     @NotNull
-    public static ProtoRequestBuilder tcpBuilder(int remotePort) {
-        return new ProtoRequestBuilder(Proto.TCP).setOptionInternal(REMOTE_PORT, String.valueOf(remotePort));
+    public static Builder tcpBuilder(int remotePort) {
+        return new Builder(Proto.TCP).setOptionInternal(REMOTE_PORT, String.valueOf(remotePort));
     }
 
     @NotNull
-    public static ProtoRequestBuilder httpBuilder(@NotNull String vhost) {
-        return new ProtoRequestBuilder(Proto.HTTP).setOptionInternal(VHOST, vhost);
-    }
-
-    @NotNull
-    public static ProtoRequestBuilder httpsBuilder(@NotNull String vhost) {
-        return new ProtoRequestBuilder(Proto.HTTPS).setOptionInternal(VHOST, vhost);
-    }
-
-    @NotNull
-    public ProtoRequestBuilder cloneTcpBuilder() {
+    public Builder cloneTcpBuilder() {
         return cloneTcpBuilder(remotePort());
     }
 
     @NotNull
-    public ProtoRequestBuilder cloneTcpBuilder(int remotePort) {
-        ProtoRequestBuilder builder = new ProtoRequestBuilder(Proto.TCP);
+    public Builder cloneTcpBuilder(int remotePort) {
+        Builder builder = new Builder(Proto.TCP);
         builder.localAddr = localAddr;
         builder.localPort = localPort;
         builder.options = options;
@@ -218,13 +209,18 @@ public class ProtoRequest {
     }
 
     @NotNull
-    public ProtoRequestBuilder cloneHttpBuilder() {
+    public static Builder httpBuilder(@NotNull String vhost) {
+        return new Builder(Proto.HTTP).setOptionInternal(VHOST, vhost);
+    }
+
+    @NotNull
+    public Builder cloneHttpBuilder() {
         return cloneHttpBuilder(vhost());
     }
 
     @NotNull
-    public ProtoRequestBuilder cloneHttpBuilder(@NotNull String vhost) {
-        ProtoRequestBuilder builder = new ProtoRequestBuilder(Proto.HTTP);
+    public Builder cloneHttpBuilder(@NotNull String vhost) {
+        Builder builder = new Builder(Proto.HTTP);
         builder.localAddr = localAddr;
         builder.localPort = localPort;
         builder.options = options;
@@ -233,13 +229,18 @@ public class ProtoRequest {
     }
 
     @NotNull
-    public ProtoRequestBuilder cloneHttpsBuilder() {
+    public static Builder httpsBuilder(@NotNull String vhost) {
+        return new Builder(Proto.HTTPS).setOptionInternal(VHOST, vhost);
+    }
+
+    @NotNull
+    public Builder cloneHttpsBuilder() {
         return cloneHttpBuilder(vhost());
     }
 
     @NotNull
-    public ProtoRequestBuilder cloneHttpsBuilder(@NotNull String vhost) {
-        ProtoRequestBuilder builder = new ProtoRequestBuilder(Proto.HTTPS);
+    public Builder cloneHttpsBuilder(@NotNull String vhost) {
+        Builder builder = new Builder(Proto.HTTPS);
         builder.localAddr = localAddr;
         builder.localPort = localPort;
         builder.options = options;
@@ -278,4 +279,120 @@ public class ProtoRequest {
     }
 
 
+    public static class Builder {
+        private Proto proto;
+        private String localAddr;
+        private int localPort;
+        private Map<String, String> options;
+
+        private Builder(@NotNull Proto proto) {
+            this.proto = proto;
+        }
+
+        @NotNull
+        public Builder setLocalAddr(@NotNull String localAddr) {
+            this.localAddr = localAddr;
+            return this;
+        }
+
+        @NotNull
+        public Builder setLocalPort(int localPort) {
+            this.localPort = localPort;
+            return this;
+        }
+
+        @NotNull
+        public Builder setToken(@NotNull String token) {
+            setOptionInternal(TOKEN, token);
+            return this;
+        }
+
+        @NotNull
+        public Builder setBasicAuth(boolean enable, @NotNull String realm) {
+            setOptionInternal(BASIC_AUTH, enable ? "1" : "0");
+            setOptionInternal(BASIC_AUTH_REALM, realm);
+            return this;
+        }
+
+        @NotNull
+        public Builder setBasicAuthAccount(@NotNull String username, @NotNull String password) {
+            setOptionInternal(BASIC_AUTH_USERNAME, username);
+            setOptionInternal(BASIC_AUTH_PASSWORD, password);
+            return this;
+        }
+
+        @NotNull
+        public Builder setWriteHeaders(@NotNull Map<String, String> headers) {
+            setHeadersOption(WRITE_HEADERS, headers);
+            return this;
+        }
+
+        @NotNull
+        public Builder setRewriteHeaders(@NotNull Map<String, String> headers) {
+            setHeadersOption(REWRITE_HEADERS, headers);
+            return this;
+        }
+
+        private void setHeadersOption(@NotNull String option, @NotNull Map<String, String> headers) {
+            boolean isFirst = true;
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> it : headers.entrySet()) {
+                if (!isFirst) {
+                    sb.append(";");
+                }
+                sb.append(it.getKey()).append(":").append(it.getValue());
+                isFirst = false;
+            }
+            setOptionInternal(option, sb.toString());
+        }
+
+        @NotNull
+        private Builder setOptionInternal(@NotNull String key, @NotNull String value) {
+            if (options == null) {
+                options = new LinkedHashMap<>();
+            }
+            options.put(key, value);
+            return this;
+        }
+
+        @NotNull
+        public Builder setOption(@NotNull String key, @NotNull String value) {
+            if (key.startsWith("$$")) {
+                throw new IllegalArgumentException("$$打头的key为系统保留的key");
+            }
+            setOptionInternal(key, value);
+            return this;
+        }
+
+        @NotNull
+        public ProtoRequest build() {
+            if (localAddr == null) {
+                throw new IllegalArgumentException("localAddr == null");
+            }
+            if (localPort < 0 || localPort > 65535) {
+                throw new IllegalArgumentException("localPort < 0 || localPort > 65535");
+            }
+            if (options == null) {
+                options = Collections.emptyMap();
+            }
+            switch (proto) {
+                case UNKNOWN:
+                    break;
+                case TCP:
+                    if (!options.containsKey(REMOTE_PORT)) {
+                        throw new IllegalArgumentException("TCP协议必须设置REMOTE_PORT");
+                    }
+                    break;
+                case HTTP:
+                    if (!options.containsKey(VHOST)) {
+                        throw new IllegalArgumentException("HTTP协议必须设置VHOST");
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return new ProtoRequest(proto, localAddr, localPort, options);
+        }
+
+    }
 }

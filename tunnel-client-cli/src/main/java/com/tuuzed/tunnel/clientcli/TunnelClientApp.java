@@ -4,7 +4,6 @@ import com.tuuzed.tunnel.client.TunnelClient;
 import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
 import com.tuuzed.tunnel.common.proto.Proto;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
-import com.tuuzed.tunnel.common.proto.ProtoRequestBuilder;
 import com.tuuzed.tunnel.common.util.SslContexts;
 import com.tuuzed.tunnel.commoncli.AbstractApp;
 import com.tuuzed.tunnel.commoncli.LogLevel;
@@ -116,7 +115,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
                     String authRealm = Maps.getString(auth, "realm", ".");
                     String authUsername = Maps.getString(auth, "username", "");
                     String authPassword = Maps.getString(auth, "password", "");
-                    ProtoRequestBuilder builder = null;
+                    ProtoRequest.Builder builder = null;
                     switch (proto) {
                         case HTTP:
                             builder = ProtoRequest.httpBuilder(vhost);
@@ -184,7 +183,7 @@ public final class TunnelClientApp extends AbstractApp<RunOptions> {
             case HTTP:
             case HTTPS:
                 final String vhost = runOptions.vhost;
-                ProtoRequestBuilder builder = null;
+                ProtoRequest.Builder builder = null;
                 switch (runOptions.proto) {
                     case HTTP:
                         builder = ProtoRequest.httpBuilder(vhost);
