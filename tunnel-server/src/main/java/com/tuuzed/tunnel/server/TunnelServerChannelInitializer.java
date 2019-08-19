@@ -4,9 +4,9 @@ import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
 import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
 import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
-import com.tuuzed.tunnel.server.http.HttpServer;
+import com.tuuzed.tunnel.server.http.HttpTunnelServer;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
-import com.tuuzed.tunnel.server.tcp.TcpServer;
+import com.tuuzed.tunnel.server.tcp.TcpTunnelServer;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
@@ -19,11 +19,11 @@ public class TunnelServerChannelInitializer extends ChannelInitializer<SocketCha
     @Nullable
     private final SslContext sslContext;
     @NotNull
-    private final TcpServer tcpServer;
+    private final TcpTunnelServer tcpTunnelServer;
     @Nullable
-    private final HttpServer httpServer;
+    private final HttpTunnelServer httpTunnelServer;
     @Nullable
-    private final HttpServer httpsServer;
+    private final HttpTunnelServer httpsTunnelServer;
     @NotNull
     private final ProtoRequestInterceptor protoRequestInterceptor;
     @NotNull
@@ -31,16 +31,16 @@ public class TunnelServerChannelInitializer extends ChannelInitializer<SocketCha
 
     public TunnelServerChannelInitializer(
         @Nullable SslContext sslContext,
-        @NotNull TcpServer tcpServer,
-        @Nullable HttpServer httpServer,
-        @Nullable HttpServer httpsServer,
+        @NotNull TcpTunnelServer tcpTunnelServer,
+        @Nullable HttpTunnelServer httpTunnelServer,
+        @Nullable HttpTunnelServer httpsTunnelServer,
         @NotNull ProtoRequestInterceptor protoRequestInterceptor,
         @NotNull TokenProducer tunnelTokenProducer
     ) {
         this.sslContext = sslContext;
-        this.tcpServer = tcpServer;
-        this.httpServer = httpServer;
-        this.httpsServer = httpsServer;
+        this.tcpTunnelServer = tcpTunnelServer;
+        this.httpTunnelServer = httpTunnelServer;
+        this.httpsTunnelServer = httpsTunnelServer;
         this.protoRequestInterceptor = protoRequestInterceptor;
         this.tunnelTokenProducer = tunnelTokenProducer;
     }
@@ -56,7 +56,8 @@ public class TunnelServerChannelInitializer extends ChannelInitializer<SocketCha
             .addLast(new ProtoMessageEncoder())
             .addLast(new ProtoHeartbeatHandler())
             .addLast(new TunnelServerChannelHandler(
-                tcpServer, httpServer, httpsServer, protoRequestInterceptor, tunnelTokenProducer
+                tcpTunnelServer, httpTunnelServer, httpsTunnelServer,
+                protoRequestInterceptor, tunnelTokenProducer
             ))
         ;
     }

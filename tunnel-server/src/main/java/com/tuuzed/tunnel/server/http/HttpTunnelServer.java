@@ -10,26 +10,40 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class HttpServer {
+public class HttpTunnelServer {
+    private static final Logger logger = LoggerFactory.getLogger(HttpTunnelServer.class);
+
+    private final boolean https;
+    @Nullable
+    private final String bindAddr;
+    private final int bindPort;
     @NotNull
     private final HttpTunnelRegistry registry;
     @NotNull
     private final ServerBootstrap serverBootstrap;
 
-    public HttpServer(
+
+    public HttpTunnelServer(
         @NotNull final NioEventLoopGroup bossGroup,
         @NotNull final NioEventLoopGroup workerGroup,
+        @Nullable String bindAddr,
+        int bindPort,
         @Nullable final SslContext sslContext,
         @NotNull final HttpRequestInterceptor interceptor
     ) {
+        this.https = sslContext != null;
+        this.bindAddr = bindAddr;
+        this.bindPort = bindPort;
         this.registry = new HttpTunnelRegistry();
         this.serverBootstrap = new ServerBootstrap();
         this.serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childHandler(new HttpServerChannelInitializer(sslContext, registry, interceptor));
+            .childHandler(new HttpTunnelServerChannelInitializer(sslContext, registry, interceptor));
     }
 
     @NotNull
@@ -37,12 +51,17 @@ public class HttpServer {
         return registry;
     }
 
-    public void serve(@Nullable String bindAddr, int bindPort) throws Exception {
+    public void start() throws Exception {
         if (bindAddr != null) {
             serverBootstrap.bind(bindAddr, bindPort).get();
         } else {
             serverBootstrap.bind(bindPort).get();
         }
+        logger.info("Serving {} on {} port {}",
+            https ? "https" : "http",
+            (bindAddr == null) ? "any address" : bindAddr,
+            bindPort
+        );
     }
 
     @Nullable

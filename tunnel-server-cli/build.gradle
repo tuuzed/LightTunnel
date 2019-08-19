@@ -13,6 +13,6 @@ dependencies {
     testImplementation "junit:junit:4.12"
 }
 
-project.ext.MainClass = "ServerBootstrap"
+project.ext.MainClass = "TunnelServerCliBootstrap"
 
 apply from: "../gradle/BuildJar.gradle"

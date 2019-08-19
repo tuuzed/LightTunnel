@@ -5,11 +5,11 @@ import com.tuuzed.tunnel.common.proto.Proto;
 import com.tuuzed.tunnel.common.proto.ProtoException;
 import com.tuuzed.tunnel.common.proto.ProtoMessage;
 import com.tuuzed.tunnel.common.proto.ProtoRequest;
-import com.tuuzed.tunnel.server.http.HttpServer;
+import com.tuuzed.tunnel.server.http.HttpTunnelServer;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
-import com.tuuzed.tunnel.server.tcp.TcpServer;
+import com.tuuzed.tunnel.server.tcp.TcpTunnelServer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -27,26 +27,26 @@ import java.nio.charset.StandardCharsets;
 public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<ProtoMessage> {
     private static final Logger logger = LoggerFactory.getLogger(TunnelServerChannelHandler.class);
     @NotNull
-    private final TcpServer tcpServer;
+    private final TcpTunnelServer tcpTunnelServer;
     @Nullable
-    private final HttpServer httpServer;
+    private final HttpTunnelServer httpTunnelServer;
     @Nullable
-    private final HttpServer httpsServer;
+    private final HttpTunnelServer httpsTunnelServer;
     @NotNull
     private final ProtoRequestInterceptor protoRequestInterceptor;
     @NotNull
     private final TokenProducer tunnelTokenProducer;
 
     public TunnelServerChannelHandler(
-        @NotNull TcpServer tcpServer,
-        @Nullable HttpServer httpServer,
-        @Nullable HttpServer httpsServer,
+        @NotNull TcpTunnelServer tcpTunnelServer,
+        @Nullable HttpTunnelServer httpTunnelServer,
+        @Nullable HttpTunnelServer httpsTunnelServer,
         @NotNull ProtoRequestInterceptor protoRequestInterceptor,
         @NotNull TokenProducer tunnelTokenProducer
     ) {
-        this.tcpServer = tcpServer;
-        this.httpServer = httpServer;
-        this.httpsServer = httpsServer;
+        this.tcpTunnelServer = tcpTunnelServer;
+        this.httpTunnelServer = httpTunnelServer;
+        this.httpsTunnelServer = httpsTunnelServer;
         this.protoRequestInterceptor = protoRequestInterceptor;
         this.tunnelTokenProducer = tunnelTokenProducer;
     }
@@ -64,16 +64,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
             switch (proto) {
                 case TCP:
                     final long tunnelToken = tunnelSessions.tunnelToken();
-                    tcpServer.shutdownTunnel(tunnelToken);
+                    tcpTunnelServer.shutdownTunnel(tunnelToken);
                     break;
                 case HTTP:
-                    if (httpServer != null) {
-                        httpServer.unregister(tunnelSessions.protoRequest().vhost());
+                    if (httpTunnelServer != null) {
+                        httpTunnelServer.unregister(tunnelSessions.protoRequest().vhost());
                     }
                     break;
                 case HTTPS:
-                    if (httpsServer != null) {
-                        httpsServer.unregister(tunnelSessions.protoRequest().vhost());
+                    if (httpsTunnelServer != null) {
+                        httpsTunnelServer.unregister(tunnelSessions.protoRequest().vhost());
                     }
                     break;
                 default:
@@ -127,16 +127,16 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
         ProtoRequest protoRequest = ProtoRequest.fromBytes(msg.getHead());
         switch (protoRequest.proto()) {
             case TCP:
-                handleTcpRequestMessage(ctx, tcpServer, protoRequest);
+                handleTcpRequestMessage(ctx, tcpTunnelServer, protoRequest);
                 break;
             case HTTP:
-                if (httpServer != null) {
-                    handleHttpRequestMessage(ctx, httpServer, protoRequest);
+                if (httpTunnelServer != null) {
+                    handleHttpRequestMessage(ctx, httpTunnelServer, protoRequest);
                 }
                 break;
             case HTTPS:
-                if (httpsServer != null) {
-                    handleHttpRequestMessage(ctx, httpsServer, protoRequest);
+                if (httpsTunnelServer != null) {
+                    handleHttpRequestMessage(ctx, httpsTunnelServer, protoRequest);
                 }
                 break;
             default:
@@ -167,25 +167,25 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
             final Proto proto = tunnelSessions.protoRequest().proto();
             switch (proto) {
                 case TCP:
-                    final Channel tcpSessionChannel = tcpServer.getSessionChannel(tunnelToken, sessionToken);
+                    final Channel tcpSessionChannel = tcpTunnelServer.getSessionChannel(tunnelToken, sessionToken);
                     if (tcpSessionChannel != null) {
                         tcpSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
                     break;
                 case HTTP:
-                    if (httpServer == null) {
+                    if (httpTunnelServer == null) {
                         break;
                     }
-                    final Channel httpSessionChannel = httpServer.getSessionChannel(tunnelToken, sessionToken);
+                    final Channel httpSessionChannel = httpTunnelServer.getSessionChannel(tunnelToken, sessionToken);
                     if (httpSessionChannel != null) {
                         httpSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
                     break;
                 case HTTPS:
-                    if (httpsServer == null) {
+                    if (httpsTunnelServer == null) {
                         break;
                     }
-                    final Channel httpsSessionChannel = httpsServer.getSessionChannel(tunnelToken, sessionToken);
+                    final Channel httpsSessionChannel = httpsTunnelServer.getSessionChannel(tunnelToken, sessionToken);
                     if (httpsSessionChannel != null) {
                         httpsSessionChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.getData()));
                     }
@@ -225,7 +225,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
 
     private void handleTcpRequestMessage(
         @NotNull ChannelHandlerContext ctx,
-        @NotNull TcpServer tcpServer,
+        @NotNull TcpTunnelServer tcpTunnelServer,
         @NotNull ProtoRequest protoRequest
     ) throws Exception {
         try {
@@ -235,7 +235,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
 
             ctx.channel().attr(AttributeKeys.SERVER_TUNNEL_SESSIONS).set(tunnelSessions);
 
-            tcpServer.startTunnel(null, protoRequest.remotePort(), tunnelSessions);
+            tcpTunnelServer.startTunnel(null, protoRequest.remotePort(), tunnelSessions);
 
             final ByteBuf head = Unpooled.buffer(9);
             head.writeBoolean(true);
@@ -264,7 +264,7 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
 
     private void handleHttpRequestMessage(
         @NotNull ChannelHandlerContext ctx,
-        @NotNull HttpServer server,
+        @NotNull HttpTunnelServer server,
         @NotNull ProtoRequest protoRequest
     ) throws Exception {
         try {

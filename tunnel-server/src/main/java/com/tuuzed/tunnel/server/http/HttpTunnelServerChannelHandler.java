@@ -21,15 +21,15 @@ import org.slf4j.LoggerFactory;
 import java.net.SocketAddress;
 
 @SuppressWarnings("Duplicates")
-public class HttpServerChannelHandler extends ChannelInboundHandlerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(HttpServerChannelHandler.class);
+public class HttpTunnelServerChannelHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger logger = LoggerFactory.getLogger(HttpTunnelServerChannelHandler.class);
 
     @NotNull
     private final HttpTunnelRegistry httpTunnelRegistry;
     @NotNull
     private final HttpRequestInterceptor httpRequestInterceptor;
 
-    public HttpServerChannelHandler(
+    public HttpTunnelServerChannelHandler(
         @NotNull HttpTunnelRegistry registry,
         @NotNull HttpRequestInterceptor interceptor
     ) {

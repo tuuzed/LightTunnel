@@ -9,7 +9,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TcpServer {
+public class TcpTunnelServer {
     @NotNull
     private final TcpTunnelRegistry registry;
     @NotNull
@@ -17,7 +17,7 @@ public class TcpServer {
     @NotNull
     private final ServerBootstrap serverBootstrap;
 
-    public TcpServer(
+    public TcpTunnelServer(
         @NotNull final NioEventLoopGroup bossGroup,
         @NotNull final NioEventLoopGroup workerGroup
     ) {
@@ -28,7 +28,7 @@ public class TcpServer {
             .channel(NioServerSocketChannel.class)
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childHandler(new TcpServerChannelInitializer(registry, stats));
+            .childHandler(new TcpTunnelServerChannelInitializer(registry, stats));
     }
 
     @NotNull

@@ -5,14 +5,14 @@ import io.netty.channel.socket.SocketChannel;
 import org.jetbrains.annotations.NotNull;
 
 
-public class TcpServerChannelInitializer extends ChannelInitializer<SocketChannel> {
+public class TcpTunnelServerChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     @NotNull
     private final TcpTunnelRegistry tcpTunnelRegistry;
     @NotNull
     private final TcpTunnelStats tcpTunnelStats;
 
-    public TcpServerChannelInitializer(
+    public TcpTunnelServerChannelInitializer(
         @NotNull TcpTunnelRegistry registry,
         @NotNull TcpTunnelStats stats
     ) {
@@ -24,7 +24,7 @@ public class TcpServerChannelInitializer extends ChannelInitializer<SocketChanne
     protected void initChannel(SocketChannel ch) throws Exception {
         ch.pipeline()
             .addFirst(new TcpTunnelStatsHandler(tcpTunnelStats))
-            .addLast(new TcpServerChannelHandler(tcpTunnelRegistry))
+            .addLast(new TcpTunnelServerChannelHandler(tcpTunnelRegistry))
         ;
     }
 }

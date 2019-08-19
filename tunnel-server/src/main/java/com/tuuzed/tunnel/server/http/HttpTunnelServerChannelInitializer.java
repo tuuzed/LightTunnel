@@ -9,7 +9,7 @@ import io.netty.handler.ssl.SslHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class HttpServerChannelInitializer extends ChannelInitializer<SocketChannel> {
+public class HttpTunnelServerChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     @Nullable
     private final SslContext sslContext;
@@ -18,7 +18,7 @@ public class HttpServerChannelInitializer extends ChannelInitializer<SocketChann
     @NotNull
     private final HttpRequestInterceptor interceptor;
 
-    public HttpServerChannelInitializer(
+    public HttpTunnelServerChannelInitializer(
         @Nullable SslContext sslContext,
         @NotNull HttpTunnelRegistry registry,
         @NotNull HttpRequestInterceptor interceptor
@@ -35,7 +35,7 @@ public class HttpServerChannelInitializer extends ChannelInitializer<SocketChann
         }
         ch.pipeline()
             .addLast(new HttpRequestDecoder())
-            .addLast(new HttpServerChannelHandler(httpTunnelRegistry, interceptor))
+            .addLast(new HttpTunnelServerChannelHandler(httpTunnelRegistry, interceptor))
         ;
     }
 }

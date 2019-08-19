@@ -68,7 +68,7 @@ public final class RunOptions {
     public String httpBindAddr = "0.0.0.0";
 
     @Option(name = "hp", longName = "http-bind-port", help = "HTTP绑定端口", order = 5003)
-    public int httpBindPort = 5001;
+    public int httpBindPort = 80;
 
 
     // =============================== https ================================== //
@@ -79,7 +79,7 @@ public final class RunOptions {
     public String httpsBindAddr = "0.0.0.0";
 
     @Option(name = "hsp", longName = "https-bind-port", help = "HTTPS绑定端口", order = 6003)
-    public int httpsBindPort = 5001;
+    public int httpsBindPort = 443;
 
     @Option(name = "hsj", longName = "https-jks", help = "https jks签名文件", order = 6004)
     public String httpsJks = "";

@@ -12,13 +12,13 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 @SuppressWarnings("Duplicates")
-public class TcpServerChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
-    private static final Logger logger = LoggerFactory.getLogger(TcpServerChannelHandler.class);
+public class TcpTunnelServerChannelHandler extends SimpleChannelInboundHandler<ByteBuf> {
+    private static final Logger logger = LoggerFactory.getLogger(TcpTunnelServerChannelHandler.class);
 
     @NotNull
     private final TcpTunnelRegistry tcpTunnelRegistry;
 
-    public TcpServerChannelHandler(@NotNull TcpTunnelRegistry registry) {
+    public TcpTunnelServerChannelHandler(@NotNull TcpTunnelRegistry registry) {
         this.tcpTunnelRegistry = registry;
     }
 
