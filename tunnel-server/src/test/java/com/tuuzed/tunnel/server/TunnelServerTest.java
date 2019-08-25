@@ -22,7 +22,7 @@ public class TunnelServerTest {
     @Before
     public void setUp() throws Exception {
         Log4jInitializer.initializeThirdLibrary(Level.WARN);
-        Log4jInitializer.builder().initialize();
+        Log4jInitializer.builder().setLevel(Level.ALL).initialize();
 
         SimpleRequestInterceptor simpleRequestInterceptor = new SimpleRequestInterceptor(
             "tk123456", "1024-60000"

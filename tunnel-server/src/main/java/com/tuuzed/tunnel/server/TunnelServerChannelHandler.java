@@ -12,10 +12,7 @@ import com.tuuzed.tunnel.server.internal.TokenProducer;
 import com.tuuzed.tunnel.server.tcp.TcpTunnelServer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -200,13 +197,15 @@ public class TunnelServerChannelHandler extends SimpleChannelInboundHandler<Prot
      * 处理本地连接成功消息
      */
     private void handleLocalConnectedMessage(ChannelHandlerContext ctx, ProtoMessage msg) {
-        // 无需操作
+        logger.trace("LocalConnected: {}", ctx);
+        // 无须处理
     }
 
     /**
      * 处理本地连接断开消息
      */
     private void handleLocalDisconnectMessage(ChannelHandlerContext ctx, ProtoMessage msg) {
+        logger.trace("LocalDisconnect: {}", ctx);
         final ByteBuf head = Unpooled.wrappedBuffer(msg.getHead());
         final long tunnelToken = head.readLong();
         final long sessionToken = head.readLong();

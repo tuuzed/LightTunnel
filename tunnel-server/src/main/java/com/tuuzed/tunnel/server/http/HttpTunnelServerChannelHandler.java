@@ -43,6 +43,16 @@ public class HttpTunnelServerChannelHandler extends ChannelInboundHandlerAdapter
         logger.trace("channelActive: {}", ctx);
     }
 
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof HttpRequest) {
+            channelReadHttpRequest(ctx, (HttpRequest) msg);
+        } else if (msg instanceof HttpContent) {
+            channelReadHttpContent(ctx, (HttpContent) msg);
+        }
+    }
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.trace("channelInactive: {}", ctx);
@@ -72,15 +82,6 @@ public class HttpTunnelServerChannelHandler extends ChannelInboundHandlerAdapter
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.trace("exceptionCaught: {}", ctx, cause);
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof HttpRequest) {
-            channelReadHttpRequest(ctx, (HttpRequest) msg);
-        } else if (msg instanceof HttpContent) {
-            channelReadHttpContent(ctx, (HttpContent) msg);
-        }
     }
 
     /**

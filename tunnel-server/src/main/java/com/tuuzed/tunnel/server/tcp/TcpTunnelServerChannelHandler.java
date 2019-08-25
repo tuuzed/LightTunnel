@@ -47,6 +47,32 @@ public class TcpTunnelServerChannelHandler extends SimpleChannelInboundHandler<B
         }
     }
 
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
+        logger.trace("channelRead0: {}", ctx);
+        InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
+        int port = sa.getPort();
+        TcpTunnelDescriptor descriptor = tcpTunnelRegistry.getDescriptorByPort(port);
+        if (descriptor != null) {
+            final byte[] data = new byte[msg.readableBytes()];
+            msg.readBytes(data);
+
+            final Channel tunnelChannel = descriptor.tunnelSessions().tunnelChannel();
+            final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
+            final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
+            if (sessionToken != null) {
+                tunnelChannel.writeAndFlush(
+                    new ProtoMessage(
+                        ProtoMessage.Type.TRANSFER,
+                        Unpooled.copyLong(tunnelToken, sessionToken).array(),
+                        data
+                    )
+                );
+            }
+        }
+    }
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
@@ -86,29 +112,5 @@ public class TcpTunnelServerChannelHandler extends SimpleChannelInboundHandler<B
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
 
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-        logger.trace("channelRead0: {}", ctx);
-        InetSocketAddress sa = (InetSocketAddress) ctx.channel().localAddress();
-        int port = sa.getPort();
-        TcpTunnelDescriptor descriptor = tcpTunnelRegistry.getDescriptorByPort(port);
-        if (descriptor != null) {
-            final byte[] data = new byte[msg.readableBytes()];
-            msg.readBytes(data);
-
-            final Channel tunnelChannel = descriptor.tunnelSessions().tunnelChannel();
-            final long tunnelToken = descriptor.tunnelSessions().tunnelToken();
-            final Long sessionToken = ctx.channel().attr(AttributeKeys.SESSION_TOKEN).get();
-            if (sessionToken != null) {
-                tunnelChannel.writeAndFlush(
-                    new ProtoMessage(
-                        ProtoMessage.Type.TRANSFER,
-                        Unpooled.copyLong(tunnelToken, sessionToken).array(),
-                        data
-                    )
-                );
-            }
-        }
-    }
 
 }

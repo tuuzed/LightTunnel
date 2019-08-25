@@ -93,25 +93,25 @@ public class TunnelClientTest {
             .setToken("tk123456")
             .build();
 
-        portReplaced = ProtoRequest.tcpBuilder(20000) // 20080
+        portReplaced = ProtoRequest.tcpBuilder(20000) //  replaced 20080
             .setLocalAddr("192.168.1.1")
             .setLocalPort(80)
             .setToken("tk123456")
             .build();
 
-        tcpHttp = ProtoRequest.tcpBuilder(10080) // 20080
-            .setLocalAddr("192.168.1.1")
-            .setLocalPort(80)
-            .setOption("token", "tk123456")
+        tcpHttp = ProtoRequest.tcpBuilder(10080)
+            .setLocalAddr("111.230.198.37")
+            .setLocalPort(10080)
+            .setToken("tk123456")
             .build();
 
-        vnc = ProtoRequest.tcpBuilder(15900) // 20080
+        vnc = ProtoRequest.tcpBuilder(15900)
             .setLocalAddr("192.168.1.33")
             .setLocalPort(5900)
             .setToken("tk123456")
             .build();
 
-        ssh = ProtoRequest.tcpBuilder(10022) // 20080
+        ssh = ProtoRequest.tcpBuilder(10022)
             .setLocalAddr("192.168.1.10")
             .setLocalPort(22)
             .setToken("tk123456")

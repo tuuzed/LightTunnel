@@ -14,16 +14,16 @@ import java.util.Objects;
 
 @SuppressWarnings({"Duplicates", "unused"})
 public class ProtoRequest {
-    private static final String REMOTE_PORT = "$$r";
-    private static final String VHOST = "$$v";
-    private static final String TOKEN = "$$t";
+    private static final String REMOTE_PORT = "$REMOTE_PORT$";
+    private static final String VHOST = "$VHOST$";
+    private static final String TOKEN = "$TOKEN$";
     // http & https
-    private static final String BASIC_AUTH = "$$a";
-    private static final String BASIC_AUTH_REALM = "$$r";
-    private static final String BASIC_AUTH_USERNAME = "$$u";
-    private static final String BASIC_AUTH_PASSWORD = "$$p";
-    private static final String REWRITE_HEADERS = "$$rwh";
-    private static final String WRITE_HEADERS = "$$wh";
+    private static final String BASIC_AUTH = "$BASIC_AUTH$";
+    private static final String BASIC_AUTH_REALM = "$BASIC_AUTH_REALM$";
+    private static final String BASIC_AUTH_USERNAME = "$BASIC_AUTH_USERNAME$";
+    private static final String BASIC_AUTH_PASSWORD = "$BASIC_AUTH_PASSWORD$";
+    private static final String REWRITE_HEADERS = "$REWRITE_HEADERS$";
+    private static final String WRITE_HEADERS = "$WRITE_HEADERS$";
 
     @NotNull
     private Proto proto;
@@ -357,8 +357,8 @@ public class ProtoRequest {
 
         @NotNull
         public Builder setOption(@NotNull String key, @NotNull String value) {
-            if (key.startsWith("$$")) {
-                throw new IllegalArgumentException("$$打头的key为系统保留的key");
+            if (key.startsWith("$") && key.endsWith("$")) {
+                throw new IllegalArgumentException("`$`打头`$`结尾的key为系统保留的key");
             }
             setOptionInternal(key, value);
             return this;

@@ -125,35 +125,6 @@ public class TunnelServer {
         if (httpsTunnelServer != null) httpsTunnelServer.start();
     }
 
-    public void destroy() {
-        if (tcpTunnelServer != null) tcpTunnelServer.destroy();
-        if (httpTunnelServer != null) httpTunnelServer.destroy();
-        if (httpsTunnelServer != null) httpsTunnelServer.destroy();
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
-    }
-
-
-    @Nullable
-    public TcpTunnelStats tcpTunnelStats() {
-        return (tcpTunnelServer != null) ? tcpTunnelServer.stats() : null;
-    }
-
-    @Nullable
-    public TcpTunnelRegistry tcpTunnelRegistry() {
-        return (tcpTunnelServer != null) ? tcpTunnelServer.registry() : null;
-    }
-
-    @Nullable
-    public HttpTunnelRegistry httpTunnelRegistry() {
-        return (httpTunnelServer != null) ? httpTunnelServer.registry() : null;
-    }
-
-    @Nullable
-    public HttpTunnelRegistry httpsTunnelRegistry() {
-        return (httpsTunnelServer != null) ? httpsTunnelServer.registry() : null;
-    }
-
     private void serve(@Nullable SslContext sslContext, @NotNull TcpTunnelServer tcpTunnelServer) throws Exception {
         final ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(bossGroup, workerGroup)
@@ -189,6 +160,58 @@ public class TunnelServer {
 
         }
     }
+
+
+    public void destroy() {
+        if (tcpTunnelServer != null) tcpTunnelServer.destroy();
+        if (httpTunnelServer != null) httpTunnelServer.destroy();
+        if (httpsTunnelServer != null) httpsTunnelServer.destroy();
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
+    }
+
+
+    /**
+     * TCP 隧道统计
+     *
+     * @return
+     */
+    @Nullable
+    public TcpTunnelStats tcpTunnelStats() {
+        return (tcpTunnelServer != null) ? tcpTunnelServer.stats() : null;
+    }
+
+    /**
+     * TCP 隧道注册中心
+     *
+     * @return
+     */
+    @Nullable
+    public TcpTunnelRegistry tcpTunnelRegistry() {
+        return (tcpTunnelServer != null) ? tcpTunnelServer.registry() : null;
+    }
+
+    /**
+     * HTTP 隧道注册中心
+     *
+     * @return
+     */
+    @Nullable
+    public HttpTunnelRegistry httpTunnelRegistry() {
+        return (httpTunnelServer != null) ? httpTunnelServer.registry() : null;
+    }
+
+
+    /**
+     * HTTPS 隧道注册中心
+     *
+     * @return
+     */
+    @Nullable
+    public HttpTunnelRegistry httpsTunnelRegistry() {
+        return (httpsTunnelServer != null) ? httpsTunnelServer.registry() : null;
+    }
+
 
     public static class Builder {
 
