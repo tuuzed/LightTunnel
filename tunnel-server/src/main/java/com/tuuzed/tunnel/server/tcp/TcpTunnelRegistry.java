@@ -18,10 +18,14 @@ public class TcpTunnelRegistry {
     @NotNull
     private final Map<Integer, TcpTunnelDescriptor> portDescriptors = new ConcurrentHashMap<>();
 
-    synchronized void register(int port, @NotNull ServerTunnelSessions tunnelSessions, TcpTunnelDescriptor descriptor) {
-        tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
+    synchronized void register(
+        int port,
+        @NotNull ServerTunnelSessions sessions,
+        @NotNull TcpTunnelDescriptor descriptor
+    ) {
+        tunnelTokenDescriptors.put(sessions.tunnelToken(), descriptor);
         portDescriptors.put(port, descriptor);
-        logger.info("Start Tunnel: {}", tunnelSessions.protoRequest());
+        logger.info("Start Tunnel: {}", sessions.protoRequest());
     }
 
     synchronized void unregister(long tunnelToken) {

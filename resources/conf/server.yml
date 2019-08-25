@@ -1,24 +1,19 @@
 # 绑定地址
 bind_addr: 0.0.0.0
-
 # 绑定端口
 bind_port: 5000
-
 # 令牌
 token: tk123456
-
-
 # TCP端口白名单
 allow_ports: 10000,10001,10002-50000
-
 # 线程数量
 boss_threads: -1
 worker_threads: -1
-
+# 日志
 log:
   # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
   level: INFO
-  file: ./logs/tunnel-server.log
+  file: ./logs/tunnels.log
   # KB, MB, GB
   max_file_size: 1MB
   max_backup_index: 3

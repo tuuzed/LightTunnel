@@ -1,7 +1,7 @@
 package com.tuuzed.tunnel.client.local;
 
 import com.tuuzed.tunnel.client.internal.AttributeKeys;
-import com.tuuzed.tunnel.common.proto.ProtoMessage;
+import com.tuuzed.tunnel.proto.ProtoMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;

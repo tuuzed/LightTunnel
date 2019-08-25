@@ -1,6 +1,6 @@
 package com.tuuzed.tunnel.server.internal;
 
-import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.proto.ProtoRequest;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;

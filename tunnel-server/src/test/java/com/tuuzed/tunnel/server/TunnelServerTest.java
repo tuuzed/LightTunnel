@@ -1,8 +1,8 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.interceptor.SimpleRequestInterceptor;
-import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
-import com.tuuzed.tunnel.common.util.SslContexts;
+import com.tuuzed.tunnel.interceptor.SimpleRequestInterceptor;
+import com.tuuzed.tunnel.log4j.Log4jInitializer;
+import com.tuuzed.tunnel.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.apache.log4j.Level;
 import org.junit.After;

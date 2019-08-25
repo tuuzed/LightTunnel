@@ -1,6 +1,6 @@
 package com.tuuzed.tunnel.server.http;
 
-import com.tuuzed.tunnel.common.proto.ProtoException;
+import com.tuuzed.tunnel.proto.ProtoException;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
@@ -24,14 +24,17 @@ public final class HttpTunnelRegistry {
     }
 
     /* package */
-    synchronized void register(@NotNull String vhost, @NotNull ServerTunnelSessions tunnelSessions) throws ProtoException {
+    synchronized void register(
+        @NotNull String vhost,
+        @NotNull ServerTunnelSessions sessions
+    ) throws ProtoException {
         if (isRegistered(vhost)) {
             throw new ProtoException("vhost(" + vhost + ") already used");
         }
-        final HttpTunnelDescriptor descriptor = new HttpTunnelDescriptor(vhost, tunnelSessions);
-        tunnelTokenDescriptors.put(tunnelSessions.tunnelToken(), descriptor);
+        final HttpTunnelDescriptor descriptor = new HttpTunnelDescriptor(vhost, sessions);
+        tunnelTokenDescriptors.put(sessions.tunnelToken(), descriptor);
         vhostDescriptors.put(vhost, descriptor);
-        logger.info("Start Tunnel: {}", tunnelSessions.protoRequest());
+        logger.info("Start Tunnel: {}", sessions.protoRequest());
         logger.trace("vhostDescriptors: {}", vhostDescriptors);
         logger.trace("tunnelTokenDescriptors: {}", tunnelTokenDescriptors);
     }

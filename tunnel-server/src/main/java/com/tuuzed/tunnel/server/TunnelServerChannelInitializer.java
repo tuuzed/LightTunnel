@@ -1,9 +1,9 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
-import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
-import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
-import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
+import com.tuuzed.tunnel.interceptor.ProtoRequestInterceptor;
+import com.tuuzed.tunnel.proto.ProtoHeartbeatHandler;
+import com.tuuzed.tunnel.proto.ProtoMessageDecoder;
+import com.tuuzed.tunnel.proto.ProtoMessageEncoder;
 import com.tuuzed.tunnel.server.http.HttpTunnelServer;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
 import com.tuuzed.tunnel.server.tcp.TcpTunnelServer;

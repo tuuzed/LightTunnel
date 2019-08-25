@@ -1,6 +1,6 @@
 package com.tuuzed.tunnel.server.http;
 
-import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
+import com.tuuzed.tunnel.interceptor.HttpRequestInterceptor;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;

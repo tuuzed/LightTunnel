@@ -1,6 +1,6 @@
 package com.tuuzed.tunnel.server.http;
 
-import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
+import com.tuuzed.tunnel.interceptor.HttpRequestInterceptor;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

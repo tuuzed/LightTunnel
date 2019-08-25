@@ -1,6 +1,6 @@
 package com.tuuzed.tunnel.server.tcp;
 
-import com.tuuzed.tunnel.common.proto.ProtoMessage;
+import com.tuuzed.tunnel.proto.ProtoMessage;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

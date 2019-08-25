@@ -1,7 +1,7 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
-import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
+import com.tuuzed.tunnel.interceptor.HttpRequestInterceptor;
+import com.tuuzed.tunnel.interceptor.ProtoRequestInterceptor;
 import com.tuuzed.tunnel.server.http.HttpTunnelRegistry;
 import com.tuuzed.tunnel.server.http.HttpTunnelServer;
 import com.tuuzed.tunnel.server.internal.TokenProducer;
@@ -367,5 +367,6 @@ public class TunnelServer {
         public TunnelServer build() {
             return new TunnelServer(this);
         }
+
     }
 }

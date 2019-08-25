@@ -1,39 +1,178 @@
-# Tunnel-内网映射工具
+# Tunnel-内网穿透工具
 
-## TCP Tunnel
+支持TCP、HTTP、HTTPS穿透。
+
+
+
+## 0x01 服务器端配置
 
 ```yml
-tunnels:
-  - proto: tcp                 # 指定协议为TCP
-    enable_ssl: false          # 是否启用SSL
-    local_addr: 192.168.1.10   # 映射本地地址
-    local_port: 22             # 映射本地端口
-    remote_port: 10022         # 映射远程端口
+# 绑定地址
+bind_addr: 0.0.0.0
+# 绑定端口
+bind_port: 5000
+# 令牌
+token: tk123456
+# TCP端口白名单
+allow_ports: 10000,10001,10002-50000 
+# 线程数量
+boss_threads: -1                     
+worker_threads: -1
+# 日志
+log:
+  # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
+  level: INFO
+  file: ./logs/tunnels.log
+  # KB, MB, GB
+  max_file_size: 1MB   
+  max_backup_index: 3
+
+# ssl
+ssl:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 5001
+  jks: server.jks
+  storepass: stunnelpass
+  keypass: stunnelpass
+
+# http
+http:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 80
+
+# https
+https:
+  enable: true
+  bind_addr: 0.0.0.0
+  bind_port: 443
+  jks: server.jks
+  storepass: stunnelpass
+  keypass: stunnelpass
+
 ```
 
-## HTTP(S) Tunnel
+
+
+## 0x02 客户端配置
 
 ```yml
+# 服务器地址
+server_addr: 127.0.0.1
+# 服务器端口
+server_port: 5000
+# 令牌
+token: tk123456
+# 线程数量
+worker_threads: -1
+
+log:
+  # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
+  level: INFO
+  file: ./logs/tunnelc.log
+  # KB, MB, GB
+  max_file_size: 1MB
+  max_backup_index: 3
+
+# ssl
+ssl:
+  server_port: 5001
+  jks: client.jks
+  storepass: ctunnelpass
+
+# 隧道列表
 tunnels:
-  - proto: [http|https]        # 指定协议为HTTPS
-    enable_ssl: false          # 是否启用SSL
-    local_addr: apache.org     # 映射本地地址
-    local_port: 80             # 映射本地端口
-    vhost: t2.tunnel.lo        # 映射域名
-    write_headers:             # 添加HTTP响应头
+  # tcp-http
+  - proto: tcp
+    enable_ssl: true
+    local_addr: 192.168.1.1
+    local_port: 80
+    remote_port: 10080
+
+  # vnc
+  - proto: tcp
+    enable_ssl: false
+    local_addr: 192.168.1.33
+    local_port: 5900
+    remote_port: 15900
+
+  # ssh
+  - proto: tcp
+    enable_ssl: false
+    local_addr: 127.0.0.1
+    local_port: 22
+    remote_port: 10022
+
+  # http-vhost
+  - proto: http
+    enable_ssl: false
+    local_addr: 192.168.1.1
+    local_port: 80
+    vhost: t1.tunnel.lo
+    write_headers:
       X-User-Agent: Tunnel
-    rewrite_headers:           # 设置HTTP响应头
-      X-Real-IP: $remote_addr  # $remote_addr 将被替换成发起请求的客户端IP
-      Host: apache.org
-    auth:                      # 登录验证
+    rewrite_headers:
+      X-Real-IP: $remote_addr
+    auth:
       enable: true
       realm: User
       username: admin
       password: admin
 
+  # http-vhost
+  - proto: http
+    enable_ssl: false
+    local_addr: 111.230.198.37
+    local_port: 10080
+    vhost: t2.tunnel.lo
+    write_headers:
+      X-User-Agent: Tunnel
+    rewrite_headers:
+      X-Real-IP: $remote_addr
+    auth:
+      enable: true
+      realm: User
+      username: admin
+      password: admin
+
+  # http-vhost
+  - proto: http
+    enable_ssl: false
+    local_addr: 192.168.1.1
+    local_port: 80
+    vhost: t1.tunnel.lo
+    write_headers:
+      X-User-Agent: Tunnel
+    rewrite_headers:
+      X-Real-IP: $remote_addr   # $remote_addr 将被替换成发起请求的客户端IP
+    auth:
+      enable: true
+      realm: .
+      username: admin
+      password: admin
+
+  # https-vhost
+  - proto: https
+    enable_ssl: false
+    local_addr: 192.168.1.1
+    local_port: 10080
+    vhost: t2.tunnel.lo
+    write_headers:
+      X-User-Agent: Tunnel
+    rewrite_headers:
+      X-Real-IP: $remote_addr
+    auth:
+      enable: true
+      realm: .
+      username: admin
+      password: admin
 ```
 
-## SSL证书生成
+
+
+## 0x03 SSL证书生成
+
 - 生成服务端证书
 ```bash
 

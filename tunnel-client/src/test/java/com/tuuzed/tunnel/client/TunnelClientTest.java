@@ -1,9 +1,9 @@
 package com.tuuzed.tunnel.client;
 
-import com.tuuzed.tunnel.common.log4j.Log4jInitializer;
-import com.tuuzed.tunnel.common.proto.ProtoRequest;
-import com.tuuzed.tunnel.common.util.HttpUtils;
-import com.tuuzed.tunnel.common.util.SslContexts;
+import com.tuuzed.tunnel.log4j.Log4jInitializer;
+import com.tuuzed.tunnel.proto.ProtoRequest;
+import com.tuuzed.tunnel.util.HttpUtils;
+import com.tuuzed.tunnel.util.SslContexts;
 import io.netty.handler.ssl.SslContext;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;

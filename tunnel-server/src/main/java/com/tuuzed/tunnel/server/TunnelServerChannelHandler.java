@@ -1,10 +1,10 @@
 package com.tuuzed.tunnel.server;
 
-import com.tuuzed.tunnel.common.interceptor.ProtoRequestInterceptor;
-import com.tuuzed.tunnel.common.proto.Proto;
-import com.tuuzed.tunnel.common.proto.ProtoException;
-import com.tuuzed.tunnel.common.proto.ProtoMessage;
-import com.tuuzed.tunnel.common.proto.ProtoRequest;
+import com.tuuzed.tunnel.interceptor.ProtoRequestInterceptor;
+import com.tuuzed.tunnel.proto.Proto;
+import com.tuuzed.tunnel.proto.ProtoException;
+import com.tuuzed.tunnel.proto.ProtoMessage;
+import com.tuuzed.tunnel.proto.ProtoRequest;
 import com.tuuzed.tunnel.server.http.HttpTunnelServer;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import com.tuuzed.tunnel.server.internal.ServerTunnelSessions;

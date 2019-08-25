@@ -1,9 +1,9 @@
 package com.tuuzed.tunnel.server.http;
 
-import com.tuuzed.tunnel.common.interceptor.HttpRequestInterceptor;
-import com.tuuzed.tunnel.common.proto.ProtoMessage;
-import com.tuuzed.tunnel.common.proto.ProtoRequest;
-import com.tuuzed.tunnel.common.util.HttpUtils;
+import com.tuuzed.tunnel.interceptor.HttpRequestInterceptor;
+import com.tuuzed.tunnel.proto.ProtoMessage;
+import com.tuuzed.tunnel.proto.ProtoRequest;
+import com.tuuzed.tunnel.util.HttpUtils;
 import com.tuuzed.tunnel.server.internal.AttributeKeys;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

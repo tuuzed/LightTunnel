@@ -10,7 +10,7 @@ worker_threads: -1
 log:
   # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
   level: INFO
-  file: ./logs/tunnel-client.log
+  file: ./logs/tunnelc.log
   # KB, MB, GB
   max_file_size: 1MB
   max_backup_index: 3
@@ -23,7 +23,6 @@ ssl:
 
 # 隧道列表
 tunnels:
-
   # tcp-http
   - proto: tcp
     enable_ssl: true
@@ -41,7 +40,7 @@ tunnels:
   # ssh
   - proto: tcp
     enable_ssl: false
-    local_addr: 192.168.1.10
+    local_addr: 127.0.0.1
     local_port: 22
     remote_port: 10022
 
@@ -77,8 +76,8 @@ tunnels:
       username: admin
       password: admin
 
-  # https-vhost
-  - proto: https
+  # http-vhost
+  - proto: http
     enable_ssl: false
     local_addr: 192.168.1.1
     local_port: 80
@@ -86,17 +85,17 @@ tunnels:
     write_headers:
       X-User-Agent: Tunnel
     rewrite_headers:
-      X-Real-IP: $remote_addr
+      X-Real-IP: $remote_addr   # $remote_addr 将被替换成发起请求的客户端IP
     auth:
       enable: true
-      realm: User
+      realm: .
       username: admin
       password: admin
 
   # https-vhost
   - proto: https
     enable_ssl: false
-    local_addr: 111.230.198.37
+    local_addr: 192.168.1.1
     local_port: 10080
     vhost: t2.tunnel.lo
     write_headers:
@@ -105,6 +104,6 @@ tunnels:
       X-Real-IP: $remote_addr
     auth:
       enable: true
-      realm: User
+      realm: .
       username: admin
       password: admin

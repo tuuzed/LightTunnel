@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,6 +25,11 @@ public class TcpTunnelStats {
             items.put(port, item);
         }
         return item;
+    }
+
+    @NotNull
+    public List<Item> getItems() {
+        return new ArrayList<>(items.values());
     }
 
     public void removeAll() {
@@ -123,14 +130,14 @@ public class TcpTunnelStats {
         @Override
         public String toString() {
             return "{" +
-                    "port=" + port +
-                    ", readBytes=" + readBytes +
-                    ", writeBytes=" + writeBytes +
-                    ", readMsgs=" + readMsgs +
-                    ", writeMsgs=" + writeMsgs +
-                    ", channels=" + channels +
-                    ", timestamp=" + timestamp +
-                    '}';
+                "port=" + port +
+                ", readBytes=" + readBytes +
+                ", writeBytes=" + writeBytes +
+                ", readMsgs=" + readMsgs +
+                ", writeMsgs=" + writeMsgs +
+                ", channels=" + channels +
+                ", timestamp=" + timestamp +
+                '}';
         }
     }
 }

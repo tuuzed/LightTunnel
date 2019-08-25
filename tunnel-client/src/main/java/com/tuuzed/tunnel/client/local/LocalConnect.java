@@ -26,8 +26,8 @@ public class LocalConnect {
     private final Bootstrap bootstrap;
 
     public LocalConnect(@NotNull NioEventLoopGroup workerGroup) {
-        bootstrap = new Bootstrap();
-        bootstrap
+        this.bootstrap = new Bootstrap();
+        this.bootstrap
             .group(workerGroup)
             .channel(NioSocketChannel.class)
             .option(ChannelOption.AUTO_READ, true)
@@ -37,15 +37,17 @@ public class LocalConnect {
 
     @Nullable
     public Channel removeLocalChannel(long tunnelToken, long sessionToken) {
-        return removeCachedChannelSync(tunnelToken, sessionToken);
+        return removeCachedChannel(tunnelToken, sessionToken);
     }
 
     public void acquireLocalChannel(
         @NotNull final String localAddr, final int localPort,
         final long tunnelToken, final long sessionToken,
-        final Channel tunnelClientChannel, @NotNull final GetLocalContentChannelCallback callback) {
+        @NotNull final Channel tunnelClientChannel,
+        @NotNull final GetLocalContentChannelCallback callback
+    ) {
         logger.trace("cachedChannels: {}", cachedChannels);
-        final Channel localChannel = getCachedChannelSync(tunnelToken, sessionToken);
+        final Channel localChannel = getCachedChannel(tunnelToken, sessionToken);
         if (localChannel != null && localChannel.isActive()) {
             callback.success(localChannel);
             return;
@@ -54,7 +56,7 @@ public class LocalConnect {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 // 二次检查是否有可用的Channel缓存
-                final Channel localChannel = getCachedChannelSync(tunnelToken, sessionToken);
+                final Channel localChannel = getCachedChannel(tunnelToken, sessionToken);
                 if (localChannel != null && localChannel.isActive()) {
                     callback.success(localChannel);
                     future.channel().close();
@@ -65,7 +67,7 @@ public class LocalConnect {
                     future.channel().attr(AttributeKeys.TUNNEL_TOKEN).set(tunnelToken);
                     future.channel().attr(AttributeKeys.SESSION_TOKEN).set(sessionToken);
                     future.channel().attr(AttributeKeys.NEXT_CHANNEL).set(tunnelClientChannel);
-                    putCachedChannelSync(tunnelToken, sessionToken, future.channel());
+                    putCachedChannel(tunnelToken, sessionToken, future.channel());
                     callback.success(future.channel());
                 } else {
                     callback.error(future.cause());
@@ -79,14 +81,14 @@ public class LocalConnect {
     }
 
     @Nullable
-    private Channel getCachedChannelSync(long tunnelToken, long sessionToken) {
+    private Channel getCachedChannel(long tunnelToken, long sessionToken) {
         final String key = getCachedChannelKey(tunnelToken, sessionToken);
         synchronized (cachedChannels) {
             return cachedChannels.get(key);
         }
     }
 
-    private void putCachedChannelSync(long tunnelToken, long sessionToken, @NotNull Channel channel) {
+    private void putCachedChannel(long tunnelToken, long sessionToken, @NotNull Channel channel) {
         final String key = getCachedChannelKey(tunnelToken, sessionToken);
         synchronized (cachedChannels) {
             cachedChannels.put(key, channel);
@@ -94,7 +96,7 @@ public class LocalConnect {
     }
 
     @Nullable
-    private Channel removeCachedChannelSync(long tunnelToken, long sessionToken) {
+    private Channel removeCachedChannel(long tunnelToken, long sessionToken) {
         final String key = getCachedChannelKey(tunnelToken, sessionToken);
         synchronized (cachedChannels) {
             return cachedChannels.remove(key);
@@ -102,7 +104,7 @@ public class LocalConnect {
     }
 
     @NotNull
-    private String getCachedChannelKey(long tunnelToken, long sessionToken) {
+    private static String getCachedChannelKey(long tunnelToken, long sessionToken) {
         return String.format("%d-%d", tunnelToken, sessionToken);
     }
 

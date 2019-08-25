@@ -5,9 +5,8 @@ include 'tunnel-client'
 include 'tunnel-server'
 
 
-include 'tunnel-common-cli'
-include 'tunnel-client-cli'
-include 'tunnel-server-cli'
+include 'tunnel-tunnelcli'
+include 'tunnel-tunnelc'
+include 'tunnel-tunnels'
 
-
-include 'tunnel-web-framework'
+include 'tunnel-tunnelweb'

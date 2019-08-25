@@ -34,5 +34,5 @@ task proguardJar(
 ) {
     configuration project.file("proguard-rules.txt")
     injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"
-    outjars rootProject.file("dists/${project.name}-${project.version}.jar")
+    outjars rootProject.file("dists/${project.version}/${project.OutJarName ?: (project.name + ".jar")}")
 }

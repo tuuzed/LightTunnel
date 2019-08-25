@@ -1,9 +1,9 @@
 package com.tuuzed.tunnel.client;
 
 import com.tuuzed.tunnel.client.local.LocalConnect;
-import com.tuuzed.tunnel.common.proto.ProtoHeartbeatHandler;
-import com.tuuzed.tunnel.common.proto.ProtoMessageDecoder;
-import com.tuuzed.tunnel.common.proto.ProtoMessageEncoder;
+import com.tuuzed.tunnel.proto.ProtoHeartbeatHandler;
+import com.tuuzed.tunnel.proto.ProtoMessageDecoder;
+import com.tuuzed.tunnel.proto.ProtoMessageEncoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
