@@ -62,7 +62,10 @@ public class TunnelClientTest {
     @Before
     public void setUp() {
         Log4jInitializer.initializeThirdLibrary(Level.WARN);
-        Log4jInitializer.builder().initialize();
+        Log4jInitializer.builder()
+            .setFile("../logs/tunnelc.log")
+            .setLevel(Level.ALL)
+            .initialize();
 
         client = TunnelClient.builder()
             .setAutoReconnect(true)

@@ -123,7 +123,7 @@ tunnels:
   # http-vhost
   - proto: http
     enable_ssl: false
-    local_addr: 111.230.198.37
+    local_addr: 192.168.1.33
     local_port: 10080
     vhost: t2.tunnel.lo
     write_headers:
@@ -176,16 +176,50 @@ tunnels:
 - 生成服务端证书
 ```bash
 
-keytool -genkey -alias stunnelalias -keysize 2048 -validity 365 -keyalg RSA -dname "CN=tunnel" -keypass stunnelpass -storepass stunnelpass -keystore tunnel-server.jks
-keytool -importkeystore -srckeystore tunnel-server.jks -destkeystore tunnel-server.jks -deststoretype pkcs12
-keytool -export -alias stunnelalias -keystore tunnel-server.jks -storepass stunnelpass -file tunnel-server.cer
+keytool -genkey \
+-alias stunnelalias \
+-keysize 2048 \
+-validity 365 \
+-keyalg RSA \
+-dname "CN=tunnel" \
+-keypass stunnelpass \
+-storepass stunnelpass \
+-keystore tunnels.jks
+
+keytool -importkeystore \
+-srckeystore tunnels.jks \
+-destkeystore tunnels.jks \
+-deststoretype pkcs12
+
+keytool -export \
+-alias stunnelalias \
+-keystore tunnels.jks \
+-storepass stunnelpass \
+-file tunnels.cer
 
 ```
 - 生成客户端证书
 ```bash
 
-keytool -genkey -alias ctunnelalias -keysize 2048 -validity 365 -keyalg RSA -dname "CN=tunnel" -keypass ctunnelpass -storepass ctunnelpass -keystore tunnel-client.jks
-keytool -importkeystore -srckeystore tunnel-client.jks -destkeystore tunnel-client.jks -deststoretype pkcs12
-keytool -import -trustcacerts -alias stunnalalias -file tunnel-server.cer -storepass ctunnelpass -keystore tunnel-client.jks
+keytool -genkey \
+-alias ctunnelalias \
+-keysize 2048 \
+-validity 365 \
+-keyalg RSA 
+-dname "CN=tunnel" \
+-keypass ctunnelpass 
+-storepass ctunnelpass \
+-keystore tunnelc.jks
+
+keytool -importkeystore \
+-srckeystore tunnelc.jks \
+-destkeystore tunnelc.jks 
+-deststoretype pkcs12
+
+keytool -import -trustcacerts \
+-alias stunnalalias \
+-file tunnels.cer \
+-storepass ctunnelpass \
+-keystore tunnelc.jks
 
 ```

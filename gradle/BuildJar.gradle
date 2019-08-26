@@ -19,11 +19,11 @@ jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
         attributes 'Main-Class': project.MainClass
-        attributes 'Version-Code': String.valueOf(GitVC.VERSION_CODE)
-        attributes 'Version-Name': String.valueOf(GitVC.VERSION_NAME)
-        attributes 'Last-Commit-SHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
-        attributes 'Last-Commit-Date': String.valueOf(GitVC.LAST_COMMIT_DATE)
-        attributes 'Build-Date': String.valueOf(new Date())
+        attributes 'Tunnel-VersionCode': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'Tunnel-VersionName': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'Tunnel-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'Tunnel-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'Tunnel-BuildDate': String.valueOf(new Date())
     }
 }
 

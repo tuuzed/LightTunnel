@@ -1,6 +1,5 @@
 package com.tuuzed.tunnel.interceptor;
 
-import com.tuuzed.tunnel.TunnelVersion;
 import com.tuuzed.tunnel.proto.ProtoException;
 import com.tuuzed.tunnel.proto.ProtoRequest;
 import com.tuuzed.tunnel.util.HttpUtils;
@@ -91,7 +90,6 @@ public final class SimpleRequestInterceptor implements ProtoRequestInterceptor, 
                 HttpResponseStatus.UNAUTHORIZED
             );
             final byte[] content = HttpResponseStatus.UNAUTHORIZED.toString().getBytes(StandardCharsets.UTF_8);
-            httpResponse.headers().add(HttpHeaderNames.SERVER, "Tunnel/" + TunnelVersion.VERSION_NAME);
             httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, String.format("Basic realm=\"%s\"", protoRequest.basicAuthRealm()));
             httpResponse.headers().add(HttpHeaderNames.CONNECTION, "keep-alive");
             httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, "bytes");

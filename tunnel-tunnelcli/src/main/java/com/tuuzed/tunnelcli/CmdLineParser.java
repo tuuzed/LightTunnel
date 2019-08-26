@@ -35,7 +35,7 @@ public final class CmdLineParser {
         }
     }
 
-    public static <T> void printHelp(@NotNull T t, @NotNull OutputStream out) throws Exception {
+    public static <T> void printHelp(@NotNull T t, @NotNull OutputStream out, @NotNull String prefix) throws Exception {
         List<Item> items = getOptionItems(t);
         PrintStream os = (out instanceof PrintStream)
             ? (PrintStream) out
@@ -49,7 +49,7 @@ public final class CmdLineParser {
             typeLength = Math.max(item.typeName.length(), typeLength);
         }
         for (Item item : items) {
-            item.printHelp(os, nameLength, longNamesLength, typeLength);
+            item.printHelp(os, nameLength, longNamesLength, typeLength, prefix);
         }
     }
 
@@ -92,7 +92,7 @@ public final class CmdLineParser {
         }
 
 
-        void printHelp(@NotNull PrintStream out, int nameLength, int longNamesLength, int typeLength) throws Exception {
+        void printHelp(@NotNull PrintStream out, int nameLength, int longNamesLength, int typeLength, @NotNull String prefix) throws Exception {
             StringBuilder helpText = new StringBuilder();
             // name
             helpText.append("-").append(name);
@@ -115,7 +115,7 @@ public final class CmdLineParser {
             helpText.append("    ");
             helpText.append(help);
             helpText.append(", default: ").append(def);
-            out.println(helpText);
+            out.printf("%s%s%n", prefix, helpText);
         }
 
 
