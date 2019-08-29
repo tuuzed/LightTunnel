@@ -19,9 +19,9 @@ public final class SslContexts {
     ) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(new FileInputStream(jks), storepass.toCharArray());
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        keyManagerFactory.init(keyStore, keypass.toCharArray());
-        return SslContextBuilder.forServer(keyManagerFactory).build();
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        kmf.init(keyStore, keypass.toCharArray());
+        return SslContextBuilder.forServer(kmf).build();
     }
 
     @NotNull
@@ -31,8 +31,8 @@ public final class SslContexts {
     ) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(new FileInputStream(jks), storepass.toCharArray());
-        TrustManagerFactory tf = TrustManagerFactory.getInstance("SunX509");
-        tf.init(keyStore);
-        return SslContextBuilder.forClient().trustManager(tf).build();
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+        tmf.init(keyStore);
+        return SslContextBuilder.forClient().trustManager(tmf).build();
     }
 }

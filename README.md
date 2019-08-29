@@ -205,15 +205,15 @@ keytool -genkey \
 -alias ctunnelalias \
 -keysize 2048 \
 -validity 365 \
--keyalg RSA 
+-keyalg RSA \
 -dname "CN=tunnel" \
--keypass ctunnelpass 
+-keypass ctunnelpass \
 -storepass ctunnelpass \
 -keystore tunnelc.jks
 
 keytool -importkeystore \
 -srckeystore tunnelc.jks \
--destkeystore tunnelc.jks 
+-destkeystore tunnelc.jks \
 -deststoretype pkcs12
 
 keytool -import -trustcacerts \
