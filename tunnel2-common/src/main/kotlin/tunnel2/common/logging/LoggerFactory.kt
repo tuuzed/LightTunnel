@@ -38,7 +38,8 @@ class LoggerFactory private constructor(
 
     companion object {
 
-        val thirdLibs = arrayOf("io.netty",
+        val thirdLibs = arrayOf(
+            "io.netty",
             "org.yaml.snakeyaml",
             "org.slf4j",
             "org.apache.log4j"
@@ -49,10 +50,10 @@ class LoggerFactory private constructor(
         private const val defaultFilePattern = "%-d{yyyy-MM-dd HH:mm:ss} [ %t:%r ] - [ %p ] %m%n"
 
         @JvmStatic
-        fun getLogger(name: String) = org.slf4j.LoggerFactory.getLogger(name)
+        fun getLogger(name: String) = org.slf4j.LoggerFactory.getLogger(name)!!
 
         @JvmStatic
-        fun getLogger(clazz: Class<*>) = org.slf4j.LoggerFactory.getLogger(clazz)
+        fun getLogger(clazz: Class<*>) = org.slf4j.LoggerFactory.getLogger(clazz)!!
 
 
         @JvmStatic

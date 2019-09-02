@@ -3,7 +3,7 @@
 
 -libraryjars  <java.home>/lib/rt.jar
 
--target 1.7
+-target 1.8
 # 代码混淆压缩比，在0和7之间，默认为5
 -optimizationpasses 5
 
@@ -16,8 +16,6 @@
 ### Netty
 -keepclasseswithmembers class io.netty.** { *; }
 -dontwarn io.netty.**
-#-keep class io.netty.** { *;}
-#-dontwarn io.netty.**
 
 ### slf4j & log4j
 -keepclasseswithmembers class org.slf4j.** { *; }

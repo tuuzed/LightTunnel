@@ -29,9 +29,9 @@ class TunnelServerTest {
             "tk123456", "1024-60000"
         )
         val sslContext = SslContexts.forServer(
-            "../resources/jks/tunnels.jks",
-            "stunnelpass",
-            "stunnelpass"
+            "../resources/jks/t2s.jks",
+            "t2spass",
+            "t2spass"
         )
         this.tunnelServer = TunnelServer(
             tunnelRequestInterceptor = simpleRequestInterceptor,

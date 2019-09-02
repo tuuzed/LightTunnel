@@ -10,7 +10,6 @@ import tunnel2.common.proto.ProtoCw
 import tunnel2.common.proto.ProtoMessage
 import java.nio.charset.StandardCharsets
 
-@ChannelHandler.Sharable
 class TunnelClientChannelHandler(
     private val localConnector: LocalConnector,
     private val listener: Listener
@@ -58,6 +57,7 @@ class TunnelClientChannelHandler(
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     @Throws(Exception::class)
     private fun handlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         ctx.writeAndFlush(ProtoMessage(ProtoCw.PONG))
@@ -128,6 +128,7 @@ class TunnelClientChannelHandler(
     /**
      * 处理用户隧道断开消息
      */
+    @Suppress("UNUSED_PARAMETER")
     @Throws(Exception::class)
     private fun handleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         localConnector.removeLocalChannel(msg.tunnelId, msg.sessionId)?.close()

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 /**
  * 心跳处理器
  */
-class TunnelHeartbeatHandler @JvmOverloads constructor(
+class TunnelHeartbeatHandler(
     observeOutput: Boolean = false,
     readerIdleTime: Long = 60 * 5L,
     writerIdleTime: Long = 60 * 3L,

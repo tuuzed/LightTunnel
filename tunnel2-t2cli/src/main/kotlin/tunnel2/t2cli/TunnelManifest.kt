@@ -1,10 +1,9 @@
 package tunnel2.t2cli
 
 import java.io.IOException
-import java.util.*
 
 object TunnelManifest {
-    private val manifest = LinkedHashMap<String, String>()
+    private val manifest = linkedMapOf<String, String>()
 
     init {
         val url = TunnelManifest::class.java.getResource("/META-INF/MANIFEST.MF")

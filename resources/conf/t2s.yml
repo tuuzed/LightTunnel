@@ -9,6 +9,7 @@ allow_ports: 10000,10001,10002-50000
 # 线程数量
 boss_threads: -1
 worker_threads: -1
+
 # 日志
 log:
   # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
@@ -24,8 +25,8 @@ ssl:
   bind_addr: 0.0.0.0
   bind_port: 5001
   jks: t2s.jks
-  storepass: stunnelpass
-  keypass: stunnelpass
+  storepass: t2spass
+  keypass: t2spass
 
 # http
 http:
@@ -39,5 +40,5 @@ https:
   bind_addr: 0.0.0.0
   bind_port: 443
   jks: t2s.jks
-  storepass: stunnelpass
-  keypass: stunnelpass
+  storepass: t2spass
+  keypass: t2spass

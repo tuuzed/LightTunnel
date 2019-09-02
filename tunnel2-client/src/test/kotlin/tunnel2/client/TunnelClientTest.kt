@@ -27,8 +27,8 @@ class TunnelClientTest {
         val serverAddr = "127.0.0.1"
         val serverPort = 5001
         val sslContext = SslContexts.forClient(
-            "../resources/jks/tunnelc.jks",
-            "ctunnelpass"
+            "../resources/jks/t2c.jks",
+            "t2cpass"
         )
         client.connect(serverAddr, serverPort, portError, sslContext)
 
@@ -75,8 +75,8 @@ class TunnelClientTest {
                     logger.error("{}", descriptor)
                 }
 
-                override fun onDisconnect(descriptor: TunnelClientDescriptor, err: Boolean) {
-                    logger.error("tunnel: {}, deadly: {}", descriptor, err)
+                override fun onDisconnect(descriptor: TunnelClientDescriptor, err: Boolean, errCause: Throwable?) {
+                    logger.error("tunnel: {}, err: {}", descriptor, err, errCause)
                 }
             }
         )

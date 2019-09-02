@@ -21,36 +21,28 @@ object CmdLineParser {
 
     @Throws(Exception::class)
     fun <T> parse(obj: T, args: Array<String>) {
-        val map = LinkedHashMap<String, String>()
+        val map = linkedMapOf<String, String>()
         var i = 0
         while (i < args.size) {
             map[args[i]] = args[++i]
             i++
         }
-        val items = getOptionItems(obj as Any)
-        for (item in items) {
-            item.apply(obj, map)
-        }
+        getOptionItems(obj as Any).forEach { it.apply(obj, map) }
     }
 
     @Throws(Exception::class)
     fun <T> printHelp(obj: T, out: OutputStream, prefix: String) {
         val items = getOptionItems(obj as Any)
-        val os = if (out is PrintStream)
-            out
-        else
-            PrintStream(out, true)
+        val outTarget = if (out is PrintStream) out else PrintStream(out, true)
         var nameLength = 0
         var longNamesLength = 0
         var typeLength = 0
-        for (item in items) {
-            nameLength = item.name.length.coerceAtLeast(nameLength)
-            longNamesLength = item.longName.length.coerceAtLeast(longNamesLength)
-            typeLength = item.typeName.length.coerceAtLeast(typeLength)
+        items.forEach {
+            nameLength = it.name.length.coerceAtLeast(nameLength)
+            longNamesLength = it.longName.length.coerceAtLeast(longNamesLength)
+            typeLength = it.typeName.length.coerceAtLeast(typeLength)
         }
-        for (item in items) {
-            item.printHelp(os, nameLength, longNamesLength, typeLength, prefix)
-        }
+        items.forEach { it.printHelp(outTarget, nameLength, longNamesLength, typeLength, prefix) }
     }
 
     @Throws(Exception::class)
@@ -83,7 +75,7 @@ object CmdLineParser {
 
 
         @Throws(Exception::class)
-        internal fun printHelp(out: PrintStream, nameLength: Int, longNamesLength: Int, typeLength: Int, prefix: String) {
+        fun printHelp(out: PrintStream, nameLength: Int, longNamesLength: Int, typeLength: Int, prefix: String) {
             val helpText = StringBuilder()
             // name
             helpText.append("-").append(name)
@@ -111,7 +103,7 @@ object CmdLineParser {
 
 
         @Throws(Exception::class)
-        internal fun <T> apply(obj: T, map: Map<String, String>) {
+        fun <T> apply(obj: T, map: Map<String, String>) {
             val name = "-" + this.name
             val longName = "--" + this.longName
             var value: String? = null
@@ -201,63 +193,40 @@ object CmdLineParser {
         }
 
         @Throws(Exception::class)
-        private fun convertListType(
-            field: Field,
-            value: String
-        ): List<*> {
+        private fun convertListType(field: Field, value: String): List<*> {
             val type = field.genericType
-            if (type is ParameterizedType) {
+            return if (type is ParameterizedType) {
                 val actualTypeArguments = type.actualTypeArguments
                 val genericType = actualTypeArguments[0] as Class<*>
-                val array = value.split(LIST_DELIMITER.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
-                val values = ArrayList<Any>()
-                for (it in array) {
-                    val tmpVal = convertBasicType(genericType, it)
-                    if (tmpVal != null) {
-                        values.add(tmpVal)
-                    }
-                }
-                return values
+                value.split(LIST_DELIMITER.toRegex())
+                    .dropLastWhile { it.isEmpty() }
+                    .mapNotNull { convertBasicType(genericType, it) }
+            } else {
+                emptyList<Any>()
             }
-            return emptyList<Any>()
         }
 
         @Throws(Exception::class)
-        private fun convertBasicType(
-            clazz: Class<*>,
-            value: String
-        ): Any? {
-            if (clazz == Boolean::class.javaPrimitiveType || clazz == Boolean::class.java) { // boolean
-                return java.lang.Boolean.parseBoolean(value)
-            } else if (clazz == Byte::class.javaPrimitiveType || clazz == Byte::class.java) { // byte
-                return java.lang.Byte.parseByte(value)
-            } else if (clazz == Char::class.javaPrimitiveType || clazz == Char::class.java) { // char
-                return value[0]
-            } else if (clazz == Short::class.javaPrimitiveType || clazz == Short::class.java) { // short
-                return java.lang.Short.parseShort(value)
-            } else if (clazz == Int::class.javaPrimitiveType || clazz == Int::class.java) { // int
-                return Integer.parseInt(value)
-            } else if (clazz == Long::class.javaPrimitiveType || clazz == Long::class.java) { // long
-                return java.lang.Long.parseLong(value)
-            } else if (clazz == Float::class.javaPrimitiveType || clazz == Float::class.java) { // long
-                return java.lang.Float.parseFloat(value)
-            } else if (clazz == Double::class.javaPrimitiveType || clazz == Double::class.java) { // long
-                return java.lang.Double.parseDouble(value)
-            } else if (clazz == String::class.java) { // string
-                return value
-            } else if (clazz.isEnum) { // enum
-                val valueOf = clazz.getMethod("valueOf", String::class.java)
-                return valueOf.invoke(clazz, value)
-            } else {
-                return null
+        private fun convertBasicType(clazz: Class<*>, value: String): Any? {
+            return when (clazz) {
+                Boolean::class.javaPrimitiveType, Boolean::class.java -> value.toBoolean()
+                Byte::class.javaPrimitiveType, Byte::class.java -> value.toByte()
+                Char::class.javaPrimitiveType, Char::class.java -> value[0]
+                Short::class.javaPrimitiveType, Short::class.java -> value.toShort()
+                Int::class.javaPrimitiveType, Int::class.java -> value.toInt()
+                Long::class.javaPrimitiveType, Long::class.java -> value.toLong()
+                Float::class.javaPrimitiveType, Float::class.java -> value.toFloat()
+                Double::class.javaPrimitiveType, Double::class.java -> value.toDouble()
+                String::class.java -> value
+                else -> {
+                    if (clazz.isEnum) clazz.getMethod("valueOf", String::class.java).invoke(clazz, value)
+                    else null
+                }
             }
         }
 
-        override fun compareTo(other: Item): Int {
-            // 正序（小 -> 大）
-            return this.order.compareTo(other.order)
-        }
+        // 正序（小 -> 大）
+        override fun compareTo(other: Item): Int = this.order.compareTo(other.order)
     }
 
 }

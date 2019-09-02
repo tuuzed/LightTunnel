@@ -1,6 +1,6 @@
 package tunnel2.common
 
-class TunnelException @JvmOverloads constructor(
+class TunnelException(
     message: String,
     cause: Throwable? = null
 ) : Exception(message, cause)

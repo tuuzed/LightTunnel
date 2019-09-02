@@ -47,13 +47,13 @@ class TunnelClient(
         override fun channelInactive(ctx: ChannelHandlerContext) {
             val descriptor = ctx.channel().attr<TunnelClientDescriptor>(AK_TUNNEL_CLIENT_DESCRIPTOR).get()
             if (descriptor != null) {
-                val fatalFlag = ctx.channel().attr<Boolean>(AK_ERR_FLAG).get()
-                val fatalCause = ctx.channel().attr<Throwable>(AK_ERR_CAUSE).get()
-                if (fatalFlag != null && fatalFlag) {
-                    listener?.onDisconnect(descriptor, true)
-                    logger.debug("{}", fatalCause.message, fatalCause)
+                val errFlag = ctx.channel().attr<Boolean>(AK_ERR_FLAG).get()
+                val errCause = ctx.channel().attr<Throwable>(AK_ERR_CAUSE).get()
+                if (errFlag == true) {
+                    listener?.onDisconnect(descriptor, true, errCause)
+                    logger.trace("{}", errCause.message)
                 } else {
-                    listener?.onDisconnect(descriptor, false)
+                    listener?.onDisconnect(descriptor, false, null)
                     if (!descriptor.isShutdown() && autoReconnect) {
                         TimeUnit.SECONDS.sleep(3)
                         descriptor.connect(connectFailureCallback)
@@ -127,9 +127,9 @@ class TunnelClient(
                 )
             }
             ch.pipeline()
+                .addLast(TunnelHeartbeatHandler())
                 .addLast(ProtoMessageDecoder())
                 .addLast(ProtoMessageEncoder())
-                .addLast(TunnelHeartbeatHandler())
                 .addLast(TunnelClientChannelHandler(
                     localConnector,
                     tunnelClientChannelListener
@@ -140,7 +140,7 @@ class TunnelClient(
     interface Listener {
         fun onConnecting(descriptor: TunnelClientDescriptor, reconnect: Boolean) {}
         fun onConnected(descriptor: TunnelClientDescriptor) {}
-        fun onDisconnect(descriptor: TunnelClientDescriptor, err: Boolean) {}
+        fun onDisconnect(descriptor: TunnelClientDescriptor, err: Boolean, errCause: Throwable?) {}
     }
 
 }

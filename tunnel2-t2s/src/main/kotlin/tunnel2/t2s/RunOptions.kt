@@ -62,7 +62,7 @@ class RunOptions {
     var sslKeypass = ""
 
     // =============================== http ================================== //
-    @Option(name = "http", longName = "http", help = "是否启用HTTP", order = 5001)
+    @Option(name = "ht", longName = "http", help = "是否启用HTTP", order = 5001)
     var httpEnable = false
 
     @Option(name = "hb", longName = "http-bind-addr", help = "HTTP绑定地址", order = 5002)
@@ -73,7 +73,7 @@ class RunOptions {
 
 
     // =============================== https ================================== //
-    @Option(name = "https", longName = "https", help = "是否启用HTTPS", order = 6001)
+    @Option(name = "hts", longName = "https", help = "是否启用HTTPS", order = 6001)
     var httpsEnable = false
 
     @Option(name = "hsb", longName = "https-bind-addr", help = "HTTPS绑定地址", order = 6002)

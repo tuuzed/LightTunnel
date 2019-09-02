@@ -1,7 +1,7 @@
 package tunnel2.t2cli
 
-@Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
+@Retention(AnnotationRetention.RUNTIME)
 annotation class Option(
     val name: String,
     val longName: String = "",

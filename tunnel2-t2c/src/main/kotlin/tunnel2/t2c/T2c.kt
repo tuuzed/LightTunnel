@@ -31,8 +31,8 @@ class T2c : AbstractApp<RunOptions>() {
             logger.info("onConnected: {}", descriptor)
         }
 
-        override fun onDisconnect(descriptor: TunnelClientDescriptor, err: Boolean) {
-            logger.info("onDisconnect: {}, err: {}", descriptor, err)
+        override fun onDisconnect(descriptor: TunnelClientDescriptor, err: Boolean, errCause: Throwable?) {
+            logger.info("onDisconnect: {}, err: {}", descriptor, err, errCause)
         }
     }
 

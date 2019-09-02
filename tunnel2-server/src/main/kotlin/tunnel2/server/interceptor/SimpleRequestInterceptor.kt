@@ -100,6 +100,7 @@ class SimpleRequestInterceptor(
         handleProxyHttpHeaders(false, localAddress, remoteAddress, tunnelRequest, httpRequest)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun handleProxyHttpHeaders(
         proxySet: Boolean,
         localAddress: SocketAddress,
