@@ -58,6 +58,7 @@ public final class CmdLineParser {
         Class<?> clazz = t.getClass();
         final Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
+            field.setAccessible(true);
             Option option = field.getAnnotation(Option.class);
             if (option != null) {
                 items.add(new Item(field, option, field.get(t)));
@@ -128,15 +129,12 @@ public final class CmdLineParser {
             if (value == null) return;
             Object typedVal = convertBasicType(field.getType(), value);
             if (typedVal != null) {
-                field.setAccessible(true);
                 field.set(obj, typedVal);
                 return;
             }
             if (field.getType() == Map.class) { // map
-                field.setAccessible(true);
                 field.set(obj, convertMapType(field, value));
             } else if (field.getType() == List.class) { // list
-                field.setAccessible(true);
                 field.set(obj, convertListType(field, value));
             }
         }

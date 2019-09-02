@@ -14,10 +14,6 @@
 -printmapping build/libs/proguard.map
 
 
--keepclasseswithmembers class keep.** { *; }
--dontwarn keep.**
-
-
 ### Netty
 -keepclasseswithmembers class io.netty.** { *; }
 -dontwarn io.netty.**
