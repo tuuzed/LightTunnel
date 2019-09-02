@@ -1,18 +1,17 @@
 buildscript {
+    ext.kotlin_version = '1.3.50'
+    ext.jvm_version = '1.8'
     repositories {
         maven { url 'https://maven.aliyun.com/repository/public' }
-        jcenter()
         mavenCentral()
     }
     dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.tuuzed.gradle.plugin:gitvc:0.1.2'
     }
-
     allprojects {
         repositories {
-            maven { url 'https://maven.aliyun.com/repository/public' }
-            maven { url 'https://dl.bintray.com/tuuzed/maven' }
-            jcenter()
+            maven { url 'https://maven.aliyun.com/repository/central' }
             mavenCentral()
         }
         tasks.withType(JavaCompile) {
@@ -21,16 +20,7 @@ buildscript {
     }
 }
 
-apply plugin: "java"
 apply plugin: 'gitvc-gradle-plugin'
 
-
-group 'com.tuuzed.tunnel'
-version = String.valueOf(GitVC.VERSION_NAME)
-
-targetCompatibility = JavaVersion.VERSION_1_7
-sourceCompatibility = JavaVersion.VERSION_1_7
-
-dependencies {
-    testCompile 'junit:junit:4.12'
-}
+group 'tunnel2'
+version '2.0.0-SNAPSHOT'

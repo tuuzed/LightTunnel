@@ -1,12 +1,9 @@
-rootProject.name = 'tunnel-parent'
+rootProject.name = 'tunnel2-parent'
 
-include 'tunnel-common'
-include 'tunnel-client'
-include 'tunnel-server'
+include "tunnel2-client"
+include "tunnel2-common"
+include "tunnel2-server"
 
-
-include 'tunnel-tunnelcli'
-include 'tunnel-tunnelc'
-include 'tunnel-tunnels'
-
-include 'tunnel-tunnelweb'
+include "tunnel2-t2cli"
+include "tunnel2-t2c"
+include "tunnel2-t2s"
