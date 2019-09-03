@@ -117,7 +117,7 @@ class T2c : AbstractApp<RunOptions>() {
                     TunnelRequest.ofHttp(
                         localAddr = localAddr,
                         localPort = localPort,
-                        vhost = tunnelCfg.getString("vhost", ""),
+                        host = tunnelCfg.getString("host", ""),
                         authToken = authToken,
                         proxySetHeaders = tunnelCfg.getMap("proxy_set_headers") as Map<String, String>,
                         proxyAddHeaders = tunnelCfg.getMap("proxy_add_headers") as Map<String, String>,
@@ -132,7 +132,7 @@ class T2c : AbstractApp<RunOptions>() {
                     TunnelRequest.ofHttps(
                         localAddr = localAddr,
                         localPort = localPort,
-                        vhost = tunnelCfg.getString("vhost", ""),
+                        host = tunnelCfg.getString("host", ""),
                         authToken = authToken,
                         proxySetHeaders = tunnelCfg.getMap("proxy_set_headers") as Map<String, String>,
                         proxyAddHeaders = tunnelCfg.getMap("proxy_add_headers") as Map<String, String>,
@@ -185,7 +185,7 @@ class T2c : AbstractApp<RunOptions>() {
                 TunnelRequest.ofHttp(
                     localAddr = runOptions.localAddr,
                     localPort = runOptions.localPort,
-                    vhost = runOptions.vhost,
+                    host = runOptions.host,
                     authToken = runOptions.authToken,
                     proxySetHeaders = runOptions.proxySetHeaders,
                     proxyAddHeaders = runOptions.proxyAddHeaders,
@@ -199,7 +199,7 @@ class T2c : AbstractApp<RunOptions>() {
                 TunnelRequest.ofHttps(
                     localAddr = runOptions.localAddr,
                     localPort = runOptions.localPort,
-                    vhost = runOptions.vhost,
+                    host = runOptions.host,
                     authToken = runOptions.authToken,
                     proxySetHeaders = runOptions.proxySetHeaders,
                     proxyAddHeaders = runOptions.proxyAddHeaders,

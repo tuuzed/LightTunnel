@@ -114,7 +114,7 @@ tunnels:
     enable_ssl: false
     local_addr: 192.168.1.1
     local_port: 80
-    vhost: t1.tunnel.lo
+    host: t1.tunnel.lo
     proxy_set_headers:
       X-Real-IP: $remote_addr
     proxy_add_headers:
@@ -130,7 +130,7 @@ tunnels:
     enable_ssl: false
     local_addr: 111.230.198.37
     local_port: 10080
-    vhost: t2.tunnel.lo
+    host: t2.tunnel.lo
     proxy_set_headers:
       X-Real-IP: $remote_addr
     proxy_add_headers:
@@ -146,7 +146,7 @@ tunnels:
     enable_ssl: false
     local_addr: 192.168.1.1
     local_port: 80
-    vhost: t1.tunnel.lo
+    host: t1.tunnel.lo
     proxy_set_headers:
       X-Real-IP: $remote_addr # $remote_addr 将被替换成发起请求的客户端IP
     proxy_add_headers:
@@ -162,7 +162,7 @@ tunnels:
     enable_ssl: false
     local_addr: 192.168.1.1
     local_port: 10080
-    vhost: t2.tunnel.lo
+    host: t2.tunnel.lo
     proxy_set_headers:
       X-Real-IP: $remote_addr
     proxy_add_headers:

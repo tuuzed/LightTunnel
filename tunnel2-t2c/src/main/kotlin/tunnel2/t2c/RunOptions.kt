@@ -59,8 +59,8 @@ class RunOptions {
     var remotePort = 10080
 
     // =============================== http(s) ================================== //
-    @Option(name = "vh", longName = "vhost", help = "域名", order = 4001)
-    var vhost = ""
+    @Option(name = "h", longName = "host", help = "域名", order = 4001)
+    var host = ""
 
     @Option(name = "psh", longName = "proxy-set-headers", help = "设置HTTP头", order = 4002)
     var proxySetHeaders = emptyMap<String, String>()
