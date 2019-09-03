@@ -1,4 +1,4 @@
-package tunnel2
+package tunnel2.common
 
 import org.junit.Test
 import tunnel2.common.TunnelRequest

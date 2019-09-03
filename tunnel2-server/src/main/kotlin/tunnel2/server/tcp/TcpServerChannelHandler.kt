@@ -20,50 +20,54 @@ class TcpServerChannelHandler(
     }
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
-        if (ctx != null) {
-            val sa = ctx.channel().localAddress() as InetSocketAddress
-            registry.getDescriptorByPort(sa.port)?.also {
-                val tunnelChannel = it.sessionChannels.tunnelChannel
-                var sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
-                if (sessionId == null) {
-                    sessionId = it.sessionChannels.putSessionChannel(ctx.channel())
-                    ctx.channel().attr<Long>(AK_SESSION_ID).set(sessionId)
-                }
-                tunnelChannel.writeAndFlush(
-                    ProtoMessage(
-                        ProtoCw.REMOTE_CONNECTED,
-                        it.sessionChannels.tunnelId,
-                        sessionId
-                    )
-                )
-            } ?: ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+        if (ctx == null) {
+            super.channelActive(ctx)
+            return
         }
+        val sa = ctx.channel().localAddress() as InetSocketAddress
+        registry.getDescriptorByPort(sa.port)?.also {
+            val tunnelChannel = it.sessionChannels.tunnelChannel
+            var sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
+            if (sessionId == null) {
+                sessionId = it.sessionChannels.putSessionChannel(ctx.channel())
+                ctx.channel().attr<Long>(AK_SESSION_ID).set(sessionId)
+            }
+            tunnelChannel.writeAndFlush(
+                ProtoMessage(
+                    ProtoCw.REMOTE_CONNECTED,
+                    it.sessionChannels.tunnelId,
+                    sessionId
+                )
+            )
+        } ?: ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         super.channelActive(ctx)
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
-        if (ctx != null) {
-            val sa = ctx.channel().localAddress() as InetSocketAddress
-            registry.getDescriptorByPort(sa.port)?.also {
-                val tunnelChannel = it.sessionChannels.tunnelChannel
-                val sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
-                if (sessionId != null) {
-                    val channel = it.sessionChannels.removeSessionChannel(sessionId)
-                    channel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
-                }
-                // 解决 HTTP/1.x 数据传输问题
-                ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener { _ ->
-                    tunnelChannel.writeAndFlush(
-                        ProtoMessage(
-                            ProtoCw.REMOTE_DISCONNECT,
-                            it.sessionChannels.tunnelId,
-                            sessionId
-                        )
-                    )
-                }
-            }
-            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+        if (ctx == null) {
+            super.channelInactive(ctx)
+            return
         }
+        val sa = ctx.channel().localAddress() as InetSocketAddress
+        registry.getDescriptorByPort(sa.port)?.also {
+            val tunnelChannel = it.sessionChannels.tunnelChannel
+            val sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
+            if (sessionId != null) {
+                val channel = it.sessionChannels.removeSessionChannel(sessionId)
+                channel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
+            }
+            // 解决 HTTP/1.x 数据传输问题
+            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener { _ ->
+                tunnelChannel.writeAndFlush(
+                    ProtoMessage(
+                        ProtoCw.REMOTE_DISCONNECT,
+                        it.sessionChannels.tunnelId,
+                        sessionId
+                    )
+                )
+            }
+        }
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         super.channelInactive(ctx)
     }
 

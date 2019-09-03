@@ -13,6 +13,7 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
     true
 ) {
     override fun decode(ctx: ChannelHandlerContext?, inbuf: ByteBuf?): Any? {
-        return ProtoMessage.decode(inbuf)
+        val inbuf2 = super.decode(ctx, inbuf) as ByteBuf?
+        return ProtoMessage.decode(inbuf2)
     }
 }

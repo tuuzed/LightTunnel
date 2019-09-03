@@ -17,7 +17,6 @@ import tunnel2.server.internal.IdProducer
 import tunnel2.server.internal.ServerSessionChannels
 import tunnel2.server.tcp.TcpServer
 import tunnel2.server.udp.UdpServer
-import java.nio.charset.StandardCharsets
 
 class TunnelServerChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
@@ -42,10 +41,10 @@ class TunnelServerChannelHandler(
             when (it.tunnelRequest.type) {
                 TunnelType.TCP -> tcpServer?.registry?.unregister(it.tunnelId)
                 TunnelType.UDP -> TODO("shutdown")
-                TunnelType.HTTP -> httpServer?.registry?.unregister(it.tunnelRequest.vhost)
-                TunnelType.HTTPS -> httpsServer?.registry?.unregister(it.tunnelRequest.vhost)
+                TunnelType.HTTP -> httpServer?.registry?.unregister(it.tunnelRequest.host)
+                TunnelType.HTTPS -> httpsServer?.registry?.unregister(it.tunnelRequest.host)
                 else -> {
-                    // pass
+                    // Nothing
                 }
             }
         }
@@ -69,7 +68,7 @@ class TunnelServerChannelHandler(
             ProtoCw.LOCAL_CONNECTED -> handleLocalConnectedMessage(ctx, msg)
             ProtoCw.LOCAL_DISCONNECT -> handleLocalDisconnectMessage(ctx, msg)
             else -> {
-                // pass
+                // Nothing
             }
         }
     }
@@ -81,38 +80,32 @@ class TunnelServerChannelHandler(
 
     private fun handleRequestMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("handleRequestMessage# {}, {}", ctx, msg)
-        val tunnelRequest = TunnelRequest.fromBytes(msg.data)
-        when (tunnelRequest.type) {
-            TunnelType.TCP -> {
-                if (tcpServer != null) {
-                    handleTcpRequestMessage(ctx, tcpServer, tunnelRequest)
+        try {
+            val tunnelRequest = TunnelRequest.fromBytes(msg.data)
+            logger.trace("tunnelRequest: {}", tunnelRequest)
+            when (tunnelRequest.type) {
+                TunnelType.TCP -> {
+                    tcpServer?.also { handleTcpRequestMessage(ctx, it, tunnelRequest) }
+                        ?: throw TunnelException("TCP协议隧道未开启")
                 }
-            }
-            TunnelType.HTTP -> {
-                if (httpServer != null) {
-                    handleHttpRequestMessage(ctx, httpServer, tunnelRequest)
+                TunnelType.HTTP -> {
+                    httpServer?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
+                        ?: throw TunnelException("HTTP协议隧道未开启")
                 }
-
-            }
-            TunnelType.HTTPS -> {
-                if (httpsServer != null) {
-                    handleHttpRequestMessage(ctx, httpsServer, tunnelRequest)
+                TunnelType.HTTPS -> {
+                    httpsServer?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
+                        ?: throw TunnelException("HTTPS协议隧道未开启")
                 }
+                else -> throw TunnelException("不支持的隧道类型")
             }
-            else -> {
-                val head = Unpooled.copyBoolean(false)
-                ctx.channel().writeAndFlush(
-                    ProtoMessage(
-                        ProtoCw.RESPONSE_ERR,
-                        0,
-                        0,
-                        "协议错误".toByteArray(StandardCharsets.UTF_8)
-                    )
-                ).addListener(ChannelFutureListener.CLOSE)
-                head.release()
-            }
+        } catch (e: Exception) {
+            ctx.channel().writeAndFlush(
+                ProtoMessage(
+                    ProtoCw.RESPONSE_ERR,
+                    data = e.message.toString().toByteArray()
+                )
+            ).addListener(ChannelFutureListener.CLOSE)
         }
-
     }
 
     private fun handleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
@@ -155,78 +148,44 @@ class TunnelServerChannelHandler(
         sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
     }
 
+    // ==================================================================
+    @Throws(TunnelException::class)
     private fun handleTcpRequestMessage(ctx: ChannelHandlerContext, server: TcpServer, request: TunnelRequest) {
-        try {
-            val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(request)
-            val tunnelId = tunnelIdProducer.nextId
-            val sessionChannels = ServerSessionChannels(
-                tunnelId,
-                tunnelRequest,
-                ctx.channel()
+        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(request)
+        val tunnelId = tunnelIdProducer.nextId
+        val sessionChannels = ServerSessionChannels(
+            tunnelId,
+            tunnelRequest,
+            ctx.channel()
+        )
+        ctx.channel().attr<ServerSessionChannels>(AK_SERVER_SESSION_CHANNELS).set(sessionChannels)
+        server.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
+        ctx.channel().writeAndFlush(
+            ProtoMessage(
+                ProtoCw.RESPONSE_OK,
+                tunnelId = tunnelId,
+                data = tunnelRequest.toBytes()
             )
-            ctx.channel().attr<ServerSessionChannels>(AK_SERVER_SESSION_CHANNELS).set(sessionChannels)
-            server.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
-
-            val head = Unpooled.buffer(9)
-            head.writeBoolean(true)
-            head.writeLong(tunnelId)
-            ctx.channel().writeAndFlush(
-                ProtoMessage(
-                    ProtoCw.RESPONSE_OK,
-                    tunnelId,
-                    0,
-                    tunnelRequest.toBytes()
-                )
-            )
-            head.release()
-
-        } catch (e: TunnelException) {
-            val head = Unpooled.copyBoolean(false)
-            ctx.channel().writeAndFlush(
-                ProtoMessage(
-                    ProtoCw.RESPONSE_ERR,
-                    0,
-                    0,
-                    e.message.toString().toByteArray(StandardCharsets.UTF_8)
-                )
-            ).addListener(ChannelFutureListener.CLOSE)
-            head.release()
-        }
-
+        )
     }
 
+    @Throws(TunnelException::class)
     private fun handleHttpRequestMessage(ctx: ChannelHandlerContext, server: HttpServer, request: TunnelRequest) {
-        try {
-            val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(request)
-            if (server.registry.isRegistered(tunnelRequest.vhost)) {
-                throw TunnelException("vhost(${tunnelRequest.vhost}) already used")
-            }
-            val tunnelId = tunnelIdProducer.nextId
-            val sessionChannels = ServerSessionChannels(tunnelId, tunnelRequest, ctx.channel())
-            ctx.channel().attr<ServerSessionChannels>(AK_SERVER_SESSION_CHANNELS).set(sessionChannels)
-            server.registry.register(tunnelRequest.vhost, sessionChannels)
-
-            ctx.channel().writeAndFlush(
-                ProtoMessage(
-                    ProtoCw.RESPONSE_OK,
-                    tunnelId,
-                    0,
-                    tunnelRequest.toBytes()
-                )
-            )
-        } catch (e: TunnelException) {
-            val head = Unpooled.copyBoolean(false)
-            ctx.channel().writeAndFlush(
-                ProtoMessage(
-                    ProtoCw.RESPONSE_ERR,
-                    0,
-                    0,
-                    e.message.toString().toByteArray(StandardCharsets.UTF_8)
-                )
-            ).addListener(ChannelFutureListener.CLOSE)
-            head.release()
+        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(request)
+        if (server.registry.isRegistered(tunnelRequest.host)) {
+            throw TunnelException("host(${tunnelRequest.host}) already used")
         }
-
+        val tunnelId = tunnelIdProducer.nextId
+        val sessionChannels = ServerSessionChannels(tunnelId, tunnelRequest, ctx.channel())
+        ctx.channel().attr<ServerSessionChannels>(AK_SERVER_SESSION_CHANNELS).set(sessionChannels)
+        server.registry.register(tunnelRequest.host, sessionChannels)
+        ctx.channel().writeAndFlush(
+            ProtoMessage(
+                ProtoCw.RESPONSE_OK,
+                tunnelId = tunnelId,
+                data = tunnelRequest.toBytes()
+            )
+        )
     }
 
 }

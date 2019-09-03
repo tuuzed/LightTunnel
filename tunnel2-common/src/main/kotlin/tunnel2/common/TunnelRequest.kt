@@ -16,7 +16,7 @@ class TunnelRequest private constructor(
     // tcp
     val remotePort: Int get() = (options[REMOTE_PORT] ?: error("remotePort == null")).toInt()
     // http & https
-    val vhost: String get() = options[VHOST] ?: error("vhost == null")
+    val host: String get() = options[HOST] ?: error("host == null")
     val enableBasicAuth: Boolean = options[ENABLE_BASIC_AUTH] == "1"
     val basicAuthRealm: String = options[BASIC_AUTH_REALM] ?: "."
     val basicAuthUsername: String = options[BASIC_AUTH_USERNAME] ?: ""
@@ -31,8 +31,8 @@ class TunnelRequest private constructor(
         return when (type) {
             TunnelType.TCP -> "[ $localAddr:$localPort<-tcp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
             TunnelType.UDP -> "[ $localAddr:$localPort<-udp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
-            TunnelType.HTTP -> String.format("[ $localAddr:$localPort<-http://$vhost { ${optionsMapToLine(options)} } ]", localAddr, localPort, vhost, optionsMapToLine(options))
-            TunnelType.HTTPS -> String.format("[ $localAddr:$localPort<-https://$vhost { ${optionsMapToLine(options)} } ]", localAddr, localPort, vhost, optionsMapToLine(options))
+            TunnelType.HTTP -> "[ $localAddr:$localPort<-http://$host { ${optionsMapToLine(options)} } ]"
+            TunnelType.HTTPS -> "[ $localAddr:$localPort<-https://$host { ${optionsMapToLine(options)} } ]"
             else -> ""
         }
     }
@@ -63,7 +63,7 @@ class TunnelRequest private constructor(
         // tcp
         private const val REMOTE_PORT = "_RP_"
         // http & https
-        private const val VHOST = "_VH_"
+        private const val HOST = "_H_"
         private const val ENABLE_BASIC_AUTH = "_AU_"
         private const val BASIC_AUTH_REALM = "_AR_"
         private const val BASIC_AUTH_USERNAME = "_AS_"
@@ -134,7 +134,7 @@ class TunnelRequest private constructor(
         fun ofHttp(
             localAddr: String,
             localPort: Int,
-            vhost: String,
+            host: String,
             enableBasicAuth: Boolean = false,
             basicAuthRealm: String = ".",
             basicAuthUsername: String = "",
@@ -146,7 +146,7 @@ class TunnelRequest private constructor(
         ): TunnelRequest {
             checkAddedOptions(*addedOptions)
             val options = mutableMapOf(
-                Pair(VHOST, vhost),
+                Pair(HOST, host),
                 Pair(ENABLE_BASIC_AUTH, if (enableBasicAuth) "1" else "0"),
                 *addedOptions
             )
@@ -165,7 +165,7 @@ class TunnelRequest private constructor(
         fun ofHttps(
             localAddr: String,
             localPort: Int,
-            vhost: String,
+            host: String,
             enableBasicAuth: Boolean = false,
             basicAuthRealm: String = ".",
             basicAuthUsername: String = "",
@@ -177,7 +177,7 @@ class TunnelRequest private constructor(
         ): TunnelRequest {
             checkAddedOptions(*addedOptions)
             val options = mutableMapOf(
-                Pair(VHOST, vhost),
+                Pair(HOST, host),
                 Pair(ENABLE_BASIC_AUTH, if (enableBasicAuth) "1" else "0"),
                 *addedOptions
             )

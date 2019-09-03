@@ -42,7 +42,10 @@ class TunnelServerTest {
             sslContext = sslContext,
 
             httpEnable = true,
+            httpBindPort = 80,
+
             httpsEnable = true,
+            httpsBindPort = 443,
             httpsContext = sslContext
         )
     }

@@ -12,27 +12,27 @@ class HttpRegistry {
     }
 
     private val tunnelIdDescriptors = ConcurrentHashMap<Long, HttpDescriptor>()
-    private val vhostDescriptors = ConcurrentHashMap<String, HttpDescriptor>()
+    private val hostDescriptors = ConcurrentHashMap<String, HttpDescriptor>()
 
     @Synchronized
-    fun isRegistered(vhost: String): Boolean = vhostDescriptors.containsKey(vhost)
+    fun isRegistered(host: String): Boolean = hostDescriptors.containsKey(host)
 
     @Synchronized
     @Throws(TunnelException::class)
-    fun register(vhost: String, sessionChannels: ServerSessionChannels) {
-        if (isRegistered(vhost)) throw TunnelException("vhost($vhost) already used")
-        val descriptor = HttpDescriptor(vhost, sessionChannels)
+    fun register(host: String, sessionChannels: ServerSessionChannels) {
+        if (isRegistered(host)) throw TunnelException("host($host) already used")
+        val descriptor = HttpDescriptor(host, sessionChannels)
         tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
-        vhostDescriptors[vhost] = descriptor
+        hostDescriptors[host] = descriptor
         logger.info("Start Tunnel: {}", sessionChannels.tunnelRequest)
-        logger.trace("vhostDescriptors: {}", vhostDescriptors)
+        logger.trace("hostDescriptors: {}", hostDescriptors)
         logger.trace("tunnelIdDescriptors: {}", tunnelIdDescriptors)
     }
 
     @Synchronized
-    fun unregister(vhost: String?) {
-        vhost ?: return
-        val descriptor = vhostDescriptors.remove(vhost)
+    fun unregister(host: String?) {
+        host ?: return
+        val descriptor = hostDescriptors.remove(host)
         if (descriptor != null) {
             tunnelIdDescriptors.remove(descriptor.sessionChannels.tunnelId)
             descriptor.close()
@@ -50,12 +50,12 @@ class HttpRegistry {
     fun getDescriptorByTunnelId(tunnelId: Long): HttpDescriptor? = tunnelIdDescriptors[tunnelId]
 
     @Synchronized
-    fun getDescriptorByVhost(vhost: String): HttpDescriptor? = vhostDescriptors[vhost]
+    fun getDescriptorByHost(host: String): HttpDescriptor? = hostDescriptors[host]
 
     @Synchronized
     fun destroy() {
         tunnelIdDescriptors.clear()
-        vhostDescriptors.clear()
+        hostDescriptors.clear()
     }
 
 }

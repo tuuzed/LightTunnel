@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets
 private const val CRLF = "\r\n"
 private val CHARSET = StandardCharsets.UTF_8
 
-fun HttpRequest.vhost(): String? {
+fun HttpRequest.host(): String? {
     val host = this.headers().get(HttpHeaderNames.HOST)
     return host.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
 }

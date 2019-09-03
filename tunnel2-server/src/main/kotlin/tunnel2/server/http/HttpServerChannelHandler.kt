@@ -30,10 +30,10 @@ class HttpServerChannelHandler(
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        val vhost = ctx.channel().attr<String>(AK_VHOST).get()
+        val host = ctx.channel().attr<String>(AK_HOST).get()
         val sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
-        if (vhost != null && sessionId != null) {
-            registry.getDescriptorByVhost(vhost)?.also {
+        if (host != null && sessionId != null) {
+            registry.getDescriptorByHost(host)?.also {
                 it.sessionChannels.tunnelChannel.writeAndFlush(
                     ProtoMessage(
                         ProtoCw.REMOTE_DISCONNECT,
@@ -42,7 +42,7 @@ class HttpServerChannelHandler(
                     )
                 )
             }
-            ctx.channel().attr<String>(AK_VHOST).set(null)
+            ctx.channel().attr<String>(AK_HOST).set(null)
             ctx.channel().attr<Long>(AK_SESSION_ID).set(null)
         }
         super.channelInactive(ctx)
@@ -67,13 +67,13 @@ class HttpServerChannelHandler(
     /**处理读取到的HttpRequest类型的消息 */
     @Throws(Exception::class)
     private fun channelReadHttpRequest(ctx: ChannelHandlerContext, msg: HttpRequest) {
-        val vhost = msg.vhost()
-        if (vhost == null) {
+        val host = msg.host()
+        if (host == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        ctx.channel().attr<String>(AK_VHOST).set(vhost)
-        val descriptor = registry.getDescriptorByVhost(vhost)
+        ctx.channel().attr<String>(AK_HOST).set(host)
+        val descriptor = registry.getDescriptorByHost(host)
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             ctx.channel().attr<Boolean>(AK_PASSED).set(false)
@@ -108,16 +108,14 @@ class HttpServerChannelHandler(
     @Throws(Exception::class)
     private fun channelReadHttpContent(ctx: ChannelHandlerContext, msg: HttpContent) {
         val passed = ctx.channel().attr<Boolean>(AK_PASSED).get() ?: return
-        if (!passed) { // 如果没有放行
-            return
-        }
-        val vhost = ctx.channel().attr<String>(AK_VHOST).get()
+        if (!passed) return
+        val host = ctx.channel().attr<String>(AK_HOST).get()
         val sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
-        if (vhost == null || sessionId == null) {
+        if (host == null || sessionId == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        val descriptor = registry.getDescriptorByVhost(vhost)
+        val descriptor = registry.getDescriptorByHost(host)
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return

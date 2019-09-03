@@ -52,4 +52,10 @@ class ProtoMessage @JvmOverloads constructor(
             return ProtoMessage(cw = cw, tunnelId = tunnelId, sessionId = sessionId, data = data)
         }
     }
+
+    override fun toString(): String {
+        return "ProtoMessage(cw=$cw, tunnelId=$tunnelId, sessionId=$sessionId, data(${data.size}))"
+    }
+
+
 }

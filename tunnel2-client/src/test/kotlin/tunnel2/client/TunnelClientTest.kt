@@ -9,16 +9,14 @@ import tunnel2.common.logging.LoggerFactory
 import tunnel2.common.ssl.SslContexts
 
 class TunnelClientTest {
+
     private lateinit var client: TunnelClient
-    private lateinit var portError: TunnelRequest
-    private lateinit var tcpHttp: TunnelRequest
+    private lateinit var tcphttp: TunnelRequest
     private lateinit var vnc: TunnelRequest
     private lateinit var ssh: TunnelRequest
-    private lateinit var vhostHttp1: TunnelRequest
-    private lateinit var vhostHttp2: TunnelRequest
-    private lateinit var vhostHttps1: TunnelRequest
-    private lateinit var vhostHttps2: TunnelRequest
-    private lateinit var portReplaced: TunnelRequest
+    private lateinit var httpT1: TunnelRequest
+    private lateinit var httpT2: TunnelRequest
+    private lateinit var httpsT3: TunnelRequest
 
 
     @Test
@@ -30,28 +28,15 @@ class TunnelClientTest {
             "../resources/jks/t2c.jks",
             "t2cpass"
         )
-        client.connect(serverAddr, serverPort, portError, sslContext)
-
-        client.connect(serverAddr, serverPort, tcpHttp, sslContext)
+        // tcp
         client.connect(serverAddr, serverPort, vnc, sslContext)
         client.connect(serverAddr, serverPort, ssh, sslContext)
-        // vhostHttp
-        client.connect(serverAddr, serverPort, vhostHttp1, sslContext)
-        client.connect(serverAddr, serverPort, vhostHttp2, sslContext)
-        // vhostHttps
-        client.connect(serverAddr, serverPort, vhostHttps1, sslContext)
-        client.connect(serverAddr, serverPort, vhostHttps2, sslContext)
+        client.connect(serverAddr, serverPort, tcphttp, sslContext)
+        // Http(s)
+        client.connect(serverAddr, serverPort, httpT1, sslContext)
+        client.connect(serverAddr, serverPort, httpT2, sslContext)
+        client.connect(serverAddr, serverPort, httpsT3, sslContext)
 
-        val portReplacedDescriptor = client.connect(serverAddr, serverPort, portReplaced, sslContext)
-        Thread(Runnable {
-            try {
-                Thread.sleep(6000)
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
-            }
-
-            portReplacedDescriptor.shutdown()
-        }).start()
         Thread.currentThread().join()
     }
 
@@ -81,52 +66,38 @@ class TunnelClientTest {
             }
         )
 
-        portError = TunnelRequest.ofTcp(
-            "192.168.1.1",
-            80,
-            65000,
-            "tk123456"
-        )
-        portReplaced = TunnelRequest.ofTcp(
-            "192.168.1.1",
-            80,
-            20000,
-            "tk123456"
-        ) //  replaced 20080
-
-        tcpHttp = TunnelRequest.ofTcp(
-            "111.230.198.37",
-            10080,
-            10080,
-            "tk123456"
-        )
 
         vnc = TunnelRequest.ofTcp(
-            "192.168.1.33",
-            5900,
-            15900,
-            "tk123456"
+            localAddr = "192.168.1.33",
+            localPort = 5900,
+            remotePort = 15900,
+            authToken = "tk123456"
         )
         ssh = TunnelRequest.ofTcp(
-            "192.168.1.10",
-            22,
-            10022,
-            "tk123456"
+            localAddr = "192.168.1.23",
+            localPort = 22,
+            remotePort = 10022,
+            authToken = "tk123456"
         )
-
-        vhostHttp1 = TunnelRequest.ofHttp(
+        tcphttp = TunnelRequest.ofTcp(
             localAddr = "192.168.1.1",
             localPort = 80,
-            vhost = "t1.tunnel.lo",
+            remotePort = 10080,
+            authToken = "tk123456"
+        )
+
+        httpT1 = TunnelRequest.ofHttp(
+            localAddr = "192.168.1.1",
+            localPort = 80,
+            host = "t1.tunnel.lo",
             authToken = "tk123456",
             proxySetHeaders = mapOf(Pair("X-Real-IP", "\$remote_addr")),
             proxyAddHeaders = mapOf(Pair("X-User-Agent", "Tunnel"))
         )
-
-        vhostHttp2 = TunnelRequest.ofHttp(
+        httpT2 = TunnelRequest.ofHttp(
             localAddr = "111.230.198.37",
             localPort = 10080,
-            vhost = "t2.tunnel.lo",
+            host = "t2.tunnel.lo",
             enableBasicAuth = true,
             basicAuthRealm = "OCR",
             basicAuthUsername = "admin",
@@ -135,20 +106,10 @@ class TunnelClientTest {
             proxySetHeaders = mapOf(Pair("X-Real-IP", "\$remote_addr")),
             proxyAddHeaders = mapOf(Pair("X-User-Agent", "Tunnel"))
         )
-
-        vhostHttps1 = TunnelRequest.ofHttps(
-            localAddr = "192.168.1.1",
-            localPort = 80,
-            vhost = "t1.tunnel.lo",
-            authToken = "tk123456",
-            proxySetHeaders = mapOf(Pair("X-Real-IP", "\$remote_addr")),
-            proxyAddHeaders = mapOf(Pair("X-User-Agent", "Tunnel"))
-        )
-
-        vhostHttps2 = TunnelRequest.ofHttps(
+        httpsT3 = TunnelRequest.ofHttps(
             localAddr = "111.230.198.37",
             localPort = 10080,
-            vhost = "t2.tunnel.lo",
+            host = "t3.tunnel.lo",
             enableBasicAuth = true,
             basicAuthRealm = "OCR",
             basicAuthUsername = "admin",
