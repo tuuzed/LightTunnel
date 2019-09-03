@@ -36,6 +36,7 @@ jar {
         attributes 'Tunnel-VersionName': String.valueOf(GitVC.VERSION_NAME)
         attributes 'Tunnel-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
         attributes 'Tunnel-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
+
         attributes 'Tunnel-BuildDate': String.valueOf(new Date())
     }
 }

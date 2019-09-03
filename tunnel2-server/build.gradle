@@ -11,10 +11,6 @@ dependencies {
     testCompile "junit:junit:4.12"
 }
 
-jar {
-
-}
-
 compileKotlin {
     kotlinOptions {
         freeCompilerArgs = ['-Xjsr305=strict']
@@ -28,3 +24,6 @@ compileTestKotlin {
         jvmTarget = rootProject.jvm_version
     }
 }
+
+
+apply from: "../gradle/BuildPackage.gradle"

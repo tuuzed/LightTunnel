@@ -39,3 +39,4 @@ compileTestKotlin {
 }
 
 
+apply from: "../gradle/BuildPackage.gradle"

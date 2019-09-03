@@ -23,4 +23,4 @@ buildscript {
 apply plugin: 'gitvc-gradle-plugin'
 
 group 'tunnel2'
-version '2.0.0-SNAPSHOT'
+version GitVC.VERSION_NAME
