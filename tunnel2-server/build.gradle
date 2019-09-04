@@ -11,6 +11,11 @@ dependencies {
     testCompile "junit:junit:4.12"
 }
 
+test {
+    include '**/*Test.class'
+    exclude '**/*Exclude.class'
+}
+
 compileKotlin {
     kotlinOptions {
         freeCompilerArgs = ['-Xjsr305=strict']
@@ -26,4 +31,4 @@ compileTestKotlin {
 }
 
 
-apply from: "../gradle/BuildPackage.gradle"
+apply from: rootProject.file("./gradle/BuildPackage.gradle").absolutePath

@@ -8,7 +8,7 @@ import tunnel2.common.TunnelRequest
 import tunnel2.common.logging.LoggerFactory
 import tunnel2.common.ssl.SslContexts
 
-class TunnelClientTest {
+class TunnelClientExclude {
 
     private lateinit var client: TunnelClient
     private lateinit var tcphttp: TunnelRequest

@@ -11,7 +11,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 
-class UdpServer {
+class UdpServerExclude {
     @Test
     fun run() {
         val b = Bootstrap()

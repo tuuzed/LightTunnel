@@ -30,4 +30,4 @@ compileTestKotlin {
 project.ext.MainClass = "T2sBootstrap"
 project.ext.OutJarName = "t2s.jar"
 
-apply from: "../gradle/BuildJar.gradle"
+apply from: rootProject.file("./gradle/BuildJar.gradle").absolutePath

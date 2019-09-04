@@ -11,7 +11,7 @@ import io.netty.util.CharsetUtil
 import org.junit.Test
 import java.net.InetSocketAddress
 
-class UdpClient {
+class UdpClientExclude {
 
 
     @Test

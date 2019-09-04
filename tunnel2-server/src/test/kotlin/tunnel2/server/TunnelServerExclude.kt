@@ -8,7 +8,7 @@ import tunnel2.common.logging.LoggerFactory
 import tunnel2.common.ssl.SslContexts
 import tunnel2.server.interceptor.SimpleRequestInterceptor
 
-class TunnelServerTest {
+class TunnelServerExclude {
     private lateinit var tunnelServer: TunnelServer
 
     @Test
