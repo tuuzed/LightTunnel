@@ -30,7 +30,6 @@ class TunnelRequest private constructor(
     override fun toString(): String {
         return when (type) {
             TunnelType.TCP -> "[ $localAddr:$localPort<-tcp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
-            TunnelType.UDP -> "[ $localAddr:$localPort<-udp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
             TunnelType.HTTP -> "[ $localAddr:$localPort<-http://$host { ${optionsMapToLine(options)} } ]"
             TunnelType.HTTPS -> "[ $localAddr:$localPort<-https://$host { ${optionsMapToLine(options)} } ]"
             else -> ""
@@ -110,23 +109,6 @@ class TunnelRequest private constructor(
             )
             authToken?.also { options[AUTH_TOKEN] = authToken }
             return TunnelRequest(TunnelType.TCP, localAddr, localPort, options)
-        }
-
-        @JvmStatic
-        fun ofUdp(
-            localAddr: String,
-            localPort: Int,
-            remotePort: Int,
-            authToken: String? = null,
-            vararg addedOptions: Pair<String, String>
-        ): TunnelRequest {
-            checkAddedOptions(*addedOptions)
-            val options = mutableMapOf(
-                Pair(REMOTE_PORT, remotePort.toString()),
-                *addedOptions
-            )
-            authToken?.also { options[AUTH_TOKEN] = authToken }
-            return TunnelRequest(TunnelType.UDP, localAddr, localPort, options)
         }
 
 

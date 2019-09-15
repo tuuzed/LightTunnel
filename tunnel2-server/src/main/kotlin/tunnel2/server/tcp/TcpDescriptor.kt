@@ -18,6 +18,7 @@ class TcpDescriptor(
     }
 
     fun close() {
+        bindChannelFuture?.channel()?.close()
         sessionChannels.destroy()
     }
 }

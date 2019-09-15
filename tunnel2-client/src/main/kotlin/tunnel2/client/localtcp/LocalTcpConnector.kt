@@ -1,4 +1,4 @@
-package tunnel2.client.local
+package tunnel2.client.localtcp
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
@@ -14,11 +14,11 @@ import tunnel2.client.internal.AK_TUNNEL_ID
 import tunnel2.common.logging.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
-class LocalConnector(
+class LocalTcpConnector(
     workerGroup: NioEventLoopGroup
 ) {
     companion object {
-        private val logger = LoggerFactory.getLogger(LocalConnector::class.java)
+        private val logger = LoggerFactory.getLogger(LocalTcpConnector::class.java)
     }
 
     private val bootstrap = Bootstrap()
@@ -102,7 +102,7 @@ class LocalConnector(
     private fun createChannelInitializer() = object : ChannelInitializer<SocketChannel>() {
         override fun initChannel(ch: SocketChannel?) {
             ch ?: return
-            ch.pipeline().addLast(LocalConnectorChannelHandler(this@LocalConnector))
+            ch.pipeline().addLast(LocalTcpConnectorChannelHandler(this@LocalTcpConnector))
         }
     }
 

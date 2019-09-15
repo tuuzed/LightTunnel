@@ -16,13 +16,11 @@ import tunnel2.server.internal.AK_SERVER_SESSION_CHANNELS
 import tunnel2.server.internal.IdProducer
 import tunnel2.server.internal.ServerSessionChannels
 import tunnel2.server.tcp.TcpServer
-import tunnel2.server.udp.UdpServer
 
 class TunnelServerChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
     private val tunnelIdProducer: IdProducer,
     private val tcpServer: TcpServer? = null,
-    private val udpServer: UdpServer? = null,
     private val httpServer: HttpServer? = null,
     private val httpsServer: HttpServer? = null
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
@@ -40,7 +38,6 @@ class TunnelServerChannelHandler(
         ctx.channel().attr<ServerSessionChannels>(AK_SERVER_SESSION_CHANNELS).get()?.also {
             when (it.tunnelRequest.type) {
                 TunnelType.TCP -> tcpServer?.registry?.unregister(it.tunnelId)
-                TunnelType.UDP -> TODO("shutdown")
                 TunnelType.HTTP -> httpServer?.registry?.unregister(it.tunnelRequest.host)
                 TunnelType.HTTPS -> httpsServer?.registry?.unregister(it.tunnelRequest.host)
                 else -> {

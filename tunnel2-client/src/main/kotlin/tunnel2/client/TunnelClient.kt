@@ -12,7 +12,7 @@ import io.netty.handler.ssl.SslHandler
 import tunnel2.client.internal.AK_ERR_CAUSE
 import tunnel2.client.internal.AK_ERR_FLAG
 import tunnel2.client.internal.AK_TUNNEL_CLIENT_DESCRIPTOR
-import tunnel2.client.local.LocalConnector
+import tunnel2.client.localtcp.LocalTcpConnector
 import tunnel2.common.TunnelHeartbeatHandler
 import tunnel2.common.TunnelRequest
 import tunnel2.common.logging.LoggerFactory
@@ -70,7 +70,7 @@ class TunnelClient(
             }
         }
     }
-    private val localConnector = LocalConnector(workerGroup)
+    private val localTcpConnector = LocalTcpConnector(workerGroup)
 
     init {
         bootstrap
@@ -102,7 +102,7 @@ class TunnelClient(
 
     fun destroy() {
         workerGroup.shutdownGracefully()
-        localConnector.destroy()
+        localTcpConnector.destroy()
         cachedSslBootstraps.clear()
     }
 
@@ -131,7 +131,7 @@ class TunnelClient(
                 .addLast(ProtoMessageDecoder())
                 .addLast(ProtoMessageEncoder())
                 .addLast(TunnelClientChannelHandler(
-                    localConnector,
+                    localTcpConnector,
                     tunnelClientChannelListener
                 ))
         }

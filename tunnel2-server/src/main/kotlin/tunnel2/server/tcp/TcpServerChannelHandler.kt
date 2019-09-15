@@ -80,8 +80,8 @@ class TcpServerChannelHandler(
         logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
-        val sa = ctx.channel().localAddress() as InetSocketAddress
         val sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get() ?: return
+        val sa = ctx.channel().localAddress() as InetSocketAddress
         val descriptor = registry.getDescriptorByPort(sa.port) ?: return
         val data = ByteArray(msg.readableBytes())
         msg.readBytes(data)

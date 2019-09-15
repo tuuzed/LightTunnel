@@ -17,7 +17,6 @@ import tunnel2.server.interceptor.HttpRequestInterceptor
 import tunnel2.server.interceptor.TunnelRequestInterceptor
 import tunnel2.server.internal.IdProducer
 import tunnel2.server.tcp.TcpServer
-import tunnel2.server.udp.UdpServer
 
 
 class TunnelServer(
@@ -33,8 +32,6 @@ class TunnelServer(
     private val sslBindPort: Int = 5001,
     // tcp
     tcpEnable: Boolean = true,
-    // udp
-    udpEnable: Boolean = false,
     // http
     httpEnable: Boolean = false,
     httpBindAddr: String? = null,
@@ -59,7 +56,6 @@ class TunnelServer(
         if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
 
     private var tcpServer: TcpServer? = null
-    private var udpServer: UdpServer? = null
     private var httpServer: HttpServer? = null
     private var httpsServer: HttpServer? = null
 
@@ -69,9 +65,6 @@ class TunnelServer(
         }
         if (tcpEnable) {
             tcpServer = TcpServer(bossGroup, workerGroup)
-        }
-        if (udpEnable) {
-            udpServer = UdpServer()
         }
         if (httpEnable) {
             httpServer = HttpServer(bossGroup, workerGroup, null, httpBindAddr, httpBindPort, httpRequestInterceptor)
@@ -114,7 +107,6 @@ class TunnelServer(
     @Synchronized
     fun destroy() {
         tcpServer?.destroy()
-        udpServer?.destroy()
         httpServer?.destroy()
         httpsServer?.destroy()
         bossGroup.shutdownGracefully()
@@ -136,7 +128,7 @@ class TunnelServer(
                     TunnelServerChannelHandler(
                         tunnelRequestInterceptor,
                         tunnelIdProducer,
-                        tcpServer, udpServer, httpServer, httpsServer
+                        tcpServer, httpServer, httpsServer
                     )
                 )
         }

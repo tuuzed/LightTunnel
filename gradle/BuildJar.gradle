@@ -19,15 +19,9 @@ jar {
     exclude 'kotlin/*.kotlin_module'
     exclude 'kotlin/*.kotlin_metadata'
     exclude 'kotlin/*.kotlin_builtins'
-    exclude 'kotlin/*/*.kotlin_module'
-    exclude 'kotlin/*/*.kotlin_metadata'
-    exclude 'kotlin/*/*.kotlin_builtins'
-    exclude 'kotlin/*/*/*.kotlin_module'
-    exclude 'kotlin/*/*/*.kotlin_metadata'
-    exclude 'kotlin/*/*/*.kotlin_builtins'
-    exclude 'kotlin/*/*/*/*.kotlin_module'
-    exclude 'kotlin/*/*/*/*.kotlin_metadata'
-    exclude 'kotlin/*/*/*/*.kotlin_builtins'
+    exclude 'kotlin/**/*.kotlin_module'
+    exclude 'kotlin/**/*.kotlin_metadata'
+    exclude 'kotlin/**/*.kotlin_builtins'
     exclude 'LICENSE'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {

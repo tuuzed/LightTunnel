@@ -1,4 +1,4 @@
-package tunnel2.client.local
+package tunnel2.client.localtcp
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
@@ -11,12 +11,12 @@ import tunnel2.common.logging.LoggerFactory
 import tunnel2.common.proto.ProtoCw
 import tunnel2.common.proto.ProtoMessage
 
-class LocalConnectorChannelHandler(
-    private val localConnector: LocalConnector
+class LocalTcpConnectorChannelHandler(
+    private val localTcpConnector: LocalTcpConnector
 ) : SimpleChannelInboundHandler<ByteBuf>() {
 
     companion object {
-        private val logger = LoggerFactory.getLogger(LocalConnectorChannelHandler::class.java)
+        private val logger = LoggerFactory.getLogger(LocalTcpConnectorChannelHandler::class.java)
     }
 
     @Throws(Exception::class)
@@ -25,7 +25,7 @@ class LocalConnectorChannelHandler(
         val tunnelId = ctx.channel().attr<Long>(AK_TUNNEL_ID).get()
         val sessionId = ctx.channel().attr<Long>(AK_SESSION_ID).get()
         if (tunnelId != null && sessionId != null) {
-            localConnector.removeLocalChannel(tunnelId, sessionId)?.close()
+            localTcpConnector.removeLocalChannel(tunnelId, sessionId)?.close()
             ctx.channel().attr<Channel>(AK_NEXT_CHANNEL).get()?.writeAndFlush(
                 ProtoMessage(
                     ProtoCw.LOCAL_DISCONNECT,

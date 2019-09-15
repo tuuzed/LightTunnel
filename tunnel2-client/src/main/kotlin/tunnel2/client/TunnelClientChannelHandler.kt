@@ -3,7 +3,7 @@ package tunnel2.client
 import io.netty.buffer.Unpooled
 import io.netty.channel.*
 import tunnel2.client.internal.*
-import tunnel2.client.local.LocalConnector
+import tunnel2.client.localtcp.LocalTcpConnector
 import tunnel2.common.TunnelRequest
 import tunnel2.common.logging.LoggerFactory
 import tunnel2.common.proto.ProtoCw
@@ -11,7 +11,7 @@ import tunnel2.common.proto.ProtoMessage
 import java.nio.charset.StandardCharsets
 
 class TunnelClientChannelHandler(
-    private val localConnector: LocalConnector,
+    private val localConnector: LocalTcpConnector,
     private val listener: Listener
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
 
@@ -99,7 +99,7 @@ class TunnelClientChannelHandler(
             localConnector.acquireLocalChannel(
                 tunnelRequest.localAddr, tunnelRequest.localPort,
                 msg.tunnelId, msg.sessionId,
-                ctx.channel(), object : LocalConnector.Callback {
+                ctx.channel(), object : LocalTcpConnector.Callback {
                 override fun success(localChannel: Channel) {
                     localChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
                 }
@@ -121,7 +121,7 @@ class TunnelClientChannelHandler(
             localConnector.acquireLocalChannel(
                 tunnelRequest.localAddr, tunnelRequest.localPort,
                 msg.tunnelId, msg.sessionId,
-                ctx.channel(), object : LocalConnector.Callback {})
+                ctx.channel(), object : LocalTcpConnector.Callback {})
         }
     }
 
