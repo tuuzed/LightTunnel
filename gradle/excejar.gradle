@@ -1,0 +1,49 @@
+buildscript {
+    repositories {
+        flatDir dirs: "${System.getenv("PROGUARD_HOME")}/lib"
+    }
+    dependencies {
+        classpath ':proguard:'
+    }
+}
+
+jar {
+    exclude 'META-INF/LICENSE/'
+    exclude 'META-INF/NOTICE/'
+    exclude 'META-INF/maven/'
+    exclude 'META-INF/native-image/'
+    exclude 'META-INF/*.kotlin_module'
+    exclude 'META-INF/INDEX.LIST'
+    exclude 'META-INF/io.netty.versions.properties'
+    exclude 'OSGI-OPT/'
+    exclude 'kotlin/*.kotlin_module'
+    exclude 'kotlin/*.kotlin_metadata'
+    exclude 'kotlin/*.kotlin_builtins'
+    exclude 'kotlin/**/*.kotlin_module'
+    exclude 'kotlin/**/*.kotlin_metadata'
+    exclude 'kotlin/**/*.kotlin_builtins'
+    exclude 'LICENSE'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'Main-Class': project.MainClass
+        attributes 'TP-VersionCode': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'TP-VersionName': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'TP-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'TP-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'TP-BuildDate': String.valueOf(new Date())
+    }
+}
+
+task exceJar(
+        group: "build",
+        type: proguard.gradle.ProGuardTask,
+        dependsOn: jar
+) {
+    List<File> proguardRules = new ArrayList<>()
+    proguardRules.add(rootProject.file("./proguard/proguard-basic.txt"))
+    proguardRules.add(rootProject.file("./proguard/proguard-libs.txt"))
+    proguardRules.add(project.file("proguard-rules.txt"))
+    configuration proguardRules
+    injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"
+    outjars rootProject.file("dists/${project.version}/${project.OutJarName ?: (project.name + ".jar")}")
+}

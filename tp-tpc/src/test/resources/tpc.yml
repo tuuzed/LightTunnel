@@ -1,0 +1,57 @@
+basic:
+  auth_token: tk123456
+  server_addr: 127.0.0.1
+  server_port: 5080
+  worker_threads: -1
+
+ssl:
+  jks: tpc.jks
+  server_port: 5443
+  storepass: tpcpass
+
+log:
+  file: tpc.log
+  # ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
+  level: INFO
+  max_backup_index: 3
+  # KB, MB, GB
+  max_file_size: 1MB
+
+tunnels:
+  - type: TCP
+    enable_ssl: true
+    local_addr: 192.168.1.1
+    local_port: 80
+    remote_port: 10080
+
+  - type: HTTP
+    enable_ssl: true
+    local_addr: 192.168.1.1
+    local_port: 80
+    http_host: t1.tunnel.lo
+    http_set_headers:
+      X-Real-IP: $remote_addr
+    http_add_headers:
+      X-User-Agent: Tunnel
+    http_auth:
+      enable: false
+      realm: .
+      username: guest
+      password: guest
+
+  - type: HTTPS
+    enable_ssl: true
+    local_addr: 192.168.1.1
+    local_port: 80
+    http_host: t1.tunnel.lo
+    http_set_headers:
+      X-Real-IP: $remote_addr
+    http_add_headers:
+      X-User-Agent: Tunnel
+    http_auth:
+      enable: true
+      realm: .
+      username: guest
+      password: guest
+
+

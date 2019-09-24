@@ -1,0 +1,21 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+group = rootProject.group
+version = rootProject.version
+
+sourceCompatibility = rootProject.jvm_version
+
+dependencies {
+    compile project(":tp-common")
+    // yaml 文件解析
+    compile 'org.yaml:snakeyaml:1.25'
+    // 单元测试
+    testCompile "junit:junit:4.12"
+}
+
+
+project.ext.MainClass = "TPCBootstrap"
+project.ext.OutJarName = "tpc.jar"
+
+apply from: rootProject.file("./gradle/common.gradle").absolutePath
+apply from: rootProject.file("./gradle/distjar.gradle").absolutePath

@@ -1,0 +1,15 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+group = rootProject.group
+version = rootProject.version
+
+sourceCompatibility = rootProject.jvm_version
+
+dependencies {
+    compile project(":tp-common")
+    // 单元测试
+    testCompile "junit:junit:4.12"
+}
+
+apply from: rootProject.file("./gradle/common.gradle").absolutePath
+apply from: rootProject.file("./gradle/distjar.gradle").absolutePath

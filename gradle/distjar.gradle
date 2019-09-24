@@ -1,0 +1,23 @@
+apply plugin: "maven"
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file://" + rootProject.file("dists/repo").absolutePath)
+        }
+    }
+}
+
+task distJar(
+        group: "build",
+        dependsOn: uploadArchives
+)
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.kotlin.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}

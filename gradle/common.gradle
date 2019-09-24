@@ -1,0 +1,18 @@
+test {
+    include '**/*Test.class'
+    exclude '**/*Skip.class'
+}
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ['-Xjsr305=strict']
+        jvmTarget = rootProject.jvm_version
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ['-Xjsr305=strict']
+        jvmTarget = rootProject.jvm_version
+    }
+}

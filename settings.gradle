@@ -1,9 +1,10 @@
-rootProject.name = 'tunnel2-parent'
+rootProject.name = 'tunnel-proxy'
 
-include "tunnel2-client"
-include "tunnel2-common"
-include "tunnel2-server"
+include "tp-common"
+include "tp-server"
+include "tp-client"
 
-include "tunnel2-t2cli"
-include "tunnel2-t2c"
-include "tunnel2-t2s"
+include "tp-starter"
+include "tp-tps"
+include "tp-tpc"
+
