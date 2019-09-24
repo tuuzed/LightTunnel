@@ -1,1 +1,1 @@
--keep class tps.** { *; }
+-keep class tpc.** { *; }
