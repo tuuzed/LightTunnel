@@ -121,8 +121,8 @@ class TPRequest private constructor(
             host: String,
             enableBasicAuth: Boolean = false,
             basicAuthRealm: String = ".",
-            basicAuthUsername: String = "",
-            basicAuthPassword: String = "",
+            basicAuthUsername: String = "guest",
+            basicAuthPassword: String = "guest",
             proxySetHeaders: Map<String, String> = emptyMap(),
             proxyAddHeaders: Map<String, String> = emptyMap(),
             vararg addedOptions: Pair<String, String>
@@ -151,11 +151,7 @@ class TPRequest private constructor(
             }
         }
 
-        private fun setHeadersOption(
-            option: String,
-            headers: Map<String, String>,
-            options: MutableMap<String, String>
-        ) {
+        private fun setHeadersOption(option: String, headers: Map<String, String>, options: MutableMap<String, String>) {
             if (headers.isEmpty()) {
                 return
             }

@@ -8,8 +8,8 @@ data class TPMassage @JvmOverloads constructor(
     val data: ByteArray = EMPTY_BYTES
 ) {
 
-    val headBuf = Unpooled.wrappedBuffer(head)
-    val dataBuf = Unpooled.wrappedBuffer(data)
+    val headBuf by lazy { Unpooled.wrappedBuffer(head) }
+    val dataBuf by lazy { Unpooled.wrappedBuffer(data) }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
