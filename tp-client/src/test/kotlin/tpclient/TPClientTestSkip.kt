@@ -5,7 +5,7 @@ import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
 import tpcommon.LoggerFactory
-import tpcommon.SslContexts
+import tpcommon.SslContextUtil
 import tpcommon.TPRequest
 import tpcommon.logger
 
@@ -38,7 +38,7 @@ class TPClientTestSkip {
             }
         }
         tpClient = TPClient(options)
-        context = SslContexts.forClient(javaClass.getResource("/tpc.jks").file, "tpcpass")
+        context = SslContextUtil.forClient(javaClass.getResource("/tpc.jks").file, "tpcpass")
 
     }
 

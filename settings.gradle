@@ -4,7 +4,7 @@ include "tp-common"
 include "tp-server"
 include "tp-client"
 
-include "tp-starter"
-include "tp-tps"
-include "tp-tpc"
+include "cmd-common"
+include "cmd-server"
+include "cmd-client"
 

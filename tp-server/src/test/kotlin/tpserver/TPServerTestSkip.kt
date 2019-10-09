@@ -4,7 +4,7 @@ import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
 import tpcommon.LoggerFactory
-import tpcommon.SslContexts
+import tpcommon.SslContextUtil
 
 class TPServerTestSkip {
 
@@ -16,7 +16,7 @@ class TPServerTestSkip {
 
     @Test
     fun startTest() {
-        val context = SslContexts.forServer(
+        val context = SslContextUtil.forServer(
             javaClass.getResource("/tps.jks").file, "tpspass", "tpspass"
         )
         val options = TPServer.Options()

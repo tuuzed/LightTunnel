@@ -13,7 +13,8 @@ import tpcommon.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-class TPClient(
+class
+TPClient(
     options: Options = Options()
 ) {
     private val logger by logger()
