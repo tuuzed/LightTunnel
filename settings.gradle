@@ -1,10 +1,10 @@
-rootProject.name = 'tunnel-proxy'
+rootProject.name = 'LightTunnel'
 
-include "tp-common"
-include "tp-server"
-include "tp-client"
+include ":core:cmd"
+include ":core:common"
+include ":core:server"
+include ":core:client"
 
-include "cmd-common"
-include "cmd-server"
-include "cmd-client"
+include ":cmd:lts"
+include ":cmd:ltc"
 

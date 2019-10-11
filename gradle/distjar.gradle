@@ -3,7 +3,7 @@ apply plugin: "maven"
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "file://" + rootProject.file("dists/repo").absolutePath)
+            repository(url: "file://" + rootProject.file("dists/m2").absolutePath)
         }
     }
 }

@@ -8,49 +8,49 @@
 ```bash
 
 keytool -genkey \
--alias tpsalias \
+-alias ltsalias \
 -keysize 2048 \
 -validity 3650 \
 -keyalg RSA \
--dname "CN=TPS" \
--keypass tpspass \
--storepass tpspass \
--keystore tps.jks
+-dname "CN=LTS" \
+-keypass ltspass \
+-storepass ltspass \
+-keystore lts.jks
 
 keytool -importkeystore \
--srckeystore tps.jks \
--destkeystore tps.jks \
+-srckeystore lts.jks \
+-destkeystore lts.jks \
 -deststoretype pkcs12
 
 keytool -export \
--alias tpsalias \
--keystore tps.jks \
--storepass tpspass \
--file tps.cer
+-alias ltsalias \
+-keystore lts.jks \
+-storepass ltspass \
+-file lts.cer
 
 ```
 - 生成客户端证书
 ```bash
 
 keytool -genkey \
--alias tpcalias \
+-alias ltcalias \
 -keysize 2048 \
 -validity 3650 \
 -keyalg RSA \
--dname "CN=TPC" \
--keypass tpcpass \
--storepass tpcpass \
--keystore tpc.jks
+-dname "CN=LTC" \
+-keypass ltcpass \
+-storepass ltcpass \
+-keystore ltc.jks
 
 keytool -importkeystore \
--srckeystore tpc.jks \
--destkeystore tpc.jks \
+-srckeystore ltc.jks \
+-destkeystore ltc.jks \
 -deststoretype pkcs12
 
 keytool -import -trustcacerts \
--alias tpsalias \
--file tps.cer \
--storepass tpcpass \
--keystore tpc.jks
+-alias ttsalias \
+-file lts.cer \
+-storepass ltcpass \
+-keystore ltc.jks
 
 ```

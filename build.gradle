@@ -11,7 +11,7 @@ buildscript {
     }
     allprojects {
         repositories {
-            maven { url 'https://maven.aliyun.com/repository/central' }
+            maven { url 'https://maven.aliyun.com/repository/public' }
             mavenCentral()
         }
         tasks.withType(JavaCompile) {
@@ -22,5 +22,5 @@ buildscript {
 
 apply plugin: 'gitvc-gradle-plugin'
 
-group 'tp'
+group 'com.tuuzed.lighttunnel'
 version GitVC.VERSION_NAME
