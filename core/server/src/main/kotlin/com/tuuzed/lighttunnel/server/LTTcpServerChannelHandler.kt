@@ -25,7 +25,7 @@ class LTTcpServerChannelHandler(
                 }
                 val tunnelId = descriptor.sessionPool.tunnelId
                 val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
-                descriptor.sessionPool.tpChannel.writeAndFlush(LTMassage(LTCommand.REMOTE_CONNECTED, head))
+                descriptor.sessionPool.tunnelChannel.writeAndFlush(LTMassage(LTCommand.REMOTE_CONNECTED, head))
             } else {
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             }
@@ -49,7 +49,7 @@ class LTTcpServerChannelHandler(
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
                     val tunnelId = descriptor.sessionPool.tunnelId
                     val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
-                    descriptor.sessionPool.tpChannel.writeAndFlush(LTMassage(LTCommand.REMOTE_CONNECTED, head))
+                    descriptor.sessionPool.tunnelChannel.writeAndFlush(LTMassage(LTCommand.REMOTE_CONNECTED, head))
                 }
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -72,7 +72,7 @@ class LTTcpServerChannelHandler(
         val tunnelId = descriptor.sessionPool.tunnelId
         val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
         val data = msg.toBytes()
-        descriptor.sessionPool.tpChannel.writeAndFlush(LTMassage(LTCommand.TRANSFER, head, data))
+        descriptor.sessionPool.tunnelChannel.writeAndFlush(LTMassage(LTCommand.TRANSFER, head, data))
     }
 
 }

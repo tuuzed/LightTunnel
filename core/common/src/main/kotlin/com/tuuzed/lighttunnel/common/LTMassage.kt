@@ -4,8 +4,8 @@ import io.netty.buffer.Unpooled
 
 data class LTMassage @JvmOverloads constructor(
     val cmd: LTCommand,
-    val head: ByteArray = EMPTY_BYTES,
-    val data: ByteArray = EMPTY_BYTES
+    val head: ByteArray = emptyBytes,
+    val data: ByteArray = emptyBytes
 ) {
 
     val headBuf by lazy { Unpooled.wrappedBuffer(head) }

@@ -2,7 +2,6 @@ package com.tuuzed.lighttunnel.server
 
 import com.tuuzed.lighttunnel.common.LTException
 import com.tuuzed.lighttunnel.common.LTRequest
-import com.tuuzed.lighttunnel.common.LTType
 
 class LTRequestInterceptorImpl(
     /** 预置Token */
@@ -17,7 +16,7 @@ class LTRequestInterceptorImpl(
             throw LTException("request($request), Bad Auth Token(${request.authToken})")
         }
         return when (request.type) {
-            LTType.TCP -> {
+            LTRequest.Type.TCP -> {
                 val remotePort = request.remotePort
                 if (allowPorts != null && !hasInPortRange(allowPorts, remotePort)) {
                     throw LTException("request($request), remotePort($remotePort) Not allowed to use.")

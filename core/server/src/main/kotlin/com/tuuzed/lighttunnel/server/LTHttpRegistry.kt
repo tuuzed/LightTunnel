@@ -22,7 +22,7 @@ class LTHttpRegistry {
         val descriptor = LTHttpDescriptor(host, sessionDescriptor)
         tunnelIdDescriptors[sessionDescriptor.tunnelId] = descriptor
         hostDescriptors[host] = descriptor
-        logger.info("Start Tunnel: {}", sessionDescriptor.tpRequest)
+        logger.info("Start Tunnel: {}", sessionDescriptor.request)
         logger.trace("hostDescriptors: {}", hostDescriptors)
         logger.trace("tunnelIdDescriptors: {}", tunnelIdDescriptors)
     }
@@ -34,7 +34,7 @@ class LTHttpRegistry {
         if (descriptor != null) {
             tunnelIdDescriptors.remove(descriptor.sessionPool.tunnelId)
             descriptor.close()
-            logger.info("Shutdown Tunnel: {}", descriptor.sessionPool.tpRequest)
+            logger.info("Shutdown Tunnel: {}", descriptor.sessionPool.request)
         }
     }
 

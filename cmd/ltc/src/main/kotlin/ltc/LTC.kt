@@ -36,11 +36,11 @@ class LTC {
             listener = onTPClientStateListener
             autoReconnect = true
         }
-        val tpClient = LTClient(options)
+        val client = LTClient(options)
         var sslContext: SslContext? = null
         for (it in config.tunnels) {
-            val tpRequest = when (it.tpType) {
-                LTType.TCP -> {
+            val request = when (it.typeEume) {
+                LTRequest.Type.TCP -> {
                     LTRequest.ofTcp(
                         authToken = config.basic.authToken,
                         localAddr = it.localAddr,
@@ -48,9 +48,9 @@ class LTC {
                         remotePort = it.remotePort
                     )
                 }
-                LTType.HTTP, LTType.HTTPS -> {
+                LTRequest.Type.HTTP,  LTRequest.Type.HTTPS -> {
                     LTRequest.ofHttp(
-                        https = it.tpType != LTType.HTTP,
+                        https = it.typeEume != LTRequest.Type.HTTP,
                         authToken = config.basic.authToken,
                         localAddr = it.localAddr,
                         localPort = it.localPort,
@@ -65,7 +65,7 @@ class LTC {
                 }
                 else -> null
             }
-            if (tpRequest != null) {
+            if (request != null) {
                 if (it.enableSsl && sslContext == null) {
                     val jks = config.ssl.jks
                     val storepass = config.ssl.storepass
@@ -73,10 +73,10 @@ class LTC {
                     requireNotNull(storepass)
                     sslContext = SslContextUtil.forClient(jks, storepass)
                 }
-                tpClient.connect(
+                client.connect(
                     config.basic.serverAddr,
                     if (it.enableSsl) config.ssl.serverPort else config.basic.serverPort,
-                    tpRequest,
+                    request,
                     if (it.enableSsl) sslContext else null
                 )
             }

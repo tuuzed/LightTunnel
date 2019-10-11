@@ -4,8 +4,9 @@ import io.netty.buffer.Unpooled
 import java.nio.charset.StandardCharsets
 import java.util.*
 
+@Suppress("unused")
 class LTRequest private constructor(
-    val type: LTType,
+    val type: Type,
     val localAddr: String,
     val localPort: Int,
     private val options: Map<String, String>
@@ -24,14 +25,14 @@ class LTRequest private constructor(
     val proxySetHeaders: Map<String, String> = parseHeadersOption(options[PROXY_SET_HEADERS])
     val proxyAddHeaders: Map<String, String> = parseHeadersOption(options[PROXY_ADD_HEADERS])
 
-    // added Option
-    fun getAddedOption(key: String): String? = options[key]
+    // option
+    fun option(key: String): String? = options[key]
 
     override fun toString(): String {
         return when (type) {
-            LTType.TCP -> "[ $localAddr:$localPort<-tcp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
-            LTType.HTTP -> "[ $localAddr:$localPort<-http://$host { ${optionsMapToLine(options)} } ]"
-            LTType.HTTPS -> "[ $localAddr:$localPort<-https://$host { ${optionsMapToLine(options)} } ]"
+            Type.TCP -> "[ $localAddr:$localPort<-tcp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
+            Type.HTTP -> "[ $localAddr:$localPort<-http://$host { ${optionsMapToLine(options)} } ]"
+            Type.HTTPS -> "[ $localAddr:$localPort<-https://$host { ${optionsMapToLine(options)} } ]"
             else -> ""
         }
     }
@@ -75,7 +76,7 @@ class LTRequest private constructor(
         fun fromBytes(bytes: ByteArray): LTRequest {
             val buffer = Unpooled.wrappedBuffer(bytes)
             try {
-                val proto = LTType.ofValue(buffer.readByte())
+                val type = Type.ofValue(buffer.readByte())
                 val localPort = buffer.readInt()
 
                 val loadAddrBytes = ByteArray(buffer.readInt())
@@ -86,7 +87,7 @@ class LTRequest private constructor(
                 buffer.readBytes(optionsBytes)
                 val options = optionsLineToMap(String(optionsBytes, StandardCharsets.UTF_8))
 
-                return LTRequest(proto, loadAddr, localPort, options)
+                return LTRequest(type, loadAddr, localPort, options)
             } catch (e: Exception) {
                 throw LTException("解析失败，数据异常", e)
             } finally {
@@ -100,15 +101,15 @@ class LTRequest private constructor(
             localAddr: String,
             localPort: Int,
             remotePort: Int,
-            vararg addedOptions: Pair<String, String>
+            vararg options: Pair<String, String>
         ): LTRequest {
-            checkAddedOptions(*addedOptions)
-            val options = mutableMapOf(
+            checkOptions(*options)
+            val options0 = mutableMapOf(
                 Pair(REMOTE_PORT, remotePort.toString()),
-                *addedOptions
+                *options
             )
-            authToken?.also { options[AUTH_TOKEN] = authToken }
-            return LTRequest(LTType.TCP, localAddr, localPort, options)
+            authToken?.also { options0[AUTH_TOKEN] = authToken }
+            return LTRequest(Type.TCP, localAddr, localPort, options0)
         }
 
 
@@ -125,27 +126,27 @@ class LTRequest private constructor(
             basicAuthPassword: String = "guest",
             proxySetHeaders: Map<String, String> = emptyMap(),
             proxyAddHeaders: Map<String, String> = emptyMap(),
-            vararg addedOptions: Pair<String, String>
+            vararg options: Pair<String, String>
         ): LTRequest {
-            checkAddedOptions(*addedOptions)
-            val options = mutableMapOf(
+            checkOptions(*options)
+            val options0 = mutableMapOf(
                 Pair(HOST, host),
                 Pair(ENABLE_BASIC_AUTH, if (enableBasicAuth) "1" else "0"),
-                *addedOptions
+                *options
             )
             if (enableBasicAuth) {
-                options[BASIC_AUTH_REALM] = basicAuthRealm
-                options[BASIC_AUTH_USERNAME] = basicAuthUsername
-                options[BASIC_AUTH_PASSWORD] = basicAuthPassword
+                options0[BASIC_AUTH_REALM] = basicAuthRealm
+                options0[BASIC_AUTH_USERNAME] = basicAuthUsername
+                options0[BASIC_AUTH_PASSWORD] = basicAuthPassword
             }
-            setHeadersOption(PROXY_SET_HEADERS, proxySetHeaders, options)
-            setHeadersOption(PROXY_ADD_HEADERS, proxyAddHeaders, options)
-            authToken?.also { options[AUTH_TOKEN] = authToken }
-            return LTRequest(if (https) LTType.HTTPS else LTType.HTTP, localAddr, localPort, options)
+            setHeadersOption(PROXY_SET_HEADERS, proxySetHeaders, options0)
+            setHeadersOption(PROXY_ADD_HEADERS, proxyAddHeaders, options0)
+            authToken?.also { options0[AUTH_TOKEN] = authToken }
+            return LTRequest(if (https) Type.HTTPS else Type.HTTP, localAddr, localPort, options0)
         }
 
 
-        private fun checkAddedOptions(vararg addedOptions: Pair<String, String>) {
+        private fun checkOptions(vararg addedOptions: Pair<String, String>) {
             addedOptions.forEach {
                 require(!(it.first.startsWith("_") && it.first.endsWith("_"))) { "`_`打头`_`结尾的key为系统保留的key" }
             }
@@ -188,6 +189,20 @@ class LTRequest private constructor(
         private fun optionsMapToLine(originalMap: Map<String, String>?): String {
             originalMap ?: return ""
             return originalMap.entries.joinToString(separator = "&") { "${it.key}=${it.value}" }
+        }
+
+    }
+
+
+    enum class Type(val value: Byte) {
+        UNKNOWN(0x00.toByte()),
+        TCP(0x10.toByte()),
+        HTTP(0x30.toByte()),
+        HTTPS(0x31.toByte());
+
+        companion object {
+            @JvmStatic
+            fun ofValue(value: Byte) = values().firstOrNull { it.value == value } ?: UNKNOWN
         }
 
     }

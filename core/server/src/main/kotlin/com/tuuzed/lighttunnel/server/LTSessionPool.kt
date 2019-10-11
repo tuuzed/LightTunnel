@@ -8,8 +8,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class LTSessionPool(
     val tunnelId: Long,
-    val tpRequest: LTRequest,
-    val tpChannel: Channel
+    val request: LTRequest,
+    val tunnelChannel: Channel
 ) {
     private val ids = LTIncIds()
     private val cachedChannels = ConcurrentHashMap<Long, Channel>()

@@ -32,7 +32,7 @@ class LTHttpServerChannelHandler(
             if (descriptor != null) {
                 val tunnelId = descriptor.sessionPool.tunnelId
                 val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
-                descriptor.sessionPool.tpChannel.writeAndFlush(LTMassage(LTCommand.REMOTE_DISCONNECT, head))
+                descriptor.sessionPool.tunnelChannel.writeAndFlush(LTMassage(LTCommand.REMOTE_DISCONNECT, head))
             }
             ctx.channel().attr<String>(AK_HTTP_HOST).set(null)
             ctx.channel().attr<Long>(AK_SESSION_ID).set(null)
@@ -75,7 +75,7 @@ class LTHttpServerChannelHandler(
         val httpResponse = interceptor.handleHttpRequest(
             ctx.channel().localAddress(),
             ctx.channel().remoteAddress(),
-            descriptor.sessionPool.tpRequest,
+            descriptor.sessionPool.request,
             msg
         )
         if (httpResponse != null) {
@@ -87,7 +87,7 @@ class LTHttpServerChannelHandler(
         val tunnelId = descriptor.sessionPool.tunnelId
         val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
         val data = msg.toBytes()
-        descriptor.sessionPool.tpChannel.writeAndFlush(LTMassage(LTCommand.TRANSFER, head, data))
+        descriptor.sessionPool.tunnelChannel.writeAndFlush(LTMassage(LTCommand.TRANSFER, head, data))
     }
 
     /** 处理读取到的HttpContent类型的消息 */
@@ -109,7 +109,7 @@ class LTHttpServerChannelHandler(
         val tunnelId = descriptor.sessionPool.tunnelId
         val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
         val data = msg.content().toBytes()
-        descriptor.sessionPool.tpChannel.writeAndFlush(LTMassage(LTCommand.TRANSFER, head, data))
+        descriptor.sessionPool.tunnelChannel.writeAndFlush(LTMassage(LTCommand.TRANSFER, head, data))
 
     }
 

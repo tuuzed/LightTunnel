@@ -10,7 +10,7 @@ internal val AK_SESSION_ID = AttributeKey.newInstance<Long>("AK_SESSION_ID")
 
 internal val AK_NEXT_CHANNEL = AttributeKey.newInstance<Channel>("NEXT_CHANNEL")
 
-internal val AK_TP_REQUEST = AttributeKey.newInstance<LTRequest>("AK_TP_REQUEST")
+internal val AK_LT_REQUEST = AttributeKey.newInstance<LTRequest>("AK_LT_REQUEST")
 
 internal val AK_ERR_FLAG = AttributeKey.newInstance<Boolean>("AK_ERR_FLAG")
 

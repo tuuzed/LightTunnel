@@ -1,7 +1,7 @@
 package ltc
 
 import org.apache.log4j.Level
-import com.tuuzed.lighttunnel.common.LTType
+import com.tuuzed.lighttunnel.common.LTRequest
 
 data class LTCConfig(
     var basic: Basic = Basic(),
@@ -62,12 +62,12 @@ data class LTCConfig(
         var http_add_headers: Map<String, String>? = null,
         var http_auth: HttpAuth = HttpAuth()
     ) {
-        val tpType: LTType
+        val typeEume: LTRequest.Type
             get() = when (type.trim().toUpperCase()) {
-                "TCP" -> LTType.TCP
-                "HTTP" -> LTType.HTTP
-                "HTTPS" -> LTType.HTTPS
-                else -> LTType.UNKNOWN
+                "TCP" -> LTRequest.Type.TCP
+                "HTTP" -> LTRequest.Type.HTTP
+                "HTTPS" -> LTRequest.Type.HTTPS
+                else -> LTRequest.Type.UNKNOWN
             }
         val enableSsl get() = enable_ssl
         val localAddr get() = local_addr
