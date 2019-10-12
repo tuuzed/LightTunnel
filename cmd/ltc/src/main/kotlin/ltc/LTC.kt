@@ -111,14 +111,14 @@ class LTC {
     }
 
     private fun configureLogger(logConfig: LTCConfig.Log) {
-        LoggerFactory.configConsole(Level.OFF, names = *LoggerFactory.thirdLibs).apply()
-        LoggerFactory.configConsole(level = logConfig.logLevel).apply()
+        LoggerFactory.configConsole(Level.OFF, names = *LTManifest.thirdLibs)
+        LoggerFactory.configConsole(level = logConfig.logLevel)
         LoggerFactory.configFile(
             level = logConfig.logLevel,
             file = logConfig.file,
             maxBackupIndex = logConfig.maxBackupIndex,
             maxFileSize = OptionConverter.toFileSize(logConfig.maxFileSize, 1)
-        ).apply()
+        )
     }
 
 }
