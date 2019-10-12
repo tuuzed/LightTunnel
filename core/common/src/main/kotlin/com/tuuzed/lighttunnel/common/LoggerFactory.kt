@@ -38,12 +38,6 @@ class LoggerFactory private constructor(
 
     companion object {
 
-        val thirdLibs = arrayOf(
-            "io.netty",
-            "org.yaml.snakeyaml",
-            "org.slf4j",
-            "org.apache.log4j"
-        )
         private const val SYSTEM_OUT = "System.out"
         private const val SYSTEM_ERR = "System.err"
         private const val defaultConsolePattern = "%-d{HH:mm:ss} [%5p] %l: %m%n"
@@ -68,7 +62,7 @@ class LoggerFactory private constructor(
             console = true,
             target = if (systemErr) SYSTEM_ERR else SYSTEM_OUT,
             names = *names
-        )
+        ).apply()
 
         @JvmStatic
         fun configFile(
@@ -88,7 +82,7 @@ class LoggerFactory private constructor(
             maxBackupIndex = maxBackupIndex,
             append = append,
             names = *names
-        )
+        ).apply()
     }
 
     private val loggers: List<Logger>
@@ -106,7 +100,7 @@ class LoggerFactory private constructor(
     }
 
 
-    fun apply() {
+    private fun apply() {
         loggers.forEach {
             it.addAppender(appender)
             it.level = level

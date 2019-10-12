@@ -14,7 +14,7 @@ class LTTcpRegistry {
     fun register(port: Int, session: LTSessionPool, descriptor: LTTcpDescriptor) {
         tunnelIdDescriptors[session.tunnelId] = descriptor
         portDescriptors[port] = descriptor
-        logger.info("Start Tunnel: {}", session.tpRequest)
+        logger.info("Start Tunnel: {}", session.request)
     }
 
     @Synchronized
@@ -23,7 +23,7 @@ class LTTcpRegistry {
         if (descriptor != null) {
             portDescriptors.remove(descriptor.port)
             descriptor.close()
-            logger.info("Shutdown Tunnel: {}", descriptor.sessionPool.tpRequest)
+            logger.info("Shutdown Tunnel: {}", descriptor.sessionPool.request)
         }
     }
 

@@ -22,16 +22,16 @@ class LTServerChannelHandler(
             super.channelInactive(ctx)
             return
         }
-        ctx.channel().attr(AK_TP_SESSION_POOL).get()?.also {
-            when (it.tpRequest.type) {
-                LTType.TCP -> tcpServer?.registry?.unregister(it.tunnelId)
-                LTType.HTTP -> httpServer?.registry?.unregister(it.tpRequest.host)
-                LTType.HTTPS -> httpsServer?.registry?.unregister(it.tpRequest.host)
+        ctx.channel().attr(AK_SESSION_POOL).get()?.also {
+            when (it.request.type) {
+                LTRequest.Type.TCP -> tcpServer?.registry?.unregister(it.tunnelId)
+                LTRequest.Type.HTTP -> httpServer?.registry?.unregister(it.request.host)
+                LTRequest.Type.HTTPS -> httpsServer?.registry?.unregister(it.request.host)
                 else -> {
                 }
             }
         }
-        ctx.channel().attr(AK_TP_SESSION_POOL).set(null)
+        ctx.channel().attr(AK_SESSION_POOL).set(null)
         super.channelInactive(ctx)
     }
 
@@ -70,15 +70,15 @@ class LTServerChannelHandler(
                 val tpRequest = LTRequest.fromBytes(msg.head)
                 logger.trace("tpRequest: {}", tpRequest)
                 when (tpRequest.type) {
-                    LTType.TCP -> {
+                    LTRequest.Type.TCP -> {
                         tcpServer?.also { handleTcpRequestMessage(ctx, it, tpRequest) }
                             ?: throw LTException("TCP协议隧道未开启")
                     }
-                    LTType.HTTP -> {
+                    LTRequest.Type.HTTP -> {
                         httpServer?.also { handleHttpRequestMessage(ctx, it, tpRequest) }
                             ?: throw LTException("HTTP协议隧道未开启")
                     }
-                    LTType.HTTPS -> {
+                    LTRequest.Type.HTTPS -> {
                         httpsServer?.also { handleHttpRequestMessage(ctx, it, tpRequest) }
                             ?: throw LTException("HTTPS协议隧道未开启")
                     }
@@ -93,23 +93,23 @@ class LTServerChannelHandler(
 
         @Throws(Exception::class)
         fun handleTransferMessage(ctx: ChannelHandlerContext, msg: LTMassage) {
-            val sessionPool = ctx.channel().attr(AK_TP_SESSION_POOL).get() ?: return
-            when (sessionPool.tpRequest.type) {
-                LTType.TCP -> {
+            val sessionPool = ctx.channel().attr(AK_SESSION_POOL).get() ?: return
+            when (sessionPool.request.type) {
+                LTRequest.Type.TCP -> {
                     tcpServer ?: return
                     val tunnelId = msg.headBuf.readLong()
                     val sessionId = msg.headBuf.readLong()
                     tcpServer.registry.getSessionChannel(tunnelId, sessionId)
                         ?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
                 }
-                LTType.HTTP -> {
+                LTRequest.Type.HTTP -> {
                     httpServer ?: return
                     val tunnelId = msg.headBuf.readLong()
                     val sessionId = msg.headBuf.readLong()
                     httpServer.registry.getSessionChannel(tunnelId, sessionId)
                         ?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
                 }
-                LTType.HTTPS -> {
+                LTRequest.Type.HTTPS -> {
                     httpsServer ?: return
                     val tunnelId = msg.headBuf.readLong()
                     val sessionId = msg.headBuf.readLong()
@@ -127,10 +127,11 @@ class LTServerChannelHandler(
             // 无须处理
         }
 
+        @Suppress("UNUSED_VARIABLE")
         @Throws(Exception::class)
         fun handleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: LTMassage) {
             logger.trace("handleLocalDisconnectMessage# {}, {}", ctx, msg)
-            val sessionPool = ctx.channel().attr(AK_TP_SESSION_POOL).get() ?: return
+            val sessionPool = ctx.channel().attr(AK_SESSION_POOL).get() ?: return
             val tunnelId = msg.headBuf.readLong()
             val sessionId = msg.headBuf.readLong()
             val sessionChannel = sessionPool.getChannel(sessionId)
@@ -143,7 +144,7 @@ class LTServerChannelHandler(
             val tunnelRequest = tpRequestInterceptor.handleTPRequest(tpRequest)
             val tunnelId = tunnelIds.nextId
             val sessionPool = LTSessionPool(tunnelId, tunnelRequest, ctx.channel())
-            ctx.channel().attr(AK_TP_SESSION_POOL).set(sessionPool)
+            ctx.channel().attr(AK_SESSION_POOL).set(sessionPool)
             server.startTunnel(null, tunnelRequest.remotePort, sessionPool)
             val head = ctx.alloc().long2Bytes(tunnelId, 0)
             val data = tunnelRequest.toBytes()
@@ -158,7 +159,7 @@ class LTServerChannelHandler(
             }
             val tunnelId = tunnelIds.nextId
             val sessionPool = LTSessionPool(tunnelId, request, ctx.channel())
-            ctx.channel().attr(AK_TP_SESSION_POOL).set(sessionPool)
+            ctx.channel().attr(AK_SESSION_POOL).set(sessionPool)
             server.registry.register(request.host, sessionPool)
             val head = ctx.alloc().long2Bytes(tunnelId, 0)
             val data = request.toBytes()

@@ -1,13 +1,14 @@
 package lts
 
-import org.apache.log4j.Level
-import org.apache.log4j.helpers.OptionConverter
+import com.tuuzed.lighttunnel.cmd.CmdLineParser
+import com.tuuzed.lighttunnel.cmd.Yaml
+import com.tuuzed.lighttunnel.common.LTManifest
 import com.tuuzed.lighttunnel.common.LoggerFactory
 import com.tuuzed.lighttunnel.common.SslContextUtil
 import com.tuuzed.lighttunnel.server.LTServer
 import com.tuuzed.lighttunnel.server.LTSimpleRequestInterceptor
-import com.tuuzed.lighttunnel.cmd.CmdLineParser
-import com.tuuzed.lighttunnel.cmd.Yaml
+import org.apache.log4j.Level
+import org.apache.log4j.helpers.OptionConverter
 import java.io.File
 
 class LTS {
@@ -102,14 +103,14 @@ class LTS {
     }
 
     private fun configureLogger(logConfig: LTSConfig.Log) {
-        LoggerFactory.configConsole(Level.OFF, names = *LoggerFactory.thirdLibs).apply()
-        LoggerFactory.configConsole(level = logConfig.logLevel).apply()
+        LoggerFactory.configConsole(Level.OFF, names = *LTManifest.thirdLibs)
+        LoggerFactory.configConsole(level = logConfig.logLevel)
         LoggerFactory.configFile(
             level = logConfig.logLevel,
             file = logConfig.file,
             maxBackupIndex = logConfig.maxBackupIndex,
             maxFileSize = OptionConverter.toFileSize(logConfig.maxFileSize, 1)
-        ).apply()
+        )
     }
 
 }

@@ -21,11 +21,11 @@ class LTClientChannelHandler(
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         // 隧道断开
         if (ctx != null) {
-            val tpRequest = ctx.channel().attr(AK_TP_REQUEST).get()
+            val request = ctx.channel().attr(AK_LT_REQUEST).get()
             val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
             val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
-            when (tpRequest?.type) {
-                LTType.TCP, LTType.HTTP, LTType.HTTPS -> {
+            when (request?.type) {
+                LTRequest.Type.TCP, LTRequest.Type.HTTP, LTRequest.Type.HTTPS -> {
                     if (tunnelId != null && sessionId != null) {
                         localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
                     }
@@ -74,12 +74,12 @@ class LTClientChannelHandler(
         @Throws(Exception::class)
         fun handleResponseOkMessage(ctx: ChannelHandlerContext, msg: LTMassage) {
             val tunnelId = msg.headBuf.readLong()
-            val tpRequest = LTRequest.fromBytes(msg.data)
+            val request = LTRequest.fromBytes(msg.data)
             ctx.channel().attr(AK_TUNNEL_ID).set(tunnelId)
-            ctx.channel().attr(AK_TP_REQUEST).set(tpRequest)
+            ctx.channel().attr(AK_LT_REQUEST).set(request)
             ctx.channel().attr(AK_ERR_FLAG).set(null)
             ctx.channel().attr(AK_ERR_CAUSE).set(null)
-            logger.debug("Opened Tunnel: {}", tpRequest)
+            logger.debug("Opened Tunnel: {}", request)
             onConnectStateListener.onTunnelConnected(ctx)
         }
 
@@ -88,7 +88,7 @@ class LTClientChannelHandler(
         fun handleResponseErrMessage(ctx: ChannelHandlerContext, msg: LTMassage) {
             val errMessage = String(msg.head, StandardCharsets.UTF_8)
             ctx.channel().attr(AK_TUNNEL_ID).set(null)
-            ctx.channel().attr(AK_TP_REQUEST).set(null)
+            ctx.channel().attr(AK_LT_REQUEST).set(null)
             ctx.channel().attr(AK_ERR_FLAG).set(true)
             ctx.channel().attr(AK_ERR_CAUSE).set(Exception(errMessage))
             ctx.channel().close()
@@ -103,12 +103,12 @@ class LTClientChannelHandler(
             val sessionId = msg.headBuf.readLong()
             ctx.channel().attr(AK_TUNNEL_ID).set(tunnelId)
             ctx.channel().attr(AK_SESSION_ID).set(sessionId)
-            val tpRequest = ctx.channel().attr(AK_TP_REQUEST).get()
-            if (tpRequest != null) {
-                when (tpRequest.type) {
-                    LTType.TCP, LTType.HTTP, LTType.HTTPS -> {
+            val request = ctx.channel().attr(AK_LT_REQUEST).get()
+            if (request != null) {
+                when (request.type) {
+                    LTRequest.Type.TCP, LTRequest.Type.HTTP, LTRequest.Type.HTTPS -> {
                         localTcpClient.getLocalChannel(
-                            tpRequest.localAddr, tpRequest.localPort,
+                            request.localAddr, request.localPort,
                             tunnelId, sessionId,
                             ctx.channel(),
                             object : LTLocalTcpClient.Callback {
@@ -130,7 +130,7 @@ class LTClientChannelHandler(
             val sessionId = msg.headBuf.readLong()
             ctx.channel().attr(AK_TUNNEL_ID).set(tunnelId)
             ctx.channel().attr(AK_SESSION_ID).set(sessionId)
-            val tpRequest = ctx.channel().attr(AK_TP_REQUEST).get()
+            val tpRequest = ctx.channel().attr(AK_LT_REQUEST).get()
             if (tpRequest != null) {
                 localTcpClient.getLocalChannel(
                     tpRequest.localAddr, tpRequest.localPort,

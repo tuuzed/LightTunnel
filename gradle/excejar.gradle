@@ -1,6 +1,11 @@
 buildscript {
     repositories {
-        flatDir dirs: "${System.getenv("PROGUARD_HOME")}/lib"
+        def proguard_home = System.getenv("PROGUARD_HOME")
+        if (proguard_home == null) {
+            flatDir dirs: rootProject.file("./proguard6.1.1/lib")
+        } else {
+            flatDir dirs: "${System.getenv("PROGUARD_HOME")}/lib"
+        }
     }
     dependencies {
         classpath ':proguard:'

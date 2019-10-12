@@ -6,7 +6,7 @@ version = rootProject.version
 sourceCompatibility = rootProject.jvm_version
 
 dependencies {
-    compile project(":core:common")
+    compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     // yaml 文件解析
     compile 'org.yaml:snakeyaml:1.25'
     // 单元测试
