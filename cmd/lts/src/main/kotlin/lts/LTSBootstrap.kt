@@ -1,4 +1,4 @@
-@file:JvmName("TPSBootstrap")
+@file:JvmName("LTSBootstrap")
 
 package lts
 
