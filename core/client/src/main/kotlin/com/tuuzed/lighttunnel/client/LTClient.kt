@@ -35,7 +35,7 @@ class LTClient(
     private val tpClientChannelListener = object : OnConnectStateListener {
         override fun onChannelInactive(ctx: ChannelHandlerContext) {
             super.onChannelInactive(ctx)
-            val descriptor = ctx.channel().attr<LTConnDescriptor>(AK_TPC_DESCRIPTOR).get()
+            val descriptor = ctx.channel().attr<LTConnDescriptor>(AK_LT_CONN_DESCRIPTOR).get()
             if (descriptor != null) {
                 val errFlag = ctx.channel().attr<Boolean>(AK_ERR_FLAG).get()
                 val errCause = ctx.channel().attr<Throwable>(AK_ERR_CAUSE).get()
@@ -55,7 +55,7 @@ class LTClient(
 
         override fun onTunnelConnected(ctx: ChannelHandlerContext) {
             super.onTunnelConnected(ctx)
-            val descriptor = ctx.channel().attr<LTConnDescriptor>(AK_TPC_DESCRIPTOR).get()
+            val descriptor = ctx.channel().attr<LTConnDescriptor>(AK_LT_CONN_DESCRIPTOR).get()
             if (descriptor != null) {
                 options.listener?.onConnected(descriptor)
             }
