@@ -9,11 +9,11 @@ import com.tuuzed.lighttunnel.common.LTRequest
 import com.tuuzed.lighttunnel.common.logger
 import java.util.concurrent.atomic.AtomicBoolean
 
-class LTClientDescriptor(
+class LTConnDescriptor(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
-    val tpRequest: LTRequest
+    val request: LTRequest
 ) {
     private val logger by logger()
     private val shutdownFlag = AtomicBoolean(false)
@@ -32,8 +32,8 @@ class LTClientDescriptor(
         f.addListener(ChannelFutureListener { future ->
             if (future.isSuccess) {
                 // 连接成功，向服务器发送请求建立隧道消息
-                future.channel().writeAndFlush(LTMassage(LTCommand.REQUEST, head = tpRequest.toBytes()))
-                future.channel().attr(AK_TPC_DESCRIPTOR).set(this)
+                future.channel().writeAndFlush(LTMassage(LTCommand.REQUEST, head = request.toBytes()))
+                future.channel().attr(AK_LT_CONN_DESCRIPTOR).set(this)
             } else {
                 listener?.onConnectFailure(this)
             }
@@ -43,12 +43,12 @@ class LTClientDescriptor(
     fun shutdown() {
         shutdownFlag.set(true)
         connectChannelFuture?.apply {
-            channel().attr(AK_TPC_DESCRIPTOR).set(null)
+            channel().attr(AK_LT_CONN_DESCRIPTOR).set(null)
             channel().close()
         }
     }
 
-    override fun toString() = tpRequest.toString()
+    override fun toString() = request.toString()
 
 
 }

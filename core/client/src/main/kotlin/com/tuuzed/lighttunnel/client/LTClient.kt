@@ -23,7 +23,7 @@ class LTClient(
     private val workerGroup: NioEventLoopGroup
     private val localTcpClient: LTLocalTcpClient
     private val onConnectFailureListener = object : OnConnectFailureListener {
-        override fun onConnectFailure(descriptor: LTClientDescriptor) {
+        override fun onConnectFailure(descriptor: LTConnDescriptor) {
             super.onConnectFailure(descriptor)
             if (!descriptor.isShutdown && options.autoReconnect) {
                 // 连接失败，3秒后发起重连
@@ -35,7 +35,7 @@ class LTClient(
     private val tpClientChannelListener = object : OnConnectStateListener {
         override fun onChannelInactive(ctx: ChannelHandlerContext) {
             super.onChannelInactive(ctx)
-            val descriptor = ctx.channel().attr<LTClientDescriptor>(AK_TPC_DESCRIPTOR).get()
+            val descriptor = ctx.channel().attr<LTConnDescriptor>(AK_TPC_DESCRIPTOR).get()
             if (descriptor != null) {
                 val errFlag = ctx.channel().attr<Boolean>(AK_ERR_FLAG).get()
                 val errCause = ctx.channel().attr<Throwable>(AK_ERR_CAUSE).get()
@@ -55,7 +55,7 @@ class LTClient(
 
         override fun onTunnelConnected(ctx: ChannelHandlerContext) {
             super.onTunnelConnected(ctx)
-            val descriptor = ctx.channel().attr<LTClientDescriptor>(AK_TPC_DESCRIPTOR).get()
+            val descriptor = ctx.channel().attr<LTConnDescriptor>(AK_TPC_DESCRIPTOR).get()
             if (descriptor != null) {
                 options.listener?.onConnected(descriptor)
             }
@@ -77,8 +77,8 @@ class LTClient(
 
     fun connect(
         serverAddr: String, serverPort: Int, tpRequest: LTRequest, sslContext: SslContext?
-    ): LTClientDescriptor {
-        val descriptor = LTClientDescriptor(
+    ): LTConnDescriptor {
+        val descriptor = LTConnDescriptor(
             if (sslContext == null) bootstrap else getSslBootstrap(sslContext),
             serverAddr,
             serverPort,
@@ -89,7 +89,7 @@ class LTClient(
         return descriptor
     }
 
-    fun shutdown(descriptor: LTClientDescriptor) {
+    fun shutdown(descriptor: LTConnDescriptor) {
         descriptor.shutdown()
     }
 

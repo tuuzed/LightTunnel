@@ -1,9 +1,6 @@
 package com.tuuzed.lighttunnel.client
 
-import com.tuuzed.lighttunnel.common.LoggerFactory
-import com.tuuzed.lighttunnel.common.SslContextUtil
-import com.tuuzed.lighttunnel.common.LTRequest
-import com.tuuzed.lighttunnel.common.logger
+import com.tuuzed.lighttunnel.common.*
 import io.netty.handler.ssl.SslContext
 import org.apache.log4j.Level
 import org.junit.Before
@@ -17,21 +14,21 @@ class LPClientTestSkip {
 
     @Before
     fun setup() {
-        LoggerFactory.configConsole(level = Level.OFF, names = *LoggerFactory.thirdLibs).apply()
-        LoggerFactory.configConsole(level = Level.ALL).apply()
+        LoggerFactory.configConsole(level = Level.OFF, names = *LTManifest.thirdLibs)
+        LoggerFactory.configConsole(level = Level.ALL)
         val options = LTClient.Options()
         with(options) {
             autoReconnect = true
             listener = object : OnLTClientStateListener {
-                override fun onConnecting(descriptor: LTClientDescriptor, reconnect: Boolean) {
+                override fun onConnecting(descriptor: LTConnDescriptor, reconnect: Boolean) {
                     logger.info("onConnecting: {}, reconnect: {}", descriptor, reconnect)
                 }
 
-                override fun onConnected(descriptor: LTClientDescriptor) {
+                override fun onConnected(descriptor: LTConnDescriptor) {
                     logger.info("onConnected: {}", descriptor)
                 }
 
-                override fun onDisconnect(descriptor: LTClientDescriptor, err: Boolean, errCause: Throwable?) {
+                override fun onDisconnect(descriptor: LTConnDescriptor, err: Boolean, errCause: Throwable?) {
                     logger.info("onDisconnect: {}, err: {}", descriptor, err)
                     errCause?.printStackTrace()
                 }

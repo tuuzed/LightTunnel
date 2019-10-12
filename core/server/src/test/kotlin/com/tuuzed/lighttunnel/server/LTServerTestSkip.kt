@@ -1,17 +1,18 @@
 package com.tuuzed.lighttunnel.server
 
+import com.tuuzed.lighttunnel.common.LTManifest
+import com.tuuzed.lighttunnel.common.LoggerFactory
+import com.tuuzed.lighttunnel.common.SslContextUtil
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
-import com.tuuzed.lighttunnel.common.LoggerFactory
-import com.tuuzed.lighttunnel.common.SslContextUtil
 
 class LTServerTestSkip {
 
     @Before
     fun setup() {
-        LoggerFactory.configConsole(level = Level.OFF, names = *LoggerFactory.thirdLibs).apply()
-        LoggerFactory.configConsole(level = Level.ALL).apply()
+        LoggerFactory.configConsole(level = Level.OFF, names = *LTManifest.thirdLibs)
+        LoggerFactory.configConsole(level = Level.ALL)
     }
 
     @Test

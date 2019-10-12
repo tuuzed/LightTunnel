@@ -5,7 +5,7 @@ import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
 import com.tuuzed.lighttunnel.client.OnLTClientStateListener
 import com.tuuzed.lighttunnel.client.LTClient
-import com.tuuzed.lighttunnel.client.LTClientDescriptor
+import com.tuuzed.lighttunnel.client.LTConnDescriptor
 import com.tuuzed.lighttunnel.common.*
 import com.tuuzed.lighttunnel.cmd.CmdLineParser
 import com.tuuzed.lighttunnel.cmd.Yaml
@@ -14,15 +14,15 @@ import java.io.File
 class LTC {
     private val logger by logger()
     private val onTPClientStateListener = object : OnLTClientStateListener {
-        override fun onConnecting(descriptor: LTClientDescriptor, reconnect: Boolean) {
+        override fun onConnecting(descriptor: LTConnDescriptor, reconnect: Boolean) {
             logger.debug("onConnecting: {}", descriptor)
         }
 
-        override fun onConnected(descriptor: LTClientDescriptor) {
+        override fun onConnected(descriptor: LTConnDescriptor) {
             logger.info("onConnected: {}", descriptor)
         }
 
-        override fun onDisconnect(descriptor: LTClientDescriptor, err: Boolean, errCause: Throwable?) {
+        override fun onDisconnect(descriptor: LTConnDescriptor, err: Boolean, errCause: Throwable?) {
             logger.info("onDisconnect: {}, err: {}", descriptor, err, errCause)
         }
     }
