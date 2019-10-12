@@ -1,4 +1,4 @@
-@file:JvmName("LPCBootstrap")
+@file:JvmName("LTCBootstrap")
 
 package ltc
 
