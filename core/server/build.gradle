@@ -1,12 +1,12 @@
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
-group = rootProject.group
+group = "${rootProject.group}.core"
 version = rootProject.version
 
 sourceCompatibility = rootProject.jvm_version
 
 dependencies {
-    compile project(":core:common")
+    compile project(":core:base")
     // 单元测试
     testCompile "junit:junit:4.12"
 }

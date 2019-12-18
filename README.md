@@ -1,4 +1,4 @@
-# TPS-内网穿透工具
+# LightTunnel-内网穿透工具
 
 支持TCP、HTTP、HTTPS穿透。
 

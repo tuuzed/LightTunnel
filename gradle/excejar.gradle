@@ -2,7 +2,7 @@ buildscript {
     repositories {
         def proguard_home = System.getenv("PROGUARD_HOME")
         if (proguard_home == null) {
-            flatDir dirs: rootProject.file("./proguard6.1.1/lib")
+            flatDir dirs: rootProject.file("./proguard/lib")
         } else {
             flatDir dirs: "${System.getenv("PROGUARD_HOME")}/lib"
         }
@@ -31,11 +31,11 @@ jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
         attributes 'Main-Class': project.MainClass
-        attributes 'TP-VersionCode': String.valueOf(GitVC.VERSION_CODE)
-        attributes 'TP-VersionName': String.valueOf(GitVC.VERSION_NAME)
-        attributes 'TP-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
-        attributes 'TP-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
-        attributes 'TP-BuildDate': String.valueOf(new Date())
+        attributes 'LightTunnel-VersionCode': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'LightTunnel-VersionName': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'LightTunnel-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'LightTunnel-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'LightTunnel-BuildDate': String.valueOf(new Date())
     }
 }
 
@@ -45,8 +45,8 @@ task exceJar(
         dependsOn: jar
 ) {
     List<File> proguardRules = new ArrayList<>()
-    proguardRules.add(rootProject.file("./proguard/proguard-basic.txt"))
-    proguardRules.add(rootProject.file("./proguard/proguard-libs.txt"))
+    proguardRules.add(rootProject.file("./proguard/proguard.rules/basic.txt"))
+    proguardRules.add(rootProject.file("./proguard/proguard.rules/libs.txt"))
     proguardRules.add(project.file("proguard-rules.txt"))
     configuration proguardRules
     injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"

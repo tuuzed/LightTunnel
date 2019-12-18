@@ -1,10 +1,10 @@
 rootProject.name = 'LightTunnel'
 
-include ":core:cmd"
-include ":core:common"
-include ":core:server"
+include ":core:base"
 include ":core:client"
+include ":core:server"
 
-include ":cmd:lts"
-include ":cmd:ltc"
+include ":cmd:base"
+include ":cmd:client"
+include ":cmd:server"
 

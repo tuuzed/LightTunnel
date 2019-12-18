@@ -1,0 +1,21 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+group = "${rootProject.group}.cmd"
+version = rootProject.version
+
+sourceCompatibility = rootProject.jvm_version
+
+dependencies {
+    compile project(":cmd:base")
+    compile project(":core:server")
+    // 单元测试
+    testCompile "junit:junit:4.12"
+}
+
+project.ext.MainClass = "ltcmd.server.LTSBootstrap"
+project.ext.OutJarName = "lts.jar"
+
+apply from: rootProject.file("./gradle/common.gradle").absolutePath
+apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
+apply from: rootProject.file("./gradle/excejar.gradle").absolutePath
+
