@@ -11,11 +11,7 @@ object SslContextUtil {
 
     @JvmStatic
     @Throws(Exception::class)
-    fun forServer(
-        jks: String,
-        storePassword: String,
-        keyPassword: String
-    ): SslContext {
+    fun forServer(jks: String, storePassword: String, keyPassword: String): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
         keyStore.load(FileInputStream(jks), storePassword.toCharArray())
         val kmf = KeyManagerFactory.getInstance("SunX509")
@@ -25,10 +21,7 @@ object SslContextUtil {
 
     @JvmStatic
     @Throws(Exception::class)
-    fun forClient(
-        jks: String,
-        storePassword: String
-    ): SslContext {
+    fun forClient(jks: String, storePassword: String): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
         keyStore.load(FileInputStream(jks), storePassword.toCharArray())
         val tmf = TrustManagerFactory.getInstance("SunX509")

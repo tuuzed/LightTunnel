@@ -41,16 +41,14 @@ class Application : OnLTClientStateListener {
         }
         val ini = Ini()
         ini.load(File(cmdLine.iniFile))
-        setupLog(ini["log"])
         val basic = ini["basic"] ?: return
+        setupLogger(basic)
         val client = newClient(basic)
-        val tunnels = ini.entries
-            .filter { it.key.startsWith("tunnel.") }
-            .mapNotNull { it.value }
         val serverAddr = basic["server_addr"] ?: return
         val serverPort = basic["server_port"].int()
-        val sslContext = newSslContext(ini["ssl"])
-        val sslServerPort = ini["ssl"]?.get("server_port").int()
+        val sslContext = newSslContext(basic)
+        val sslServerPort = basic["ssl_server_port"].int()
+        val tunnels = ini.entries.filter { it.key != "basic" }.mapNotNull { it.value }
         for (tunnel in tunnels) {
             val request = newTunnelRequest(basic, tunnel) ?: continue
             if (tunnel["ssl"]?.toUpperCase() == "TRUE") {
@@ -65,21 +63,19 @@ class Application : OnLTClientStateListener {
         }
     }
 
-    private fun newSslContext(sslSection: Profile.Section?): SslContext? {
-        sslSection ?: return null
-        val jks = sslSection["jks"] ?: return null
-        val storePassword = sslSection["store_password"] ?: return null
+    private fun newSslContext(basic: Profile.Section): SslContext? {
+        val jks = basic["ssl_jks"] ?: return null
+        val storePassword = basic["ssl_store_password"] ?: return null
         return SslContextUtil.forClient(jks, storePassword)
     }
 
     private fun newClient(basicSection: Profile.Section): LTClient {
         val workerThreads = basicSection["worker_threads"].int() ?: -1
-        val options = LTClient.Options(
+        return LTClient(
             workerThreads = workerThreads,
             listener = this,
             autoReconnect = true
         )
-        return LTClient(options)
     }
 
     private fun newTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): LTRequest? {
@@ -119,13 +115,13 @@ class Application : OnLTClientStateListener {
         val customDomain = tunnel["custom_domain"] ?: return null
         val proxySetHeaders = mapOf(
             *tunnel.entries
-                .filter { it.key.startsWith("header_set_") && it.value.isNotEmpty() }
-                .map { Pair(it.key.substring("header_set_".length), it.value.toString()) }.toTypedArray()
+                .filter { it.key.startsWith("pxy_header_set_") && it.value.isNotEmpty() }
+                .map { Pair(it.key.substring("pxy_header_set_".length), it.value.toString()) }.toTypedArray()
         )
         val proxyAddHeaders = mapOf(
             *tunnel.entries
-                .filter { it.key.startsWith("header_add_") && it.value.isNotEmpty() }
-                .map { Pair(it.key.substring("header_add_".length), it.value.toString()) }.toTypedArray()
+                .filter { it.key.startsWith("pxy_header_add_") && it.value.isNotEmpty() }
+                .map { Pair(it.key.substring("pxy_header_add_".length), it.value.toString()) }.toTypedArray()
         )
         val enableBasicAuth = tunnel["auth_enable"]?.toUpperCase() == "TRUE"
         val basicAuthRealm = tunnel["auth_realm"] ?: "."
@@ -146,24 +142,18 @@ class Application : OnLTClientStateListener {
         )
     }
 
-    private fun setupLog(log: Profile.Section?) {
-        var level = Level.OFF
-        var file: String? = null
-        var maxBackupIndex: Int? = null
-        var maxFileSize: String? = null
-        if (log != null) {
-            level = Level.toLevel(log["level"])
-            file = log["file"] ?: ""
-            maxBackupIndex = log["max_backup_index"].int()
-            maxFileSize = log["max_file_size"]
-        }
+    private fun setupLogger(basic: Profile.Section) {
+        val logLevel = Level.toLevel(basic["log_level"], Level.OFF)
+        val logFile = basic["log_file"] ?: "./logs/ltc.log"
+        val logCount = basic["log_count"].int() ?: 3
+        val logSize = basic["log_size"] ?: "1M"
         LoggerFactory.configConsole(Level.OFF, names = *LTManifest.thirdLibs)
-        LoggerFactory.configConsole(level = level)
+        LoggerFactory.configConsole(level = logLevel)
         LoggerFactory.configFile(
-            level = level,
-            file = file ?: "./logs/ltc.log",
-            maxBackupIndex = maxBackupIndex ?: 0,
-            maxFileSize = OptionConverter.toFileSize(maxFileSize, 1)
+            level = logLevel,
+            file = logFile,
+            maxBackupIndex = logCount,
+            maxFileSize = OptionConverter.toFileSize(logSize, 1)
         )
     }
 

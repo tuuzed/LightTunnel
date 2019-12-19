@@ -1,3 +1,5 @@
+@file:Suppress("CanBeParameter")
+
 package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
@@ -14,48 +16,68 @@ import lighttunnel.proto.LTMassageDecoder
 import lighttunnel.proto.LTMassageEncoder
 
 class LTServer(
-    options: Options = Options()
+    private val bossThreads: Int = -1,
+    private val workerThreads: Int = -1,
+    // tcp
+    private val bindAddr: String? = null,
+    private val bindPort: Int = 5080,
+    private val requestInterceptor: LTRequestInterceptor = LTRequestInterceptor.EMPTY_IMPL,
+    // ssl
+    private val sslBindPort: Int? = null,
+    private val sslContext: SslContext? = null,
+    // http
+    private val httpBindPort: Int? = null,
+    private val httpRequestInterceptor: LTHttpRequestInterceptor = LTHttpRequestInterceptor.EMPTY_IMPL,
+    // https
+    private val httpsBindPort: Int? = null,
+    private val httpsContext: SslContext? = null,
+    private val httpsRequestInterceptor: LTHttpRequestInterceptor = LTHttpRequestInterceptor.EMPTY_IMPL
 ) {
     private val logger by logger()
-    private val options = options.copy()
     private val tunnelIds = LTIncIds()
-    private val bossGroup: NioEventLoopGroup
-    private val workerGroup: NioEventLoopGroup
+    private val bossGroup: NioEventLoopGroup =
+        if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
+    private val workerGroup: NioEventLoopGroup =
+        if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private var tcpServer: LTTcpServer? = null
     private var httpServer: LTHttpServer? = null
     private var httpsServer: LTHttpServer? = null
 
     init {
-        with(this.options) {
-            bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
-            workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
-            if (sslEnable) {
-                requireNotNull(sslContext) { "sslContext == null" }
-            }
-            if (tcpEnable) {
-                tcpServer = LTTcpServer(bossGroup, workerGroup)
-            }
-            if (httpEnable) {
-                httpServer = LTHttpServer(
-                    bossGroup, workerGroup, null, httpBindAddr, httpBindPort, tpHttpRequestInterceptor
-                )
-            }
-            if (httpsEnable) {
-                requireNotNull(options.httpsContext) { "httpsContext == null" }
-                httpsServer = LTHttpServer(
-                    bossGroup, workerGroup, httpsContext, httpsBindAddr, httpsBindPort, tpHttpsRequestInterceptor
-                )
-            }
+        if (sslBindPort != null) {
+            requireNotNull(sslContext) { "sslContext == null" }
         }
+        if (httpBindPort != null) {
+            httpServer = LTHttpServer(
+                bossGroup, workerGroup, null, bindAddr, httpBindPort, httpRequestInterceptor
+            )
+        }
+        if (httpsBindPort != null) {
+            requireNotNull(httpsContext) { "httpsContext == null" }
+            httpsServer = LTHttpServer(
+                bossGroup, workerGroup, httpsContext, bindAddr, httpsBindPort, httpsRequestInterceptor
+            )
+        }
+        tcpServer = LTTcpServer(bossGroup, workerGroup)
     }
 
     @Synchronized
     @Throws(Exception::class)
     fun start() {
         startTunnelService(null)
-        options.sslContext?.also { startTunnelService(it) }
+        sslContext?.also { startTunnelService(it) }
         httpServer?.start()
         httpsServer?.start()
+    }
+
+
+    @Synchronized
+    fun destroy() {
+        tcpServer?.destroy()
+        httpServer?.destroy()
+        httpsServer?.destroy()
+        bossGroup.shutdownGracefully()
+        workerGroup.shutdownGracefully()
     }
 
     private fun startTunnelService(sslContext: SslContext?) {
@@ -66,23 +88,14 @@ class LTServer(
             .childOption(ChannelOption.SO_KEEPALIVE, true)
             .childHandler(createChannelInitializer(sslContext))
         if (sslContext == null) {
-            if (options.bindAddr == null) serverBootstrap.bind(options.bindPort).get()
-            else serverBootstrap.bind(options.bindAddr, options.bindPort).get()
-            logger.info("Serving tunnel on {} port {}", options.bindAddr ?: "any address", options.bindPort)
-        } else {
-            if (options.sslBindAddr == null) serverBootstrap.bind(options.sslBindPort).get()
-            else serverBootstrap.bind(options.sslBindAddr, options.sslBindPort).get()
-            logger.info("Serving ssl tunnel on {} port {}", options.sslBindAddr ?: "any address", options.sslBindPort)
+            if (bindAddr == null) serverBootstrap.bind(bindPort).get()
+            else serverBootstrap.bind(bindAddr, bindPort).get()
+            logger.info("Serving tunnel on {} port {}", bindAddr ?: "any address", bindPort)
+        } else if (sslBindPort != null) {
+            if (bindAddr == null) serverBootstrap.bind(sslBindPort).get()
+            else serverBootstrap.bind(bindAddr, sslBindPort).get()
+            logger.info("Serving ssl tunnel on {} port {}", bindAddr ?: "any address", sslBindPort)
         }
-    }
-
-    @Synchronized
-    fun destroy() {
-        tcpServer?.destroy()
-        httpServer?.destroy()
-        httpsServer?.destroy()
-        bossGroup.shutdownGracefully()
-        workerGroup.shutdownGracefully()
     }
 
     private fun createChannelInitializer(sslContext: SslContext?) = object : ChannelInitializer<SocketChannel>() {
@@ -94,41 +107,9 @@ class LTServer(
                 .addLast(LTMassageDecoder())
                 .addLast(LTMassageEncoder())
                 .addLast(
-                    LTServerChannelHandler(
-                        options.tpRequestInterceptor,
-                        tunnelIds,
-                        tcpServer,
-                        httpServer,
-                        httpsServer
-                    )
+                    LTServerChannelHandler(requestInterceptor, tunnelIds, tcpServer, httpServer, httpsServer)
                 )
         }
     }
-
-    data class Options(
-        var bossThreads: Int = -1,
-        var workerThreads: Int = -1,
-        // tunnel
-        var tpRequestInterceptor: LTRequestInterceptor = LTRequestInterceptor.EMPTY_IMPL,
-        var bindAddr: String? = null,
-        var bindPort: Int = 5080,
-        var sslEnable: Boolean = false,
-        var sslContext: SslContext? = null,
-        var sslBindAddr: String? = null,
-        var sslBindPort: Int = 5443,
-        // tcp
-        var tcpEnable: Boolean = true,
-        // http
-        var httpEnable: Boolean = false,
-        var httpBindAddr: String? = null,
-        var httpBindPort: Int = 80,
-        var tpHttpRequestInterceptor: LTHttpRequestInterceptor = LTHttpRequestInterceptor.EMPTY_IMPL,
-        // https
-        var httpsEnable: Boolean = false,
-        var httpsContext: SslContext? = null,
-        var httpsBindAddr: String? = null,
-        var httpsBindPort: Int = 443,
-        var tpHttpsRequestInterceptor: LTHttpRequestInterceptor = LTHttpRequestInterceptor.EMPTY_IMPL
-    )
 
 }
