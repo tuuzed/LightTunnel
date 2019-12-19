@@ -12,51 +12,6 @@ class LTRequest private constructor(
     private val options: Map<String, String>
 ) {
 
-    // common
-    val authToken: String? get() = options[AUTH_TOKEN]
-    // tcp
-    val remotePort: Int get() = (options[REMOTE_PORT] ?: error("remotePort == null")).toInt()
-    // http & https
-    val host: String get() = options[HOST] ?: error("host == null")
-    val enableBasicAuth: Boolean = options[ENABLE_BASIC_AUTH] == "1"
-    val basicAuthRealm: String = options[BASIC_AUTH_REALM] ?: "."
-    val basicAuthUsername: String = options[BASIC_AUTH_USERNAME] ?: ""
-    val basicAuthPassword: String = options[BASIC_AUTH_PASSWORD] ?: ""
-    val proxySetHeaders: Map<String, String> = parseHeadersOption(options[PROXY_SET_HEADERS])
-    val proxyAddHeaders: Map<String, String> = parseHeadersOption(options[PROXY_ADD_HEADERS])
-
-    // option
-    fun option(key: String): String? = options[key]
-
-    override fun toString(): String {
-        return when (type) {
-            Type.TCP -> "[ $localAddr:$localPort<-tcp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
-            Type.HTTP -> "[ $localAddr:$localPort<-http://$host { ${optionsMapToLine(options)} } ]"
-            Type.HTTPS -> "[ $localAddr:$localPort<-https://$host { ${optionsMapToLine(options)} } ]"
-            else -> ""
-        }
-    }
-
-    fun toBytes(): ByteArray {
-        val buffer = Unpooled.buffer()
-        buffer.writeByte(type.value.toInt())
-        buffer.writeInt(localPort)
-
-        val loadAddrBytes = localAddr.toByteArray(StandardCharsets.UTF_8)
-        buffer.writeInt(loadAddrBytes.size)
-        buffer.writeBytes(loadAddrBytes)
-
-        val optionsBytes = optionsMapToLine(options).toByteArray(StandardCharsets.UTF_8)
-        buffer.writeInt(optionsBytes.size)
-        buffer.writeBytes(optionsBytes)
-
-        val bytes = ByteArray(buffer.readableBytes())
-        buffer.readBytes(bytes)
-
-        buffer.release()
-        return bytes
-    }
-
     companion object Factory {
         // common
         private const val AUTH_TOKEN = "_AT_"
@@ -191,6 +146,51 @@ class LTRequest private constructor(
             return originalMap.entries.joinToString(separator = "&") { "${it.key}=${it.value}" }
         }
 
+    }
+
+    // common
+    val authToken: String? get() = options[AUTH_TOKEN]
+    // tcp
+    val remotePort: Int get() = (options[REMOTE_PORT] ?: error("remotePort == null")).toInt()
+    // http & https
+    val host: String get() = options[HOST] ?: error("host == null")
+    val enableBasicAuth: Boolean = options[ENABLE_BASIC_AUTH] == "1"
+    val basicAuthRealm: String = options[BASIC_AUTH_REALM] ?: "."
+    val basicAuthUsername: String = options[BASIC_AUTH_USERNAME] ?: ""
+    val basicAuthPassword: String = options[BASIC_AUTH_PASSWORD] ?: ""
+    val proxySetHeaders: Map<String, String> = parseHeadersOption(options[PROXY_SET_HEADERS])
+    val proxyAddHeaders: Map<String, String> = parseHeadersOption(options[PROXY_ADD_HEADERS])
+
+    // option
+    fun option(key: String): String? = options[key]
+
+    override fun toString(): String {
+        return when (type) {
+            Type.TCP -> "[ $localAddr:$localPort<-tcp://{server}:$remotePort { ${optionsMapToLine(options)} } ]"
+            Type.HTTP -> "[ $localAddr:$localPort<-http://$host { ${optionsMapToLine(options)} } ]"
+            Type.HTTPS -> "[ $localAddr:$localPort<-https://$host { ${optionsMapToLine(options)} } ]"
+            else -> ""
+        }
+    }
+
+    fun toBytes(): ByteArray {
+        val buffer = Unpooled.buffer()
+        buffer.writeByte(type.value.toInt())
+        buffer.writeInt(localPort)
+
+        val loadAddrBytes = localAddr.toByteArray(StandardCharsets.UTF_8)
+        buffer.writeInt(loadAddrBytes.size)
+        buffer.writeBytes(loadAddrBytes)
+
+        val optionsBytes = optionsMapToLine(options).toByteArray(StandardCharsets.UTF_8)
+        buffer.writeInt(optionsBytes.size)
+        buffer.writeBytes(optionsBytes)
+
+        val bytes = ByteArray(buffer.readableBytes())
+        buffer.readBytes(bytes)
+
+        buffer.release()
+        return bytes
     }
 
 

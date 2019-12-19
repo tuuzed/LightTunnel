@@ -46,7 +46,7 @@ task exceJar(
 ) {
     List<File> proguardRules = new ArrayList<>()
     proguardRules.add(rootProject.file("./proguard/proguard.rules/basic.txt"))
-    proguardRules.add(rootProject.file("./proguard/proguard.rules/libs.txt"))
+    proguardRules.add(rootProject.file("./proguard/proguard.rules/third-party.txt"))
     proguardRules.add(project.file("proguard-rules.txt"))
     configuration proguardRules
     injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"

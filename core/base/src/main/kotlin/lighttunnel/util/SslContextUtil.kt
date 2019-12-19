@@ -13,13 +13,13 @@ object SslContextUtil {
     @Throws(Exception::class)
     fun forServer(
         jks: String,
-        storepass: String,
-        keypass: String
+        storePassword: String,
+        keyPassword: String
     ): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
-        keyStore.load(FileInputStream(jks), storepass.toCharArray())
+        keyStore.load(FileInputStream(jks), storePassword.toCharArray())
         val kmf = KeyManagerFactory.getInstance("SunX509")
-        kmf.init(keyStore, keypass.toCharArray())
+        kmf.init(keyStore, keyPassword.toCharArray())
         return SslContextBuilder.forServer(kmf).build()
     }
 
@@ -27,10 +27,10 @@ object SslContextUtil {
     @Throws(Exception::class)
     fun forClient(
         jks: String,
-        storepass: String
+        storePassword: String
     ): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
-        keyStore.load(FileInputStream(jks), storepass.toCharArray())
+        keyStore.load(FileInputStream(jks), storePassword.toCharArray())
         val tmf = TrustManagerFactory.getInstance("SunX509")
         tmf.init(keyStore)
         return SslContextBuilder.forClient().trustManager(tmf).build()

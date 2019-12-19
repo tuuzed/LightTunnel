@@ -1,1 +1,1 @@
--keep class ltcmd.server.** { *; }
+#-keep class ltcmd.server.** { *; }

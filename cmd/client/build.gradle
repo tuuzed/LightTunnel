@@ -13,7 +13,7 @@ dependencies {
 }
 
 
-project.ext.MainClass = "ltcmd.client.LTCBootstrap"
+project.ext.MainClass = "ltcmd.client.MainKt"
 project.ext.OutJarName = "ltc.jar"
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath

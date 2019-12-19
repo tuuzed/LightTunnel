@@ -7,8 +7,8 @@ sourceCompatibility = rootProject.jvm_version
 
 dependencies {
     compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-    // yaml 文件解析
-    compile 'org.yaml:snakeyaml:1.25'
+    // ini 文件解析
+    compile 'org.ini4j:ini4j:0.5.4'
     // 单元测试
     testCompile "junit:junit:4.12"
 }
