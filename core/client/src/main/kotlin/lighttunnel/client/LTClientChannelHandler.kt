@@ -7,8 +7,10 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.proto.*
 import lighttunnel.logging.logger
+import lighttunnel.proto.LTCommand
+import lighttunnel.proto.LTMassage
+import lighttunnel.proto.LTRequest
 import java.nio.charset.StandardCharsets
 
 class LTClientChannelHandler(

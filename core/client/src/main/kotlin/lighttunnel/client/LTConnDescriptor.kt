@@ -3,10 +3,10 @@ package lighttunnel.client
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
+import lighttunnel.logging.logger
 import lighttunnel.proto.LTCommand
 import lighttunnel.proto.LTMassage
 import lighttunnel.proto.LTRequest
-import lighttunnel.logging.logger
 import java.util.concurrent.atomic.AtomicBoolean
 
 class LTConnDescriptor(

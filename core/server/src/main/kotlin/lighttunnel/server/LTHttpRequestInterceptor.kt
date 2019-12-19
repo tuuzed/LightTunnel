@@ -1,8 +1,8 @@
 package lighttunnel.server
 
-import lighttunnel.proto.LTRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponse
+import lighttunnel.proto.LTRequest
 import java.net.SocketAddress
 
 interface LTHttpRequestInterceptor {

@@ -1,7 +1,7 @@
 package lighttunnel.server
 
-import lighttunnel.proto.LTRequest
 import io.netty.handler.codec.http.*
+import lighttunnel.proto.LTRequest
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.charset.StandardCharsets

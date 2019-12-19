@@ -4,8 +4,9 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.proto.*
 import lighttunnel.logging.logger
+import lighttunnel.proto.LTCommand
+import lighttunnel.proto.LTMassage
 import lighttunnel.util.long2Bytes
 import lighttunnel.util.toBytes
 

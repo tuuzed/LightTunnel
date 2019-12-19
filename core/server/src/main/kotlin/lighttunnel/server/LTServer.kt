@@ -1,9 +1,5 @@
 package lighttunnel.server
 
-import lighttunnel.proto.LTHeartbeatHandler
-import lighttunnel.proto.LTMassageDecoder
-import lighttunnel.proto.LTMassageEncoder
-import lighttunnel.logging.logger
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
@@ -12,6 +8,10 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
+import lighttunnel.logging.logger
+import lighttunnel.proto.LTHeartbeatHandler
+import lighttunnel.proto.LTMassageDecoder
+import lighttunnel.proto.LTMassageEncoder
 
 class LTServer(
     options: Options = Options()

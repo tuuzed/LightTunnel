@@ -1,9 +1,9 @@
 package lighttunnel.server
 
-import lighttunnel.proto.LTRequest
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
+import lighttunnel.proto.LTRequest
 import java.util.concurrent.ConcurrentHashMap
 
 class LTSessionPool(

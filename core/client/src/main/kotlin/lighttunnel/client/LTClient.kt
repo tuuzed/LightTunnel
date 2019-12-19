@@ -9,8 +9,11 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
-import lighttunnel.proto.*
 import lighttunnel.logging.logger
+import lighttunnel.proto.LTHeartbeatHandler
+import lighttunnel.proto.LTMassageDecoder
+import lighttunnel.proto.LTMassageEncoder
+import lighttunnel.proto.LTRequest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 

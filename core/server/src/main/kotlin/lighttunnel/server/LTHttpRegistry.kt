@@ -1,8 +1,8 @@
 package lighttunnel.server
 
-import lighttunnel.proto.LTException
-import lighttunnel.logging.logger
 import io.netty.channel.Channel
+import lighttunnel.logging.logger
+import lighttunnel.proto.LTException
 import java.util.concurrent.ConcurrentHashMap
 
 

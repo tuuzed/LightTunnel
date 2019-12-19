@@ -14,8 +14,8 @@ class LTMassageDecoder : LengthFieldBasedFrameDecoder(
 ) {
     companion object {
         private const val MIN_BYTES = TP_MESSAGE_LENGTH_FIELD_LENGTH +
-                TP_MESSAGE_COMMAND_LENGTH +
-                TP_MESSAGE_HEAD_LENGTH_FIELD_LENGTH
+            TP_MESSAGE_COMMAND_LENGTH +
+            TP_MESSAGE_HEAD_LENGTH_FIELD_LENGTH
     }
 
     @Throws(Exception::class)
@@ -31,9 +31,9 @@ class LTMassageDecoder : LengthFieldBasedFrameDecoder(
             val head = ByteArray(headLength)
             inbuf.readBytes(head)
             val dataLength = msgTotalLength -
-                    TP_MESSAGE_COMMAND_LENGTH -
-                    TP_MESSAGE_HEAD_LENGTH_FIELD_LENGTH -
-                    headLength
+                TP_MESSAGE_COMMAND_LENGTH -
+                TP_MESSAGE_HEAD_LENGTH_FIELD_LENGTH -
+                headLength
             val data = ByteArray(dataLength)
             inbuf.readBytes(data)
             return LTMassage(cmd, head, data)

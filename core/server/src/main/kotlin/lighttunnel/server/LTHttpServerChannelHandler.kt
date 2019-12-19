@@ -1,6 +1,5 @@
 package lighttunnel.server
 
-import lighttunnel.proto.*
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
@@ -8,6 +7,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import lighttunnel.logging.logger
+import lighttunnel.proto.LTCommand
+import lighttunnel.proto.LTMassage
 import lighttunnel.util.long2Bytes
 import lighttunnel.util.toBytes
 

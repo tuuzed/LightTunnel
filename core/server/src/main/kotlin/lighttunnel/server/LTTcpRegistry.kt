@@ -1,7 +1,7 @@
 package lighttunnel.server
 
-import lighttunnel.logging.logger
 import io.netty.channel.Channel
+import lighttunnel.logging.logger
 import java.util.concurrent.ConcurrentHashMap
 
 class LTTcpRegistry {
