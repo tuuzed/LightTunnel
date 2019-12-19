@@ -13,6 +13,5 @@ jobs:
           java-version: 1.8
       - name: Build with Gradle
         run: |
-          tar -zxvf ./proguard/proguard6.1.1.tar.gz
           chmod +x ./gradlew
           ./gradlew clean build -x test
