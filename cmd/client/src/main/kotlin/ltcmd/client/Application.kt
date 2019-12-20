@@ -1,14 +1,14 @@
 package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.LTClient
-import lighttunnel.client.LTConnDescriptor
-import lighttunnel.client.OnLTClientStateListener
+import lighttunnel.client.TunnelClient
+import lighttunnel.client.TunnelConnDescriptor
+import lighttunnel.client.OnTunnelClientStateListener
 import lighttunnel.cmd.CmdLineParser
 import lighttunnel.logging.LoggerFactory
-import lighttunnel.logging.logger
-import lighttunnel.proto.LTManifest
-import lighttunnel.proto.LTRequest
+import lighttunnel.logging.loggerDelegate
+import lighttunnel.proto.ProtoRequest
+import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
@@ -16,18 +16,18 @@ import org.ini4j.Ini
 import org.ini4j.Profile
 import java.io.File
 
-class Application : OnLTClientStateListener {
-    private val logger by logger()
+class Application : OnTunnelClientStateListener {
+    private val logger by loggerDelegate()
 
-    override fun onConnecting(descriptor: LTConnDescriptor, reconnect: Boolean) {
+    override fun onConnecting(descriptor: TunnelConnDescriptor, reconnect: Boolean) {
         logger.debug("onConnecting: {}", descriptor)
     }
 
-    override fun onConnected(descriptor: LTConnDescriptor) {
+    override fun onConnected(descriptor: TunnelConnDescriptor) {
         logger.info("onConnected: {}", descriptor)
     }
 
-    override fun onDisconnect(descriptor: LTConnDescriptor, err: Boolean, errCause: Throwable?) {
+    override fun onDisconnect(descriptor: TunnelConnDescriptor, err: Boolean, errCause: Throwable?) {
         logger.info("onDisconnect: {}, err: {}", descriptor, err, errCause)
     }
 
@@ -69,16 +69,16 @@ class Application : OnLTClientStateListener {
         return SslContextUtil.forClient(jks, storePassword)
     }
 
-    private fun newClient(basicSection: Profile.Section): LTClient {
+    private fun newClient(basicSection: Profile.Section): TunnelClient {
         val workerThreads = basicSection["worker_threads"].int() ?: -1
-        return LTClient(
+        return TunnelClient(
             workerThreads = workerThreads,
             listener = this,
             autoReconnect = true
         )
     }
 
-    private fun newTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): LTRequest? {
+    private fun newTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): ProtoRequest? {
         val type = tunnel["type"] ?: "tcp"
         return when (type.toUpperCase()) {
             "TCP" -> newTcpTunnelRequest(basic, tunnel)
@@ -88,12 +88,12 @@ class Application : OnLTClientStateListener {
         }
     }
 
-    private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): LTRequest? {
+    private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): ProtoRequest? {
         val authToken = basic["auth_token"] ?: return null
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
         val localPort = tunnel["local_port"].int() ?: 80
         val remotePort = tunnel["remote_port"].int() ?: return null
-        return LTRequest.ofTcp(
+        return ProtoRequest.ofTcp(
             authToken = authToken,
             localAddr = localAddr,
             localPort = localPort,
@@ -108,7 +108,7 @@ class Application : OnLTClientStateListener {
         basic: Profile.Section, tunnel: Profile.Section) = newHttpOrHttpsTunnelRequest(basic, tunnel, true)
 
     private fun newHttpOrHttpsTunnelRequest(
-        basic: Profile.Section, tunnel: Profile.Section, https: Boolean): LTRequest? {
+        basic: Profile.Section, tunnel: Profile.Section, https: Boolean): ProtoRequest? {
         val authToken = basic["auth_token"] ?: return null
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
         val localPort = tunnel["local_port"].int() ?: 80
@@ -127,7 +127,7 @@ class Application : OnLTClientStateListener {
         val basicAuthRealm = tunnel["auth_realm"] ?: "."
         val basicAuthUsername = tunnel["auth_username"] ?: "guest"
         val basicAuthPassword = tunnel["auth_password"] ?: "guest"
-        return LTRequest.ofHttp(
+        return ProtoRequest.ofHttp(
             https = https,
             authToken = authToken,
             localAddr = localAddr,
@@ -147,7 +147,7 @@ class Application : OnLTClientStateListener {
         val logFile = basic["log_file"] ?: "./logs/ltc.log"
         val logCount = basic["log_count"].int() ?: 3
         val logSize = basic["log_size"] ?: "1M"
-        LoggerFactory.configConsole(Level.OFF, names = *LTManifest.thirdLibs)
+        LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdParties)
         LoggerFactory.configConsole(level = logLevel)
         LoggerFactory.configFile(
             level = logLevel,

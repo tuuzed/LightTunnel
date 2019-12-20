@@ -1,6 +1,6 @@
 @file:JvmName("-ExtendKt")
+@file:Suppress("unused")
 
 package lighttunnel.logging
 
-@Suppress("unused")
-inline fun <reified T : Any> T.logger() = lazy { LoggerFactory.getLogger(T::class.java) }
+inline fun <reified T> T.loggerDelegate() = lazy { LoggerFactory.getLogger(T::class.java) }

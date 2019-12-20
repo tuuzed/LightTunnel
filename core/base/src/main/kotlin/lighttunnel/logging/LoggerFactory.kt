@@ -99,7 +99,6 @@ class LoggerFactory private constructor(
         }
     }
 
-
     private fun apply() {
         loggers.forEach {
             it.addAppender(appender)

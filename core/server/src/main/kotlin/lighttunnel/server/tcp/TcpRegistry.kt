@@ -1,0 +1,44 @@
+package lighttunnel.server.tcp
+
+import io.netty.channel.Channel
+import lighttunnel.logging.loggerDelegate
+import lighttunnel.server.SessionPool
+import java.util.concurrent.ConcurrentHashMap
+
+class TcpRegistry {
+    private val logger by loggerDelegate()
+
+    private val tunnelIdDescriptors = ConcurrentHashMap<Long, TcpDescriptor>()
+    private val portDescriptors = ConcurrentHashMap<Int, TcpDescriptor>()
+
+    @Synchronized
+    fun register(port: Int, session: SessionPool, descriptor: TcpDescriptor) {
+        tunnelIdDescriptors[session.tunnelId] = descriptor
+        portDescriptors[port] = descriptor
+        logger.info("Start Tunnel: {}", session.request)
+    }
+
+    @Synchronized
+    fun unregister(tunnelId: Long) {
+        val descriptor = tunnelIdDescriptors.remove(tunnelId)
+        if (descriptor != null) {
+            portDescriptors.remove(descriptor.port)
+            descriptor.close()
+            logger.info("Shutdown Tunnel: {}", descriptor.sessionPool.request)
+        }
+    }
+
+    @Synchronized
+    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? =
+        tunnelIdDescriptors[tunnelId]?.sessionPool?.getChannel(sessionId)
+
+    @Synchronized
+    fun getDescriptorByPort(port: Int): TcpDescriptor? = portDescriptors[port]
+
+    @Synchronized
+    fun destroy() {
+        tunnelIdDescriptors.clear()
+        portDescriptors.clear()
+    }
+
+}

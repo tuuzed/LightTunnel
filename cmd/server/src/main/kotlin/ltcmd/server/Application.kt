@@ -2,9 +2,9 @@ package ltcmd.server
 
 import lighttunnel.cmd.CmdLineParser
 import lighttunnel.logging.LoggerFactory
-import lighttunnel.proto.LTManifest
-import lighttunnel.server.LTServer
-import lighttunnel.server.LTSimpleRequestInterceptor
+import lighttunnel.server.TunnelServer
+import lighttunnel.server.interceptor.SimpleRequestInterceptor
+import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
@@ -28,8 +28,8 @@ class Application {
         setupLogger(basic)
         val authToken = basic["auth_token"]
         val allowPorts = basic["allow_ports"]
-        val interceptor = LTSimpleRequestInterceptor(authToken, allowPorts)
-        LTServer(
+        val interceptor = SimpleRequestInterceptor(authToken, allowPorts)
+        TunnelServer(
             bossThreads = basic["boss_threads"].int() ?: -1,
             workerThreads = basic["worker_threads"].int() ?: -1,
             // tcp
@@ -64,7 +64,7 @@ class Application {
         val logFile = basic["log_file"] ?: "./logs/lts.log"
         val logCount = basic["log_count"].int() ?: 3
         val logSize = basic["log_size"] ?: "1M"
-        LoggerFactory.configConsole(Level.OFF, names = *LTManifest.thirdLibs)
+        LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdParties)
         LoggerFactory.configConsole(level = logLevel)
         LoggerFactory.configFile(
             level = logLevel,
