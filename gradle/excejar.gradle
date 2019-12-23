@@ -42,6 +42,13 @@ jar {
     }
 }
 
+launch4j {
+    headerType = "console"
+    mainClassName = project.MainClass
+    jar = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
+    outfile = "${project.AppName ?: project.name}.exe"
+}
+
 task _mixinProguardJar(
         group: "other",
         type: proguard.gradle.ProGuardTask,
@@ -72,16 +79,11 @@ task packageJar(
         dependsOn: _mixinProguardJar
 )
 
-
-launch4j {
-    headerType = "console"
-    mainClassName = project.MainClass
-    jar = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
-    outputDir = "../../../../"
-    outfile = "${project.AppName ?: project.name}.exe"
-}
-
 task packageExe(
         group: "package",
+        type: Copy,
         dependsOn: [_mixinProguardJar, createExe]
-)
+) {
+    from new File(project.buildDir, "launch4j/${project.AppName ?: project.name}.exe")
+    into rootProject.file("dists/${project.version}")
+}
