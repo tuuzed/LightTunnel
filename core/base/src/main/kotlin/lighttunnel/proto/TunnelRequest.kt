@@ -167,7 +167,7 @@ data class TunnelRequest internal constructor(
     // option
     fun option(key: String): String? = options.getOrDefault<String?>(key, null)
 
-    private fun options() = options.toStringMap().filter { it.key.startsWith("\$") }
+    private fun options() = options.toStringMap().filterNot { it.key.startsWith("\$") }
 
     fun toBytes() = toBytesInternal()
 

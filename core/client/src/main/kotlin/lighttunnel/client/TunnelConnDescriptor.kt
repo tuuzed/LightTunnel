@@ -14,11 +14,17 @@ class TunnelConnDescriptor(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
-    val tunnelRequest: TunnelRequest
+    private var request: TunnelRequest
 ) {
     private val logger by loggerDelegate()
     private val shutdownFlag = AtomicBoolean(false)
     private var connectChannelFuture: ChannelFuture? = null
+
+    val tunnelRequest get() = request
+
+    internal fun updateTunnelRequest(request: TunnelRequest) {
+        this.request = request
+    }
 
     val isShutdown get() = shutdownFlag.get()
 
