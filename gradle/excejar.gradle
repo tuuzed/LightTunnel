@@ -12,6 +12,9 @@ buildscript {
     }
 }
 
+apply plugin: "edu.sc.seis.launch4j"
+
+
 jar {
     exclude 'META-INF/LICENSE/'
     exclude 'META-INF/NOTICE/'
@@ -39,8 +42,8 @@ jar {
     }
 }
 
-task exceJar(
-        group: "build",
+task _mixinProguardJar(
+        group: "other",
         type: proguard.gradle.ProGuardTask,
         dependsOn: jar
 ) {
@@ -50,5 +53,35 @@ task exceJar(
     proguardRules.add(project.file("proguard-rules.txt"))
     configuration proguardRules
     injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"
-    outjars rootProject.file("dists/${project.version}/${project.OutJarName ?: (project.name + ".jar")}")
+    outjars rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
 }
+
+
+task packageClean(
+        group: "package",
+        type: Delete,
+        dependsOn: clean
+) {
+    delete rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
+    delete rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.exe")
+}
+
+task packageJar(
+        group: "package",
+        type: proguard.gradle.ProGuardTask,
+        dependsOn: _mixinProguardJar
+)
+
+
+launch4j {
+    headerType = "console"
+    mainClassName = project.MainClass
+    jar = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
+    outputDir = "../../../../"
+    outfile = "${project.AppName ?: project.name}.exe"
+}
+
+task packageExe(
+        group: "package",
+        dependsOn: [_mixinProguardJar, createExe]
+)

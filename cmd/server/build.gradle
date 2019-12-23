@@ -13,7 +13,7 @@ dependencies {
 }
 
 project.ext.MainClass = "ltcmd.server.MainKt"
-project.ext.OutJarName = "lts.jar"
+project.ext.AppName = "lts"
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
 apply from: rootProject.file("./gradle/distjar.gradle").absolutePath

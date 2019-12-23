@@ -14,7 +14,7 @@ dependencies {
 
 
 project.ext.MainClass = "ltcmd.client.MainKt"
-project.ext.OutJarName = "ltc.jar"
+project.ext.AppName = "ltc"
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
 apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
