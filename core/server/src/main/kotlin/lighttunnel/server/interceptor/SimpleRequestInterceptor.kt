@@ -9,4 +9,9 @@ class SimpleRequestInterceptor(
     /** 端口白名单 */
     allowPorts: String? = null
 ) : TunnelRequestInterceptor by TunnelRequestInterceptorImpl(authToken, allowPorts),
-    HttpRequestInterceptor by HttpRequestInterceptorImpl()
+    HttpRequestInterceptor by HttpRequestInterceptorImpl() {
+
+    companion object {
+        val defaultImpl by lazy { SimpleRequestInterceptor() }
+    }
+}

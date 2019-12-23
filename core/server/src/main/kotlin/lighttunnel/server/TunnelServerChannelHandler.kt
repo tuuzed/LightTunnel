@@ -135,37 +135,38 @@ class TunnelServerChannelHandler(
     @Throws(Exception::class)
     private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("handleLocalDisconnectMessage# {}, {}", ctx, msg)
-        val sessionPool = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
-        val sessionChannel = sessionPool.getChannel(msg.sessionId)
+        val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
+        val sessionChannel = sessionChannels.getChannel(msg.sessionId)
         // 解决 HTTP/1.x 数据传输问题
         sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
     }
 
     @Throws(Exception::class)
-    private fun handleTcpRequestMessage(ctx: ChannelHandlerContext, server: TcpServer, tpRequest: TunnelRequest) {
-        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(tpRequest)
+    private fun handleTcpRequestMessage(ctx: ChannelHandlerContext, server: TcpServer, tunnelRequest: TunnelRequest) {
+        @Suppress("NAME_SHADOWING")
+        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(tunnelRequest)
         val tunnelId = tunnelIds.nextId
-        val sessionPool = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionPool)
-        server.startTunnel(null, tunnelRequest.remotePort, sessionPool)
+        val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
+        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionChannels)
+        server.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
         ctx.channel().writeAndFlush(ProtoMessage(ProtoCommand.RESPONSE_OK, head, data))
     }
 
     @Throws(Exception::class)
-    private fun handleHttpRequestMessage(ctx: ChannelHandlerContext, server: HttpServer, request: TunnelRequest) {
+    private fun handleHttpRequestMessage(ctx: ChannelHandlerContext, server: HttpServer, tunnelRequest: TunnelRequest) {
         @Suppress("NAME_SHADOWING")
-        val request = tunnelRequestInterceptor.handleTunnelRequest(request)
-        if (server.registry.isRegistered(request.host)) {
-            throw ProtoException("host(${request.host}) already used")
+        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(tunnelRequest)
+        if (server.registry.isRegistered(tunnelRequest.host)) {
+            throw ProtoException("host(${tunnelRequest.host}) already used")
         }
         val tunnelId = tunnelIds.nextId
-        val sessionPool = SessionChannels(tunnelId, request, ctx.channel())
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionPool)
-        server.registry.register(request.host, sessionPool)
+        val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
+        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionChannels)
+        server.registry.register(tunnelRequest.host, sessionChannels)
         val head = LongUtil.toBytes(tunnelId, 0L)
-        val data = request.toBytes()
+        val data = tunnelRequest.toBytes()
         ctx.channel().writeAndFlush(ProtoMessage(ProtoCommand.RESPONSE_OK, head, data))
     }
 

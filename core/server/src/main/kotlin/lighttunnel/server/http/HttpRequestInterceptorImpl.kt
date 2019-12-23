@@ -69,7 +69,7 @@ class HttpRequestInterceptorImpl : HttpRequestInterceptor {
         localAddress: SocketAddress, remoteAddress: SocketAddress,
         tunnelRequest: TunnelRequest, httpRequest: HttpRequest
     ) {
-        val headers = if (isPxySet) tunnelRequest.proxySetHeaders else tunnelRequest.proxyAddHeaders
+        val headers = if (isPxySet) tunnelRequest.pxySetHeaders else tunnelRequest.pxyAddHeaders
         if (headers.isEmpty()) {
             return
         }

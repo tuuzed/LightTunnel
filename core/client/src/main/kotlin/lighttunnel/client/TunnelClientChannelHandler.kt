@@ -128,10 +128,10 @@ class TunnelClientChannelHandler(
     private fun doHandleRemoteConnectedMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(msg.sessionId)
-        val tpRequest = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
-        if (tpRequest != null) {
+        val tunnelRequest = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
+        if (tunnelRequest != null) {
             localTcpClient.getLocalChannel(
-                tpRequest.localAddr, tpRequest.localPort,
+                tunnelRequest.localAddr, tunnelRequest.localPort,
                 msg.tunnelId, msg.sessionId,
                 ctx.channel(),
                 object : LocalTcpClient.Callback {}

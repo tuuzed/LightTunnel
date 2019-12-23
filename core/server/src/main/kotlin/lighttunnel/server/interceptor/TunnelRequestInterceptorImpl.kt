@@ -18,13 +18,22 @@ class TunnelRequestInterceptorImpl(
         }
         return when (request.type) {
             TunnelRequest.Type.TCP -> {
-                val remotePort = request.remotePort
-                if (allowPorts != null && !PortRangeUtil.hasInPortRange(allowPorts, remotePort)) {
-                    throw ProtoException("request($request), remotePort($remotePort) Not allowed to use.")
+                if (request.remotePort == 0) {
+                    TunnelRequest.copyTcp(
+                        request,
+                        remotePort = PortRangeUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
+                    )
+                } else {
+                    if (allowPorts != null && !PortRangeUtil.hasInPortRange(allowPorts, request.remotePort)) {
+                        throw ProtoException("request($request), remotePort($request.remotePort) Not allowed to use.")
+                    }
+                    request
                 }
+            }
+            else -> {
                 request
             }
-            else -> request
         }
     }
+
 }

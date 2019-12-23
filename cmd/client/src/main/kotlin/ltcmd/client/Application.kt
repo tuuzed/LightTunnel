@@ -73,7 +73,7 @@ class Application : OnTunnelClientStateListener {
         val workerThreads = basicSection["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
-            listener = this,
+            tunnelClientStateListener = this,
             autoReconnect = true
         )
     }
@@ -135,8 +135,8 @@ class Application : OnTunnelClientStateListener {
             https = https,
             authToken = authToken,
             host = customDomain,
-            proxySetHeaders = proxySetHeaders,
-            proxyAddHeaders = proxyAddHeaders,
+            pxySetHeaders = proxySetHeaders,
+            pxyAddHeaders = proxyAddHeaders,
             enableBasicAuth = enableBasicAuth,
             basicAuthRealm = basicAuthRealm,
             basicAuthUsername = basicAuthUsername,

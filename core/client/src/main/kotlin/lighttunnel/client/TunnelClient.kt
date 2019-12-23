@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 class TunnelClient(
     private val workerThreads: Int = -1,
     private val autoReconnect: Boolean = true,
-    private val listener: OnTunnelClientStateListener? = null
+    private val tunnelClientStateListener: OnTunnelClientStateListener? = null
 ) : OnConnectFailureListener, OnConnectStateListener {
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
@@ -48,14 +48,14 @@ class TunnelClient(
             val errFlag = ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).get()
             val errCause = ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).get()
             if (errFlag == true) {
-                listener?.onDisconnect(descriptor, true, errCause)
+                tunnelClientStateListener?.onDisconnect(descriptor, true, errCause)
                 logger.trace("{}", errCause.message)
             } else {
-                listener?.onDisconnect(descriptor, false, null)
+                tunnelClientStateListener?.onDisconnect(descriptor, false, null)
                 if (!descriptor.isShutdown && autoReconnect) {
                     TimeUnit.SECONDS.sleep(3)
                     descriptor.connect(this)
-                    listener?.onConnecting(descriptor, true)
+                    tunnelClientStateListener?.onConnecting(descriptor, true)
                 }
             }
         }
@@ -65,7 +65,7 @@ class TunnelClient(
         super.onTunnelConnected(ctx)
         val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()
         if (descriptor != null) {
-            listener?.onConnected(descriptor)
+            tunnelClientStateListener?.onConnected(descriptor)
         }
     }
 
@@ -92,7 +92,7 @@ class TunnelClient(
             tunnelRequest
         )
         descriptor.connect(this)
-        listener?.onConnecting(descriptor, false)
+        tunnelClientStateListener?.onConnecting(descriptor, false)
         return descriptor
     }
 

@@ -1,5 +1,10 @@
 package lighttunnel.server.util
 
+import java.io.IOException
+import java.net.ServerSocket
+import java.util.*
+
+
 object PortRangeUtil {
     /**
      * 判断端口是否在指定的端口规则内
@@ -12,33 +17,51 @@ object PortRangeUtil {
         if (port < 0 || port > 65535) {
             return false
         }
-        val sliceArray = portRange.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        for (slice in sliceArray) {
-            val index = slice.indexOf("-")
+        val rules = portRange.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+        for (rule in rules) {
+            val index = rule.indexOf("-")
             if (index == -1) {
                 try {
-                    val rulePort = Integer.parseInt(slice)
-                    if (rulePort == port) {
+                    if (rule.toInt() == port) {
                         return true
                     }
                 } catch (e: Exception) {
                     // pass
                 }
-
             } else {
-                val range = slice.split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val range = rule.split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 try {
-                    val startRulePort = Integer.parseInt(range[0])
-                    val endRulePort = Integer.parseInt(range[1])
+                    val startRulePort = range[0].toInt()
+                    val endRulePort = range[1].toInt()
                     if (port in startRulePort..endRulePort) {
                         return true
                     }
                 } catch (e: Exception) {
                     // pass
                 }
-
             }
         }
         return false
+    }
+
+    /**
+     * 获取指定的端口规则可用端口
+     *
+     * @param portRange 端口规则，例如：10000-21000,30000,30001,30003
+     * @return 端口号
+     */
+    fun getAvailableTcpPort(portRange: String): Int {
+        val random = Random()
+        while (true) {
+            val port = random.nextInt(65535 - 1024) + 1024
+            if (hasInPortRange(portRange, port)) {
+                try {
+                    ServerSocket(port).close()
+                    return port
+                } catch (e: IOException) {
+                    continue
+                }
+            }
+        }
     }
 }

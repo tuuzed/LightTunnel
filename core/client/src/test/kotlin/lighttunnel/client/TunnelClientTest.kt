@@ -23,7 +23,7 @@ class TunnelClientTest {
         tunnelClient.connect("127.0.0.1", 5080, TunnelRequest.forTcp(
             localAddr = "192.168.1.100",
             localPort = 22,
-            remotePort = 10022
+            remotePort = 0
         ))
         Thread.currentThread().join()
     }
