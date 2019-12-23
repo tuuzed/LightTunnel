@@ -1,21 +1,18 @@
 package lighttunnel.server.http
 
+import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
-import lighttunnel.logging.loggerDelegate
+import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoCommand
-import lighttunnel.proto.ProtoMassage
-import lighttunnel.server.util.host
-import lighttunnel.server.util.toByteBuf
-import lighttunnel.server.util.toBytes
-import lighttunnel.server.util.AttrKeys
-import lighttunnel.util.long2Bytes
-import lighttunnel.util.toBytes
-
+import lighttunnel.proto.ProtoMessage
+import lighttunnel.server.util.AttributeKeys
+import lighttunnel.server.util.HttpUtil
+import lighttunnel.util.LongUtil
 
 class HttpServerChannelHandler(
     private val registry: HttpRegistry,
@@ -33,17 +30,17 @@ class HttpServerChannelHandler(
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        val host = ctx.channel().attr(AttrKeys.AK_HTTP_HOST).get()
-        val sessionId = ctx.channel().attr(AttrKeys.AK_SESSION_ID).get()
+        val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
+        val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
         if (host != null && sessionId != null) {
             val descriptor = registry.getDescriptorByHost(host)
             if (descriptor != null) {
                 val tunnelId = descriptor.sessionPool.tunnelId
-                val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
-                descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMassage(ProtoCommand.REMOTE_DISCONNECT, head))
+                val head = LongUtil.toBytes(tunnelId, sessionId)
+                descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_DISCONNECT, head))
             }
-            ctx.channel().attr<String>(AttrKeys.AK_HTTP_HOST).set(null)
-            ctx.channel().attr<Long>(AttrKeys.AK_SESSION_ID).set(null)
+            ctx.channel().attr<String>(AttributeKeys.AK_HTTP_HOST).set(null)
+            ctx.channel().attr<Long>(AttributeKeys.AK_SESSION_ID).set(null)
         }
         super.channelInactive(ctx)
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -67,19 +64,19 @@ class HttpServerChannelHandler(
     /**处理读取到的HttpRequest类型的消息 */
     @Throws(Exception::class)
     private fun channelReadHttpRequest(ctx: ChannelHandlerContext, msg: HttpRequest) {
-        val host = msg.host()
+        val host = HttpUtil.getHost(msg)
         if (host == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        ctx.channel().attr(AttrKeys.AK_HTTP_HOST).set(host)
+        ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).set(host)
         val descriptor = registry.getDescriptorByHost(host)
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
-            ctx.channel().attr<Boolean>(AttrKeys.AK_HTTP_SKIP).set(false)
+            ctx.channel().attr<Boolean>(AttributeKeys.AK_HTTP_SKIP).set(false)
             return
         }
-        ctx.channel().attr(AttrKeys.AK_HTTP_SKIP).set(true)
+        ctx.channel().attr(AttributeKeys.AK_HTTP_SKIP).set(true)
         val httpResponse = interceptor.handleHttpRequest(
             ctx.channel().localAddress(),
             ctx.channel().remoteAddress(),
@@ -87,24 +84,24 @@ class HttpServerChannelHandler(
             msg
         )
         if (httpResponse != null) {
-            ctx.channel().writeAndFlush(httpResponse.toByteBuf())
+            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpResponse))
             return
         }
         val sessionId = descriptor.sessionPool.putChannel(ctx.channel())
-        ctx.channel().attr(AttrKeys.AK_SESSION_ID).set(sessionId)
+        ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
         val tunnelId = descriptor.sessionPool.tunnelId
-        val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
-        val data = msg.toBytes()
-        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMassage(ProtoCommand.TRANSFER, head, data))
+        val head = LongUtil.toBytes(tunnelId, sessionId)
+        val data = HttpUtil.toBytes(msg)
+        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
     }
 
     /** 处理读取到的HttpContent类型的消息 */
     @Throws(Exception::class)
     private fun channelReadHttpContent(ctx: ChannelHandlerContext, msg: HttpContent) {
-        val skip = ctx.channel().attr(AttrKeys.AK_HTTP_SKIP).get() ?: return
+        val skip = ctx.channel().attr(AttributeKeys.AK_HTTP_SKIP).get() ?: return
         if (!skip) return
-        val host = ctx.channel().attr(AttrKeys.AK_HTTP_HOST).get()
-        val sessionId = ctx.channel().attr(AttrKeys.AK_SESSION_ID).get()
+        val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
+        val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
         if (host == null || sessionId == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
@@ -115,9 +112,9 @@ class HttpServerChannelHandler(
             return
         }
         val tunnelId = descriptor.sessionPool.tunnelId
-        val head = ctx.alloc().long2Bytes(tunnelId, sessionId)
-        val data = msg.content().toBytes()
-        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMassage(ProtoCommand.TRANSFER, head, data))
+        val head = LongUtil.toBytes(tunnelId, sessionId)
+        val data = ByteBufUtil.getBytes(msg.content())
+        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
 
     }
 

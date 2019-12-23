@@ -3,18 +3,18 @@ package lighttunnel.client
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
-import lighttunnel.client.util.AttrKeys
-import lighttunnel.logging.loggerDelegate
+import lighttunnel.client.util.AttributeKeys
+import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoCommand
-import lighttunnel.proto.ProtoMassage
-import lighttunnel.proto.ProtoRequest
+import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TunnelConnDescriptor(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
-    val request: ProtoRequest
+    val tunnelRequest: TunnelRequest
 ) {
     private val logger by loggerDelegate()
     private val shutdownFlag = AtomicBoolean(false)
@@ -33,8 +33,8 @@ class TunnelConnDescriptor(
         f.addListener(ChannelFutureListener { future ->
             if (future.isSuccess) {
                 // 连接成功，向服务器发送请求建立隧道消息
-                future.channel().writeAndFlush(ProtoMassage(ProtoCommand.REQUEST, head = request.toBytes()))
-                future.channel().attr(AttrKeys.AK_LT_CONN_DESCRIPTOR).set(this)
+                future.channel().writeAndFlush(ProtoMessage(ProtoCommand.REQUEST, head = tunnelRequest.toBytes()))
+                future.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).set(this)
             } else {
                 listener?.onConnectFailure(this)
             }
@@ -44,12 +44,12 @@ class TunnelConnDescriptor(
     fun shutdown() {
         shutdownFlag.set(true)
         connectChannelFuture?.apply {
-            channel().attr(AttrKeys.AK_LT_CONN_DESCRIPTOR).set(null)
+            channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).set(null)
             channel().close()
         }
     }
 
-    override fun toString() = request.toString()
+    override fun toString() = tunnelRequest.toString()
 
 
 }

@@ -2,12 +2,12 @@ package lighttunnel.server.tcp
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelFuture
-import lighttunnel.server.SessionPool
+import lighttunnel.server.SessionChannels
 
 class TcpDescriptor(
     val addr: String?,
     val port: Int,
-    val sessionPool: SessionPool
+    val sessionPool: SessionChannels
 ) {
     private var bindChannelFuture: ChannelFuture? = null
 

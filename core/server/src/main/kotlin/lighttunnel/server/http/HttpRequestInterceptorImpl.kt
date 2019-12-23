@@ -1,8 +1,8 @@
 package lighttunnel.server.http
 
 import io.netty.handler.codec.http.*
-import lighttunnel.proto.ProtoRequest
-import lighttunnel.server.util.basicAuthorization
+import lighttunnel.proto.TunnelRequest
+import lighttunnel.server.util.HttpUtil
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.charset.StandardCharsets
@@ -17,17 +17,19 @@ class HttpRequestInterceptorImpl : HttpRequestInterceptor {
 
     override fun handleHttpRequest(
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tpRequest: ProtoRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
     ): HttpResponse? {
-        handleRewriteHttpHeaders(localAddress, remoteAddress, tpRequest, httpRequest)
-        handleWriteHttpHeaders(localAddress, remoteAddress, tpRequest, httpRequest)
-        return if (tpRequest.enableBasicAuth) handleHttpBasicAuth(tpRequest, httpRequest) else null
+        handleRewriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)
+        handleWriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)
+        return if (tunnelRequest.enableBasicAuth) handleHttpBasicAuth(tunnelRequest, httpRequest) else null
     }
 
-    private fun handleHttpBasicAuth(tpRequest: ProtoRequest, httpRequest: HttpRequest): HttpResponse? {
-        val account = httpRequest.basicAuthorization()
-        val username = tpRequest.basicAuthUsername
-        val password = tpRequest.basicAuthPassword
+    private fun handleHttpBasicAuth(
+        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
+    ): HttpResponse? {
+        val account = HttpUtil.getBasicAuthorization(httpRequest)
+        val username = tunnelRequest.basicAuthUsername
+        val password = tunnelRequest.basicAuthPassword
         if (account == null || username != account[0] || password != account[1]) {
             val httpResponse = DefaultFullHttpResponse(
                 httpRequest.protocolVersion(),
@@ -35,7 +37,7 @@ class HttpRequestInterceptorImpl : HttpRequestInterceptor {
             )
             val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
             httpResponse.headers()
-                .add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tpRequest.basicAuthRealm}\"")
+                .add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\"")
             httpResponse.headers().add(HttpHeaderNames.CONNECTION, "keep-alive")
             httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, "bytes")
 
@@ -49,40 +51,42 @@ class HttpRequestInterceptorImpl : HttpRequestInterceptor {
 
     private fun handleRewriteHttpHeaders(
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tpRequest: ProtoRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
     ) {
-        handleProxyHttpHeaders(true, localAddress, remoteAddress, tpRequest, httpRequest)
+        handleProxyHttpHeaders(true, localAddress, remoteAddress, tunnelRequest, httpRequest)
     }
 
     private fun handleWriteHttpHeaders(
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tpRequest: ProtoRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
     ) {
-        handleProxyHttpHeaders(false, localAddress, remoteAddress, tpRequest, httpRequest)
+        handleProxyHttpHeaders(false, localAddress, remoteAddress, tunnelRequest, httpRequest)
     }
 
     @Suppress("UNUSED_PARAMETER")
     private fun handleProxyHttpHeaders(
-        proxySet: Boolean,
+        isPxySet: Boolean,
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tpRequest: ProtoRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
     ) {
-        val headers = if (proxySet) tpRequest.proxySetHeaders else tpRequest.proxyAddHeaders
-        if (headers.isEmpty()) return
+        val headers = if (isPxySet) tunnelRequest.proxySetHeaders else tunnelRequest.proxyAddHeaders
+        if (headers.isEmpty()) {
+            return
+        }
         for (it in headers.entries) {
             val name = it.key
             val value = it.value
             if (TL_REMOTE_ADDR == value) {
                 if (remoteAddress is InetSocketAddress) {
                     val remoteAddr = remoteAddress.address.toString()
-                    if (proxySet && httpRequest.headers().contains(name)) {
+                    if (isPxySet && httpRequest.headers().contains(name)) {
                         httpRequest.headers().set(name, remoteAddr)
                     } else {
                         httpRequest.headers().add(name, remoteAddr)
                     }
                 }
             } else {
-                if (proxySet && httpRequest.headers().contains(name)) {
+                if (isPxySet && httpRequest.headers().contains(name)) {
                     httpRequest.headers().set(name, value)
                 } else {
                     httpRequest.headers().add(name, value)

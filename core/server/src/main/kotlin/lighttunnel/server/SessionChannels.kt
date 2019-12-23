@@ -3,16 +3,16 @@ package lighttunnel.server
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
-import lighttunnel.proto.ProtoRequest
-import lighttunnel.server.util.IncId
+import lighttunnel.proto.TunnelRequest
+import lighttunnel.server.util.IncIds
 import java.util.concurrent.ConcurrentHashMap
 
-class SessionPool(
+class SessionChannels(
     val tunnelId: Long,
-    val request: ProtoRequest,
+    val request: TunnelRequest,
     val tunnelChannel: Channel
 ) {
-    private val ids = IncId()
+    private val ids = IncIds()
     private val cachedChannels = ConcurrentHashMap<Long, Channel>()
 
     fun putChannel(channel: Channel): Long {

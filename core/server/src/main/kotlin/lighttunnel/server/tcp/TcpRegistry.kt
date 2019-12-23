@@ -1,8 +1,8 @@
 package lighttunnel.server.tcp
 
 import io.netty.channel.Channel
-import lighttunnel.logging.loggerDelegate
-import lighttunnel.server.SessionPool
+import lighttunnel.logger.loggerDelegate
+import lighttunnel.server.SessionChannels
 import java.util.concurrent.ConcurrentHashMap
 
 class TcpRegistry {
@@ -12,7 +12,7 @@ class TcpRegistry {
     private val portDescriptors = ConcurrentHashMap<Int, TcpDescriptor>()
 
     @Synchronized
-    fun register(port: Int, session: SessionPool, descriptor: TcpDescriptor) {
+    fun register(port: Int, session: SessionChannels, descriptor: TcpDescriptor) {
         tunnelIdDescriptors[session.tunnelId] = descriptor
         portDescriptors[port] = descriptor
         logger.info("Start Tunnel: {}", session.request)

@@ -8,8 +8,8 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import lighttunnel.client.util.AttrKeys
-import lighttunnel.logging.loggerDelegate
+import lighttunnel.client.util.AttributeKeys
+import lighttunnel.logger.loggerDelegate
 import java.util.concurrent.ConcurrentHashMap
 
 class LocalTcpClient(workerGroup: NioEventLoopGroup) {
@@ -48,9 +48,9 @@ class LocalTcpClient(workerGroup: NioEventLoopGroup) {
             }
             removeLocalChannel(tunnelToken, sessionToken)
             if (future.isSuccess) {
-                future.channel().attr(AttrKeys.AK_TUNNEL_ID).set(tunnelToken)
-                future.channel().attr(AttrKeys.AK_SESSION_ID).set(sessionToken)
-                future.channel().attr(AttrKeys.AK_NEXT_CHANNEL).set(tunnelClientChannel)
+                future.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(tunnelToken)
+                future.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionToken)
+                future.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).set(tunnelClientChannel)
                 putCachedChannel(tunnelToken, sessionToken, future.channel())
                 callback.success(future.channel())
             } else {

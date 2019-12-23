@@ -12,12 +12,12 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.client.local.LocalTcpClient
-import lighttunnel.client.util.AttrKeys
-import lighttunnel.logging.loggerDelegate
+import lighttunnel.client.util.AttributeKeys
+import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
-import lighttunnel.proto.ProtoMassageDecoder
-import lighttunnel.proto.ProtoMassageEncoder
-import lighttunnel.proto.ProtoRequest
+import lighttunnel.proto.ProtoMessageDecoder
+import lighttunnel.proto.ProtoMessageEncoder
+import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -29,8 +29,7 @@ class TunnelClient(
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
     private val bootstrap = Bootstrap()
-    private val workerGroup: NioEventLoopGroup =
-        if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
+    private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
 
     override fun onConnectFailure(descriptor: TunnelConnDescriptor) {
@@ -44,10 +43,10 @@ class TunnelClient(
 
     override fun onChannelInactive(ctx: ChannelHandlerContext) {
         super.onChannelInactive(ctx)
-        val descriptor = ctx.channel().attr(AttrKeys.AK_LT_CONN_DESCRIPTOR).get()
+        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()
         if (descriptor != null) {
-            val errFlag = ctx.channel().attr(AttrKeys.AK_ERR_FLAG).get()
-            val errCause = ctx.channel().attr(AttrKeys.AK_ERR_CAUSE).get()
+            val errFlag = ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).get()
+            val errCause = ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).get()
             if (errFlag == true) {
                 listener?.onDisconnect(descriptor, true, errCause)
                 logger.trace("{}", errCause.message)
@@ -64,7 +63,7 @@ class TunnelClient(
 
     override fun onTunnelConnected(ctx: ChannelHandlerContext) {
         super.onTunnelConnected(ctx)
-        val descriptor = ctx.channel().attr(AttrKeys.AK_LT_CONN_DESCRIPTOR).get()
+        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()
         if (descriptor != null) {
             listener?.onConnected(descriptor)
         }
@@ -80,12 +79,17 @@ class TunnelClient(
             .handler(createChannelInitializer(null))
     }
 
-    fun connect(serverAddr: String, serverPort: Int, tpRequest: ProtoRequest, sslContext: SslContext?): TunnelConnDescriptor {
+    fun connect(
+        serverAddr: String,
+        serverPort: Int,
+        tunnelRequest: TunnelRequest,
+        sslContext: SslContext? = null
+    ): TunnelConnDescriptor {
         val descriptor = TunnelConnDescriptor(
             if (sslContext == null) bootstrap else getSslBootstrap(sslContext),
             serverAddr,
             serverPort,
-            tpRequest
+            tunnelRequest
         )
         descriptor.connect(this)
         listener?.onConnecting(descriptor, false)
@@ -117,8 +121,8 @@ class TunnelClient(
             if (sslContext != null) ch.pipeline().addFirst(SslHandler(sslContext.newEngine(ch.alloc())))
             ch.pipeline()
                 .addLast(HeartbeatHandler())
-                .addLast(ProtoMassageDecoder())
-                .addLast(ProtoMassageEncoder())
+                .addLast(ProtoMessageDecoder())
+                .addLast(ProtoMessageEncoder())
                 .addLast(TunnelClientChannelHandler(localTcpClient, this@TunnelClient))
         }
     }

@@ -1,9 +1,9 @@
 package lighttunnel.server.http
 
 import io.netty.channel.Channel
-import lighttunnel.logging.loggerDelegate
+import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
-import lighttunnel.server.SessionPool
+import lighttunnel.server.SessionChannels
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -18,7 +18,7 @@ class HttpRegistry {
 
     @Synchronized
     @Throws(ProtoException::class)
-    fun register(host: String, sessionDescriptor: SessionPool) {
+    fun register(host: String, sessionDescriptor: SessionChannels) {
         if (isRegistered(host)) throw ProtoException("host($host) already used")
         val descriptor = HttpDescriptor(host, sessionDescriptor)
         tunnelIdDescriptors[sessionDescriptor.tunnelId] = descriptor

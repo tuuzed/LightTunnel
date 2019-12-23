@@ -8,5 +8,5 @@ class SimpleRequestInterceptor(
     authToken: String? = null,
     /** 端口白名单 */
     allowPorts: String? = null
-) : RequestInterceptor by RequestInterceptorImpl(authToken, allowPorts),
+) : TunnelRequestInterceptor by TunnelRequestInterceptorImpl(authToken, allowPorts),
     HttpRequestInterceptor by HttpRequestInterceptorImpl()

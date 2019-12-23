@@ -3,7 +3,7 @@ package lighttunnel.proto
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
-import lighttunnel.logging.loggerDelegate
+import lighttunnel.logger.loggerDelegate
 import java.util.concurrent.TimeUnit
 
 /**
@@ -24,7 +24,7 @@ class HeartbeatHandler(
         when (evt) {
             IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> {
                 logger.trace("channel write timeout {}", ctx)
-                ctx.channel().writeAndFlush(ProtoMassage(ProtoCommand.PING))
+                ctx.channel().writeAndFlush(ProtoMessage(ProtoCommand.PING))
             }
             IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT -> {
                 logger.trace("channel read timeout {}", ctx)

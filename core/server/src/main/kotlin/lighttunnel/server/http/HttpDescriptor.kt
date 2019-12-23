@@ -1,10 +1,10 @@
 package lighttunnel.server.http
 
-import lighttunnel.server.SessionPool
+import lighttunnel.server.SessionChannels
 
 class HttpDescriptor(
     val host: String,
-    val sessionPool: SessionPool
+    val sessionPool: SessionChannels
 ) {
     fun close() = sessionPool.destroy()
 }

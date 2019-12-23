@@ -1,13 +1,13 @@
 package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
+import lighttunnel.client.OnTunnelClientStateListener
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.TunnelConnDescriptor
-import lighttunnel.client.OnTunnelClientStateListener
 import lighttunnel.cmd.CmdLineParser
-import lighttunnel.logging.LoggerFactory
-import lighttunnel.logging.loggerDelegate
-import lighttunnel.proto.ProtoRequest
+import lighttunnel.logger.LoggerFactory
+import lighttunnel.logger.loggerDelegate
+import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
@@ -45,9 +45,9 @@ class Application : OnTunnelClientStateListener {
         setupLogger(basic)
         val client = newClient(basic)
         val serverAddr = basic["server_addr"] ?: return
-        val serverPort = basic["server_port"].int()
+        val serverPort = basic["server_port"].asInt()
         val sslContext = newSslContext(basic)
-        val sslServerPort = basic["ssl_server_port"].int()
+        val sslServerPort = basic["ssl_server_port"].asInt()
         val tunnels = ini.entries.filter { it.key != "basic" }.mapNotNull { it.value }
         for (tunnel in tunnels) {
             val request = newTunnelRequest(basic, tunnel) ?: continue
@@ -70,7 +70,7 @@ class Application : OnTunnelClientStateListener {
     }
 
     private fun newClient(basicSection: Profile.Section): TunnelClient {
-        val workerThreads = basicSection["worker_threads"].int() ?: -1
+        val workerThreads = basicSection["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
             listener = this,
@@ -78,7 +78,7 @@ class Application : OnTunnelClientStateListener {
         )
     }
 
-    private fun newTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): ProtoRequest? {
+    private fun newTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
         val type = tunnel["type"] ?: "tcp"
         return when (type.toUpperCase()) {
             "TCP" -> newTcpTunnelRequest(basic, tunnel)
@@ -88,15 +88,16 @@ class Application : OnTunnelClientStateListener {
         }
     }
 
-    private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): ProtoRequest? {
+    private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
         val authToken = basic["auth_token"] ?: return null
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
-        val localPort = tunnel["local_port"].int() ?: 80
-        val remotePort = tunnel["remote_port"].int() ?: return null
-        return ProtoRequest.ofTcp(
-            authToken = authToken,
+        val localPort = tunnel["local_port"].asInt() ?: 80
+        val remotePort = tunnel["remote_port"].asInt() ?: return null
+        return TunnelRequest.forTcp(
             localAddr = localAddr,
             localPort = localPort,
+
+            authToken = authToken,
             remotePort = remotePort
         )
     }
@@ -108,10 +109,10 @@ class Application : OnTunnelClientStateListener {
         basic: Profile.Section, tunnel: Profile.Section) = newHttpOrHttpsTunnelRequest(basic, tunnel, true)
 
     private fun newHttpOrHttpsTunnelRequest(
-        basic: Profile.Section, tunnel: Profile.Section, https: Boolean): ProtoRequest? {
+        basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
         val authToken = basic["auth_token"] ?: return null
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
-        val localPort = tunnel["local_port"].int() ?: 80
+        val localPort = tunnel["local_port"].asInt() ?: 80
         val customDomain = tunnel["custom_domain"] ?: return null
         val proxySetHeaders = mapOf(
             *tunnel.entries
@@ -127,11 +128,12 @@ class Application : OnTunnelClientStateListener {
         val basicAuthRealm = tunnel["auth_realm"] ?: "."
         val basicAuthUsername = tunnel["auth_username"] ?: "guest"
         val basicAuthPassword = tunnel["auth_password"] ?: "guest"
-        return ProtoRequest.ofHttp(
-            https = https,
-            authToken = authToken,
+        return TunnelRequest.forHttp(
             localAddr = localAddr,
             localPort = localPort,
+
+            https = https,
+            authToken = authToken,
             host = customDomain,
             proxySetHeaders = proxySetHeaders,
             proxyAddHeaders = proxyAddHeaders,
@@ -145,9 +147,9 @@ class Application : OnTunnelClientStateListener {
     private fun setupLogger(basic: Profile.Section) {
         val logLevel = Level.toLevel(basic["log_level"], Level.OFF)
         val logFile = basic["log_file"] ?: "./logs/ltc.log"
-        val logCount = basic["log_count"].int() ?: 3
+        val logCount = basic["log_count"].asInt() ?: 3
         val logSize = basic["log_size"] ?: "1M"
-        LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdParties)
+        LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
         LoggerFactory.configConsole(level = logLevel)
         LoggerFactory.configFile(
             level = logLevel,
@@ -157,7 +159,7 @@ class Application : OnTunnelClientStateListener {
         )
     }
 
-    private fun String?.int(): Int? {
+    private fun String?.asInt(): Int? {
         return try {
             this?.toInt()
         } catch (e: NumberFormatException) {

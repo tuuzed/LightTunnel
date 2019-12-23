@@ -21,6 +21,8 @@ dependencies {
     def slf4j_version = '1.7.25'
     compile "org.slf4j:slf4j-api:$slf4j_version"
     compile "org.slf4j:slf4j-log4j12:$slf4j_version"
+    // Json
+    compile 'org.json:json:20190722'
     // 单元测试
     testCompile "junit:junit:4.12"
 }

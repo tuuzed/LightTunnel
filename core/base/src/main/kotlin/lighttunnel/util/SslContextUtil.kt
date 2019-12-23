@@ -9,7 +9,6 @@ import javax.net.ssl.TrustManagerFactory
 
 object SslContextUtil {
 
-    @JvmStatic
     @Throws(Exception::class)
     fun forServer(jks: String, storePassword: String, keyPassword: String): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
@@ -19,7 +18,6 @@ object SslContextUtil {
         return SslContextBuilder.forServer(kmf).build()
     }
 
-    @JvmStatic
     @Throws(Exception::class)
     fun forClient(jks: String, storePassword: String): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
