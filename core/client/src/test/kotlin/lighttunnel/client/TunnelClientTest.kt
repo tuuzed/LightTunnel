@@ -2,7 +2,6 @@ package lighttunnel.client
 
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.util.Manifest
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test

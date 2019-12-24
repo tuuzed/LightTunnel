@@ -4,7 +4,6 @@ import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.server.util.PortRangeUtil
-import lighttunnel.util.Manifest
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test

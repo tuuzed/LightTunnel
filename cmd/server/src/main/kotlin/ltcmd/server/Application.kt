@@ -1,10 +1,11 @@
 package ltcmd.server
 
 import lighttunnel.cmd.AbstractApplication
+import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
+import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.TunnelServer
 import lighttunnel.server.interceptor.SimpleRequestInterceptor
-import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
@@ -15,17 +16,22 @@ import org.ini4j.Profile
 import java.io.File
 
 class Application : AbstractApplication() {
+    private val logger by loggerDelegate()
 
     override val options: Options
         get() = Options().apply {
             addOption("h", "help", false, "帮助信息")
+            addOption("v", "version", false, "版本信息")
             addOption("c", "config", true, "配置文件, 默认为lts.ini")
         }
-
 
     override fun main(commandLine: CommandLine) {
         if (commandLine.hasOption("h")) {
             printUsage()
+            return
+        }
+        if (commandLine.hasOption("v")) {
+            System.out.printf("%s%n", BuildConfig.VERSION_NAME)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "lts.ini"
@@ -50,22 +56,36 @@ class Application : AbstractApplication() {
             // ssl
             sslBindPort = basic["ssl_bind_port"].asInt(),
             sslContext = if (basic["ssl_bind_port"] != null) {
-                val jks = basic["ssl_jks"] ?: "lts.jks"
-                val storePassword = basic["ssl_key_password"] ?: "ltspass"
-                val keyPassword = basic["ssl_store_password"] ?: "ltspass"
-                SslContextUtil.forServer(jks, storePassword, keyPassword)
-            } else null,
+                try {
+                    val jks = basic["ssl_jks"] ?: "lts.jks"
+                    val storePassword = basic["ssl_key_password"] ?: "ltspass"
+                    val keyPassword = basic["ssl_store_password"] ?: "ltspass"
+                    SslContextUtil.forServer(jks, storePassword, keyPassword)
+                } catch (e: Exception) {
+                    logger.warn("tunnel ssl used builtin jks.")
+                    SslContextUtil.forBuiltinServer()
+                }
+            } else {
+                null
+            },
             // http
             httpBindPort = basic["vhost_http_port"].asInt(),
             httpRequestInterceptor = interceptor,
             // https
             httpsBindPort = basic["vhost_https_port"].asInt(),
             httpsContext = if (basic["vhost_https_port"] != null) {
-                val jks = basic["vhost_https_jks"] ?: "lts.jks"
-                val storePassword = basic["vhost_https_key_password"] ?: "ltspass"
-                val keyPassword = basic["vhost_https_store_password"] ?: "ltspass"
-                SslContextUtil.forServer(jks, storePassword, keyPassword)
-            } else null,
+                try {
+                    val jks = basic["ssl_jks"] ?: "lts.jks"
+                    val storePassword = basic["ssl_key_password"] ?: "ltspass"
+                    val keyPassword = basic["ssl_store_password"] ?: "ltspass"
+                    SslContextUtil.forServer(jks, storePassword, keyPassword)
+                } catch (e: Exception) {
+                    logger.warn("tunnel https used builtin jks.")
+                    SslContextUtil.forBuiltinServer()
+                }
+            } else {
+                null
+            },
             httpsRequestInterceptor = interceptor
         )
     }
@@ -75,7 +95,13 @@ class Application : AbstractApplication() {
         val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3
         val logSize = basic["log_size"] ?: "1MB"
-        LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
+        LoggerFactory.configConsole(Level.OFF, names = *arrayOf(
+            "io.netty",
+            "org.ini4j",
+            "org.slf4j",
+            "org.json",
+            "org.apache.commons.cli"
+        ))
         LoggerFactory.configConsole(level = logLevel)
         if (logFile != null) {
             LoggerFactory.configFile(

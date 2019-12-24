@@ -5,10 +5,10 @@ import lighttunnel.client.OnTunnelClientStateListener
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.TunnelConnDescriptor
 import lighttunnel.cmd.AbstractApplication
+import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
@@ -36,12 +36,17 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
     override val options: Options
         get() = Options().apply {
             addOption("h", "help", false, "帮助信息")
+            addOption("v", "version", false, "版本信息")
             addOption("c", "config", true, "配置文件, 默认为ltc.ini")
         }
 
     override fun main(commandLine: CommandLine) {
         if (commandLine.hasOption("h")) {
             printUsage()
+            return
+        }
+        if (commandLine.hasOption("v")) {
+            System.out.printf("%s%n", BuildConfig.VERSION_NAME)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "ltc.ini"
@@ -58,19 +63,22 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
         for (tunnel in tunnels) {
             val request = newTunnelRequest(basic, tunnel) ?: continue
             if (tunnel["ssl"]?.toUpperCase() == "TRUE") {
-                if (sslContext != null) {
-                    client.connect(serverAddr, sslServerPort, request, sslContext)
-                }
+                client.connect(serverAddr, sslServerPort, request, sslContext)
             } else {
                 client.connect(serverAddr, serverPort, request, null)
             }
         }
     }
 
-    private fun newSslContext(basic: Profile.Section): SslContext? {
-        val jks = basic["ssl_jks"] ?: return null
-        val storePassword = basic["ssl_store_password"] ?: return null
-        return SslContextUtil.forClient(jks, storePassword)
+    private fun newSslContext(basic: Profile.Section): SslContext {
+        val jks = basic["ssl_jks"] ?: return SslContextUtil.forBuiltinClient()
+        val storePassword = basic["ssl_store_password"] ?: return SslContextUtil.forBuiltinClient()
+        return try {
+            SslContextUtil.forClient(jks, storePassword)
+        } catch (e: Exception) {
+            logger.warn("tunnel ssl used builtin jks.")
+            SslContextUtil.forBuiltinServer()
+        }
     }
 
     private fun newTunnelClient(basicSection: Profile.Section): TunnelClient {
@@ -152,7 +160,13 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
         val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3
         val logSize = basic["log_size"] ?: "1MB"
-        LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
+        LoggerFactory.configConsole(Level.OFF, names = *arrayOf(
+            "io.netty",
+            "org.ini4j",
+            "org.slf4j",
+            "org.json",
+            "org.apache.commons.cli"
+        ))
         LoggerFactory.configConsole(level = logLevel)
         if (logFile != null) {
             LoggerFactory.configFile(

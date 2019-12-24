@@ -16,3 +16,21 @@ compileTestKotlin {
         jvmTarget = rootProject.jvm_version
     }
 }
+
+apply plugin: 'de.fuerstenau.buildconfig'
+
+static def s(Object o) { return o.toString() }
+
+buildConfig {
+    appName = project.name
+    version = project.version
+    clsName = 'BuildConfig'
+    packageName = "${project.group}.${project.name}"
+    charset = 'UTF-8'
+
+    buildConfigField 'int', 'VERSION_CODE', "${GitVC.VERSION_CODE}"
+    buildConfigField 'String', 'VERSION_NAME', s(GitVC.VERSION_NAME)
+    buildConfigField 'String', 'LAST_COMMIT_SHA', s(GitVC.LAST_COMMIT_SHA)
+    buildConfigField 'String', 'LAST_COMMIT_DATE', s(GitVC.LAST_COMMIT_DATE)
+    buildConfigField 'String', 'BUILD_DATA', s(new Date())
+}
