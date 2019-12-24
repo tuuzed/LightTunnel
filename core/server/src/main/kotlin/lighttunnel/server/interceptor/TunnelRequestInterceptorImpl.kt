@@ -4,7 +4,7 @@ import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.server.util.PortRangeUtil
 
-class TunnelRequestInterceptorImpl(
+internal class TunnelRequestInterceptorImpl(
     /** 预置Token */
     private val authToken: String?,
     /** 端口白名单 */
@@ -12,26 +12,26 @@ class TunnelRequestInterceptorImpl(
 ) : TunnelRequestInterceptor {
 
     @Throws(ProtoException::class)
-    override fun handleTunnelRequest(request: TunnelRequest): TunnelRequest {
-        if (authToken != null && authToken != request.authToken) {
-            throw ProtoException("request($request), Bad Auth Token(${request.authToken})")
+    override fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest {
+        if (authToken != null && authToken != tunnelRequest.authToken) {
+            throw ProtoException("request($tunnelRequest), Bad Auth Token(${tunnelRequest.authToken})")
         }
-        return when (request.type) {
+        return when (tunnelRequest.type) {
             TunnelRequest.Type.TCP -> {
-                if (request.remotePort == 0) {
+                if (tunnelRequest.remotePort == 0) {
                     TunnelRequest.copyTcp(
-                        request,
+                        tunnelRequest,
                         remotePort = PortRangeUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
                     )
                 } else {
-                    if (allowPorts != null && !PortRangeUtil.hasInPortRange(allowPorts, request.remotePort)) {
-                        throw ProtoException("request($request), remotePort($request.remotePort) Not allowed to use.")
+                    if (allowPorts != null && !PortRangeUtil.hasInPortRange(allowPorts, tunnelRequest.remotePort)) {
+                        throw ProtoException("request($tunnelRequest), remotePort($tunnelRequest.remotePort) Not allowed to use.")
                     }
-                    request
+                    tunnelRequest
                 }
             }
             else -> {
-                request
+                tunnelRequest
             }
         }
     }

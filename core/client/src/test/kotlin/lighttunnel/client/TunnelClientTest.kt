@@ -24,7 +24,7 @@ class TunnelClientTest {
             localAddr = "192.168.1.100",
             localPort = 22,
             remotePort = 0
-        ))
+        ), sslContext = null)
         Thread.currentThread().join()
     }
 }

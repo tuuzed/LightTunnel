@@ -1,29 +1,36 @@
 package ltcmd.server
 
-import lighttunnel.cmd.CmdLineParser
+import lighttunnel.cmd.AbstractApplication
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.server.TunnelServer
 import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
+import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.Options
 import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
 import org.ini4j.Ini
 import org.ini4j.Profile
 import java.io.File
 
-class Application {
+class Application : AbstractApplication() {
 
-    fun doMain(args: Array<String>) {
-        val cmdLine = CmdLine()
-        CmdLineParser.parse(cmdLine, args)
-        if (cmdLine.help) {
-            System.err.printf("%n%nUsage: %n")
-            CmdLineParser.printHelp(cmdLine, System.err, "    ")
+    override val options: Options
+        get() = Options().apply {
+            addOption("h", "help", false, "帮助信息")
+            addOption("c", "config", true, "配置文件, 默认为lts.ini")
+        }
+
+
+    override fun main(commandLine: CommandLine) {
+        if (commandLine.hasOption("h")) {
+            printUsage()
             return
         }
+        val configFilePath = commandLine.getOptionValue("c") ?: "lts.ini"
         val ini = Ini()
-        ini.load(File(cmdLine.iniFile))
+        ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         setupLogger(basic)
         val authToken = basic["auth_token"]
@@ -63,7 +70,7 @@ class Application {
         val logLevel = Level.toLevel(basic["log_level"], Level.OFF)
         val logFile = basic["log_file"] ?: "./logs/lts.log"
         val logCount = basic["log_count"].asInt() ?: 3
-        val logSize = basic["log_size"] ?: "1M"
+        val logSize = basic["log_size"] ?: "1MB"
         LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
         LoggerFactory.configConsole(level = logLevel)
         LoggerFactory.configFile(
@@ -73,7 +80,6 @@ class Application {
             maxFileSize = OptionConverter.toFileSize(logSize, 1)
         )
     }
-
 
     private fun String?.asInt(): Int? {
         return try {

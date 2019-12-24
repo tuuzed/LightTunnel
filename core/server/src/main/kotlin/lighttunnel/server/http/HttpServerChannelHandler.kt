@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpRequest
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoCommand
 import lighttunnel.proto.ProtoMessage
+import lighttunnel.server.interceptor.HttpRequestInterceptor
 import lighttunnel.server.util.AttributeKeys
 import lighttunnel.server.util.HttpUtil
 import lighttunnel.util.LongUtil

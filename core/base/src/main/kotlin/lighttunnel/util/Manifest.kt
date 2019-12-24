@@ -8,6 +8,7 @@ object Manifest {
         "io.netty",
         "org.ini4j",
         "org.slf4j",
-        "org.json"
+        "org.json",
+        "org.apache.commons.cli"
     )
 }

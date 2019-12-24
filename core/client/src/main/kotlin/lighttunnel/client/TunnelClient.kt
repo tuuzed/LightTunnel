@@ -10,7 +10,6 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
-import io.netty.handler.ssl.SslHandler
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
@@ -118,12 +117,17 @@ class TunnelClient(
     private fun createChannelInitializer(sslContext: SslContext?) = object : ChannelInitializer<SocketChannel>() {
         override fun initChannel(ch: SocketChannel?) {
             ch ?: return
-            if (sslContext != null) ch.pipeline().addFirst(SslHandler(sslContext.newEngine(ch.alloc())))
+            if (sslContext != null) {
+                ch.pipeline()
+                    .addFirst("ssl", sslContext.newHandler(ch.alloc()))
+            }
             ch.pipeline()
-                .addLast(HeartbeatHandler())
-                .addLast(ProtoMessageDecoder())
-                .addLast(ProtoMessageEncoder())
-                .addLast(TunnelClientChannelHandler(localTcpClient, this@TunnelClient))
+                .addLast("heartbeat", HeartbeatHandler())
+                .addLast("decoder", ProtoMessageDecoder())
+                .addLast("encoder", ProtoMessageEncoder())
+                .addLast("handler", TunnelClientChannelHandler(
+                    localTcpClient, this@TunnelClient
+                ))
         }
     }
 

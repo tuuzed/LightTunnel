@@ -1,7 +1,8 @@
 package lighttunnel.server
 
+import io.netty.handler.ssl.SslContextBuilder
+import io.netty.handler.ssl.util.SelfSignedCertificate
 import lighttunnel.logger.LoggerFactory
-import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.server.util.PortRangeUtil
 import lighttunnel.util.Manifest
 import org.apache.log4j.Level
@@ -16,8 +17,10 @@ class TunnelServerTest {
     fun setUp() {
         LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
         LoggerFactory.configConsole(level = Level.ALL)
+        val ssc = SelfSignedCertificate()
         tunnelServer = TunnelServer(
-            tunnelRequestInterceptor = SimpleRequestInterceptor.defaultImpl
+            httpsBindPort = 443,
+            httpsContext = SslContextBuilder.forServer(ssc.key(), ssc.cert()).build()
         )
     }
 

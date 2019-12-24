@@ -14,17 +14,14 @@ class TunnelConnDescriptor(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
-    private var request: TunnelRequest
+    val tunnelRequest: TunnelRequest
 ) {
     private val logger by loggerDelegate()
     private val shutdownFlag = AtomicBoolean(false)
     private var connectChannelFuture: ChannelFuture? = null
 
-    val tunnelRequest get() = request
-
-    internal fun updateTunnelRequest(request: TunnelRequest) {
-        this.request = request
-    }
+    var confirmedTunnelRequest: TunnelRequest? = null
+        internal set
 
     val isShutdown get() = shutdownFlag.get()
 
@@ -55,7 +52,9 @@ class TunnelConnDescriptor(
         }
     }
 
-    override fun toString() = tunnelRequest.toString()
+    override fun toString(): String {
+        return confirmedTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
+    }
 
 
 }

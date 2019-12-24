@@ -1,4 +1,4 @@
-package lighttunnel.server.http
+package lighttunnel.server.interceptor
 
 import io.netty.handler.codec.http.*
 import lighttunnel.proto.TunnelRequest
@@ -8,7 +8,7 @@ import java.net.SocketAddress
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-class HttpRequestInterceptorImpl : HttpRequestInterceptor {
+internal class HttpRequestInterceptorImpl : HttpRequestInterceptor {
 
     companion object {
         /** remote_addr 模板字符串 */

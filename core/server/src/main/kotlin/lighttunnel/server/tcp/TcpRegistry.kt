@@ -15,7 +15,7 @@ class TcpRegistry {
     fun register(port: Int, session: SessionChannels, descriptor: TcpDescriptor) {
         tunnelIdDescriptors[session.tunnelId] = descriptor
         portDescriptors[port] = descriptor
-        logger.info("Start Tunnel: {}", session.request)
+        logger.info("Start Tunnel: {}, Options: {}", session.request, session.request.optionsString)
     }
 
     @Synchronized

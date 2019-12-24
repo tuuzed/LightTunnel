@@ -13,8 +13,9 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
 import lighttunnel.proto.ProtoMessageEncoder
-import lighttunnel.server.http.HttpRequestInterceptor
 import lighttunnel.server.http.HttpServer
+import lighttunnel.server.interceptor.HttpRequestInterceptor
+import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.server.util.IncIds
@@ -25,17 +26,17 @@ class TunnelServer(
     // tcp
     private val bindAddr: String? = null,
     private val bindPort: Int = 5080,
-    private val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl,
+    private val tunnelRequestInterceptor: TunnelRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
     // ssl
     private val sslBindPort: Int? = null,
     private val sslContext: SslContext? = null,
     // http
     private val httpBindPort: Int? = null,
-    private val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.emptyImpl,
+    private val httpRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
     // https
     private val httpsBindPort: Int? = null,
     private val httpsContext: SslContext? = null,
-    private val httpsRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.emptyImpl
+    private val httpsRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl
 ) {
     private val logger by loggerDelegate()
     private val tunnelIds = IncIds()
@@ -98,9 +99,9 @@ class TunnelServer(
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
-                        .addLast(
-                            TunnelServerChannelHandler(tunnelRequestInterceptor, tunnelIds, tcpServer, httpServer, httpsServer)
-                        )
+                        .addLast("handler", TunnelServerChannelHandler(
+                            tunnelRequestInterceptor, tunnelIds, tcpServer, httpServer, httpsServer
+                        ))
                 }
             })
         if (sslContext == null) {

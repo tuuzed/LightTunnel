@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
+import lighttunnel.server.interceptor.HttpRequestInterceptor
 
 
 class HttpServer(

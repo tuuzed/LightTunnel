@@ -175,11 +175,13 @@ data class TunnelRequest internal constructor(
         return toString("tunnel")
     }
 
+    val optionsString get() = options.toString()
+
     fun toString(serverAddr: String): String {
         return when (type) {
-            Type.TCP -> "$localAddr:$localPort<-tcp://$serverAddr:$remotePort #options:$options"
-            Type.HTTP -> "$localAddr:$localPort<-http://$host #options:$options"
-            Type.HTTPS -> "$localAddr:$localPort<-https://$host #options:$options"
+            Type.TCP -> "$localAddr:$localPort<-tcp://$serverAddr:$remotePort"
+            Type.HTTP -> "$localAddr:$localPort<-http://$host"
+            Type.HTTPS -> "$localAddr:$localPort<-https://$host"
             else -> ""
         }
     }

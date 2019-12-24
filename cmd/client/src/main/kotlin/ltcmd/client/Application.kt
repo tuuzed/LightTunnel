@@ -4,23 +4,25 @@ import io.netty.handler.ssl.SslContext
 import lighttunnel.client.OnTunnelClientStateListener
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.TunnelConnDescriptor
-import lighttunnel.cmd.CmdLineParser
+import lighttunnel.cmd.AbstractApplication
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.Manifest
 import lighttunnel.util.SslContextUtil
+import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.Options
 import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
 import org.ini4j.Ini
 import org.ini4j.Profile
 import java.io.File
 
-class Application : OnTunnelClientStateListener {
+class Application : AbstractApplication(), OnTunnelClientStateListener {
     private val logger by loggerDelegate()
 
     override fun onConnecting(descriptor: TunnelConnDescriptor, reconnect: Boolean) {
-        logger.debug("onConnecting: {}", descriptor)
+        logger.info("onConnecting: {}", descriptor)
     }
 
     override fun onConnected(descriptor: TunnelConnDescriptor) {
@@ -31,16 +33,20 @@ class Application : OnTunnelClientStateListener {
         logger.info("onDisconnect: {}, err: {}", descriptor, err, errCause)
     }
 
-    fun doMain(args: Array<String>) {
-        val cmdLine = CmdLine()
-        CmdLineParser.parse(cmdLine, args)
-        if (cmdLine.help) {
-            System.err.printf("%n%nUsage: %n")
-            CmdLineParser.printHelp(cmdLine, System.err, "    ")
+    override val options: Options
+        get() = Options().apply {
+            addOption("h", "help", false, "帮助信息")
+            addOption("c", "config", true, "配置文件, 默认为ltc.ini")
+        }
+
+    override fun main(commandLine: CommandLine) {
+        if (commandLine.hasOption("h")) {
+            printUsage()
             return
         }
+        val configFilePath = commandLine.getOptionValue("c") ?: "ltc.ini"
         val ini = Ini()
-        ini.load(File(cmdLine.iniFile))
+        ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         setupLogger(basic)
         val client = newClient(basic)
@@ -148,7 +154,7 @@ class Application : OnTunnelClientStateListener {
         val logLevel = Level.toLevel(basic["log_level"], Level.OFF)
         val logFile = basic["log_file"] ?: "./logs/ltc.log"
         val logCount = basic["log_count"].asInt() ?: 3
-        val logSize = basic["log_size"] ?: "1M"
+        val logSize = basic["log_size"] ?: "1MB"
         LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
         LoggerFactory.configConsole(level = logLevel)
         LoggerFactory.configFile(

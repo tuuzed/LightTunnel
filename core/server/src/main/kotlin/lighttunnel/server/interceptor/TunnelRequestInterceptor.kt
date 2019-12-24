@@ -5,17 +5,7 @@ import lighttunnel.proto.TunnelRequest
 
 interface TunnelRequestInterceptor {
 
-    companion object {
-        val emptyImpl by lazy {
-            object : TunnelRequestInterceptor {
-                override fun handleTunnelRequest(
-                    request: TunnelRequest
-                ): TunnelRequest = request
-            }
-        }
-    }
-
     @Throws(ProtoException::class)
-    fun handleTunnelRequest(request: TunnelRequest): TunnelRequest
+    fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest = tunnelRequest
 
 }

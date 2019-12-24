@@ -81,7 +81,7 @@ class TunnelClientChannelHandler(
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(request)
         ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).set(null)
         ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).set(null)
-        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()?.updateTunnelRequest(request)
+        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()?.confirmedTunnelRequest = request
         logger.debug("Opened Tunnel: {}", request)
         connectStateListener.onTunnelConnected(ctx)
     }

@@ -18,4 +18,3 @@ project.ext.AppName = "lts"
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
 apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
 apply from: rootProject.file("./gradle/excejar.gradle").absolutePath
-
