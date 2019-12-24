@@ -49,22 +49,20 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         setupLogger(basic)
-        val client = newClient(basic)
-        val serverAddr = basic["server_addr"] ?: return
-        val serverPort = basic["server_port"].asInt()
+        val client = newTunnelClient(basic)
+        val serverAddr = basic["server_addr"] ?: "127.0.0.1"
+        val serverPort = basic["server_port"].asInt() ?: 5080
         val sslContext = newSslContext(basic)
-        val sslServerPort = basic["ssl_server_port"].asInt()
+        val sslServerPort = basic["ssl_server_port"].asInt() ?: 5443
         val tunnels = ini.entries.filter { it.key != "basic" }.mapNotNull { it.value }
         for (tunnel in tunnels) {
             val request = newTunnelRequest(basic, tunnel) ?: continue
             if (tunnel["ssl"]?.toUpperCase() == "TRUE") {
-                if (sslContext != null && sslServerPort != null) {
+                if (sslContext != null) {
                     client.connect(serverAddr, sslServerPort, request, sslContext)
                 }
             } else {
-                if (serverPort != null) {
-                    client.connect(serverAddr, serverPort, request, null)
-                }
+                client.connect(serverAddr, serverPort, request, null)
             }
         }
     }
@@ -75,7 +73,7 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
         return SslContextUtil.forClient(jks, storePassword)
     }
 
-    private fun newClient(basicSection: Profile.Section): TunnelClient {
+    private fun newTunnelClient(basicSection: Profile.Section): TunnelClient {
         val workerThreads = basicSection["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
@@ -95,16 +93,15 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
     }
 
     private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
-        val authToken = basic["auth_token"] ?: return null
+        val authToken = basic["auth_token"]
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
-        val remotePort = tunnel["remote_port"].asInt() ?: return null
+        val remotePort = tunnel["remote_port"].asInt() ?: 0
         return TunnelRequest.forTcp(
             localAddr = localAddr,
             localPort = localPort,
-
-            authToken = authToken,
-            remotePort = remotePort
+            remotePort = remotePort,
+            authToken = authToken
         )
     }
 
@@ -116,7 +113,7 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
 
     private fun newHttpOrHttpsTunnelRequest(
         basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
-        val authToken = basic["auth_token"] ?: return null
+        val authToken = basic["auth_token"]
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
         val customDomain = tunnel["custom_domain"] ?: return null
@@ -151,18 +148,20 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
     }
 
     private fun setupLogger(basic: Profile.Section) {
-        val logLevel = Level.toLevel(basic["log_level"], Level.OFF)
-        val logFile = basic["log_file"] ?: "./logs/ltc.log"
+        val logLevel = Level.toLevel(basic["log_level"], Level.INFO)
+        val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3
         val logSize = basic["log_size"] ?: "1MB"
         LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
         LoggerFactory.configConsole(level = logLevel)
-        LoggerFactory.configFile(
-            level = logLevel,
-            file = logFile,
-            maxBackupIndex = logCount,
-            maxFileSize = OptionConverter.toFileSize(logSize, 1)
-        )
+        if (logFile != null) {
+            LoggerFactory.configFile(
+                level = logLevel,
+                file = logFile,
+                maxBackupIndex = logCount,
+                maxFileSize = OptionConverter.toFileSize(logSize, 1)
+            )
+        }
     }
 
     private fun String?.asInt(): Int? {

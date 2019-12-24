@@ -33,10 +33,14 @@ class Application : AbstractApplication() {
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         setupLogger(basic)
+        newTunnelServer(basic).start()
+    }
+
+    private fun newTunnelServer(basic: Profile.Section): TunnelServer {
         val authToken = basic["auth_token"]
         val allowPorts = basic["allow_ports"]
         val interceptor = SimpleRequestInterceptor(authToken, allowPorts)
-        TunnelServer(
+        return TunnelServer(
             bossThreads = basic["boss_threads"].asInt() ?: -1,
             workerThreads = basic["worker_threads"].asInt() ?: -1,
             // tcp
@@ -63,22 +67,24 @@ class Application : AbstractApplication() {
                 SslContextUtil.forServer(jks, storePassword, keyPassword)
             } else null,
             httpsRequestInterceptor = interceptor
-        ).start()
+        )
     }
 
     private fun setupLogger(basic: Profile.Section) {
-        val logLevel = Level.toLevel(basic["log_level"], Level.OFF)
-        val logFile = basic["log_file"] ?: "./logs/lts.log"
+        val logLevel = Level.toLevel(basic["log_level"], Level.INFO)
+        val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3
         val logSize = basic["log_size"] ?: "1MB"
         LoggerFactory.configConsole(Level.OFF, names = *Manifest.thirdPartyLibs)
         LoggerFactory.configConsole(level = logLevel)
-        LoggerFactory.configFile(
-            level = logLevel,
-            file = logFile,
-            maxBackupIndex = logCount,
-            maxFileSize = OptionConverter.toFileSize(logSize, 1)
-        )
+        if (logFile != null) {
+            LoggerFactory.configFile(
+                level = logLevel,
+                file = logFile,
+                maxBackupIndex = logCount,
+                maxFileSize = OptionConverter.toFileSize(logSize, 1)
+            )
+        }
     }
 
     private fun String?.asInt(): Int? {
