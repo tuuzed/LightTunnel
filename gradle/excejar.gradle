@@ -50,7 +50,7 @@ launch4j {
 }
 
 task _mixinProguardJar(
-        group: "other",
+        group: "package",
         type: proguard.gradle.ProGuardTask,
         dependsOn: jar
 ) {
@@ -69,21 +69,48 @@ task packageClean(
         type: Delete,
         dependsOn: clean
 ) {
-    delete rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
-    delete rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.exe")
+    delete rootProject.file("dists/${project.version}")
 }
 
 task packageJar(
         group: "package",
-        type: proguard.gradle.ProGuardTask,
         dependsOn: _mixinProguardJar
 )
 
-task packageExe(
+task packageRelease(
         group: "package",
         type: Copy,
         dependsOn: [_mixinProguardJar, createExe]
 ) {
     from new File(project.buildDir, "launch4j/${project.AppName ?: project.name}.exe")
     into rootProject.file("dists/${project.version}")
+    doLast {
+        def jarFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
+        def stubFile = rootProject.file("gradle/stub.sh")
+        def runFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.run")
+        if (!jarFile.exists()) {
+            return
+        }
+        def srcJar = new FileInputStream(jarFile)
+        def srcStub = new FileInputStream(stubFile)
+        def dst = new FileOutputStream(runFile)
+
+        copyTo(srcStub, dst)
+        copyTo(srcJar, dst)
+        dst.flush()
+
+        srcJar.close()
+        srcStub.close()
+        dst.close()
+        runFile.setExecutable(true, false)
+    }
+}
+
+
+static def copyTo(InputStream src, OutputStream dst) {
+    byte[] buf = new byte[1024]
+    int len
+    while ((len = src.read(buf)) != -1) {
+        dst.write(buf, 0, len)
+    }
 }

@@ -11,7 +11,7 @@
 -optimizationpasses 5
 
 # 打印映射表到文件
--printmapping ../../dists/proguard.map
+# -printmapping ../../dists/proguard.map
 
 -keepattributes SourceFile, LineNumberTable
 -keepattributes *Annotation*
