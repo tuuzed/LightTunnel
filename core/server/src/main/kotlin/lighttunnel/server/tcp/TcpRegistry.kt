@@ -2,7 +2,10 @@ package lighttunnel.server.tcp
 
 import io.netty.channel.Channel
 import lighttunnel.logger.loggerDelegate
+import lighttunnel.proto.ProtoException
 import lighttunnel.server.SessionChannels
+import java.io.IOException
+import java.net.ServerSocket
 import java.util.concurrent.ConcurrentHashMap
 
 class TcpRegistry {
@@ -12,33 +15,43 @@ class TcpRegistry {
     private val portDescriptors = ConcurrentHashMap<Int, TcpDescriptor>()
 
     @Synchronized
+    @Throws(ProtoException::class)
     fun register(port: Int, session: SessionChannels, descriptor: TcpDescriptor) {
+        if (isRegistered(port)) throw ProtoException("port($port) already used")
+        try {
+            ServerSocket(port).close()
+        } catch (e: IOException) {
+            throw ProtoException("port($port) already used")
+        }
         tunnelIdDescriptors[session.tunnelId] = descriptor
         portDescriptors[port] = descriptor
-        logger.info("Start Tunnel: {}, Options: {}", session.request, session.request.optionsString)
+        logger.info("Start Tunnel: {}, Options: {}", session.tunnelRequest, session.tunnelRequest.optionsString)
     }
 
     @Synchronized
-    fun unregister(tunnelId: Long) {
-        val descriptor = tunnelIdDescriptors.remove(tunnelId)
+    fun unregister(port: Int) {
+        val descriptor = portDescriptors.remove(port)
         if (descriptor != null) {
-            portDescriptors.remove(descriptor.port)
+            tunnelIdDescriptors.remove(descriptor.tunnelId)
             descriptor.close()
-            logger.info("Shutdown Tunnel: {}", descriptor.sessionPool.request)
+            logger.info("Shutdown Tunnel: {}", descriptor.sessionChannels.tunnelRequest)
         }
     }
 
     @Synchronized
-    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? =
-        tunnelIdDescriptors[tunnelId]?.sessionPool?.getChannel(sessionId)
+    fun isRegistered(port: Int): Boolean = portDescriptors.containsKey(port)
 
     @Synchronized
-    fun getDescriptorByPort(port: Int): TcpDescriptor? = portDescriptors[port]
+    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? {
+        return tunnelIdDescriptors[tunnelId]?.sessionChannels?.getChannel(sessionId)
+    }
+
+    @Synchronized
+    fun getDescriptor(port: Int): TcpDescriptor? = portDescriptors[port]
 
     @Synchronized
     fun destroy() {
-        tunnelIdDescriptors.clear()
-        portDescriptors.clear()
+        portDescriptors.forEach { (port, _) -> unregister(port) }
     }
 
 }

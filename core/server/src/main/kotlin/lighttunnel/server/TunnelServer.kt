@@ -52,13 +52,13 @@ class TunnelServer(
         }
         if (httpBindPort != null) {
             httpServer = HttpServer(
-                bossGroup, workerGroup, null, bindAddr, httpBindPort, httpRequestInterceptor
+                bossGroup, workerGroup, bindAddr, httpBindPort, null, httpRequestInterceptor
             )
         }
         if (httpsBindPort != null) {
             requireNotNull(httpsContext) { "httpsContext == null" }
             httpsServer = HttpServer(
-                bossGroup, workerGroup, httpsContext, bindAddr, httpsBindPort, httpsRequestInterceptor
+                bossGroup, workerGroup, bindAddr, httpsBindPort, httpsContext, httpsRequestInterceptor
             )
         }
         tcpServer = TcpServer(bossGroup, workerGroup)

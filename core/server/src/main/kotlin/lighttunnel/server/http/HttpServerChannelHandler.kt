@@ -34,11 +34,11 @@ class HttpServerChannelHandler(
         val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
         if (host != null && sessionId != null) {
-            val descriptor = registry.getDescriptorByHost(host)
+            val descriptor = registry.getDescriptor(host)
             if (descriptor != null) {
-                val tunnelId = descriptor.sessionPool.tunnelId
+                val tunnelId = descriptor.sessionChannels.tunnelId
                 val head = LongUtil.toBytes(tunnelId, sessionId)
-                descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_DISCONNECT, head))
+                descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_DISCONNECT, head))
             }
             ctx.channel().attr<String>(AttributeKeys.AK_HTTP_HOST).set(null)
             ctx.channel().attr<Long>(AttributeKeys.AK_SESSION_ID).set(null)
@@ -71,7 +71,7 @@ class HttpServerChannelHandler(
             return
         }
         ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).set(host)
-        val descriptor = registry.getDescriptorByHost(host)
+        val descriptor = registry.getDescriptor(host)
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             ctx.channel().attr<Boolean>(AttributeKeys.AK_HTTP_SKIP).set(false)
@@ -81,19 +81,19 @@ class HttpServerChannelHandler(
         val httpResponse = interceptor.handleHttpRequest(
             ctx.channel().localAddress(),
             ctx.channel().remoteAddress(),
-            descriptor.sessionPool.request,
+            descriptor.sessionChannels.tunnelRequest,
             msg
         )
         if (httpResponse != null) {
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpResponse))
             return
         }
-        val sessionId = descriptor.sessionPool.putChannel(ctx.channel())
+        val sessionId = descriptor.sessionChannels.putChannel(ctx.channel())
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
-        val tunnelId = descriptor.sessionPool.tunnelId
+        val tunnelId = descriptor.sessionChannels.tunnelId
         val head = LongUtil.toBytes(tunnelId, sessionId)
         val data = HttpUtil.toBytes(msg)
-        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
     }
 
     /** 处理读取到的HttpContent类型的消息 */
@@ -107,15 +107,15 @@ class HttpServerChannelHandler(
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        val descriptor = registry.getDescriptorByHost(host)
+        val descriptor = registry.getDescriptor(host)
         if (descriptor == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        val tunnelId = descriptor.sessionPool.tunnelId
+        val tunnelId = descriptor.sessionChannels.tunnelId
         val head = LongUtil.toBytes(tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg.content())
-        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
 
     }
 

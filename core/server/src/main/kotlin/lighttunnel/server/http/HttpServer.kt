@@ -16,16 +16,15 @@ import lighttunnel.server.interceptor.HttpRequestInterceptor
 class HttpServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
-    private val sslContext: SslContext? = null,
     private val bindAddr: String?,
     private val bindPort: Int,
+    private val sslContext: SslContext? = null,
     private val interceptor: HttpRequestInterceptor
 ) {
     private val logger by loggerDelegate()
-
     val registry = HttpRegistry()
     private val serverBootstrap = ServerBootstrap()
-    private val https: Boolean get() = sslContext != null
+    private val isHttps: Boolean get() = sslContext != null
 
     init {
         this.serverBootstrap.group(bossGroup, workerGroup)
@@ -43,7 +42,7 @@ class HttpServer(
         }
         logger.info(
             "Serving {} on {} port {}",
-            if (https) "https" else "http",
+            if (isHttps) "https" else "http",
             bindAddr ?: "any address",
             bindPort
         )

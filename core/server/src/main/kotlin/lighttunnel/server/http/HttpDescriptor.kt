@@ -4,7 +4,10 @@ import lighttunnel.server.SessionChannels
 
 class HttpDescriptor(
     val host: String,
-    val sessionPool: SessionChannels
+    val sessionChannels: SessionChannels
 ) {
-    fun close() = sessionPool.destroy()
+
+    val tunnelId get() = sessionChannels.tunnelId
+
+    fun close() = sessionChannels.destroy()
 }

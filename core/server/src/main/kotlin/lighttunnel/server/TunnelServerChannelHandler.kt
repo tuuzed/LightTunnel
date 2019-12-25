@@ -31,12 +31,13 @@ class TunnelServerChannelHandler(
             super.channelInactive(ctx)
             return
         }
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get()?.also {
-            when (it.request.type) {
-                TunnelRequest.Type.TCP -> tcpServer?.registry?.unregister(it.tunnelId)
-                TunnelRequest.Type.HTTP -> httpServer?.registry?.unregister(it.request.host)
-                TunnelRequest.Type.HTTPS -> httpsServer?.registry?.unregister(it.request.host)
+        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get()?.also { sc ->
+            when (sc.tunnelRequest.type) {
+                TunnelRequest.Type.TCP -> tcpServer?.also { it.registry.unregister(sc.tunnelRequest.remotePort) }
+                TunnelRequest.Type.HTTP -> httpServer?.also { it.registry.unregister(sc.tunnelRequest.host) }
+                TunnelRequest.Type.HTTPS -> httpsServer?.also { it.registry.unregister(sc.tunnelRequest.host) }
                 else -> {
+                    // Nothing
                 }
             }
         }
@@ -45,8 +46,8 @@ class TunnelServerChannelHandler(
     }
 
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
-        ctx ?: return
         logger.trace("exceptionCaught: {}", ctx, cause)
+        ctx ?: return
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
@@ -102,7 +103,7 @@ class TunnelServerChannelHandler(
     @Throws(Exception::class)
     private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         val sessionPool = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
-        when (sessionPool.request.type) {
+        when (sessionPool.tunnelRequest.type) {
             TunnelRequest.Type.TCP -> {
                 tcpServer ?: return
                 tcpServer.registry

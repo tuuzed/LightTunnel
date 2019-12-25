@@ -13,6 +13,7 @@ class TcpServer(
     workerGroup: NioEventLoopGroup
 ) {
     val registry = TcpRegistry()
+
     private val serverBootstrap = ServerBootstrap()
 
     init {
@@ -23,16 +24,17 @@ class TcpServer(
             .childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel?) {
                     ch ?: return
-                    ch.pipeline().addLast("handler", TcpServerChannelHandler(registry))
+                    ch.pipeline()
+                        .addLast("handler", TcpServerChannelHandler(registry))
                 }
             })
     }
 
     @Throws(Exception::class)
     fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels) {
-        val descriptor = TcpDescriptor(addr, port, sessionChannels)
-        descriptor.open(serverBootstrap)
-        registry.register(port, sessionChannels, descriptor)
+        val bindChannelFuture = if (addr != null) serverBootstrap.bind(addr, port)
+        else serverBootstrap.bind(port)
+        registry.register(port, sessionChannels, TcpDescriptor(addr, port, sessionChannels, bindChannelFuture))
     }
 
     fun destroy() = registry.destroy()

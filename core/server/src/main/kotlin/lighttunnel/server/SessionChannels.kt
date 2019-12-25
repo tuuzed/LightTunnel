@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class SessionChannels(
     val tunnelId: Long,
-    val request: TunnelRequest,
+    val tunnelRequest: TunnelRequest,
     val tunnelChannel: Channel
 ) {
     private val ids = IncIds()

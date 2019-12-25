@@ -21,16 +21,16 @@ class TcpServerChannelHandler(
     override fun channelActive(ctx: ChannelHandlerContext?) {
         if (ctx != null) {
             val sa = ctx.channel().localAddress() as InetSocketAddress
-            val descriptor = registry.getDescriptorByPort(sa.port)
+            val descriptor = registry.getDescriptor(sa.port)
             if (descriptor != null) {
                 var sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
                 if (sessionId == null) {
-                    sessionId = descriptor.sessionPool.putChannel(ctx.channel())
+                    sessionId = descriptor.sessionChannels.putChannel(ctx.channel())
                     ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
                 }
-                val tunnelId = descriptor.sessionPool.tunnelId
+                val tunnelId = descriptor.sessionChannels.tunnelId
                 val head = LongUtil.toBytes(tunnelId, sessionId)
-                descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
+                descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
             } else {
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             }
@@ -42,19 +42,19 @@ class TcpServerChannelHandler(
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         if (ctx != null) {
             val sa = ctx.channel().localAddress() as InetSocketAddress
-            val descriptor = registry.getDescriptorByPort(sa.port)
+            val descriptor = registry.getDescriptor(sa.port)
             if (descriptor != null) {
                 val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
                 if (sessionId != null) {
-                    descriptor.sessionPool.removeChannel(sessionId)
+                    descriptor.sessionChannels.removeChannel(sessionId)
                         ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
                         ?.addListener(ChannelFutureListener.CLOSE)
                 }
                 // 解决 HTTP/1.x 数据传输问题
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
-                    val tunnelId = descriptor.sessionPool.tunnelId
+                    val tunnelId = descriptor.sessionChannels.tunnelId
                     val head = LongUtil.toBytes(tunnelId, sessionId)
-                    descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
+                    descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
                 }
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -73,11 +73,11 @@ class TcpServerChannelHandler(
         msg ?: return
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get() ?: return
         val sa = ctx.channel().localAddress() as InetSocketAddress
-        val descriptor = registry.getDescriptorByPort(sa.port) ?: return
-        val tunnelId = descriptor.sessionPool.tunnelId
+        val descriptor = registry.getDescriptor(sa.port) ?: return
+        val tunnelId = descriptor.sessionChannels.tunnelId
         val head = LongUtil.toBytes(tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)
-        descriptor.sessionPool.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
     }
 
 }

@@ -83,6 +83,10 @@ task packageRelease(
         dependsOn: [_mixinProguardJar, createExe]
 ) {
     from new File(project.buildDir, "launch4j/${project.AppName ?: project.name}.exe")
+    from(rootProject.file("resources")) {
+        include '*.ini'
+        include '*.jks'
+    }
     into rootProject.file("dists/${project.version}")
     doLast {
         def jarFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
@@ -95,8 +99,8 @@ task packageRelease(
         def srcStub = new FileInputStream(stubFile)
         def dst = new FileOutputStream(runFile)
 
-        copyTo(srcStub, dst)
-        copyTo(srcJar, dst)
+        copyOf(srcStub, dst)
+        copyOf(srcJar, dst)
         dst.flush()
 
         srcJar.close()
@@ -107,7 +111,7 @@ task packageRelease(
 }
 
 
-static def copyTo(InputStream src, OutputStream dst) {
+static def copyOf(InputStream src, OutputStream dst) {
     byte[] buf = new byte[1024]
     int len
     while ((len = src.read(buf)) != -1) {
