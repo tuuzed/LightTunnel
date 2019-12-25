@@ -2,7 +2,7 @@ package lighttunnel.server.interceptor
 
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.server.util.PortRangeUtil
+import lighttunnel.server.util.PortUtil
 
 internal class TunnelRequestInterceptorImpl(
     /** 预置Token */
@@ -21,10 +21,10 @@ internal class TunnelRequestInterceptorImpl(
                 if (tunnelRequest.remotePort == 0) {
                     TunnelRequest.copyTcp(
                         tunnelRequest,
-                        remotePort = PortRangeUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
+                        remotePort = PortUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
                     )
                 } else {
-                    if (allowPorts != null && !PortRangeUtil.hasInPortRange(allowPorts, tunnelRequest.remotePort)) {
+                    if (allowPorts != null && !PortUtil.hasInPortRange(allowPorts, tunnelRequest.remotePort)) {
                         throw ProtoException("request($tunnelRequest), remotePort($tunnelRequest.remotePort) Not allowed to use.")
                     }
                     tunnelRequest

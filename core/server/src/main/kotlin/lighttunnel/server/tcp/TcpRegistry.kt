@@ -4,8 +4,6 @@ import io.netty.channel.Channel
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
 import lighttunnel.server.SessionChannels
-import java.io.IOException
-import java.net.ServerSocket
 import java.util.concurrent.ConcurrentHashMap
 
 class TcpRegistry {
@@ -17,12 +15,6 @@ class TcpRegistry {
     @Synchronized
     @Throws(ProtoException::class)
     fun register(port: Int, session: SessionChannels, descriptor: TcpDescriptor) {
-        if (isRegistered(port)) throw ProtoException("port($port) already used")
-        try {
-            ServerSocket(port).close()
-        } catch (e: IOException) {
-            throw ProtoException("port($port) already used")
-        }
         tunnelIdDescriptors[session.tunnelId] = descriptor
         portDescriptors[port] = descriptor
         logger.info("Start Tunnel: {}, Options: {}", session.tunnelRequest, session.tunnelRequest.optionsString)

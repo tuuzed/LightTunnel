@@ -31,7 +31,19 @@ class HttpServer(
             .channel(NioServerSocketChannel::class.java)
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childHandler(createChannelInitializer(sslContext))
+            .childHandler(object : ChannelInitializer<SocketChannel>() {
+                override fun initChannel(ch: SocketChannel?) {
+                    ch ?: return
+                    if (sslContext != null) {
+                        ch.pipeline().addFirst(
+                            SslHandler(sslContext.newEngine(ch.alloc()))
+                        )
+                    }
+                    ch.pipeline()
+                        .addLast(HttpRequestDecoder())
+                        .addLast(HttpServerChannelHandler(registry, interceptor))
+                }
+            })
     }
 
     fun start() {
@@ -48,20 +60,5 @@ class HttpServer(
         )
     }
 
-    fun shutdown() = registry.destroy()
-    fun destroy() = shutdown()
-
-    private fun createChannelInitializer(sslContext: SslContext?) = object : ChannelInitializer<SocketChannel>() {
-        override fun initChannel(ch: SocketChannel?) {
-            ch ?: return
-            if (sslContext != null) {
-                ch.pipeline().addFirst(
-                    SslHandler(sslContext.newEngine(ch.alloc()))
-                )
-            }
-            ch.pipeline()
-                .addLast(HttpRequestDecoder())
-                .addLast(HttpServerChannelHandler(registry, interceptor))
-        }
-    }
+    fun destroy() = registry.destroy()
 }

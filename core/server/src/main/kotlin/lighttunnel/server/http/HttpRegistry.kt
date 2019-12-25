@@ -16,7 +16,9 @@ class HttpRegistry {
     @Synchronized
     @Throws(ProtoException::class)
     fun register(host: String, sessionChannels: SessionChannels) {
-        if (isRegistered(host)) throw ProtoException("host($host) already used")
+        if (isRegistered(host)) {
+            throw ProtoException("host($host) already used")
+        }
         val descriptor = HttpDescriptor(host, sessionChannels)
         tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
         hostDescriptors[host] = descriptor

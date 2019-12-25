@@ -5,7 +5,7 @@ import java.net.ServerSocket
 import java.util.*
 
 
-object PortRangeUtil {
+object PortUtil {
     /**
      * 判断端口是否在指定的端口规则内
      *
@@ -50,18 +50,26 @@ object PortRangeUtil {
      * @param portRange 端口规则，例如：10000-21000,30000,30001,30003
      * @return 端口号
      */
+    @Synchronized
     fun getAvailableTcpPort(portRange: String): Int {
         val random = Random()
         while (true) {
             val port = random.nextInt(65535 - 1024) + 1024
             if (hasInPortRange(portRange, port)) {
-                try {
-                    ServerSocket(port).close()
+                if (isAvailablePort(port)) {
                     return port
-                } catch (e: IOException) {
-                    continue
                 }
             }
+        }
+    }
+
+    @Synchronized
+    fun isAvailablePort(port: Int): Boolean {
+        return try {
+            ServerSocket(port).close()
+            true
+        } catch (e: IOException) {
+            false
         }
     }
 }

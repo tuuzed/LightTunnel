@@ -6,7 +6,9 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import lighttunnel.proto.ProtoException
 import lighttunnel.server.SessionChannels
+import lighttunnel.server.util.PortUtil
 
 class TcpServer(
     bossGroup: NioEventLoopGroup,
@@ -31,9 +33,15 @@ class TcpServer(
     }
 
     @Throws(Exception::class)
-    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels) {
-        val bindChannelFuture = if (addr != null) serverBootstrap.bind(addr, port)
-        else serverBootstrap.bind(port)
+    internal fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels) {
+        if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
+            throw ProtoException("port($port) already used")
+        }
+        val bindChannelFuture = if (addr != null) {
+            serverBootstrap.bind(addr, port)
+        } else {
+            serverBootstrap.bind(port)
+        }
         registry.register(port, sessionChannels, TcpDescriptor(addr, port, sessionChannels, bindChannelFuture))
     }
 
