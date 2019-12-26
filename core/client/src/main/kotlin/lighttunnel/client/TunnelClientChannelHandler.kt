@@ -11,7 +11,7 @@ import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoCommand
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.LongUtil
@@ -56,13 +56,13 @@ class TunnelClientChannelHandler(
         logger.trace("channelRead0 : {}, {}", ctx, msg)
         ctx ?: return
         msg ?: return
-        when (msg.cmd) {
-            ProtoCommand.PING -> doHandlePingMessage(ctx, msg)
-            ProtoCommand.RESPONSE_OK -> doHandleResponseOkMessage(ctx, msg)
-            ProtoCommand.RESPONSE_ERR -> doHandleResponseErrMessage(ctx, msg)
-            ProtoCommand.TRANSFER -> doHandleTransferMessage(ctx, msg)
-            ProtoCommand.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg)
-            ProtoCommand.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg)
+        when (msg.type) {
+            ProtoMessageType.PING -> doHandlePingMessage(ctx, msg)
+            ProtoMessageType.RESPONSE_OK -> doHandleResponseOkMessage(ctx, msg)
+            ProtoMessageType.RESPONSE_ERR -> doHandleResponseErrMessage(ctx, msg)
+            ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg)
+            ProtoMessageType.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg)
+            ProtoMessageType.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg)
             else -> {
             }
         }
@@ -71,7 +71,7 @@ class TunnelClientChannelHandler(
     /** Ping */
     @Throws(Exception::class)
     private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        ctx.writeAndFlush(ProtoMessage(ProtoCommand.PONG))
+        ctx.writeAndFlush(ProtoMessage(ProtoMessageType.PONG))
     }
 
     /** 隧道建立成功 */
@@ -121,7 +121,7 @@ class TunnelClientChannelHandler(
                         override fun onError(cause: Throwable) {
                             super.onError(cause)
                             val head = LongUtil.toBytes(msg.tunnelId, msg.sessionId)
-                            ctx.writeAndFlush(ProtoMessage(ProtoCommand.LOCAL_DISCONNECT, head))
+                            ctx.writeAndFlush(ProtoMessage(ProtoMessageType.LOCAL_DISCONNECT, head))
                         }
                     })
             }

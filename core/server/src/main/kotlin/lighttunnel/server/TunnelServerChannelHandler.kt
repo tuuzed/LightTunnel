@@ -5,7 +5,7 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoCommand
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.TunnelRequest
@@ -54,12 +54,12 @@ class TunnelServerChannelHandler(
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: ProtoMessage?) {
         ctx ?: return
         msg ?: return
-        when (msg.cmd) {
-            ProtoCommand.PING -> doHandlePingMessage(ctx, msg)
-            ProtoCommand.REQUEST -> doHandleRequestMessage(ctx, msg)
-            ProtoCommand.TRANSFER -> doHandleTransferMessage(ctx, msg)
-            ProtoCommand.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
-            ProtoCommand.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
+        when (msg.type) {
+            ProtoMessageType.PING -> doHandlePingMessage(ctx, msg)
+            ProtoMessageType.REQUEST -> doHandleRequestMessage(ctx, msg)
+            ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg)
+            ProtoMessageType.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
+            ProtoMessageType.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
             else -> {
                 // Nothing
             }
@@ -69,7 +69,7 @@ class TunnelServerChannelHandler(
     @Throws(Exception::class)
     private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("handlePingMessage# {}, {}", ctx, msg)
-        ctx.writeAndFlush(ProtoMessage(ProtoCommand.PONG))
+        ctx.writeAndFlush(ProtoMessage(ProtoMessageType.PONG))
     }
 
     @Throws(Exception::class)
@@ -95,7 +95,7 @@ class TunnelServerChannelHandler(
             }
         } catch (e: Exception) {
             ctx.channel().writeAndFlush(
-                ProtoMessage(ProtoCommand.RESPONSE_ERR, e.message.toString().toByteArray())
+                ProtoMessage(ProtoMessageType.RESPONSE_ERR, e.message.toString().toByteArray())
             ).addListener(ChannelFutureListener.CLOSE)
         }
     }
@@ -152,7 +152,7 @@ class TunnelServerChannelHandler(
         server.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
-        ctx.channel().writeAndFlush(ProtoMessage(ProtoCommand.RESPONSE_OK, head, data))
+        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
     }
 
     @Throws(Exception::class)
@@ -168,7 +168,7 @@ class TunnelServerChannelHandler(
         server.registry.register(tunnelRequest.host, sessionChannels)
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
-        ctx.channel().writeAndFlush(ProtoMessage(ProtoCommand.RESPONSE_OK, head, data))
+        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
     }
 
 }

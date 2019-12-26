@@ -24,7 +24,7 @@ class HeartbeatHandler(
         when (evt) {
             IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> {
                 logger.trace("channel write timeout {}", ctx)
-                ctx.channel().writeAndFlush(ProtoMessage(ProtoCommand.PING))
+                ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.PING))
             }
             IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT -> {
                 logger.trace("channel read timeout {}", ctx)

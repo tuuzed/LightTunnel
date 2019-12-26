@@ -7,7 +7,7 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoCommand
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.server.util.AttributeKeys
 import lighttunnel.util.LongUtil
@@ -31,7 +31,7 @@ class TcpServerChannelHandler(
                 val tunnelId = descriptor.sessionChannels.tunnelId
                 val head = LongUtil.toBytes(tunnelId, sessionId)
                 descriptor.sessionChannels.tunnelChannel
-                    .writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
+                    .writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head))
             } else {
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             }
@@ -56,7 +56,7 @@ class TcpServerChannelHandler(
                     val tunnelId = descriptor.sessionChannels.tunnelId
                     val head = LongUtil.toBytes(tunnelId, sessionId)
                     descriptor.sessionChannels.tunnelChannel
-                        .writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_DISCONNECT, head))
+                        .writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
                 }
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -79,7 +79,7 @@ class TcpServerChannelHandler(
         val tunnelId = descriptor.sessionChannels.tunnelId
         val head = LongUtil.toBytes(tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)
-        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
 }

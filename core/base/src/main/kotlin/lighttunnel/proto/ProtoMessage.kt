@@ -3,7 +3,7 @@ package lighttunnel.proto
 import lighttunnel.util.LongUtil
 
 class ProtoMessage(
-    val cmd: ProtoCommand,
+    val type: ProtoMessageType,
     val head: ByteArray = ProtoConsts.emptyBytes,
     val data: ByteArray = ProtoConsts.emptyBytes
 ) {
@@ -12,7 +12,7 @@ class ProtoMessage(
     val sessionId by lazy { LongUtil.fromBytes(head, 8) }
 
     override fun toString(): String {
-        return "ProtoMessage(cmd=$cmd, head.length=${head.size}, data.length=${data.size})"
+        return "ProtoMessage(type=$type, head.length=${head.size}, data.length=${data.size})"
     }
 
 

@@ -1,6 +1,6 @@
 package lighttunnel.proto
 
-enum class ProtoCommand(val flag: Byte) {
+enum class ProtoMessageType(val flag: Byte) {
     /**
      * 未知
      */

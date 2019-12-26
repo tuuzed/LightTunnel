@@ -8,7 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoCommand
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.server.interceptor.HttpRequestInterceptor
 import lighttunnel.server.util.AttributeKeys
@@ -38,7 +38,7 @@ class HttpServerChannelHandler(
             if (descriptor != null) {
                 val tunnelId = descriptor.sessionChannels.tunnelId
                 val head = LongUtil.toBytes(tunnelId, sessionId)
-                descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_DISCONNECT, head))
+                descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
             }
             ctx.channel().attr<String>(AttributeKeys.AK_HTTP_HOST).set(null)
             ctx.channel().attr<Long>(AttributeKeys.AK_SESSION_ID).set(null)
@@ -93,7 +93,7 @@ class HttpServerChannelHandler(
         val tunnelId = descriptor.sessionChannels.tunnelId
         val head = LongUtil.toBytes(tunnelId, sessionId)
         val data = HttpUtil.toBytes(msg)
-        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
     /** 处理读取到的HttpContent类型的消息 */
@@ -115,7 +115,7 @@ class HttpServerChannelHandler(
         val tunnelId = descriptor.sessionChannels.tunnelId
         val head = LongUtil.toBytes(tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg.content())
-        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
 
     }
 

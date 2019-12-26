@@ -5,7 +5,7 @@ import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoCommand
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,7 +36,7 @@ class TunnelConnectDescriptor(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    future.channel().writeAndFlush(ProtoMessage(ProtoCommand.REQUEST, head = tunnelRequest.toBytes()))
+                    future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = tunnelRequest.toBytes()))
                     future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).set(this)
                 } else {
                     callback?.onConnectFailure(this)

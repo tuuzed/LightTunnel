@@ -8,7 +8,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoCommand
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.util.LongUtil
 
@@ -30,7 +30,7 @@ class LocalTcpClientChannelHandler(
             val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()
             if (nextChannel != null) {
                 val head = LongUtil.toBytes(tunnelId, sessionId)
-                nextChannel.writeAndFlush(ProtoMessage(ProtoCommand.LOCAL_DISCONNECT, head))
+                nextChannel.writeAndFlush(ProtoMessage(ProtoMessageType.LOCAL_DISCONNECT, head))
             }
         }
         super.channelInactive(ctx)
@@ -50,7 +50,7 @@ class LocalTcpClientChannelHandler(
         if (tunnelId != null && sessionId != null && nextChannel != null) {
             val head = LongUtil.toBytes(tunnelId, sessionId)
             val data = ByteBufUtil.getBytes(msg)
-            nextChannel.writeAndFlush(ProtoMessage(ProtoCommand.TRANSFER, head, data))
+            nextChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
         }
     }
 
