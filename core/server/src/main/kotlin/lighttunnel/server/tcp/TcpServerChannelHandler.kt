@@ -30,7 +30,8 @@ class TcpServerChannelHandler(
                 }
                 val tunnelId = descriptor.sessionChannels.tunnelId
                 val head = LongUtil.toBytes(tunnelId, sessionId)
-                descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
+                descriptor.sessionChannels.tunnelChannel
+                    .writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
             } else {
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             }
@@ -54,7 +55,8 @@ class TcpServerChannelHandler(
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
                     val tunnelId = descriptor.sessionChannels.tunnelId
                     val head = LongUtil.toBytes(tunnelId, sessionId)
-                    descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_CONNECTED, head))
+                    descriptor.sessionChannels.tunnelChannel
+                        .writeAndFlush(ProtoMessage(ProtoCommand.REMOTE_DISCONNECT, head))
                 }
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)

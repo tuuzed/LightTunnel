@@ -1,9 +1,9 @@
 package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.OnTunnelClientStateListener
 import lighttunnel.client.TunnelClient
-import lighttunnel.client.TunnelConnDescriptor
+import lighttunnel.client.TunnelConnectDescriptor
+import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
@@ -18,18 +18,18 @@ import org.ini4j.Ini
 import org.ini4j.Profile
 import java.io.File
 
-class Application : AbstractApplication(), OnTunnelClientStateListener {
+class Application : AbstractApplication(), OnTunnelStateListener {
     private val logger by loggerDelegate()
 
-    override fun onConnecting(descriptor: TunnelConnDescriptor, reconnect: Boolean) {
+    override fun onConnecting(descriptor: TunnelConnectDescriptor, reconnect: Boolean) {
         logger.info("onConnecting: {}", descriptor)
     }
 
-    override fun onConnected(descriptor: TunnelConnDescriptor) {
+    override fun onConnected(descriptor: TunnelConnectDescriptor) {
         logger.info("onConnected: {}", descriptor)
     }
 
-    override fun onDisconnect(descriptor: TunnelConnDescriptor, err: Boolean, errCause: Throwable?) {
+    override fun onDisconnect(descriptor: TunnelConnectDescriptor, err: Boolean, errCause: Throwable?) {
         logger.info("onDisconnect: {}, err: {}", descriptor, err, errCause)
     }
 
@@ -85,8 +85,8 @@ class Application : AbstractApplication(), OnTunnelClientStateListener {
         val workerThreads = basicSection["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
-            tunnelClientStateListener = this,
-            autoReconnect = true
+            onTunnelStateListener = this,
+            isAutoReconnect = true
         )
     }
 

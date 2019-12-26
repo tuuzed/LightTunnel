@@ -10,7 +10,7 @@ import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TunnelConnDescriptor(
+class TunnelConnectDescriptor(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
@@ -25,29 +25,29 @@ class TunnelConnDescriptor(
 
     val isShutdown get() = shutdownFlag.get()
 
-    @JvmOverloads
-    fun connect(listener: OnConnectFailureListener? = null) {
+    fun connect(callback: OnConnectFailureCallback? = null) {
         if (shutdownFlag.get()) {
             logger.warn("This tunnel already shutdown.")
             return
         }
-        val f = bootstrap.connect(serverAddr, serverPort).also { connectChannelFuture = it }
         @Suppress("RedundantSamConstructor")
-        f.addListener(ChannelFutureListener { future ->
-            if (future.isSuccess) {
-                // 连接成功，向服务器发送请求建立隧道消息
-                future.channel().writeAndFlush(ProtoMessage(ProtoCommand.REQUEST, head = tunnelRequest.toBytes()))
-                future.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).set(this)
-            } else {
-                listener?.onConnectFailure(this)
-            }
-        })
+        bootstrap.connect(serverAddr, serverPort)
+            .also { connectChannelFuture = it }
+            .addListener(ChannelFutureListener { future ->
+                if (future.isSuccess) {
+                    // 连接成功，向服务器发送请求建立隧道消息
+                    future.channel().writeAndFlush(ProtoMessage(ProtoCommand.REQUEST, head = tunnelRequest.toBytes()))
+                    future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).set(this)
+                } else {
+                    callback?.onConnectFailure(this)
+                }
+            })
     }
 
     fun shutdown() {
         shutdownFlag.set(true)
         connectChannelFuture?.apply {
-            channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).set(null)
+            channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).set(null)
             channel().close()
         }
     }
@@ -57,4 +57,7 @@ class TunnelConnDescriptor(
     }
 
 
+    interface OnConnectFailureCallback {
+        fun onConnectFailure(descriptor: TunnelConnectDescriptor) {}
+    }
 }

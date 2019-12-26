@@ -2,6 +2,8 @@ package lighttunnel.client.local
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.Unpooled
+import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.client.util.AttributeKeys
@@ -22,7 +24,9 @@ class LocalTcpClientChannelHandler(
         val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
         if (tunnelId != null && sessionId != null) {
-            localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
+            localTcpClient.removeLocalChannel(tunnelId, sessionId)
+                ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
+                ?.addListener(ChannelFutureListener.CLOSE)
             val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()
             if (nextChannel != null) {
                 val head = LongUtil.toBytes(tunnelId, sessionId)

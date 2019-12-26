@@ -10,6 +10,8 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
+import lighttunnel.client.callback.OnTunnelStateCallback
+import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
@@ -22,39 +24,39 @@ import java.util.concurrent.TimeUnit
 
 class TunnelClient(
     private val workerThreads: Int = -1,
-    private val autoReconnect: Boolean = true,
-    private val tunnelClientStateListener: OnTunnelClientStateListener? = null
-) : OnConnectFailureListener, OnConnectStateListener {
+    private val isAutoReconnect: Boolean = true,
+    private val onTunnelStateListener: OnTunnelStateListener? = null
+) : TunnelConnectDescriptor.OnConnectFailureCallback, OnTunnelStateCallback {
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
     private val bootstrap = Bootstrap()
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
 
-    override fun onConnectFailure(descriptor: TunnelConnDescriptor) {
+    override fun onConnectFailure(descriptor: TunnelConnectDescriptor) {
         super.onConnectFailure(descriptor)
-        if (!descriptor.isShutdown && autoReconnect) {
+        if (!descriptor.isShutdown && isAutoReconnect) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
             descriptor.connect(this)
         }
     }
 
-    override fun onChannelInactive(ctx: ChannelHandlerContext) {
-        super.onChannelInactive(ctx)
-        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()
+    override fun onTunnelInactive(ctx: ChannelHandlerContext) {
+        super.onTunnelInactive(ctx)
+        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()
         if (descriptor != null) {
             val errFlag = ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).get()
             val errCause = ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).get()
             if (errFlag == true) {
-                tunnelClientStateListener?.onDisconnect(descriptor, true, errCause)
+                onTunnelStateListener?.onDisconnect(descriptor, true, errCause)
                 logger.trace("{}", errCause.message)
             } else {
-                tunnelClientStateListener?.onDisconnect(descriptor, false, null)
-                if (!descriptor.isShutdown && autoReconnect) {
+                onTunnelStateListener?.onDisconnect(descriptor, false, null)
+                if (!descriptor.isShutdown && isAutoReconnect) {
                     TimeUnit.SECONDS.sleep(3)
                     descriptor.connect(this)
-                    tunnelClientStateListener?.onConnecting(descriptor, true)
+                    onTunnelStateListener?.onConnecting(descriptor, true)
                 }
             }
         }
@@ -62,9 +64,9 @@ class TunnelClient(
 
     override fun onTunnelConnected(ctx: ChannelHandlerContext) {
         super.onTunnelConnected(ctx)
-        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()
+        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()
         if (descriptor != null) {
-            tunnelClientStateListener?.onConnected(descriptor)
+            onTunnelStateListener?.onConnected(descriptor)
         }
     }
 
@@ -83,19 +85,19 @@ class TunnelClient(
         serverPort: Int,
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
-    ): TunnelConnDescriptor {
-        val descriptor = TunnelConnDescriptor(
+    ): TunnelConnectDescriptor {
+        val descriptor = TunnelConnectDescriptor(
             if (sslContext == null) bootstrap else getSslBootstrap(sslContext),
             serverAddr,
             serverPort,
             tunnelRequest
         )
         descriptor.connect(this)
-        tunnelClientStateListener?.onConnecting(descriptor, false)
+        onTunnelStateListener?.onConnecting(descriptor, false)
         return descriptor
     }
 
-    fun shutdown(descriptor: TunnelConnDescriptor) {
+    fun shutdown(descriptor: TunnelConnectDescriptor) {
         descriptor.shutdown()
     }
 

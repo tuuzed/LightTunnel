@@ -2,7 +2,7 @@ package lighttunnel.client.util
 
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
-import lighttunnel.client.TunnelConnDescriptor
+import lighttunnel.client.TunnelConnectDescriptor
 import lighttunnel.proto.TunnelRequest
 
 
@@ -20,5 +20,5 @@ object AttributeKeys {
 
     val AK_ERR_CAUSE: AttributeKey<Throwable> = AttributeKey.newInstance("\$err_cause")
 
-    val AK_TUNNEL_CONN_DESCRIPTOR: AttributeKey<TunnelConnDescriptor> = AttributeKey.newInstance("\$tcd")
+    val AK_TUNNEL_CONNECT_DESCRIPTOR: AttributeKey<TunnelConnectDescriptor> = AttributeKey.newInstance("\$tunnel_connect_descriptor")
 }

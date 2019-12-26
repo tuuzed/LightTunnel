@@ -7,17 +7,19 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
+import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoCommand
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.TunnelRequest
+import lighttunnel.util.LongUtil
 import java.nio.charset.StandardCharsets
 
 class TunnelClientChannelHandler(
     private val localTcpClient: LocalTcpClient,
-    private val connectStateListener: OnConnectStateListener
+    private val onTunnelStateCallback: OnTunnelStateCallback
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
     private val logger by loggerDelegate()
 
@@ -37,7 +39,7 @@ class TunnelClientChannelHandler(
                 else -> {
                 }
             }
-            connectStateListener.onChannelInactive(ctx)
+            onTunnelStateCallback.onTunnelInactive(ctx)
         }
         super.channelInactive(ctx)
     }
@@ -66,7 +68,6 @@ class TunnelClientChannelHandler(
         }
     }
 
-
     /** Ping */
     @Throws(Exception::class)
     private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
@@ -81,9 +82,9 @@ class TunnelClientChannelHandler(
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(request)
         ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).set(null)
         ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).set(null)
-        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONN_DESCRIPTOR).get()?.confirmedTunnelRequest = request
+        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()?.confirmedTunnelRequest = request
         logger.debug("Opened Tunnel: {}", request)
-        connectStateListener.onTunnelConnected(ctx)
+        onTunnelStateCallback.onTunnelConnected(ctx)
     }
 
     /** 隧道建立失败 */
@@ -105,21 +106,27 @@ class TunnelClientChannelHandler(
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(msg.sessionId)
         val request = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
-        if (request != null) {
-            when (request.type) {
-                TunnelRequest.Type.TCP, TunnelRequest.Type.HTTP, TunnelRequest.Type.HTTPS -> {
-                    localTcpClient.getLocalChannel(
-                        request.localAddr, request.localPort,
-                        msg.tunnelId, msg.sessionId,
-                        ctx.channel(),
-                        object : LocalTcpClient.Callback {
-                            override fun success(localChannel: Channel) {
-                                localChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
-                            }
-                        })
-                }
-                else -> {
-                }
+        when (request?.type) {
+            TunnelRequest.Type.TCP, TunnelRequest.Type.HTTP, TunnelRequest.Type.HTTPS -> {
+                localTcpClient.getLocalChannel(
+                    request.localAddr, request.localPort,
+                    msg.tunnelId, msg.sessionId,
+                    ctx.channel(),
+                    object : LocalTcpClient.OnGetLocalChannelCallback {
+                        override fun onSuccess(localChannel: Channel) {
+                            super.onSuccess(localChannel)
+                            localChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
+                        }
+
+                        override fun onError(cause: Throwable) {
+                            super.onError(cause)
+                            val head = LongUtil.toBytes(msg.tunnelId, msg.sessionId)
+                            ctx.writeAndFlush(ProtoMessage(ProtoCommand.LOCAL_DISCONNECT, head))
+                        }
+                    })
+            }
+            else -> {
+                // Nothing
             }
         }
     }
@@ -135,7 +142,7 @@ class TunnelClientChannelHandler(
                 tunnelRequest.localAddr, tunnelRequest.localPort,
                 msg.tunnelId, msg.sessionId,
                 ctx.channel(),
-                object : LocalTcpClient.Callback {}
+                null
             )
         }
     }
@@ -143,7 +150,9 @@ class TunnelClientChannelHandler(
     /** 用户隧道断开消息 */
     @Throws(Exception::class)
     private fun doHandleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        localTcpClient.removeLocalChannel(msg.tunnelId, msg.sessionId)?.close()
+        localTcpClient.removeLocalChannel(msg.tunnelId, msg.sessionId)
+            ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
+            ?.addListener(ChannelFutureListener.CLOSE)
     }
 
 }
