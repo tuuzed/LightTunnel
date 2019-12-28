@@ -29,17 +29,26 @@ class TunnelClient(
 ) : TunnelConnectDescriptor.OnConnectFailureCallback, OnTunnelStateCallback {
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
+    private val cachedTunnelConnectDescriptors = ArrayList<TunnelConnectDescriptor>()
     private val bootstrap = Bootstrap()
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
 
-    override fun onConnectFailure(descriptor: TunnelConnectDescriptor) {
-        super.onConnectFailure(descriptor)
-        if (!descriptor.isShutdown && isAutoReconnect) {
+    private fun tryReconnect(descriptor: TunnelConnectDescriptor) {
+        if (!descriptor.isClosed && isAutoReconnect) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
             descriptor.connect(this)
+            onTunnelStateListener?.onConnecting(descriptor, true)
+        } else {
+            // 不需要自动重连时移除缓存
+            cachedTunnelConnectDescriptors.remove(descriptor)
         }
+    }
+
+    override fun onConnectFailure(descriptor: TunnelConnectDescriptor) {
+        super.onConnectFailure(descriptor)
+        tryReconnect(descriptor)
     }
 
     override fun onTunnelInactive(ctx: ChannelHandlerContext) {
@@ -53,11 +62,7 @@ class TunnelClient(
                 logger.trace("{}", errCause.message)
             } else {
                 onTunnelStateListener?.onDisconnect(descriptor, false, null)
-                if (!descriptor.isShutdown && isAutoReconnect) {
-                    TimeUnit.SECONDS.sleep(3)
-                    descriptor.connect(this)
-                    onTunnelStateListener?.onConnecting(descriptor, true)
-                }
+                tryReconnect(descriptor)
             }
         }
     }
@@ -80,6 +85,7 @@ class TunnelClient(
             .handler(createChannelInitializer(null))
     }
 
+    @Synchronized
     fun connect(
         serverAddr: String,
         serverPort: Int,
@@ -94,17 +100,23 @@ class TunnelClient(
         )
         descriptor.connect(this)
         onTunnelStateListener?.onConnecting(descriptor, false)
+        cachedTunnelConnectDescriptors.add(descriptor)
         return descriptor
     }
 
-    fun shutdown(descriptor: TunnelConnectDescriptor) {
-        descriptor.shutdown()
+    @Synchronized
+    fun close(descriptor: TunnelConnectDescriptor) {
+        descriptor.close()
+        cachedTunnelConnectDescriptors.remove(descriptor)
     }
 
+    @Synchronized
     fun destroy() {
-        workerGroup.shutdownGracefully()
-        localTcpClient.destroy()
+        cachedTunnelConnectDescriptors.forEach { it.close() }
+        cachedTunnelConnectDescriptors.clear()
         cachedSslBootstraps.clear()
+        localTcpClient.destroy()
+        workerGroup.shutdownGracefully()
     }
 
     private fun getSslBootstrap(sslContext: SslContext): Bootstrap {

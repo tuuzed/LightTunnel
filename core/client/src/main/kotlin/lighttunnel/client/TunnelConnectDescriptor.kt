@@ -5,8 +5,8 @@ import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -17,17 +17,17 @@ class TunnelConnectDescriptor(
     val tunnelRequest: TunnelRequest
 ) {
     private val logger by loggerDelegate()
-    private val shutdownFlag = AtomicBoolean(false)
+    private val closedFlag = AtomicBoolean(false)
     private var connectChannelFuture: ChannelFuture? = null
 
     var confirmedTunnelRequest: TunnelRequest? = null
         internal set
 
-    val isShutdown get() = shutdownFlag.get()
+    val isClosed get() = closedFlag.get()
 
-    fun connect(callback: OnConnectFailureCallback? = null) {
-        if (shutdownFlag.get()) {
-            logger.warn("This tunnel already shutdown.")
+    internal fun connect(callback: OnConnectFailureCallback? = null) {
+        if (closedFlag.get()) {
+            logger.warn("This tunnel already closed.")
             return
         }
         @Suppress("RedundantSamConstructor")
@@ -44,8 +44,8 @@ class TunnelConnectDescriptor(
             })
     }
 
-    fun shutdown() {
-        shutdownFlag.set(true)
+    internal fun close() {
+        closedFlag.set(true)
         connectChannelFuture?.apply {
             channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).set(null)
             channel().close()
@@ -55,7 +55,6 @@ class TunnelConnectDescriptor(
     override fun toString(): String {
         return confirmedTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
     }
-
 
     interface OnConnectFailureCallback {
         fun onConnectFailure(descriptor: TunnelConnectDescriptor) {}
