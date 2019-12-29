@@ -14,6 +14,7 @@ class TcpServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup
 ) {
+
     val registry = TcpRegistry()
 
     private val serverBootstrap = ServerBootstrap()
@@ -33,7 +34,7 @@ class TcpServer(
     }
 
     @Throws(Exception::class)
-    internal fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels) {
+    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels) {
         if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
             throw ProtoException("port($port) already used")
         }

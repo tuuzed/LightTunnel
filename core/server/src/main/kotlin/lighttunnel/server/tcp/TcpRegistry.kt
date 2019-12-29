@@ -14,10 +14,10 @@ class TcpRegistry {
 
     @Synchronized
     @Throws(ProtoException::class)
-    fun register(port: Int, session: SessionChannels, descriptor: TcpDescriptor) {
-        tunnelIdDescriptors[session.tunnelId] = descriptor
+    fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpDescriptor) {
+        tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
         portDescriptors[port] = descriptor
-        logger.info("Start Tunnel: {}, Options: {}", session.tunnelRequest, session.tunnelRequest.optionsString)
+        logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
     @Synchronized

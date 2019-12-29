@@ -11,8 +11,8 @@ import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.LongUtil
 import java.nio.charset.StandardCharsets
@@ -82,7 +82,7 @@ class TunnelClientChannelHandler(
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(request)
         ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).set(null)
         ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).set(null)
-        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()?.confirmedTunnelRequest = request
+        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()?.finallyTunnelRequest = request
         logger.debug("Opened Tunnel: {}", request)
         onTunnelStateCallback.onTunnelConnected(ctx)
     }

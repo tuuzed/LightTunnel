@@ -85,8 +85,8 @@ class Application : AbstractApplication(), OnTunnelStateListener {
         val workerThreads = basicSection["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
-            onTunnelStateListener = this,
-            isAutoReconnect = true
+            isAutoReconnect = true,
+            onTunnelStateListener = this
         )
     }
 

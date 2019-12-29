@@ -20,7 +20,7 @@ class TunnelConnectDescriptor(
     private val closedFlag = AtomicBoolean(false)
     private var connectChannelFuture: ChannelFuture? = null
 
-    var confirmedTunnelRequest: TunnelRequest? = null
+    var finallyTunnelRequest: TunnelRequest? = null
         internal set
 
     val isClosed get() = closedFlag.get()
@@ -53,10 +53,11 @@ class TunnelConnectDescriptor(
     }
 
     override fun toString(): String {
-        return confirmedTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
+        return finallyTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
     }
 
     interface OnConnectFailureCallback {
         fun onConnectFailure(descriptor: TunnelConnectDescriptor) {}
     }
+
 }

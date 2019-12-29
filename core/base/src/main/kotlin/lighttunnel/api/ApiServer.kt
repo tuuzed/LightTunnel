@@ -6,6 +6,8 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.FullHttpResponse
 import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.ssl.SslContext
@@ -18,7 +20,7 @@ class ApiServer(
     workerGroup: NioEventLoopGroup,
     private val bindAddr: String?,
     private val bindPort: Int,
-    private val apiRequestCallback: ApiRequestCallback,
+    private val requestDispatcher: RequestDispatcher,
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 512 * 1024
 ) {
@@ -35,13 +37,13 @@ class ApiServer(
                     ch ?: return
                     if (sslContext != null) {
                         ch.pipeline().addFirst(
-                            SslHandler(sslContext.newEngine(ch.alloc()))
+                            "ssl", SslHandler(sslContext.newEngine(ch.alloc()))
                         )
                     }
                     ch.pipeline()
                         .addLast("codec", HttpServerCodec())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", ApiRequestHandler(apiRequestCallback))
+                        .addLast("handler", ApiServerChannelHandler(requestDispatcher))
                 }
             })
 
@@ -63,6 +65,10 @@ class ApiServer(
 
     fun destroy() {
         bindChannelFuture?.channel()?.close()
+    }
+
+    interface RequestDispatcher {
+        fun doRequest(request: FullHttpRequest): FullHttpResponse
     }
 
 }

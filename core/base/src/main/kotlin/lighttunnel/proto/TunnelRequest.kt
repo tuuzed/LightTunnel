@@ -179,9 +179,9 @@ data class TunnelRequest internal constructor(
 
     fun toString(serverAddr: String): String {
         return when (type) {
-            Type.TCP -> "$localAddr:$localPort<-tcp://$serverAddr:$remotePort"
-            Type.HTTP -> "$localAddr:$localPort<-http://$host"
-            Type.HTTPS -> "$localAddr:$localPort<-https://$host"
+            Type.TCP -> "tcp://$localAddr:$localPort<-tcp://$serverAddr:$remotePort"
+            Type.HTTP -> "http://$localAddr:$localPort<-http://$host"
+            Type.HTTPS -> "https://$localAddr:$localPort<-https://$host"
             else -> ""
         }
     }

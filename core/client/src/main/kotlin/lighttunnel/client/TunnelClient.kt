@@ -10,6 +10,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
+import lighttunnel.api.ApiServer
 import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.client.local.LocalTcpClient
@@ -25,14 +26,19 @@ import java.util.concurrent.TimeUnit
 class TunnelClient(
     private val workerThreads: Int = -1,
     private val isAutoReconnect: Boolean = true,
+    private val apiServerBindAddr: String? = null,
+    private val apiServerBindPort: Int = -1,
     private val onTunnelStateListener: OnTunnelStateListener? = null
 ) : TunnelConnectDescriptor.OnConnectFailureCallback, OnTunnelStateCallback {
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
-    private val cachedTunnelConnectDescriptors = ArrayList<TunnelConnectDescriptor>()
     private val bootstrap = Bootstrap()
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
+    private val tunnelConnectRegistry = TunnelConnectRegistry()
+
+    private var apiBossGroup: NioEventLoopGroup? = null
+    private var apiServer: ApiServer? = null
 
     private fun tryReconnect(descriptor: TunnelConnectDescriptor) {
         if (!descriptor.isClosed && isAutoReconnect) {
@@ -42,7 +48,7 @@ class TunnelClient(
             onTunnelStateListener?.onConnecting(descriptor, true)
         } else {
             // 不需要自动重连时移除缓存
-            cachedTunnelConnectDescriptors.remove(descriptor)
+            tunnelConnectRegistry.unregister(descriptor)
         }
     }
 
@@ -100,23 +106,36 @@ class TunnelClient(
         )
         descriptor.connect(this)
         onTunnelStateListener?.onConnecting(descriptor, false)
-        cachedTunnelConnectDescriptors.add(descriptor)
+        tunnelConnectRegistry.register(descriptor)
+        startApiServer()
         return descriptor
     }
 
     @Synchronized
     fun close(descriptor: TunnelConnectDescriptor) {
         descriptor.close()
-        cachedTunnelConnectDescriptors.remove(descriptor)
+        tunnelConnectRegistry.unregister(descriptor)
     }
 
     @Synchronized
     fun destroy() {
-        cachedTunnelConnectDescriptors.forEach { it.close() }
-        cachedTunnelConnectDescriptors.clear()
+        tunnelConnectRegistry.destroy()
         cachedSslBootstraps.clear()
         localTcpClient.destroy()
+        apiServer?.destroy()
+        apiBossGroup?.shutdownGracefully()
         workerGroup.shutdownGracefully()
+    }
+
+    private fun startApiServer() {
+        if (apiServer == null && apiServerBindPort != -1) {
+            val bossGroup = NioEventLoopGroup(1)
+            val server = ApiServer(bossGroup, workerGroup, apiServerBindAddr, apiServerBindPort, tunnelConnectRegistry)
+            server.start()
+            apiBossGroup = bossGroup
+            apiServer = server
+            logger.info("Serving api server on {} port {}", apiServerBindAddr ?: "any address", apiServerBindPort)
+        }
     }
 
     private fun getSslBootstrap(sslContext: SslContext): Bootstrap {
