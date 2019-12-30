@@ -25,7 +25,8 @@ class TunnelServerTest {
         val ssc = SelfSignedCertificate()
         tunnelServer = TunnelServer(
             httpsBindPort = 443,
-            httpsContext = SslContextBuilder.forServer(ssc.key(), ssc.cert()).build()
+            httpsContext = SslContextBuilder.forServer(ssc.key(), ssc.cert()).build(),
+            dashBindPort = 4000
         )
     }
 

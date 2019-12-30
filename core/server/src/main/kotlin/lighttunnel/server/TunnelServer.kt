@@ -9,6 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.ssl.SslContext
+import lighttunnel.api.ApiServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
@@ -23,20 +24,22 @@ import lighttunnel.server.util.IncIds
 class TunnelServer(
     private val bossThreads: Int = -1,
     private val workerThreads: Int = -1,
-    // tcp
+    // tunnel
     private val bindAddr: String? = null,
     private val bindPort: Int = 5080,
-    private val tunnelRequestInterceptor: TunnelRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
-    // ssl
+    // ssl tunnel
     private val sslBindPort: Int? = null,
     private val sslContext: SslContext? = null,
+    private val tunnelRequestInterceptor: TunnelRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
     // http
     private val httpBindPort: Int? = null,
     private val httpRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
     // https
     private val httpsBindPort: Int? = null,
     private val httpsContext: SslContext? = null,
-    private val httpsRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl
+    private val httpsRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
+    // dash
+    private val dashBindPort: Int? = null
 ) {
     private val logger by loggerDelegate()
     private val tunnelIds = IncIds()
@@ -45,8 +48,10 @@ class TunnelServer(
     private var tcpServer: TcpServer? = null
     private var httpServer: HttpServer? = null
     private var httpsServer: HttpServer? = null
+    private var dashServer: ApiServer? = null
 
     init {
+        tcpServer = TcpServer(bossGroup, workerGroup)
         if (sslBindPort != null) {
             requireNotNull(sslContext) { "sslContext == null" }
         }
@@ -61,7 +66,19 @@ class TunnelServer(
                 bossGroup, workerGroup, bindAddr, httpsBindPort, httpsContext, httpsRequestInterceptor
             )
         }
-        tcpServer = TcpServer(bossGroup, workerGroup)
+        if (dashBindPort != null) {
+            dashServer = ApiServer(
+                bossGroup = bossGroup,
+                workerGroup = workerGroup,
+                bindAddr = bindAddr,
+                bindPort = dashBindPort,
+                requestDispatcher = DashRequestDispatcher(
+                    tcpRegistry = tcpServer?.registry,
+                    httpRegistry = httpServer?.registry,
+                    httpsRegistry = httpServer?.registry
+                )
+            )
+        }
     }
 
     @Synchronized
@@ -71,6 +88,7 @@ class TunnelServer(
         sslContext?.also { startTunnelService(it) }
         httpServer?.start()
         httpsServer?.start()
+        dashServer?.start()
     }
 
     @Synchronized
@@ -78,6 +96,7 @@ class TunnelServer(
         tcpServer?.destroy()
         httpServer?.destroy()
         httpsServer?.destroy()
+        dashServer?.destroy()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }
@@ -114,5 +133,6 @@ class TunnelServer(
             logger.info("Serving tunnel with ssl on {} port {}", bindAddr ?: "any address", sslBindPort)
         }
     }
+
 
 }

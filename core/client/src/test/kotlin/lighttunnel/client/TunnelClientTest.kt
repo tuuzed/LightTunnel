@@ -20,7 +20,7 @@ class TunnelClientTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        tunnelClient = TunnelClient(apiServerBindPort = 8080)
+        tunnelClient = TunnelClient(dashBindPort = 4001)
     }
 
     @Test

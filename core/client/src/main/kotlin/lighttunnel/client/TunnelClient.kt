@@ -25,9 +25,10 @@ import java.util.concurrent.TimeUnit
 
 class TunnelClient(
     private val workerThreads: Int = -1,
-    private val isAutoReconnect: Boolean = true,
-    private val apiServerBindAddr: String? = null,
-    private val apiServerBindPort: Int = -1,
+    private val loseReconnect: Boolean = true,
+    private val errorReconnect: Boolean = false,
+    private val dashBindAddr: String? = null,
+    private val dashBindPort: Int? = null,
     private val onTunnelStateListener: OnTunnelStateListener? = null
 ) : TunnelConnectDescriptor.OnConnectFailureCallback, OnTunnelStateCallback {
     private val logger by loggerDelegate()
@@ -36,12 +37,10 @@ class TunnelClient(
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
     private val tunnelConnectRegistry = TunnelConnectRegistry()
-
-    private var apiBossGroup: NioEventLoopGroup? = null
-    private var apiServer: ApiServer? = null
+    private var dashServer: ApiServer? = null
 
     private fun tryReconnect(descriptor: TunnelConnectDescriptor) {
-        if (!descriptor.isClosed && isAutoReconnect) {
+        if (!descriptor.isClosed && (loseReconnect || errorReconnect)) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
             descriptor.connect(this)
@@ -107,7 +106,7 @@ class TunnelClient(
         descriptor.connect(this)
         onTunnelStateListener?.onConnecting(descriptor, false)
         tunnelConnectRegistry.register(descriptor)
-        startApiServer()
+        startDashServer()
         return descriptor
     }
 
@@ -122,19 +121,21 @@ class TunnelClient(
         tunnelConnectRegistry.destroy()
         cachedSslBootstraps.clear()
         localTcpClient.destroy()
-        apiServer?.destroy()
-        apiBossGroup?.shutdownGracefully()
+        dashServer?.destroy()
         workerGroup.shutdownGracefully()
     }
 
-    private fun startApiServer() {
-        if (apiServer == null && apiServerBindPort != -1) {
-            val bossGroup = NioEventLoopGroup(1)
-            val server = ApiServer(bossGroup, workerGroup, apiServerBindAddr, apiServerBindPort, tunnelConnectRegistry)
+    private fun startDashServer() {
+        if (dashServer == null && dashBindPort != null) {
+            val server = ApiServer(
+                bossGroup = workerGroup,
+                workerGroup = workerGroup,
+                bindAddr = dashBindAddr,
+                bindPort = dashBindPort,
+                requestDispatcher = DashRequestDispatcher(tunnelConnectRegistry)
+            )
             server.start()
-            apiBossGroup = bossGroup
-            apiServer = server
-            logger.info("Serving api server on {} port {}", apiServerBindAddr ?: "any address", apiServerBindPort)
+            dashServer = server
         }
     }
 

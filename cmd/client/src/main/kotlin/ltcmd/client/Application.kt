@@ -81,12 +81,15 @@ class Application : AbstractApplication(), OnTunnelStateListener {
         }
     }
 
-    private fun newTunnelClient(basicSection: Profile.Section): TunnelClient {
-        val workerThreads = basicSection["worker_threads"].asInt() ?: -1
+    private fun newTunnelClient(basic: Profile.Section): TunnelClient {
+        val workerThreads = basic["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
-            isAutoReconnect = true,
-            onTunnelStateListener = this
+            loseReconnect = true,
+            errorReconnect = false,
+            onTunnelStateListener = this,
+            // dash
+            dashBindPort = basic["dash_bind_port"].asInt()
         )
     }
 

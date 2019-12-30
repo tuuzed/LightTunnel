@@ -7,8 +7,8 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.server.util.AttributeKeys
 import lighttunnel.util.LongUtil
 import java.net.InetSocketAddress
@@ -18,32 +18,28 @@ class TcpServerChannelHandler(
 ) : SimpleChannelInboundHandler<ByteBuf>() {
     private val logger by loggerDelegate()
 
+
     override fun channelActive(ctx: ChannelHandlerContext?) {
         if (ctx != null) {
-            val sa = ctx.channel().localAddress() as InetSocketAddress
-            val descriptor = registry.getDescriptor(sa.port)
+            val descriptor = ctx.descriptor
             if (descriptor != null) {
                 var sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
                 if (sessionId == null) {
                     sessionId = descriptor.sessionChannels.putChannel(ctx.channel())
                     ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
                 }
-                val tunnelId = descriptor.sessionChannels.tunnelId
-                val head = LongUtil.toBytes(tunnelId, sessionId)
-                descriptor.sessionChannels.tunnelChannel
-                    .writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head))
+                val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
+                descriptor.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head))
             } else {
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             }
         }
         super.channelActive(ctx)
-
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         if (ctx != null) {
-            val sa = ctx.channel().localAddress() as InetSocketAddress
-            val descriptor = registry.getDescriptor(sa.port)
+            val descriptor = ctx.descriptor
             if (descriptor != null) {
                 val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
                 if (sessionId != null) {
@@ -53,9 +49,8 @@ class TcpServerChannelHandler(
                 }
                 // 解决 HTTP/1.x 数据传输问题
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
-                    val tunnelId = descriptor.sessionChannels.tunnelId
-                    val head = LongUtil.toBytes(tunnelId, sessionId)
-                    descriptor.sessionChannels.tunnelChannel
+                    val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
+                    descriptor.tunnelChannel
                         .writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
                 }
             }
@@ -74,12 +69,17 @@ class TcpServerChannelHandler(
         ctx ?: return
         msg ?: return
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get() ?: return
-        val sa = ctx.channel().localAddress() as InetSocketAddress
-        val descriptor = registry.getDescriptor(sa.port) ?: return
-        val tunnelId = descriptor.sessionChannels.tunnelId
-        val head = LongUtil.toBytes(tunnelId, sessionId)
+        val descriptor = ctx.descriptor ?: return
+        val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)
-        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
+        descriptor.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
+
+    private val ChannelHandlerContext?.descriptor: TcpDescriptor?
+        get() {
+            this ?: return null
+            val sa = this.channel().localAddress() as InetSocketAddress
+            return registry.getDescriptor(sa.port)
+        }
 
 }

@@ -8,8 +8,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.server.interceptor.HttpRequestInterceptor
 import lighttunnel.server.util.AttributeKeys
 import lighttunnel.server.util.HttpUtil
@@ -36,9 +36,8 @@ class HttpServerChannelHandler(
         if (host != null && sessionId != null) {
             val descriptor = registry.getDescriptor(host)
             if (descriptor != null) {
-                val tunnelId = descriptor.sessionChannels.tunnelId
-                val head = LongUtil.toBytes(tunnelId, sessionId)
-                descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
+                val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
+                descriptor.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
             }
             ctx.channel().attr<String>(AttributeKeys.AK_HTTP_HOST).set(null)
             ctx.channel().attr<Long>(AttributeKeys.AK_SESSION_ID).set(null)
@@ -81,7 +80,7 @@ class HttpServerChannelHandler(
         val httpResponse = interceptor.handleHttpRequest(
             ctx.channel().localAddress(),
             ctx.channel().remoteAddress(),
-            descriptor.sessionChannels.tunnelRequest,
+            descriptor.tunnelRequest,
             msg
         )
         if (httpResponse != null) {
@@ -90,10 +89,9 @@ class HttpServerChannelHandler(
         }
         val sessionId = descriptor.sessionChannels.putChannel(ctx.channel())
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
-        val tunnelId = descriptor.sessionChannels.tunnelId
-        val head = LongUtil.toBytes(tunnelId, sessionId)
+        val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
         val data = HttpUtil.toBytes(msg)
-        descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
+        descriptor.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
     /** 处理读取到的HttpContent类型的消息 */
@@ -112,8 +110,7 @@ class HttpServerChannelHandler(
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        val tunnelId = descriptor.sessionChannels.tunnelId
-        val head = LongUtil.toBytes(tunnelId, sessionId)
+        val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg.content())
         descriptor.sessionChannels.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
 

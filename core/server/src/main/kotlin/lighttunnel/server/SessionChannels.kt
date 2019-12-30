@@ -15,34 +15,26 @@ class SessionChannels(
     private val ids = IncIds()
     private val cachedChannels = ConcurrentHashMap<Long, Channel>()
 
+    val cachedChannelCount get() = syncCachedChannels { this.count() }
+
     fun putChannel(channel: Channel): Long {
         val sessionId = ids.nextId
-        synchronized(cachedChannels) {
-            cachedChannels.put(sessionId, channel)
-        }
+        syncCachedChannels { put(sessionId, channel) }
         return sessionId
     }
 
-    fun getChannel(sessionId: Long): Channel? {
-        synchronized(cachedChannels) {
-            return cachedChannels[sessionId]
-        }
+    fun getChannel(sessionId: Long): Channel? = syncCachedChannels { this[sessionId] }
+
+    fun removeChannel(sessionId: Long): Channel? = syncCachedChannels { this.remove(sessionId) }
+
+    fun destroy() = syncCachedChannels {
+        this.forEach { (_, ch) -> ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE) }
+        clear()
     }
 
-    fun removeChannel(sessionId: Long): Channel? {
-        synchronized(cachedChannels) {
-            return cachedChannels.remove(sessionId)
-        }
-    }
 
-    fun destroy() {
-        synchronized(cachedChannels) {
-            val channels = cachedChannels.values
-            for (ch in channels) {
-                ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
-            }
-            cachedChannels.clear()
-        }
-    }
+    private inline fun <R> syncCachedChannels(
+        block: ConcurrentHashMap<Long, Channel>.() -> R
+    ): R = synchronized(cachedChannels) { cachedChannels.block() }
 
 }

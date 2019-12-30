@@ -49,11 +49,10 @@ class Application : AbstractApplication() {
         return TunnelServer(
             bossThreads = basic["boss_threads"].asInt() ?: -1,
             workerThreads = basic["worker_threads"].asInt() ?: -1,
-            // tcp
+            // tunnel
             bindAddr = basic["bind_addr"] ?: "0.0.0.0",
             bindPort = basic["bind_port"].asInt() ?: 5080,
-            tunnelRequestInterceptor = interceptor,
-            // ssl
+            // ssl tunnel
             sslBindPort = basic["ssl_bind_port"].asInt(),
             sslContext = if (basic["ssl_bind_port"] != null) {
                 try {
@@ -68,6 +67,7 @@ class Application : AbstractApplication() {
             } else {
                 null
             },
+            tunnelRequestInterceptor = interceptor,
             // http
             httpBindPort = basic["vhost_http_port"].asInt(),
             httpRequestInterceptor = interceptor,
@@ -86,7 +86,9 @@ class Application : AbstractApplication() {
             } else {
                 null
             },
-            httpsRequestInterceptor = interceptor
+            httpsRequestInterceptor = interceptor,
+            // dash
+            dashBindPort = basic["dash_bind_port"].asInt()
         )
     }
 

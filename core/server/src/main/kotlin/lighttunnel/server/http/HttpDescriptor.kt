@@ -9,5 +9,12 @@ class HttpDescriptor(
 
     val tunnelId get() = sessionChannels.tunnelId
 
+    val tunnelRequest get() = sessionChannels.tunnelRequest
+
+    val tunnelChannel get() = sessionChannels.tunnelChannel
+
+    val channelCount get() = sessionChannels.cachedChannelCount
+
     fun close() = sessionChannels.destroy()
+
 }
