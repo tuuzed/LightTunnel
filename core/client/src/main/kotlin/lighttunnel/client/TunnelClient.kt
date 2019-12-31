@@ -51,11 +51,6 @@ class TunnelClient(
         }
     }
 
-    override fun onConnectFailure(descriptor: TunnelConnectDescriptor) {
-        super.onConnectFailure(descriptor)
-        tryReconnect(descriptor)
-    }
-
     override fun onTunnelInactive(ctx: ChannelHandlerContext) {
         super.onTunnelInactive(ctx)
         val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()
@@ -80,6 +75,11 @@ class TunnelClient(
         }
     }
 
+    override fun onConnectFailure(descriptor: TunnelConnectDescriptor) {
+        super.onConnectFailure(descriptor)
+        tryReconnect(descriptor)
+    }
+
     init {
         localTcpClient = LocalTcpClient(workerGroup)
         bootstrap
@@ -90,7 +90,6 @@ class TunnelClient(
             .handler(createChannelInitializer(null))
     }
 
-    @Synchronized
     fun connect(
         serverAddr: String,
         serverPort: Int,
@@ -110,7 +109,6 @@ class TunnelClient(
         return descriptor
     }
 
-    @Synchronized
     fun close(descriptor: TunnelConnectDescriptor) {
         descriptor.close()
         tunnelConnectRegistry.unregister(descriptor)
@@ -125,6 +123,7 @@ class TunnelClient(
         workerGroup.shutdownGracefully()
     }
 
+    @Synchronized
     private fun startDashServer() {
         if (dashServer == null && dashBindPort != null) {
             val server = ApiServer(
