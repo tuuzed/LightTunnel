@@ -90,6 +90,7 @@ class TcpRegistry {
                     array.put(JSONObject().also { obj ->
                         obj.put("port", it.port)
                         obj.put("conns", it.channelCount)
+                        obj.put("name", it.tunnelRequest.name)
                         obj.put("local_addr", it.tunnelRequest.localAddr)
                         obj.put("local_port", it.tunnelRequest.localPort)
                     })

@@ -112,6 +112,7 @@ class Application : AbstractApplication(), OnTunnelStateListener {
             localAddr = localAddr,
             localPort = localPort,
             remotePort = remotePort,
+            name = tunnel.name,
             authToken = authToken
         )
     }
@@ -145,8 +146,8 @@ class Application : AbstractApplication(), OnTunnelStateListener {
         return TunnelRequest.forHttp(
             localAddr = localAddr,
             localPort = localPort,
-
             https = https,
+            name = tunnel.name,
             authToken = authToken,
             host = customDomain,
             pxySetHeaders = proxySetHeaders,

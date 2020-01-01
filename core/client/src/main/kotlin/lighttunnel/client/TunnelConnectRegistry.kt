@@ -45,12 +45,10 @@ class TunnelConnectRegistry {
             try {
                 val array = JSONArray()
                 cachedTunnelConnectDescriptors.forEach { descriptor ->
+                    val request = descriptor.finallyTunnelRequest ?: descriptor.tunnelRequest
                     array.put(JSONObject().also {
-                        it.put("tunnel",
-                            (descriptor.finallyTunnelRequest?.let { request ->
-                                request
-                            } ?: descriptor.tunnelRequest).toString(descriptor.serverAddr)
-                        )
+                        it.put("name", request.name)
+                        it.put("tunnel", request.toString(descriptor.serverAddr))
                     })
                 }
                 return array

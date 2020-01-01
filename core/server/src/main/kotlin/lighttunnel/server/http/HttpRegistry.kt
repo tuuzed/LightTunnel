@@ -91,6 +91,7 @@ class HttpRegistry {
                     array.put(JSONObject().also { obj ->
                         obj.put("host", it.host)
                         obj.put("connections", it.channelCount)
+                        obj.put("name", it.tunnelRequest.name)
                         obj.put("local_addr", it.tunnelRequest.localAddr)
                         obj.put("local_port", it.tunnelRequest.localPort)
                     })

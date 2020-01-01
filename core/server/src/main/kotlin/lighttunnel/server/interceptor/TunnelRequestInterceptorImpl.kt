@@ -2,6 +2,7 @@ package lighttunnel.server.interceptor
 
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
+import lighttunnel.proto.TunnelRequest.Factory.copyTcp
 import lighttunnel.server.util.PortUtil
 
 internal class TunnelRequestInterceptorImpl(
@@ -19,8 +20,7 @@ internal class TunnelRequestInterceptorImpl(
         return when (tunnelRequest.type) {
             TunnelRequest.Type.TCP -> {
                 if (tunnelRequest.remotePort == 0) {
-                    TunnelRequest.copyTcp(
-                        tunnelRequest,
+                    tunnelRequest.copyTcp(
                         remotePort = PortUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
                     )
                 } else {
