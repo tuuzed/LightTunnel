@@ -91,7 +91,7 @@ data class TunnelRequest internal constructor(
             localAddr: String = this.localAddr,
             localPort: Int = this.localPort,
             remotePort: Int = this.remotePort,
-            name: String? = this.authToken,
+            name: String? = this.name,
             authToken: String? = this.authToken,
             vararg options: Pair<String, String> = this.options().map { it.key to it.value }.toTypedArray()
         ) = forTcp(
