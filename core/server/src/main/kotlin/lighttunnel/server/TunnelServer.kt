@@ -75,7 +75,7 @@ class TunnelServer(
                 requestDispatcher = DashRequestDispatcher(
                     tcpRegistry = tcpServer?.registry,
                     httpRegistry = httpServer?.registry,
-                    httpsRegistry = httpServer?.registry
+                    httpsRegistry = httpsServer?.registry
                 )
             )
         }
