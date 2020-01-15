@@ -4,6 +4,8 @@ import lighttunnel.proto.ProtoException
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class TunnelConnectRegistry {
     private val cachedTunnelConnectDescriptors = ArrayList<TunnelConnectDescriptor>()
@@ -11,38 +13,28 @@ class TunnelConnectRegistry {
 
     @Throws(ProtoException::class)
     fun register(descriptor: TunnelConnectDescriptor) {
-        lock.writeLock().lock()
-        try {
+        lock.write {
             cachedTunnelConnectDescriptors.add(descriptor)
-        } finally {
-            lock.writeLock().unlock()
         }
     }
 
     fun unregister(descriptor: TunnelConnectDescriptor) {
-        lock.writeLock().lock()
-        try {
+        lock.write {
             cachedTunnelConnectDescriptors.remove(descriptor)
-        } finally {
-            lock.writeLock().unlock()
         }
     }
 
     fun destroy() {
-        lock.writeLock().lock()
-        try {
+        lock.write {
             cachedTunnelConnectDescriptors.forEach { it.close() }
             cachedTunnelConnectDescriptors.clear()
-        } finally {
-            lock.writeLock().unlock()
         }
     }
 
 
     val snapshot: JSONArray
         get() {
-            lock.readLock().lock()
-            try {
+            lock.read {
                 val array = JSONArray()
                 cachedTunnelConnectDescriptors.forEach { descriptor ->
                     val request = descriptor.finallyTunnelRequest ?: descriptor.tunnelRequest
@@ -52,8 +44,6 @@ class TunnelConnectRegistry {
                     })
                 }
                 return array
-            } finally {
-                lock.readLock().unlock()
             }
         }
 

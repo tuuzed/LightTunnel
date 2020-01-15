@@ -8,6 +8,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 
 class HttpRegistry {
@@ -36,56 +38,40 @@ class HttpRegistry {
     }
 
     fun unregister(host: String?) {
-        lock.writeLock().lock()
-        try {
+        lock.write {
             unsafeUnregister(host)
             hostDescriptors.remove(host)
-        } finally {
-            lock.writeLock().unlock()
         }
     }
 
     fun destroy() {
-        lock.writeLock().lock()
-        try {
+        lock.write {
             hostDescriptors.forEach { (host, _) -> unsafeUnregister(host) }
             hostDescriptors.clear()
-        } finally {
-            lock.writeLock().unlock()
         }
     }
 
     fun isRegistered(host: String): Boolean {
-        lock.readLock().lock()
-        try {
+        lock.read {
             return hostDescriptors.contains(host)
-        } finally {
-            lock.readLock().unlock();
         }
     }
 
     fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? {
-        lock.readLock().lock()
-        try {
+        lock.read {
             return tunnelIdDescriptors[tunnelId]?.sessionChannels?.getChannel(sessionId)
-        } finally {
-            lock.readLock().unlock()
         }
     }
 
     fun getDescriptor(host: String): HttpDescriptor? {
-        lock.readLock().lock()
-        try {
+        lock.read {
             return hostDescriptors[host]
-        } finally {
-            lock.readLock().unlock()
         }
     }
 
     val snapshot: JSONArray
         get() {
-            lock.readLock().lock()
-            try {
+            lock.read {
                 val array = JSONArray()
                 tunnelIdDescriptors.values.forEach {
                     array.put(JSONObject().also { obj ->
@@ -97,8 +83,6 @@ class HttpRegistry {
                     })
                 }
                 return array
-            } finally {
-                lock.readLock().unlock()
             }
         }
 
