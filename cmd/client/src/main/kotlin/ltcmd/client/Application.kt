@@ -2,7 +2,7 @@ package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
 import lighttunnel.client.TunnelClient
-import lighttunnel.client.TunnelConnectDescriptor
+import lighttunnel.client.connect.TunnelConnectDescriptor
 import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.base.BuildConfig

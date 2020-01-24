@@ -7,7 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import lighttunnel.proto.ProtoException
-import lighttunnel.server.SessionChannels
+import lighttunnel.server.util.SessionChannels
 import lighttunnel.server.util.PortUtil
 
 class TcpServer(

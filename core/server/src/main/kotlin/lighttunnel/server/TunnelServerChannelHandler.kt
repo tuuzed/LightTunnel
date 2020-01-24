@@ -14,6 +14,7 @@ import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.server.util.AttributeKeys
 import lighttunnel.server.util.IncIds
+import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.LongUtil
 
 class TunnelServerChannelHandler(

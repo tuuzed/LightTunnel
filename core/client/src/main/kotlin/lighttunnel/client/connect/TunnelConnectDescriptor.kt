@@ -1,4 +1,4 @@
-package lighttunnel.client
+package lighttunnel.client.connect
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture

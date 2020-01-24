@@ -101,7 +101,7 @@ class LocalTcpClient(
     }
 
     private fun getCachedChannelKey(tunnelId: Long, sessionId: Long): String {
-        return String.format("%d-%d", tunnelId, sessionId)
+        return String.format("tunnelId:%d, sessionId:%d", tunnelId, sessionId)
     }
 
     interface OnGetLocalChannelCallback {

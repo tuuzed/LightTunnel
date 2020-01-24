@@ -19,7 +19,6 @@ class HttpServerChannelHandler(
     private val registry: HttpRegistry,
     private val interceptor: HttpRequestInterceptor
 ) : ChannelInboundHandlerAdapter() {
-
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
@@ -55,15 +54,16 @@ class HttpServerChannelHandler(
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is HttpRequest) {
-            channelReadHttpRequest(ctx, msg)
+            doChannelReadHttpRequest(ctx, msg)
         } else if (msg is HttpContent) {
-            channelReadHttpContent(ctx, msg)
+            doChannelReadHttpContent(ctx, msg)
         }
     }
 
-    /**处理读取到的HttpRequest类型的消息 */
+
+    /** 处理读取到的HttpRequest类型的消息 */
     @Throws(Exception::class)
-    private fun channelReadHttpRequest(ctx: ChannelHandlerContext, msg: HttpRequest) {
+    private fun doChannelReadHttpRequest(ctx: ChannelHandlerContext, msg: HttpRequest) {
         val host = HttpUtil.getHost(msg)
         if (host == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -96,9 +96,11 @@ class HttpServerChannelHandler(
 
     /** 处理读取到的HttpContent类型的消息 */
     @Throws(Exception::class)
-    private fun channelReadHttpContent(ctx: ChannelHandlerContext, msg: HttpContent) {
+    private fun doChannelReadHttpContent(ctx: ChannelHandlerContext, msg: HttpContent) {
         val skip = ctx.channel().attr(AttributeKeys.AK_HTTP_SKIP).get() ?: return
-        if (!skip) return
+        if (!skip) {
+            return
+        }
         val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
         if (host == null || sessionId == null) {

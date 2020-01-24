@@ -1,7 +1,7 @@
 package lighttunnel.server.tcp
 
 import io.netty.channel.ChannelFuture
-import lighttunnel.server.SessionChannels
+import lighttunnel.server.util.SessionChannels
 
 class TcpDescriptor(
     val addr: String?,

@@ -2,7 +2,7 @@ package lighttunnel.client.util
 
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
-import lighttunnel.client.TunnelConnectDescriptor
+import lighttunnel.client.connect.TunnelConnectDescriptor
 import lighttunnel.proto.TunnelRequest
 
 

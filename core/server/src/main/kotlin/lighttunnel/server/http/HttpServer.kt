@@ -41,7 +41,10 @@ class HttpServer(
                     }
                     ch.pipeline()
                         .addLast(HttpRequestDecoder())
-                        .addLast(HttpServerChannelHandler(registry, interceptor))
+                        .addLast(HttpServerChannelHandler(
+                            registry = registry,
+                            interceptor = interceptor
+                        ))
                 }
             })
     }

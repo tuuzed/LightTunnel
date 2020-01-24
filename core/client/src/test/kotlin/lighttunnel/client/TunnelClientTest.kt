@@ -26,20 +26,20 @@ class TunnelClientTest {
     @Test
     fun connect() {
         tunnelClient.connect("127.0.0.1", 5080, TunnelRequest.forTcp(
-            localAddr = "192.168.1.100",
-            localPort = 22,
-            remotePort = 0
+            localAddr = "192.168.43.1",
+            localPort = 8080,
+            remotePort = 18080
         ), sslContext = null)
-        tunnelClient.connect("127.0.0.1", 5080, TunnelRequest.forTcp(
-            localAddr = "192.168.1.100",
-            localPort = 22,
-            remotePort = 0
-        ), sslContext = null)
-        tunnelClient.connect("127.0.0.1", 5080, TunnelRequest.forTcp(
-            localAddr = "192.168.1.100",
-            localPort = 22,
-            remotePort = 0
-        ), sslContext = null)
+//        tunnelClient.connect("127.0.0.1", 5080, TunnelRequest.forTcp(
+//            localAddr = "192.168.1.100",
+//            localPort = 22,
+//            remotePort = 0
+//        ), sslContext = null)
+//        tunnelClient.connect("127.0.0.1", 5080, TunnelRequest.forTcp(
+//            localAddr = "192.168.1.100",
+//            localPort = 22,
+//            remotePort = 0
+//        ), sslContext = null)
         Thread.currentThread().join()
     }
 }

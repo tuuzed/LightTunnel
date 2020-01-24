@@ -13,6 +13,8 @@ import io.netty.handler.ssl.SslContext
 import lighttunnel.api.ApiServer
 import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.callback.OnTunnelStateListener
+import lighttunnel.client.connect.TunnelConnectDescriptor
+import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate

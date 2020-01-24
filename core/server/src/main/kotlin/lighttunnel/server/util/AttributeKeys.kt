@@ -1,7 +1,6 @@
 package lighttunnel.server.util
 
 import io.netty.util.AttributeKey
-import lighttunnel.server.SessionChannels
 
 object AttributeKeys {
 

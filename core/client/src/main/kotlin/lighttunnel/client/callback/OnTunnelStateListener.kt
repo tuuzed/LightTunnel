@@ -1,6 +1,6 @@
 package lighttunnel.client.callback
 
-import lighttunnel.client.TunnelConnectDescriptor
+import lighttunnel.client.connect.TunnelConnectDescriptor
 
 interface OnTunnelStateListener {
     fun onConnecting(descriptor: TunnelConnectDescriptor, reconnect: Boolean) {}

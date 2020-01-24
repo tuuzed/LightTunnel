@@ -3,10 +3,9 @@ package lighttunnel.server.http
 import io.netty.channel.Channel
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
-import lighttunnel.server.SessionChannels
+import lighttunnel.server.util.SessionChannels
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -15,8 +14,8 @@ import kotlin.concurrent.write
 class HttpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdDescriptors = ConcurrentHashMap<Long, HttpDescriptor>()
-    private val hostDescriptors = ConcurrentHashMap<String, HttpDescriptor>()
+    private val tunnelIdDescriptors = HashMap<Long, HttpDescriptor>()
+    private val hostDescriptors = HashMap<String, HttpDescriptor>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)

@@ -10,7 +10,7 @@ import org.junit.Test
 
 class TunnelServerTest {
 
-    lateinit var tunnelServer: TunnelServer
+    private lateinit var tunnelServer: TunnelServer
 
     @Before
     fun setUp() {

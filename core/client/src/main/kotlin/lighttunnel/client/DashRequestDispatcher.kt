@@ -3,6 +3,7 @@ package lighttunnel.client
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import lighttunnel.api.ApiServer
+import lighttunnel.client.connect.TunnelConnectRegistry
 
 class DashRequestDispatcher(
     private val registry: TunnelConnectRegistry

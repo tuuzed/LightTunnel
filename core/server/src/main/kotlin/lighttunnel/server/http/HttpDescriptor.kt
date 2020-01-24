@@ -1,6 +1,6 @@
 package lighttunnel.server.http
 
-import lighttunnel.server.SessionChannels
+import lighttunnel.server.util.SessionChannels
 
 class HttpDescriptor(
     val host: String,

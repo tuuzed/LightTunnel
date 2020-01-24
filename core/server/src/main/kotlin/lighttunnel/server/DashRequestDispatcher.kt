@@ -15,16 +15,16 @@ class DashRequestDispatcher(
 ) : ApiServer.RequestDispatcher {
 
     companion object {
-        private val emptyJSONArray = JSONArray()
+        private val EMPTY_JSON_ARRAY = JSONArray()
     }
 
     override fun doRequest(request: FullHttpRequest): FullHttpResponse {
         return when {
             "/api/snapshot" == request.uri() -> {
                 val obj = JSONObject()
-                obj.put("tcp", tcpRegistry?.snapshot ?: emptyJSONArray)
-                obj.put("http", httpRegistry?.snapshot ?: emptyJSONArray)
-                obj.put("https", httpsRegistry?.snapshot ?: emptyJSONArray)
+                obj.put("tcp", tcpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                obj.put("http", httpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                obj.put("https", httpsRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
