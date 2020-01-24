@@ -23,14 +23,11 @@ class TcpRegistry {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
-        lock.writeLock().lock()
-        try {
+        lock.write {
             tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
             portDescriptors[port] = descriptor
-            logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
-        } finally {
-            lock.writeLock().unlock()
         }
+        logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
     fun unregister(port: Int) {

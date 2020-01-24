@@ -25,12 +25,9 @@ class HttpRegistry {
             throw ProtoException("host($host) already used")
         }
         val descriptor = HttpDescriptor(host, sessionChannels)
-        lock.writeLock().lock()
-        try {
+        lock.write {
             tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
             hostDescriptors[host] = descriptor
-        } finally {
-            lock.writeLock().unlock()
         }
         logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
         logger.trace("hostDescriptors: {}", hostDescriptors)
