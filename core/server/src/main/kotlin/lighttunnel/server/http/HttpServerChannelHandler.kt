@@ -17,7 +17,8 @@ import lighttunnel.util.LongUtil
 
 class HttpServerChannelHandler(
     private val registry: HttpRegistry,
-    private val interceptor: HttpRequestInterceptor
+    private val interceptor: HttpRequestInterceptor,
+    private val staticFilePlugin: StaticFilePlugin? = null
 ) : ChannelInboundHandlerAdapter() {
     private val logger by loggerDelegate()
 
@@ -54,17 +55,22 @@ class HttpServerChannelHandler(
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is HttpRequest) {
-            doChannelReadHttpRequest(ctx, msg)
+            val response = staticFilePlugin?.doHandle(msg)
+            if (response != null) {
+                ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
+                ctx.channel().attr<Boolean>(AttributeKeys.AK_HTTP_SKIP).set(false)
+            } else {
+                doChannelReadHttpRequest(ctx, msg)
+            }
         } else if (msg is HttpContent) {
             doChannelReadHttpContent(ctx, msg)
         }
     }
 
-
     /** 处理读取到的HttpRequest类型的消息 */
     @Throws(Exception::class)
     private fun doChannelReadHttpRequest(ctx: ChannelHandlerContext, msg: HttpRequest) {
-        val host = HttpUtil.getHost(msg)
+        val host = HttpUtil.getDomainHost(msg)
         if (host == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return

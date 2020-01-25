@@ -3,6 +3,7 @@ package lighttunnel.server
 import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import lighttunnel.logger.LoggerFactory
+import lighttunnel.server.http.DefaultStaticFilePlugin
 import lighttunnel.server.util.PortUtil
 import org.apache.log4j.Level
 import org.junit.Before
@@ -24,9 +25,14 @@ class TunnelServerTest {
         LoggerFactory.configConsole(level = Level.ALL)
         val ssc = SelfSignedCertificate()
         tunnelServer = TunnelServer(
+            httpBindPort = 80,
             httpsBindPort = 443,
             httpsContext = SslContextBuilder.forServer(ssc.key(), ssc.cert()).build(),
-            dashBindPort = 4000
+            dashBindPort = 4000,
+            staticFilePlugin = DefaultStaticFilePlugin(
+                rootPathList = listOf("C:\\", "D:\\"),
+                hostPrefixList = listOf("127.0.0.1")
+            )
         )
     }
 

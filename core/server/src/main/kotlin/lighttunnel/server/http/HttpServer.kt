@@ -7,6 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.HttpRequestDecoder
+import io.netty.handler.codec.http.HttpResponseEncoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
@@ -19,7 +20,8 @@ class HttpServer(
     private val bindAddr: String?,
     private val bindPort: Int,
     private val sslContext: SslContext? = null,
-    private val interceptor: HttpRequestInterceptor
+    private val interceptor: HttpRequestInterceptor,
+    private val staticFilePlugin: StaticFilePlugin? = null
 ) {
     private val logger by loggerDelegate()
     val registry = HttpRegistry()
@@ -36,14 +38,16 @@ class HttpServer(
                     ch ?: return
                     if (sslContext != null) {
                         ch.pipeline().addFirst(
-                            SslHandler(sslContext.newEngine(ch.alloc()))
+                            "ssl", SslHandler(sslContext.newEngine(ch.alloc()))
                         )
                     }
                     ch.pipeline()
-                        .addLast(HttpRequestDecoder())
-                        .addLast(HttpServerChannelHandler(
+                        .addLast("decoder", HttpRequestDecoder())
+                        .addLast("encoder", HttpResponseEncoder())
+                        .addLast("handler", HttpServerChannelHandler(
                             registry = registry,
-                            interceptor = interceptor
+                            interceptor = interceptor,
+                            staticFilePlugin = staticFilePlugin
                         ))
                 }
             })

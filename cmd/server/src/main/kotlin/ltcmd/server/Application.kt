@@ -5,6 +5,8 @@ import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.TunnelServer
+import lighttunnel.server.http.StaticFilePlugin
+import lighttunnel.server.http.DefaultStaticFilePlugin
 import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
@@ -46,6 +48,16 @@ class Application : AbstractApplication() {
         val authToken = basic["auth_token"]
         val allowPorts = basic["allow_ports"]
         val interceptor = SimpleRequestInterceptor(authToken, allowPorts)
+
+        val sfRootPaths = basic["sf_root_paths"]?.split(',')
+        val sfHostPrefixes = basic["sf_host_prefixes"]?.split(',')
+        var staticFilePlugin: StaticFilePlugin? = null
+        if (!sfRootPaths.isNullOrEmpty() && !sfHostPrefixes.isNullOrEmpty()) {
+            staticFilePlugin = DefaultStaticFilePlugin(
+                rootPathList = sfRootPaths,
+                hostPrefixList = sfHostPrefixes
+            )
+        }
         return TunnelServer(
             bossThreads = basic["boss_threads"].asInt() ?: -1,
             workerThreads = basic["worker_threads"].asInt() ?: -1,
@@ -87,6 +99,8 @@ class Application : AbstractApplication() {
                 null
             },
             httpsRequestInterceptor = interceptor,
+            // plugin
+            staticFilePlugin = staticFilePlugin,
             // dash
             dashBindPort = basic["dash_bind_port"].asInt()
         )
