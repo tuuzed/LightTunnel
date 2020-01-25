@@ -30,7 +30,7 @@ class TunnelClient(
     private val loseReconnect: Boolean = true,
     private val errorReconnect: Boolean = false,
     private val dashBindAddr: String? = null,
-    private val dashBindPort: Int? = null,
+    private val dashboardBindPort: Int? = null,
     private val onTunnelStateListener: OnTunnelStateListener? = null
 ) : TunnelConnectDescriptor.OnConnectFailureCallback, OnTunnelStateCallback {
     private val logger by loggerDelegate()
@@ -127,12 +127,12 @@ class TunnelClient(
 
     @Synchronized
     private fun startDashServer() {
-        if (dashServer == null && dashBindPort != null) {
+        if (dashServer == null && dashboardBindPort != null) {
             val server = ApiServer(
                 bossGroup = workerGroup,
                 workerGroup = workerGroup,
                 bindAddr = dashBindAddr,
-                bindPort = dashBindPort,
+                bindPort = dashboardBindPort,
                 requestDispatcher = DashRequestDispatcher(tunnelConnectRegistry)
             )
             server.start()

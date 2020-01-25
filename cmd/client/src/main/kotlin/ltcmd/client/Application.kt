@@ -2,8 +2,8 @@ package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
 import lighttunnel.client.TunnelClient
-import lighttunnel.client.connect.TunnelConnectDescriptor
 import lighttunnel.client.callback.OnTunnelStateListener
+import lighttunnel.client.connect.TunnelConnectDescriptor
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
@@ -89,7 +89,7 @@ class Application : AbstractApplication(), OnTunnelStateListener {
             errorReconnect = false,
             onTunnelStateListener = this,
             // dash
-            dashBindPort = basic["dash_bind_port"].asInt()
+            dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )
     }
 

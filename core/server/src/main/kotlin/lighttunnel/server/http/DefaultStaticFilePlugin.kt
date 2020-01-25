@@ -8,14 +8,13 @@ import java.net.URLDecoder
 
 class DefaultStaticFilePlugin(
     private val rootPathList: List<String>,
-    private val hostPrefixList: List<String>
+    private val domainPrefixList: List<String>
 ) : StaticFilePlugin {
     private val logger by loggerDelegate()
 
     override fun doHandle(request: HttpRequest): FullHttpResponse? {
-        logger.debug("doHandle: ")
         val host = request.headers().get(HttpHeaderNames.HOST)
-        if (hostPrefixList.firstOrNull { it.startsWith(host) } == null) {
+        if (domainPrefixList.firstOrNull { it.startsWith(host) } == null) {
             return null
         }
         val path = URLDecoder.decode(request.uri().split('?').first(), "utf-8")

@@ -41,8 +41,8 @@ class TunnelServer(
     private val httpsRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
     // plugin
     private val staticFilePlugin: StaticFilePlugin? = null,
-    // dash
-    private val dashBindPort: Int? = null
+    // dashboard
+    private val dashboardBindPort: Int? = null
 ) {
     private val logger by loggerDelegate()
     private val tunnelIds = IncIds()
@@ -81,12 +81,12 @@ class TunnelServer(
                 staticFilePlugin = staticFilePlugin
             )
         }
-        if (dashBindPort != null) {
+        if (dashboardBindPort != null) {
             dashServer = ApiServer(
                 bossGroup = bossGroup,
                 workerGroup = workerGroup,
                 bindAddr = bindAddr,
-                bindPort = dashBindPort,
+                bindPort = dashboardBindPort,
                 requestDispatcher = DashRequestDispatcher(
                     tcpRegistry = tcpServer?.registry,
                     httpRegistry = httpServer?.registry,

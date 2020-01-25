@@ -5,8 +5,8 @@ import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.TunnelServer
-import lighttunnel.server.http.StaticFilePlugin
 import lighttunnel.server.http.DefaultStaticFilePlugin
+import lighttunnel.server.http.StaticFilePlugin
 import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
@@ -49,13 +49,13 @@ class Application : AbstractApplication() {
         val allowPorts = basic["allow_ports"]
         val interceptor = SimpleRequestInterceptor(authToken, allowPorts)
 
-        val sfRootPaths = basic["sf_root_paths"]?.split(',')
-        val sfHostPrefixes = basic["sf_host_prefixes"]?.split(',')
+        val pluginSfRootPaths = basic["plugin_sf_root_paths"]?.split(',')
+        val pluginSfDomainPrefixes = basic["plugin_sf_domain_prefixes"]?.split(',')
         var staticFilePlugin: StaticFilePlugin? = null
-        if (!sfRootPaths.isNullOrEmpty() && !sfHostPrefixes.isNullOrEmpty()) {
+        if (!pluginSfRootPaths.isNullOrEmpty() && !pluginSfDomainPrefixes.isNullOrEmpty()) {
             staticFilePlugin = DefaultStaticFilePlugin(
-                rootPathList = sfRootPaths,
-                hostPrefixList = sfHostPrefixes
+                rootPathList = pluginSfRootPaths,
+                domainPrefixList = pluginSfDomainPrefixes
             )
         }
         return TunnelServer(
@@ -102,7 +102,7 @@ class Application : AbstractApplication() {
             // plugin
             staticFilePlugin = staticFilePlugin,
             // dash
-            dashBindPort = basic["dash_bind_port"].asInt()
+            dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )
     }
 
