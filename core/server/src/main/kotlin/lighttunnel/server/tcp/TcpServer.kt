@@ -7,8 +7,8 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import lighttunnel.proto.ProtoException
-import lighttunnel.server.util.SessionChannels
 import lighttunnel.server.util.PortUtil
+import lighttunnel.server.util.SessionChannels
 
 class TcpServer(
     bossGroup: NioEventLoopGroup,
@@ -38,10 +38,10 @@ class TcpServer(
         if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
             throw ProtoException("port($port) already used")
         }
-        val bindChannelFuture = if (addr != null) {
-            serverBootstrap.bind(addr, port)
-        } else {
+        val bindChannelFuture = if (addr == null || "0.0.0.0" == addr) {
             serverBootstrap.bind(port)
+        } else {
+            serverBootstrap.bind(addr, port)
         }
         registry.register(port, sessionChannels, TcpDescriptor(addr, port, sessionChannels, bindChannelFuture))
     }

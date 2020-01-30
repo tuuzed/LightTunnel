@@ -50,10 +50,10 @@ class ApiServer(
     }
 
     fun start() {
-        bindChannelFuture = if (bindAddr != null) {
-            serverBootstrap.bind(bindAddr, bindPort)
-        } else {
+        bindChannelFuture = if (bindAddr == null || "0.0.0.0" == bindAddr) {
             serverBootstrap.bind(bindPort)
+        } else {
+            serverBootstrap.bind(bindAddr, bindPort)
         }
         logger.info(
             "Serving {} on {} port {}",

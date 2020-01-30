@@ -21,6 +21,8 @@ import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.server.util.IncIds
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class TunnelServer(
     private val bossThreads: Int = -1,
@@ -45,6 +47,7 @@ class TunnelServer(
     private val dashboardBindPort: Int? = null
 ) {
     private val logger by loggerDelegate()
+    private val lock = ReentrantLock()
     private val tunnelIds = IncIds()
     private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
     private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
@@ -96,9 +99,8 @@ class TunnelServer(
         }
     }
 
-    @Synchronized
     @Throws(Exception::class)
-    fun start() {
+    fun start(): Unit = lock.withLock {
         startTunnelService(null)
         sslContext?.also { startTunnelService(it) }
         httpServer?.start()
@@ -106,8 +108,7 @@ class TunnelServer(
         dashServer?.start()
     }
 
-    @Synchronized
-    fun destroy() {
+    fun destroy(): Unit = lock.withLock {
         tcpServer?.destroy()
         httpServer?.destroy()
         httpsServer?.destroy()
@@ -139,15 +140,20 @@ class TunnelServer(
                 }
             })
         if (sslContext == null) {
-            if (bindAddr == null) serverBootstrap.bind(bindPort).get()
-            else serverBootstrap.bind(bindAddr, bindPort).get()
+            if (bindAddr == null || "0.0.0.0" == bindAddr) {
+                serverBootstrap.bind(bindPort).get()
+            } else {
+                serverBootstrap.bind(bindAddr, bindPort).get()
+            }
             logger.info("Serving tunnel on {} port {}", bindAddr ?: "any address", bindPort)
         } else if (sslBindPort != null) {
-            if (bindAddr == null) serverBootstrap.bind(sslBindPort).get()
-            else serverBootstrap.bind(bindAddr, sslBindPort).get()
+            if (bindAddr == null || "0.0.0.0" == bindAddr) {
+                serverBootstrap.bind(sslBindPort).get()
+            } else {
+                serverBootstrap.bind(bindAddr, sslBindPort).get()
+            }
             logger.info("Serving tunnel with ssl on {} port {}", bindAddr ?: "any address", sslBindPort)
         }
     }
-
 
 }

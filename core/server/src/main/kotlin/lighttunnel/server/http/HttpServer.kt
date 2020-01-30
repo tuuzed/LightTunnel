@@ -54,10 +54,10 @@ class HttpServer(
     }
 
     fun start() {
-        if (bindAddr != null) {
-            serverBootstrap.bind(bindAddr, bindPort).get()
-        } else {
+        if (bindAddr == null || "0.0.0.0" == bindAddr) {
             serverBootstrap.bind(bindPort).get()
+        } else {
+            serverBootstrap.bind(bindAddr, bindPort).get()
         }
         logger.info(
             "Serving {} on {} port {}",
