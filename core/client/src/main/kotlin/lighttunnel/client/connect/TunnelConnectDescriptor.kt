@@ -56,7 +56,7 @@ class TunnelConnectDescriptor(
         return finallyTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
     }
 
-    interface OnConnectFailureCallback {
+    internal interface OnConnectFailureCallback {
         fun onConnectFailure(descriptor: TunnelConnectDescriptor) {}
     }
 

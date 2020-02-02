@@ -1,4 +1,4 @@
-package lighttunnel.api
+package lighttunnel.dashboard.client
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelInitializer
@@ -13,14 +13,14 @@ import io.netty.util.AttributeKey
 import lighttunnel.logger.loggerDelegate
 import java.net.URI
 
-class ApiClient(
+class DashboardClient(
     workerGroup: NioEventLoopGroup,
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 512 * 1024
 ) {
     companion object {
-        internal val RESPONSE_CALLBACK: AttributeKey<ResponseCallback> =
-            AttributeKey.newInstance("api.client.response_callback")
+        internal val REQUEST_CALLBACK: AttributeKey<RequestCallback> =
+            AttributeKey.newInstance("dashboard.client.RequestCallback")
     }
 
     private val logger by loggerDelegate()
@@ -43,14 +43,14 @@ class ApiClient(
                     ch.pipeline()
                         .addLast("codec", HttpClientCodec())
                         .addLast("aggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", ApiClientChannelHandler())
+                        .addLast("handler", DashboardClientChannelHandler())
                 }
 
             })
     }
 
     @Throws(Exception::class)
-    fun request(url: String, method: HttpMethod, callback: ResponseCallback) {
+    fun request(url: String, method: HttpMethod, callback: RequestCallback) {
         val uri = URI.create(url)
         val request = DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, url)
         println(uri.host)
@@ -59,12 +59,9 @@ class ApiClient(
         } else {
             uri.port
         }).sync().channel().also {
-            it.attr(RESPONSE_CALLBACK).set(callback)
+            it.attr(REQUEST_CALLBACK).set(callback)
         }.writeAndFlush(request)
     }
 
-    interface ResponseCallback {
-        fun onResponse(response: FullHttpResponse)
-    }
 
 }

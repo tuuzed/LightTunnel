@@ -59,13 +59,17 @@ class Application : AbstractApplication(), OnTunnelStateListener {
         val serverPort = basic["server_port"].asInt() ?: 5080
         val sslContext = newSslContext(basic)
         val sslServerPort = basic["ssl_server_port"].asInt() ?: 5443
-        val tunnels = ini.entries.filter { it.key != "basic" }.mapNotNull { it.value }
-        for (tunnel in tunnels) {
-            val request = newTunnelRequest(basic, tunnel) ?: continue
-            if (tunnel["ssl"]?.toUpperCase() == "TRUE") {
-                client.connect(serverAddr, sslServerPort, request, sslContext)
-            } else {
-                client.connect(serverAddr, serverPort, request, null)
+        ini.entries.filter { it.key != "basic" }.map {
+            Pair(it.value["ssl"]?.toUpperCase() == "TRUE", newTunnelRequest(basic, it.value))
+        }.forEach {
+            val ssl = it.first
+            val request = it.second
+            if (request != null) {
+                if (ssl) {
+                    client.connect(serverAddr, sslServerPort, request, sslContext)
+                } else {
+                    client.connect(serverAddr, serverPort, request, null)
+                }
             }
         }
     }
@@ -88,7 +92,7 @@ class Application : AbstractApplication(), OnTunnelStateListener {
             loseReconnect = true,
             errorReconnect = false,
             onTunnelStateListener = this,
-            // dash
+            // dashboard
             dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )
     }
@@ -117,14 +121,15 @@ class Application : AbstractApplication(), OnTunnelStateListener {
         )
     }
 
-    private fun newHttpTunnelRequest(
-        basic: Profile.Section, tunnel: Profile.Section) = newHttpOrHttpsTunnelRequest(basic, tunnel, false)
+    private fun newHttpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
+        return newHttpOrHttpsTunnelRequest(basic, tunnel, false)
+    }
 
-    private fun newHttpsTunnelRequest(
-        basic: Profile.Section, tunnel: Profile.Section) = newHttpOrHttpsTunnelRequest(basic, tunnel, true)
+    private fun newHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
+        return newHttpOrHttpsTunnelRequest(basic, tunnel, true)
+    }
 
-    private fun newHttpOrHttpsTunnelRequest(
-        basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
+    private fun newHttpOrHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
         val authToken = basic["auth_token"]
         val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80

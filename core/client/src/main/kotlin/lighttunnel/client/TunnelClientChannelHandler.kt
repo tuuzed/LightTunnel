@@ -80,8 +80,8 @@ class TunnelClientChannelHandler(
         val request = TunnelRequest.fromBytes(msg.data)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(request)
-        ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).set(null)
-        ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).set(null)
+        ctx.channel().attr(AttributeKeys.AK_ERROR_FLAG).set(null)
+        ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).set(null)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()?.finallyTunnelRequest = request
         logger.debug("Opened Tunnel: {}", request)
         onTunnelStateCallback.onTunnelConnected(ctx)
@@ -93,8 +93,8 @@ class TunnelClientChannelHandler(
         val errMessage = String(msg.head, StandardCharsets.UTF_8)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(null)
-        ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).set(true)
-        ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).set(Exception(errMessage))
+        ctx.channel().attr(AttributeKeys.AK_ERROR_FLAG).set(true)
+        ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).set(Exception(errMessage))
         ctx.channel().close()
         logger.trace("Open Tunnel Error: {}", errMessage)
     }

@@ -19,6 +19,7 @@ import java.io.File
 
 class Application : AbstractApplication() {
     private val logger by loggerDelegate()
+    private var tunnelServer: TunnelServer? = null
 
     override val options: Options
         get() = Options().apply {
@@ -41,7 +42,12 @@ class Application : AbstractApplication() {
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         setupLogger(basic)
-        newTunnelServer(basic).start()
+        tunnelServer = newTunnelServer(basic)
+        start()
+    }
+
+    private fun start() {
+        tunnelServer?.start()
     }
 
     private fun newTunnelServer(basic: Profile.Section): TunnelServer {
@@ -62,7 +68,7 @@ class Application : AbstractApplication() {
             bossThreads = basic["boss_threads"].asInt() ?: -1,
             workerThreads = basic["worker_threads"].asInt() ?: -1,
             // tunnel
-            bindAddr = basic["bind_addr"] ?: "0.0.0.0",
+            bindAddr = basic["bind_addr"],
             bindPort = basic["bind_port"].asInt() ?: 5080,
             // ssl tunnel
             sslBindPort = basic["ssl_bind_port"].asInt(),
@@ -101,7 +107,7 @@ class Application : AbstractApplication() {
             httpsRequestInterceptor = interceptor,
             // plugin
             staticFilePlugin = staticFilePlugin,
-            // dash
+            // dashboard
             dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )
     }

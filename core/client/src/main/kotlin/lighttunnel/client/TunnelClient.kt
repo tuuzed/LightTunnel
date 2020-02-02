@@ -3,20 +3,24 @@
 package lighttunnel.client
 
 import io.netty.bootstrap.Bootstrap
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
+import io.netty.handler.codec.http.DefaultFullHttpResponse
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.ssl.SslContext
-import lighttunnel.api.ApiServer
 import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.client.connect.TunnelConnectDescriptor
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
+import lighttunnel.dashboard.server.DashboardServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
@@ -24,6 +28,8 @@ import lighttunnel.proto.ProtoMessageEncoder
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class TunnelClient(
     private val workerThreads: Int = -1,
@@ -39,7 +45,8 @@ class TunnelClient(
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
     private val tunnelConnectRegistry = TunnelConnectRegistry()
-    private var dashServer: ApiServer? = null
+    private var dashboardServer: DashboardServer? = null
+    private val lock = ReentrantLock()
 
     private fun tryReconnect(descriptor: TunnelConnectDescriptor) {
         if (!descriptor.isClosed && (loseReconnect || errorReconnect)) {
@@ -57,8 +64,8 @@ class TunnelClient(
         super.onTunnelInactive(ctx)
         val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()
         if (descriptor != null) {
-            val errFlag = ctx.channel().attr(AttributeKeys.AK_ERR_FLAG).get()
-            val errCause = ctx.channel().attr(AttributeKeys.AK_ERR_CAUSE).get()
+            val errFlag = ctx.channel().attr(AttributeKeys.AK_ERROR_FLAG).get()
+            val errCause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
             if (errFlag == true) {
                 onTunnelStateListener?.onDisconnect(descriptor, true, errCause)
                 logger.trace("{}", errCause.message)
@@ -107,7 +114,7 @@ class TunnelClient(
         descriptor.connect(this)
         onTunnelStateListener?.onConnecting(descriptor, false)
         tunnelConnectRegistry.register(descriptor)
-        startDashServer()
+        startDashboardServer()
         return descriptor
     }
 
@@ -116,27 +123,32 @@ class TunnelClient(
         tunnelConnectRegistry.unregister(descriptor)
     }
 
-    @Synchronized
-    fun destroy() {
+    fun destroy() = lock.withLock {
         tunnelConnectRegistry.destroy()
         cachedSslBootstraps.clear()
         localTcpClient.destroy()
-        dashServer?.destroy()
+        dashboardServer?.destroy()
         workerGroup.shutdownGracefully()
     }
 
-    @Synchronized
-    private fun startDashServer() {
-        if (dashServer == null && dashboardBindPort != null) {
-            val server = ApiServer(
+    private fun startDashboardServer() = lock.withLock {
+        if (dashboardServer == null && dashboardBindPort != null) {
+            val server = DashboardServer(
                 bossGroup = workerGroup,
                 workerGroup = workerGroup,
                 bindAddr = dashBindAddr,
-                bindPort = dashboardBindPort,
-                requestDispatcher = DashRequestDispatcher(tunnelConnectRegistry)
-            )
+                bindPort = dashboardBindPort
+            ).router {
+                route("/api/snapshot") {
+                    DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK,
+                        Unpooled.copiedBuffer(tunnelConnectRegistry.snapshot.toString(2), Charsets.UTF_8)
+                    )
+                }
+            }
+            dashboardServer = server
             server.start()
-            dashServer = server
         }
     }
 

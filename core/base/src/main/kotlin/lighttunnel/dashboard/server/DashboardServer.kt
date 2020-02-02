@@ -1,4 +1,4 @@
-package lighttunnel.api
+package lighttunnel.dashboard.server
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelFuture
@@ -6,21 +6,17 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.FullHttpResponse
-import io.netty.handler.codec.http.HttpObjectAggregator
-import io.netty.handler.codec.http.HttpServerCodec
+import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
 
 
-class ApiServer(
+class DashboardServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val bindAddr: String?,
     private val bindPort: Int,
-    private val requestDispatcher: RequestDispatcher,
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 512 * 1024
 ) {
@@ -28,6 +24,7 @@ class ApiServer(
     private val serverBootstrap = ServerBootstrap()
     private val isHttps: Boolean get() = sslContext != null
     private var bindChannelFuture: ChannelFuture? = null
+    private val routerConfig = RouterConfig()
 
     init {
         serverBootstrap.group(bossGroup, workerGroup)
@@ -43,14 +40,19 @@ class ApiServer(
                     ch.pipeline()
                         .addLast("codec", HttpServerCodec())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", ApiServerChannelHandler(requestDispatcher))
+                        .addLast("handler", DashboardServerChannelHandler(this@DashboardServer))
                 }
             })
 
     }
 
+    fun router(block: RouteBlock): DashboardServer {
+        block(routerConfig)
+        return this
+    }
+
     fun start() {
-        bindChannelFuture = if (bindAddr == null || "0.0.0.0" == bindAddr) {
+        bindChannelFuture = if (bindAddr == null) {
             serverBootstrap.bind(bindPort)
         } else {
             serverBootstrap.bind(bindAddr, bindPort)
@@ -63,12 +65,12 @@ class ApiServer(
         )
     }
 
-    fun destroy() {
-        bindChannelFuture?.channel()?.close()
+    internal fun doRequest(request: FullHttpRequest): FullHttpResponse {
+        return routerConfig.doRequest(request)
     }
 
-    interface RequestDispatcher {
-        fun doRequest(request: FullHttpRequest): FullHttpResponse
+    fun destroy() {
+        bindChannelFuture?.channel()?.close()
     }
 
 }

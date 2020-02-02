@@ -1,17 +1,18 @@
-package lighttunnel.api
+package lighttunnel.dashboard.server
 
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 
 
-class ApiServerChannelHandler(
-    private val requestDispatcher: ApiServer.RequestDispatcher
+class DashboardServerChannelHandler(
+    private val server: DashboardServer
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
 
     override fun channelReadComplete(ctx: ChannelHandlerContext) {
-        ctx.flush()
+        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
     }
 
     @Throws(Exception::class)
@@ -22,7 +23,8 @@ class ApiServerChannelHandler(
                 HttpResponseStatus.CONTINUE)
             )
         }
-        val response = requestDispatcher.doRequest(request)
+        val response = server.doRequest(request)
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
     }
+
 }

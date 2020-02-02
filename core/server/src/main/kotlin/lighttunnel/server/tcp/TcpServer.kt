@@ -1,6 +1,8 @@
 package lighttunnel.server.tcp
 
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.ChannelFuture
+import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
@@ -38,7 +40,7 @@ class TcpServer(
         if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
             throw ProtoException("port($port) already used")
         }
-        val bindChannelFuture = if (addr == null || "0.0.0.0" == addr) {
+        val bindChannelFuture = if (addr == null) {
             serverBootstrap.bind(port)
         } else {
             serverBootstrap.bind(addr, port)

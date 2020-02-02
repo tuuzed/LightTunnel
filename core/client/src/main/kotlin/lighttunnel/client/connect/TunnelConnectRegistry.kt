@@ -22,7 +22,6 @@ class TunnelConnectRegistry {
         cachedTunnelConnectDescriptors.clear()
     }
 
-
     val snapshot: JSONArray
         get() {
             val array = JSONArray()

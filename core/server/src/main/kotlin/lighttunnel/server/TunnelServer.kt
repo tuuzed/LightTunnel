@@ -3,13 +3,17 @@
 package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.handler.codec.http.DefaultFullHttpResponse
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.ssl.SslContext
-import lighttunnel.api.ApiServer
+import lighttunnel.dashboard.server.DashboardServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
@@ -21,6 +25,8 @@ import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.server.util.IncIds
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -46,15 +52,19 @@ class TunnelServer(
     // dashboard
     private val dashboardBindPort: Int? = null
 ) {
+    companion object {
+        private val EMPTY_JSON_ARRAY = JSONArray()
+    }
+
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
     private val tunnelIds = IncIds()
-    private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
-    private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
+    private val bossGroup by lazy { if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup() }
+    private val workerGroup by lazy { if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup() }
     private var tcpServer: TcpServer? = null
     private var httpServer: HttpServer? = null
     private var httpsServer: HttpServer? = null
-    private var dashServer: ApiServer? = null
+    private var dashboardServer: DashboardServer? = null
 
     init {
         tcpServer = TcpServer(bossGroup, workerGroup)
@@ -79,23 +89,32 @@ class TunnelServer(
                 workerGroup = workerGroup,
                 bindAddr = bindAddr,
                 bindPort = httpsBindPort,
-                sslContext = null,
+                sslContext = httpsContext,
                 interceptor = httpsRequestInterceptor,
                 staticFilePlugin = staticFilePlugin
             )
         }
         if (dashboardBindPort != null) {
-            dashServer = ApiServer(
+            val server = DashboardServer(
                 bossGroup = bossGroup,
                 workerGroup = workerGroup,
                 bindAddr = bindAddr,
-                bindPort = dashboardBindPort,
-                requestDispatcher = DashRequestDispatcher(
-                    tcpRegistry = tcpServer?.registry,
-                    httpRegistry = httpServer?.registry,
-                    httpsRegistry = httpsServer?.registry
-                )
+                bindPort = dashboardBindPort
             )
+            server.router {
+                route("/api/snapshot") {
+                    val obj = JSONObject()
+                    obj.put("tcp", tcpServer?.registry?.snapshot ?: EMPTY_JSON_ARRAY)
+                    obj.put("http", httpServer?.registry?.snapshot ?: EMPTY_JSON_ARRAY)
+                    obj.put("https", httpsServer?.registry?.snapshot ?: EMPTY_JSON_ARRAY)
+                    DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK,
+                        Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
+                    )
+                }
+            }
+            dashboardServer = server
         }
     }
 
@@ -105,14 +124,14 @@ class TunnelServer(
         sslContext?.also { startTunnelService(it) }
         httpServer?.start()
         httpsServer?.start()
-        dashServer?.start()
+        dashboardServer?.start()
     }
 
     fun destroy(): Unit = lock.withLock {
         tcpServer?.destroy()
         httpServer?.destroy()
         httpsServer?.destroy()
-        dashServer?.destroy()
+        dashboardServer?.destroy()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }
@@ -140,14 +159,14 @@ class TunnelServer(
                 }
             })
         if (sslContext == null) {
-            if (bindAddr == null || "0.0.0.0" == bindAddr) {
+            if (bindAddr == null) {
                 serverBootstrap.bind(bindPort).get()
             } else {
                 serverBootstrap.bind(bindAddr, bindPort).get()
             }
             logger.info("Serving tunnel on {} port {}", bindAddr ?: "any address", bindPort)
         } else if (sslBindPort != null) {
-            if (bindAddr == null || "0.0.0.0" == bindAddr) {
+            if (bindAddr == null) {
                 serverBootstrap.bind(sslBindPort).get()
             } else {
                 serverBootstrap.bind(bindAddr, sslBindPort).get()

@@ -54,7 +54,7 @@ class HttpServer(
     }
 
     fun start() {
-        if (bindAddr == null || "0.0.0.0" == bindAddr) {
+        if (bindAddr == null) {
             serverBootstrap.bind(bindPort).get()
         } else {
             serverBootstrap.bind(bindAddr, bindPort).get()
