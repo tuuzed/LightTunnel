@@ -2,6 +2,10 @@
 
 支持TCP、HTTP、HTTPS穿透。
 
+![Java CI](https://github.com/tuuzed/LightTunnel/workflows/Java%20CI/badge.svg)
+![LightTunnel Version](https://img.shields.io/badge/LightTunnel-0.5.x-blue.svg)
+![Thank Idea](https://img.shields.io/badge/Thank-jetbrains.com-green.svg)
+
 ## 0x01 SSL证书生成
 
 - 生成服务端证书
