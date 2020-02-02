@@ -22,7 +22,7 @@ class Application : AbstractApplication(), OnTunnelStateListener {
     private val logger by loggerDelegate()
 
     override fun onConnecting(descriptor: TunnelConnectDescriptor, reconnect: Boolean) {
-        logger.info("onConnecting: {}", descriptor)
+        logger.info("onConnecting: {}, reconnect: {}", descriptor, reconnect)
     }
 
     override fun onConnected(descriptor: TunnelConnectDescriptor) {

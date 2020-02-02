@@ -105,6 +105,7 @@ class TunnelClient(
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
     ): TunnelConnectDescriptor {
+        startDashboardServer()
         val descriptor = TunnelConnectDescriptor(
             if (sslContext == null) bootstrap else getSslBootstrap(sslContext),
             serverAddr,
@@ -114,7 +115,6 @@ class TunnelClient(
         descriptor.connect(this)
         onTunnelStateListener?.onConnecting(descriptor, false)
         tunnelConnectRegistry.register(descriptor)
-        startDashboardServer()
         return descriptor
     }
 
