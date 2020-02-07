@@ -5,6 +5,7 @@ import lighttunnel.client.TunnelClient
 import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.client.connect.TunnelConnectDescriptor
 import lighttunnel.cmd.AbstractApplication
+import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
@@ -109,7 +110,7 @@ class Application : AbstractApplication(), OnTunnelStateListener {
 
     private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
         val authToken = basic["auth_token"]
-        val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
+        val localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
         val remotePort = tunnel["remote_port"].asInt() ?: 0
         return TunnelRequest.forTcp(
@@ -131,7 +132,7 @@ class Application : AbstractApplication(), OnTunnelStateListener {
 
     private fun newHttpOrHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
         val authToken = basic["auth_token"]
-        val localAddr = tunnel["local_addr"] ?: "127.0.0.1"
+        val localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
         val customDomain = tunnel["custom_domain"] ?: return null
         val proxySetHeaders = mapOf(
