@@ -15,7 +15,7 @@ class ProtoMessageEncoder : MessageToByteEncoder<ProtoMessage>() {
             msg.head.size +
             msg.data.size
         out.writeInt(totalLength)
-        out.writeByte(msg.type.flag.toInt())
+        out.writeByte(msg.type.code.toInt())
         out.writeInt(msg.head.size)
         out.writeBytes(msg.head)
         out.writeBytes(msg.data)

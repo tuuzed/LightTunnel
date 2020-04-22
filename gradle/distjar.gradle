@@ -8,8 +8,8 @@ uploadArchives {
     }
 }
 
-task distJar(
-        group: "build",
+task distJars(
+        group: "package",
         dependsOn: uploadArchives
 )
 

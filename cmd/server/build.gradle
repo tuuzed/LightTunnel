@@ -12,7 +12,7 @@ dependencies {
     testCompile "junit:junit:4.12"
 }
 
-project.ext.MainClass = "ltcmd.server.MainKt"
+project.ext.MainClass = "ltcmd.server.LauncherKt"
 project.ext.AppName = "lts"
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath

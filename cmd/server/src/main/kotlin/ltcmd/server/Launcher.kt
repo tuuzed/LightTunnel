@@ -1,4 +1,4 @@
-@file:JvmName("MainKt")
+@file:JvmName("LauncherKt")
 
 package ltcmd.server
 
