@@ -19,13 +19,13 @@ jar {
     exclude 'META-INF/**/**'
     exclude 'META-INF/**'
     exclude 'OSGI-OPT/'
+    exclude 'LICENSE'
     exclude 'kotlin/*.kotlin_module'
     exclude 'kotlin/*.kotlin_metadata'
     exclude 'kotlin/*.kotlin_builtins'
     exclude 'kotlin/**/*.kotlin_module'
     exclude 'kotlin/**/*.kotlin_metadata'
     exclude 'kotlin/**/*.kotlin_builtins'
-    exclude 'LICENSE'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
         attributes 'Main-Class': project.MainClass
@@ -50,8 +50,8 @@ task _mixinProguardJar(
         dependsOn: jar
 ) {
     List<File> proguardRules = new ArrayList<>()
-    proguardRules.add(rootProject.file("./proguard/proguard.rules/basic.txt"))
-    proguardRules.add(rootProject.file("./proguard/proguard.rules/third-party.txt"))
+    proguardRules.add(rootProject.file("./gradle/proguardrules/basic.txt"))
+    proguardRules.add(rootProject.file("./gradle/proguardrules/third-party.txt"))
     proguardRules.add(project.file("proguard-rules.txt"))
     configuration proguardRules
     injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"
@@ -72,7 +72,7 @@ task packageJar(
         dependsOn: _mixinProguardJar
 )
 
-task packageRelease(
+task dists(
         group: "package",
         type: Copy,
         dependsOn: [_mixinProguardJar, createExe]
@@ -86,7 +86,7 @@ task packageRelease(
     doLast {
         def jarFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
         def stubFile = rootProject.file("gradle/stub.sh")
-        def runFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.run")
+        def runFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.sh")
         if (!jarFile.exists()) {
             return
         }

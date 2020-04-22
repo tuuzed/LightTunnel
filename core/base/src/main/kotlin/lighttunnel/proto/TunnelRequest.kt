@@ -4,6 +4,8 @@ package lighttunnel.proto
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
+import lighttunnel.util.json.getOrDefault
+import lighttunnel.util.json.toStringMap
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 
@@ -17,11 +19,14 @@ data class TunnelRequest internal constructor(
 
     companion object Factory {
         private val CHARSET = StandardCharsets.UTF_8
+
         // common
         private const val NAME = "\$name"
         private const val AUTH_TOKEN = "\$auth_token"
+
         // tcp
         private const val REMOTE_PORT = "\$remote_port"
+
         // http & https
         private const val HOST = "\$host"
         private const val ENABLE_BASIC_AUTH = "\$enable_basic_auth"
@@ -54,7 +59,7 @@ data class TunnelRequest internal constructor(
         private fun TunnelRequest.toBytesInternal(): ByteArray {
             val buffer = Unpooled.buffer()
             try {
-                buffer.writeByte(type.flag.toInt())
+                buffer.writeByte(type.code.toInt())
                 buffer.writeInt(localPort)
                 localAddr.toByteArray(CHARSET).also {
                     buffer.writeInt(it.size)
@@ -187,8 +192,10 @@ data class TunnelRequest internal constructor(
     // common
     val name get() = options.getOrDefault<String?>(NAME, null)
     val authToken get() = options.getOrDefault<String?>(AUTH_TOKEN, null)
+
     // tcp
     val remotePort get() = (options.getOrDefault<Int?>(REMOTE_PORT, null) ?: error("remotePort == null"))
+
     // http & https
     val host get() = options.getOrDefault<String?>(HOST, null) ?: error("host == null")
     val enableBasicAuth get() = options.getOrDefault(ENABLE_BASIC_AUTH, false)
@@ -220,19 +227,8 @@ data class TunnelRequest internal constructor(
         }
     }
 
-    private fun JSONObject?.toStringMap(): Map<String, String> {
-        this ?: return emptyMap()
-        val map = mutableMapOf<String, String>()
-        this.keys().forEach {
-            val value = this.getOrDefault<String?>(it, null)
-            if (value != null) {
-                map[it] = value
-            }
-        }
-        return map
-    }
 
-    enum class Type(val flag: Byte) {
+    enum class Type(val code: Byte) {
         UNKNOWN(0x00.toByte()),
         TCP(0x10.toByte()),
         HTTP(0x30.toByte()),
@@ -240,21 +236,9 @@ data class TunnelRequest internal constructor(
 
         companion object {
             @JvmStatic
-            fun valueOf(flag: Byte) = values().firstOrNull { it.flag == flag } ?: UNKNOWN
+            fun valueOf(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
         }
 
-    }
-
-    private inline fun <reified T> JSONObject.getOrDefault(key: String, def: T): T {
-        if (this.has(key)) {
-            val value = this.get(key)
-            if (value is T) {
-                return value
-            }
-            return def
-        } else {
-            return def
-        }
     }
 
 }

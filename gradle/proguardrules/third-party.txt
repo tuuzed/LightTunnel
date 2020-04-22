@@ -1,0 +1,9 @@
+### Netty
+-keepclasseswithmembers class io.netty.** { *; }
+-dontwarn io.netty.**
+
+### slf4j & log4j
+-keepclasseswithmembers class org.slf4j.** { *; }
+-dontwarn org.slf4j.**
+-keepclasseswithmembers class org.apache.log4j.** { *; }
+-dontwarn org.apache.log4j.**
