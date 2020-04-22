@@ -8,7 +8,7 @@ sourceCompatibility = rootProject.jvm_version
 dependencies {
     compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     // Netty
-    def netty_version = '4.1.48.Final'
+    def netty_version = '4.1.43.Final'
     // compile "io.netty:netty-all:$netty_version"
     compile "io.netty:netty-buffer:$netty_version"
     compile "io.netty:netty-codec:$netty_version"
