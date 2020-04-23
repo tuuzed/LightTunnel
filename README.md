@@ -6,7 +6,74 @@
 ![LightTunnel Version](https://img.shields.io/badge/LightTunnel-0.5.x-blue.svg)
 ![Thank Idea](https://img.shields.io/badge/Thank-jetbrains.com-green.svg)
 
-## 0x01 SSL证书生成
+## 0x00 发行版下载
+
+[Github下载 LightTunnel-v0.5.7.tar.gz](https://github.com/tuuzed/LightTunnel/releases/download/v0.5.7/LightTunnel-v0.5.7.tar.gz)
+
+[Gitee下载 LightTunnel-v0.5.7.tar.gz](https://gitee.com/tuuzed/LightTunnel/attach_files/380291/download)
+
+## 0x01 文件说明
+
+- 服务器端文件
+```
+ lts.exe       - 服务器端windows可执行文件
+ lts.sh        - 服务器端*nix可执行文件
+ lts.jar       - 服务器端jvm可执行文件
+ lts.ini       - 服务器端完整配置文件   
+ lts_mini.ini  - 服务器端最小配置文件
+ lts.jks       - 服务器端SSl证书
+```
+- 客户端文件
+``` 
+ ltc.exe       - 客户端windows可执行文件
+ ltc.sh        - 客户端*nix可执行文件
+ ltc.jar       - 客户端jvm可执行文件
+ ltc.ini       - 客户端完整配置文件   
+ ltc_mini.ini  - 客户端最小配置文件
+ ltc.jks       - 客户端SSl证书
+```
+
+
+## 0x02 启动命令
+
+- windows系统
+  
+  - 服务器端
+  ```shell script
+  .\lts.exe -c lts.ini
+  ```
+  
+  - 客户端
+  ```shell script
+  .\ltc.exe -c ltc.ini
+  ```
+
+    
+- *nix系统
+
+  - 服务器端
+  ```shell script
+  ./lts.sh -c lts.ini
+  ```
+  
+  - 客户端
+  ```shell script
+  ./ltc.sh -c ltc.ini
+  ```
+
+- jvm
+
+  - 服务器端
+  ```shell script
+  java -jar ltc.jar -c lts.ini
+  ```
+  
+  - 客户端
+  ```shell script
+  java -jar ltc.sh -c ltc.ini
+  ```
+  
+## 0x03 SSL证书生成
 
 - 生成服务端证书
 ```bash
