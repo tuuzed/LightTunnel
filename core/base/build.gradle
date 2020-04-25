@@ -8,15 +8,15 @@ sourceCompatibility = rootProject.jvm_version
 dependencies {
     compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     // Netty
-    def netty_version = '4.1.43.Final'
-    // compile "io.netty:netty-all:$netty_version"
-    compile "io.netty:netty-buffer:$netty_version"
-    compile "io.netty:netty-codec:$netty_version"
-    compile "io.netty:netty-codec-http:$netty_version"
-    compile "io.netty:netty-common:$netty_version"
-    compile "io.netty:netty-handler:$netty_version"
-    compile "io.netty:netty-resolver:$netty_version"
-    compile "io.netty:netty-transport:$netty_version"
+    def netty_version = '4.1.48.Final'
+    compile "io.netty:netty-all:$netty_version"
+    // compile "io.netty:netty-buffer:$netty_version"
+    // compile "io.netty:netty-codec:$netty_version"
+    // compile "io.netty:netty-codec-http:$netty_version"
+    // compile "io.netty:netty-common:$netty_version"
+    // compile "io.netty:netty-handler:$netty_version"
+    // compile "io.netty:netty-resolver:$netty_version"
+    // compile "io.netty:netty-transport:$netty_version"
     // Logger
     def slf4j_version = '1.7.25'
     compile "org.slf4j:slf4j-api:$slf4j_version"
