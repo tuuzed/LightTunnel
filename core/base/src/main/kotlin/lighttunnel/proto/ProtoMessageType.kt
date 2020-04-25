@@ -69,7 +69,7 @@ enum class ProtoMessageType(val code: Byte) {
 
     companion object {
         @JvmStatic
-        fun valueOf(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
+        fun ofCode(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
     }
 
 }

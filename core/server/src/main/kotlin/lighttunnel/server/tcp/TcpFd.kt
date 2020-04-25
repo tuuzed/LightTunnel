@@ -1,9 +1,11 @@
+@file:Suppress("unused")
+
 package lighttunnel.server.tcp
 
 import io.netty.channel.ChannelFuture
 import lighttunnel.server.util.SessionChannels
 
-class TcpDescriptor(
+class TcpFd(
     val addr: String?,
     val port: Int,
     val sessionChannels: SessionChannels,

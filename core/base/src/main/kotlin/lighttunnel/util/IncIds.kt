@@ -1,4 +1,4 @@
-package lighttunnel.server.util
+package lighttunnel.util
 
 import java.util.concurrent.atomic.AtomicLong
 

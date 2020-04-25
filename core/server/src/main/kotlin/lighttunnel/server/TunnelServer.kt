@@ -19,12 +19,12 @@ import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
 import lighttunnel.proto.ProtoMessageEncoder
 import lighttunnel.server.http.HttpServer
-import lighttunnel.server.http.StaticFilePlugin
+import lighttunnel.server.http.HttpPlugin
 import lighttunnel.server.interceptor.HttpRequestInterceptor
 import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpServer
-import lighttunnel.server.util.IncIds
+import lighttunnel.util.IncIds
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
@@ -48,7 +48,7 @@ class TunnelServer(
     private val httpsContext: SslContext? = null,
     private val httpsRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
     // plugin
-    private val staticFilePlugin: StaticFilePlugin? = null,
+    private val httpPlugin: HttpPlugin? = null,
     // dashboard
     private val dashboardBindPort: Int? = null
 ) {
@@ -79,7 +79,7 @@ class TunnelServer(
                 bindPort = httpBindPort,
                 sslContext = null,
                 interceptor = httpRequestInterceptor,
-                staticFilePlugin = staticFilePlugin
+                httpPlugin = httpPlugin
             )
         }
         if (httpsBindPort != null) {
@@ -91,7 +91,7 @@ class TunnelServer(
                 bindPort = httpsBindPort,
                 sslContext = httpsContext,
                 interceptor = httpsRequestInterceptor,
-                staticFilePlugin = staticFilePlugin
+                httpPlugin = httpPlugin
             )
         }
         if (dashboardBindPort != null) {

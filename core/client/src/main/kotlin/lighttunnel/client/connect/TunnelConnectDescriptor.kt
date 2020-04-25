@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package lighttunnel.client.connect
 
 import io.netty.bootstrap.Bootstrap

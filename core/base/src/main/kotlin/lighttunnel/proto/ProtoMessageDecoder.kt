@@ -15,7 +15,7 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
     companion object {
         private const val MIN_BYTES =
             ProtoConsts.PROTO_MESSAGE_LENGTH_FIELD_LENGTH +
-                ProtoConsts.PROTO_MESSAGE_COMMAND_LENGTH +
+                ProtoConsts.PROTO_MESSAGE_TYPE_LENGTH +
                 ProtoConsts.PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH
     }
 
@@ -28,12 +28,12 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
             val totalLength = `in`.readInt()
             if (`in`.readableBytes() < totalLength) return null
             // 开始解码数据
-            val type = ProtoMessageType.valueOf(`in`.readByte())
+            val type = ProtoMessageType.ofCode(`in`.readByte())
             val headLength = `in`.readInt()
             val head = ByteArray(headLength)
             `in`.readBytes(head)
             val dataLength = totalLength -
-                ProtoConsts.PROTO_MESSAGE_COMMAND_LENGTH -
+                ProtoConsts.PROTO_MESSAGE_TYPE_LENGTH -
                 ProtoConsts.PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH -
                 headLength
             val data = ByteArray(dataLength)

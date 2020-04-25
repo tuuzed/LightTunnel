@@ -13,63 +13,44 @@ import kotlin.concurrent.write
 class TcpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdDescriptors = HashMap<Long, TcpDescriptor>()
-    private val portDescriptors = HashMap<Int, TcpDescriptor>()
+    private val tunnelIdTcpFds = HashMap<Long, TcpFd>()
+    private val portTcpFds = HashMap<Int, TcpFd>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
-    fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpDescriptor) {
+    fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpFd) {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
         lock.write {
-            tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
-            portDescriptors[port] = descriptor
+            tunnelIdTcpFds[sessionChannels.tunnelId] = descriptor
+            portTcpFds[port] = descriptor
         }
         logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
-    fun unregister(port: Int) {
-        lock.write {
-            unsafeUnregister(port)
-            portDescriptors.remove(port)
-        }
+    fun unregister(port: Int) = lock.write {
+        unsafeUnregister(port)
+        portTcpFds.remove(port)
+        Unit
     }
 
-    fun destroy() {
-        lock.write {
-            portDescriptors.forEach { (host, _) -> unsafeUnregister(host) }
-            portDescriptors.clear()
-        }
-        lock.writeLock().lock()
+    fun destroy() = lock.write {
+        portTcpFds.forEach { (host, _) -> unsafeUnregister(host) }
+        portTcpFds.clear()
+        Unit
     }
 
+    fun isRegistered(port: Int): Boolean = lock.read { portTcpFds.contains(port) }
 
-    fun isRegistered(port: Int): Boolean {
-        lock.read {
-            return portDescriptors.contains(port)
-        }
-    }
+    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? = lock.read { tunnelIdTcpFds[tunnelId]?.sessionChannels?.getChannel(sessionId) }
 
-    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? {
-        lock.read {
-            return tunnelIdDescriptors[tunnelId]?.sessionChannels?.getChannel(sessionId)
-        }
-    }
-
-
-    fun getDescriptor(port: Int): TcpDescriptor? {
-        lock.read {
-            return portDescriptors[port]
-        }
-    }
-
+    fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
 
     val snapshot: JSONArray
-        get() {
-            lock.read {
-                val array = JSONArray()
-                tunnelIdDescriptors.values.forEach {
+        get() = lock.read {
+            JSONArray().also { array ->
+                tunnelIdTcpFds.values.forEach {
                     array.put(JSONObject().also { obj ->
                         obj.put("port", it.port)
                         obj.put("conns", it.channelCount)
@@ -78,17 +59,15 @@ class TcpRegistry {
                         obj.put("local_port", it.tunnelRequest.localPort)
                     })
                 }
-                return array
             }
         }
 
     private fun unsafeUnregister(port: Int) {
-        portDescriptors[port]?.also {
-            tunnelIdDescriptors.remove(it.tunnelId)
+        portTcpFds[port]?.also {
+            tunnelIdTcpFds.remove(it.tunnelId)
             it.close()
             logger.info("Shutdown Tunnel: {}", it.tunnelRequest)
         }
     }
-
 
 }

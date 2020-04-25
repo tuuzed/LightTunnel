@@ -6,10 +6,11 @@ import lighttunnel.logger.loggerDelegate
 import java.io.File
 import java.net.URLDecoder
 
-class DefaultStaticFilePlugin(
+class HttpPluginImplStaticFile(
     private val rootPathList: List<String>,
     private val domainPrefixList: List<String>
-) : StaticFilePlugin {
+) : HttpPlugin {
+
     private val logger by loggerDelegate()
 
     override fun doHandle(request: HttpRequest): FullHttpResponse? {

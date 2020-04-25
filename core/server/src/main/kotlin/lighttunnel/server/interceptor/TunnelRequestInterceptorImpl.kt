@@ -3,7 +3,7 @@ package lighttunnel.server.interceptor
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.proto.TunnelRequest.Factory.copyTcp
-import lighttunnel.server.util.PortUtil
+import lighttunnel.util.PortUtil
 
 internal class TunnelRequestInterceptorImpl(
     /** 预置Token */

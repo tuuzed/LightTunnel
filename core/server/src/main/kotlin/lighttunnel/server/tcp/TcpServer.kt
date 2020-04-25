@@ -1,15 +1,13 @@
 package lighttunnel.server.tcp
 
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import lighttunnel.proto.ProtoException
-import lighttunnel.server.util.PortUtil
+import lighttunnel.util.PortUtil
 import lighttunnel.server.util.SessionChannels
 
 class TcpServer(
@@ -45,7 +43,7 @@ class TcpServer(
         } else {
             serverBootstrap.bind(addr, port)
         }
-        registry.register(port, sessionChannels, TcpDescriptor(addr, port, sessionChannels, bindChannelFuture))
+        registry.register(port, sessionChannels, TcpFd(addr, port, sessionChannels, bindChannelFuture))
     }
 
     fun destroy() = registry.destroy()

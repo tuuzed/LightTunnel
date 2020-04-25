@@ -5,16 +5,16 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.server.http.HttpServer
 import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.server.util.AttributeKeys
-import lighttunnel.server.util.IncIds
 import lighttunnel.server.util.SessionChannels
+import lighttunnel.util.IncIds
 import lighttunnel.util.LongUtil
 
 class TunnelServerChannelHandler(
@@ -106,22 +106,13 @@ class TunnelServerChannelHandler(
         val sessionPool = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
         when (sessionPool.tunnelRequest.type) {
             TunnelRequest.Type.TCP -> {
-                tcpServer ?: return
-                tcpServer.registry
-                    .getSessionChannel(msg.tunnelId, msg.sessionId)
-                    ?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
+                tcpServer?.registry?.getSessionChannel(msg.tunnelId, msg.sessionId)?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
             }
             TunnelRequest.Type.HTTP -> {
-                httpServer ?: return
-                httpServer.registry
-                    .getSessionChannel(msg.tunnelId, msg.sessionId)
-                    ?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
+                httpServer?.registry?.getSessionChannel(msg.tunnelId, msg.sessionId)?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
             }
             TunnelRequest.Type.HTTPS -> {
-                httpsServer ?: return
-                httpsServer.registry
-                    .getSessionChannel(msg.tunnelId, msg.sessionId)
-                    ?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
+                httpsServer?.registry?.getSessionChannel(msg.tunnelId, msg.sessionId)?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
             }
             else -> {
             }

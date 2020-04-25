@@ -40,7 +40,7 @@ data class TunnelRequest internal constructor(
         fun fromBytes(bytes: ByteArray): TunnelRequest {
             val buffer = Unpooled.wrappedBuffer(bytes)
             try {
-                val type = Type.valueOf(buffer.readByte())
+                val type = Type.ofCode(buffer.readByte())
                 val localPort = buffer.readInt()
                 val localAddrBytes = ByteArray(buffer.readInt())
                 buffer.readBytes(localAddrBytes)
@@ -236,7 +236,7 @@ data class TunnelRequest internal constructor(
 
         companion object {
             @JvmStatic
-            fun valueOf(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
+            fun ofCode(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
         }
 
     }

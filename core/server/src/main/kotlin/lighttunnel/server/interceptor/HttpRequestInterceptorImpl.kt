@@ -2,7 +2,7 @@ package lighttunnel.server.interceptor
 
 import io.netty.handler.codec.http.*
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.server.util.HttpUtil
+import lighttunnel.util.http.basicAuthorization
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.charset.StandardCharsets
@@ -27,7 +27,7 @@ internal class HttpRequestInterceptorImpl : HttpRequestInterceptor {
     private fun handleHttpBasicAuth(
         tunnelRequest: TunnelRequest, httpRequest: HttpRequest
     ): HttpResponse? {
-        val account = HttpUtil.getBasicAuthorization(httpRequest)
+        val account = httpRequest.basicAuthorization
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
         if (account == null || username != account[0] || password != account[1]) {

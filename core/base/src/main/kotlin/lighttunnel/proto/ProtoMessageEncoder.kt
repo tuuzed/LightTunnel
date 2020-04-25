@@ -11,7 +11,7 @@ class ProtoMessageEncoder : MessageToByteEncoder<ProtoMessage>() {
         msg ?: return
         out ?: return
         val totalLength = ProtoConsts.PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH +
-            ProtoConsts.PROTO_MESSAGE_COMMAND_LENGTH +
+            ProtoConsts.PROTO_MESSAGE_TYPE_LENGTH +
             msg.head.size +
             msg.data.size
         out.writeInt(totalLength)

@@ -21,7 +21,7 @@ class HttpServer(
     private val bindPort: Int,
     private val sslContext: SslContext? = null,
     private val interceptor: HttpRequestInterceptor,
-    private val staticFilePlugin: StaticFilePlugin? = null
+    private val httpPlugin: HttpPlugin? = null
 ) {
     private val logger by loggerDelegate()
     val registry = HttpRegistry()
@@ -47,7 +47,7 @@ class HttpServer(
                         .addLast("handler", HttpServerChannelHandler(
                             registry = registry,
                             interceptor = interceptor,
-                            staticFilePlugin = staticFilePlugin
+                            httpPlugin = httpPlugin
                         ))
                 }
             })

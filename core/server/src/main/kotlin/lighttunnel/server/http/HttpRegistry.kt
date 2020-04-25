@@ -14,8 +14,8 @@ import kotlin.concurrent.write
 class HttpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdDescriptors = HashMap<Long, HttpDescriptor>()
-    private val hostDescriptors = HashMap<String, HttpDescriptor>()
+    private val tunnelIdHttpFds = HashMap<Long, HttpFd>()
+    private val hostHttpFds = HashMap<String, HttpFd>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
@@ -23,69 +23,53 @@ class HttpRegistry {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
-        val descriptor = HttpDescriptor(host, sessionChannels)
+        val httpFd = HttpFd(host, sessionChannels)
         lock.write {
-            tunnelIdDescriptors[sessionChannels.tunnelId] = descriptor
-            hostDescriptors[host] = descriptor
+            tunnelIdHttpFds[sessionChannels.tunnelId] = httpFd
+            hostHttpFds[host] = httpFd
         }
         logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
-        logger.trace("hostDescriptors: {}", hostDescriptors)
-        logger.trace("tunnelIdDescriptors: {}", tunnelIdDescriptors)
+        logger.trace("hostHttpFds: {}", hostHttpFds)
+        logger.trace("tunnelIdHttpFds: {}", tunnelIdHttpFds)
     }
 
-    fun unregister(host: String?) {
-        lock.write {
-            unsafeUnregister(host)
-            hostDescriptors.remove(host)
-        }
+    fun unregister(host: String?) = lock.write {
+        unsafeUnregister(host)
+        hostHttpFds.remove(host)
+        Unit
     }
 
-    fun destroy() {
-        lock.write {
-            hostDescriptors.forEach { (host, _) -> unsafeUnregister(host) }
-            hostDescriptors.clear()
-        }
+    fun destroy() = lock.write {
+        hostHttpFds.forEach { (host, _) -> unsafeUnregister(host) }
+        hostHttpFds.clear()
+        Unit
     }
 
-    fun isRegistered(host: String): Boolean {
-        lock.read {
-            return hostDescriptors.contains(host)
-        }
-    }
+    fun isRegistered(host: String): Boolean = lock.read { hostHttpFds.contains(host) }
 
-    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? {
-        lock.read {
-            return tunnelIdDescriptors[tunnelId]?.sessionChannels?.getChannel(sessionId)
-        }
-    }
+    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? = lock.read { tunnelIdHttpFds[tunnelId]?.sessionChannels?.getChannel(sessionId) }
 
-    fun getDescriptor(host: String): HttpDescriptor? {
-        lock.read {
-            return hostDescriptors[host]
-        }
-    }
+    fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
 
     val snapshot: JSONArray
-        get() {
-            lock.read {
-                val array = JSONArray()
-                tunnelIdDescriptors.values.forEach {
+        get() = lock.read {
+            JSONArray().also { array ->
+                tunnelIdHttpFds.values.forEach { fd ->
                     array.put(JSONObject().also { obj ->
-                        obj.put("host", it.host)
-                        obj.put("conns", it.channelCount)
-                        obj.put("name", it.tunnelRequest.name)
-                        obj.put("local_addr", it.tunnelRequest.localAddr)
-                        obj.put("local_port", it.tunnelRequest.localPort)
+                        obj.put("host", fd.host)
+                        obj.put("conns", fd.channelCount)
+                        obj.put("name", fd.tunnelRequest.name)
+                        obj.put("local_addr", fd.tunnelRequest.localAddr)
+                        obj.put("local_port", fd.tunnelRequest.localPort)
                     })
                 }
-                return array
             }
         }
 
     private fun unsafeUnregister(host: String?) {
         host ?: return
-        hostDescriptors[host]?.also {
-            tunnelIdDescriptors.remove(it.tunnelId)
+        hostHttpFds[host]?.also {
+            tunnelIdHttpFds.remove(it.tunnelId)
             it.close()
             logger.info("Shutdown Tunnel: {}", it.tunnelRequest)
         }

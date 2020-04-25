@@ -2,7 +2,7 @@ package lighttunnel.server.http
 
 import lighttunnel.server.util.SessionChannels
 
-class HttpDescriptor(
+class HttpFd(
     val host: String,
     val sessionChannels: SessionChannels
 ) {

@@ -4,7 +4,10 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import lighttunnel.proto.TunnelRequest
-import java.util.concurrent.ConcurrentHashMap
+import lighttunnel.util.IncIds
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class SessionChannels(
     val tunnelId: Long,
@@ -12,31 +15,26 @@ class SessionChannels(
     val tunnelChannel: Channel
 ) {
     private val ids = IncIds()
-    private val cachedChannels = ConcurrentHashMap<Long, Channel>()
+    private val cachedChannels = HashMap<Long, Channel>()
+    private val lock = ReentrantReadWriteLock()
 
-    val cachedChannelCount: Int
-        get() {
-            return cachedChannels.count()
-        }
+    val cachedChannelCount: Int get() = cachedChannels.count()
 
     fun putChannel(channel: Channel): Long {
         val sessionId = ids.nextId
-        cachedChannels[sessionId] = channel
+        lock.write { cachedChannels[sessionId] = channel }
         return sessionId
     }
 
-    fun getChannel(sessionId: Long): Channel? {
-        return cachedChannels[sessionId]
-    }
+    fun getChannel(sessionId: Long): Channel? = lock.read { cachedChannels[sessionId] }
 
-    fun removeChannel(sessionId: Long): Channel? {
-        return cachedChannels.remove(sessionId)
-    }
+    fun removeChannel(sessionId: Long): Channel? = lock.write { cachedChannels.remove(sessionId) }
 
-    fun destroy() {
+    fun destroy() = lock.write {
         cachedChannels.forEach { (_, ch) ->
             ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         }
         cachedChannels.clear()
+        Unit
     }
 }
