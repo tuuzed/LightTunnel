@@ -3,7 +3,7 @@ package ltcmd.client
 import io.netty.handler.ssl.SslContext
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.callback.OnTunnelStateListener
-import lighttunnel.client.connect.TunnelConnectDescriptor
+import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.cmd.base.BuildConfig
@@ -22,16 +22,16 @@ import java.io.File
 class Application : AbstractApplication(), OnTunnelStateListener {
     private val logger by loggerDelegate()
 
-    override fun onConnecting(descriptor: TunnelConnectDescriptor, reconnect: Boolean) {
-        logger.info("onConnecting: {}, reconnect: {}", descriptor, reconnect)
+    override fun onConnecting(fd: TunnelConnectFd, reconnect: Boolean) {
+        logger.info("onConnecting: {}, reconnect: {}", fd, reconnect)
     }
 
-    override fun onConnected(descriptor: TunnelConnectDescriptor) {
-        logger.info("onConnected: {}", descriptor)
+    override fun onConnected(fd: TunnelConnectFd) {
+        logger.info("onConnected: {}", fd)
     }
 
-    override fun onDisconnect(descriptor: TunnelConnectDescriptor, err: Boolean, errCause: Throwable?) {
-        logger.info("onDisconnect: {}, err: {}", descriptor, err, errCause)
+    override fun onDisconnect(fd: TunnelConnectFd, err: Boolean, errCause: Throwable?) {
+        logger.info("onDisconnect: {}, err: {}", fd, err, errCause)
     }
 
     override val options: Options

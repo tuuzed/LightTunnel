@@ -46,6 +46,6 @@ class TcpServer(
         registry.register(port, sessionChannels, TcpFd(addr, port, sessionChannels, bindChannelFuture))
     }
 
-    fun destroy() = registry.destroy()
+    fun depose() = registry.depose()
 
 }

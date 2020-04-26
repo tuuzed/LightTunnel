@@ -14,8 +14,8 @@ import kotlin.concurrent.write
 class HttpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdHttpFds = HashMap<Long, HttpFd>()
-    private val hostHttpFds = HashMap<String, HttpFd>()
+    private val tunnelIdHttpFds = hashMapOf<Long, HttpFd>()
+    private val hostHttpFds = hashMapOf<String, HttpFd>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
@@ -39,7 +39,7 @@ class HttpRegistry {
         Unit
     }
 
-    fun destroy() = lock.write {
+    fun depose() = lock.write {
         hostHttpFds.forEach { (host, _) -> unsafeUnregister(host) }
         hostHttpFds.clear()
         Unit

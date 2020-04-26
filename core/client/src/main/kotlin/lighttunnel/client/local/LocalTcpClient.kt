@@ -11,14 +11,17 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class LocalTcpClient(
     workerGroup: NioEventLoopGroup
 ) {
     private val logger by loggerDelegate()
     private val bootstrap = Bootstrap()
-    private val cachedChannels = ConcurrentHashMap<String, Channel>()
+    private val cachedChannels = hashMapOf<String, Channel>()
+    private val lock = ReentrantReadWriteLock()
 
     init {
         this.bootstrap
@@ -72,32 +75,27 @@ class LocalTcpClient(
         return removeCachedChannel(tunnelId, sessionId)
     }
 
-    fun destroy() {
+    fun depose() = lock.write {
         cachedChannels.values.forEach {
             it.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         }
         cachedChannels.clear()
+        Unit
     }
 
     private fun getCachedChannel(tunnelId: Long, sessionId: Long): Channel? {
         val key = getCachedChannelKey(tunnelId, sessionId)
-        synchronized(cachedChannels) {
-            return cachedChannels[key]
-        }
+        return lock.read { cachedChannels[key] }
     }
 
     private fun putCachedChannel(tunnelId: Long, sessionId: Long, channel: Channel) {
         val key = getCachedChannelKey(tunnelId, sessionId)
-        synchronized(cachedChannels) {
-            cachedChannels.put(key, channel)
-        }
+        lock.write { cachedChannels.put(key, channel) }
     }
 
     private fun removeCachedChannel(tunnelId: Long, sessionId: Long): Channel? {
         val key = getCachedChannelKey(tunnelId, sessionId)
-        synchronized(cachedChannels) {
-            return cachedChannels.remove(key)
-        }
+        return lock.write { cachedChannels.remove(key) }
     }
 
     private fun getCachedChannelKey(tunnelId: Long, sessionId: Long): String {

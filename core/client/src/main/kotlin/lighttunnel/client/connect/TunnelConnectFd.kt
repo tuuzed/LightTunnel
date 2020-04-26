@@ -12,7 +12,7 @@ import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TunnelConnectDescriptor(
+class TunnelConnectFd(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
@@ -27,7 +27,7 @@ class TunnelConnectDescriptor(
 
     val isClosed get() = closedFlag.get()
 
-    internal fun connect(callback: OnConnectFailureCallback? = null) {
+    fun connect(callback: OnConnectFailureCallback? = null) {
         if (closedFlag.get()) {
             logger.warn("This tunnel already closed.")
             return
@@ -39,17 +39,17 @@ class TunnelConnectDescriptor(
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = tunnelRequest.toBytes()))
-                    future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).set(this)
+                    future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(this)
                 } else {
                     callback?.onConnectFailure(this)
                 }
             })
     }
 
-    internal fun close() {
+    fun close() {
         closedFlag.set(true)
         connectChannelFuture?.apply {
-            channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).set(null)
+            channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(null)
             channel().close()
         }
     }
@@ -58,8 +58,8 @@ class TunnelConnectDescriptor(
         return finallyTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
     }
 
-    internal interface OnConnectFailureCallback {
-        fun onConnectFailure(descriptor: TunnelConnectDescriptor) {}
+    interface OnConnectFailureCallback {
+        fun onConnectFailure(fd: TunnelConnectFd) {}
     }
 
 }

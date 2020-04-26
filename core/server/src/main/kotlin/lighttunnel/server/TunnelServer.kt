@@ -127,11 +127,11 @@ class TunnelServer(
         dashboardServer?.start()
     }
 
-    fun destroy(): Unit = lock.withLock {
-        tcpServer?.destroy()
-        httpServer?.destroy()
-        httpsServer?.destroy()
-        dashboardServer?.destroy()
+    fun depose(): Unit = lock.withLock {
+        tcpServer?.depose()
+        httpServer?.depose()
+        httpsServer?.depose()
+        dashboardServer?.depose()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }

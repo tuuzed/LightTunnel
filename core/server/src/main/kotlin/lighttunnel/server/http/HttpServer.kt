@@ -67,5 +67,5 @@ class HttpServer(
         )
     }
 
-    fun destroy() = registry.destroy()
+    fun depose() = registry.depose()
 }

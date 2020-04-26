@@ -69,7 +69,7 @@ class DashboardServer(
         return routerConfig.doRequest(request)
     }
 
-    fun destroy() {
+    fun depose() {
         bindChannelFuture?.channel()?.close()
     }
 

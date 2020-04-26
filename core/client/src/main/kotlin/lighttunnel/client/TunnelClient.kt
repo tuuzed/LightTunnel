@@ -16,7 +16,7 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.ssl.SslContext
 import lighttunnel.client.callback.OnTunnelStateCallback
 import lighttunnel.client.callback.OnTunnelStateListener
-import lighttunnel.client.connect.TunnelConnectDescriptor
+import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
@@ -38,7 +38,7 @@ class TunnelClient(
     private val dashBindAddr: String? = null,
     private val dashboardBindPort: Int? = null,
     private val onTunnelStateListener: OnTunnelStateListener? = null
-) : TunnelConnectDescriptor.OnConnectFailureCallback, OnTunnelStateCallback {
+) : TunnelConnectFd.OnConnectFailureCallback, OnTunnelStateCallback {
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
     private val bootstrap = Bootstrap()
@@ -48,45 +48,45 @@ class TunnelClient(
     private var dashboardServer: DashboardServer? = null
     private val lock = ReentrantLock()
 
-    private fun tryReconnect(descriptor: TunnelConnectDescriptor) {
-        if (!descriptor.isClosed && (loseReconnect || errorReconnect)) {
+    private fun tryReconnect(fd: TunnelConnectFd) {
+        if (!fd.isClosed && (loseReconnect || errorReconnect)) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
-            descriptor.connect(this)
-            onTunnelStateListener?.onConnecting(descriptor, true)
+            fd.connect(this)
+            onTunnelStateListener?.onConnecting(fd, true)
         } else {
             // 不需要自动重连时移除缓存
-            tunnelConnectRegistry.unregister(descriptor)
+            tunnelConnectRegistry.unregister(fd)
         }
     }
 
     override fun onTunnelInactive(ctx: ChannelHandlerContext) {
         super.onTunnelInactive(ctx)
-        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()
-        if (descriptor != null) {
+        val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
+        if (fd != null) {
             val errFlag = ctx.channel().attr(AttributeKeys.AK_ERROR_FLAG).get()
             val errCause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
             if (errFlag == true) {
-                onTunnelStateListener?.onDisconnect(descriptor, true, errCause)
+                onTunnelStateListener?.onDisconnect(fd, true, errCause)
                 logger.trace("{}", errCause.message)
             } else {
-                onTunnelStateListener?.onDisconnect(descriptor, false, null)
-                tryReconnect(descriptor)
+                onTunnelStateListener?.onDisconnect(fd, false, null)
+                tryReconnect(fd)
             }
         }
     }
 
     override fun onTunnelConnected(ctx: ChannelHandlerContext) {
         super.onTunnelConnected(ctx)
-        val descriptor = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_DESCRIPTOR).get()
-        if (descriptor != null) {
-            onTunnelStateListener?.onConnected(descriptor)
+        val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
+        if (fd != null) {
+            onTunnelStateListener?.onConnected(fd)
         }
     }
 
-    override fun onConnectFailure(descriptor: TunnelConnectDescriptor) {
-        super.onConnectFailure(descriptor)
-        tryReconnect(descriptor)
+    override fun onConnectFailure(fd: TunnelConnectFd) {
+        super.onConnectFailure(fd)
+        tryReconnect(fd)
     }
 
     init {
@@ -104,30 +104,30 @@ class TunnelClient(
         serverPort: Int,
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
-    ): TunnelConnectDescriptor {
+    ): TunnelConnectFd {
         startDashboardServer()
-        val descriptor = TunnelConnectDescriptor(
+        val fd = TunnelConnectFd(
             if (sslContext == null) bootstrap else getSslBootstrap(sslContext),
             serverAddr,
             serverPort,
             tunnelRequest
         )
-        descriptor.connect(this)
-        onTunnelStateListener?.onConnecting(descriptor, false)
-        tunnelConnectRegistry.register(descriptor)
-        return descriptor
+        fd.connect(this)
+        onTunnelStateListener?.onConnecting(fd, false)
+        tunnelConnectRegistry.register(fd)
+        return fd
     }
 
-    fun close(descriptor: TunnelConnectDescriptor) {
-        descriptor.close()
-        tunnelConnectRegistry.unregister(descriptor)
+    fun close(fd: TunnelConnectFd) {
+        fd.close()
+        tunnelConnectRegistry.unregister(fd)
     }
 
-    fun destroy() = lock.withLock {
-        tunnelConnectRegistry.destroy()
+    fun depose() = lock.withLock {
+        tunnelConnectRegistry.depose()
         cachedSslBootstraps.clear()
-        localTcpClient.destroy()
-        dashboardServer?.destroy()
+        localTcpClient.depose()
+        dashboardServer?.depose()
         workerGroup.shutdownGracefully()
     }
 

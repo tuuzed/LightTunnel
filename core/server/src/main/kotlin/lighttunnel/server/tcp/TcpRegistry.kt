@@ -13,8 +13,8 @@ import kotlin.concurrent.write
 class TcpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdTcpFds = HashMap<Long, TcpFd>()
-    private val portTcpFds = HashMap<Int, TcpFd>()
+    private val tunnelIdTcpFds = hashMapOf<Long, TcpFd>()
+    private val portTcpFds = hashMapOf<Int, TcpFd>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
@@ -35,7 +35,7 @@ class TcpRegistry {
         Unit
     }
 
-    fun destroy() = lock.write {
+    fun depose() = lock.write {
         portTcpFds.forEach { (host, _) -> unsafeUnregister(host) }
         portTcpFds.clear()
         Unit
