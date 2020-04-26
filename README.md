@@ -3,7 +3,7 @@
 支持TCP、HTTP、HTTPS穿透。
 
 ![Java CI](https://github.com/tuuzed/LightTunnel/workflows/Java%20CI/badge.svg)
-![Last Version](https://img.shields.io/badge/LightTunnel-0.5.11-blue.svg)
+![LightTunnel LaseVersion](https://img.shields.io/badge/LightTunnel-v0.5.11-blue.svg)
 ![Thank Idea](https://img.shields.io/badge/Thank-jetbrains.com-green.svg)
 
 ## 0x00 发行版下载
@@ -21,7 +21,7 @@
  lts.jar       - 服务器端jvm可执行文件
  lts.ini       - 服务器端最小配置文件   
  lts_full.ini  - 服务器端完整配置文件   
- lts.jks       - 服务器端SSl证书
+ lts.jks       - 服务器端SSL证书
 ```
 - 客户端文件
 ``` 
@@ -30,7 +30,7 @@
  ltc.jar       - 客户端jvm可执行文件
  ltc.ini       - 客户端最小配置文件
  ltc_full.ini  - 客户端完整配置文件   
- ltc.jks       - 客户端SSl证书
+ ltc.jks       - 客户端SSL证书
 ```
 
 
