@@ -176,7 +176,7 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
             "org.json",
             "org.apache.commons.cli"
         ))
-        LoggerFactory.configConsole(level = logLevel)
+        LoggerFactory.configConsole(level = logLevel, conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n")
         if (logFile != null) {
             LoggerFactory.configFile(
                 level = logLevel,
