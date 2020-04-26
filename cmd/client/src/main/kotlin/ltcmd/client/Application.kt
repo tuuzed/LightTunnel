@@ -3,6 +3,8 @@ package ltcmd.client
 import io.netty.handler.ssl.SslContext
 import lighttunnel.BuildConfig
 import lighttunnel.client.TunnelClient
+import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
+import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
 import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
@@ -17,6 +19,7 @@ import org.apache.log4j.helpers.OptionConverter
 import org.ini4j.Ini
 import org.ini4j.Profile
 import java.io.File
+import kotlin.experimental.or
 
 class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
     private val logger by loggerDelegate()
@@ -89,8 +92,7 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
         val workerThreads = basic["worker_threads"].asInt() ?: -1
         return TunnelClient(
             workerThreads = workerThreads,
-            loseReconnect = true,
-            errorReconnect = false,
+            retryConnectPolicy = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
             onTunnelStateListener = this,
             // dashboard
             dashboardBindPort = basic["dashboard_bind_port"].asInt()

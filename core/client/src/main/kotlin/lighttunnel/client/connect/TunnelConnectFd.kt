@@ -19,16 +19,16 @@ class TunnelConnectFd(
     val tunnelRequest: TunnelRequest
 ) {
     private val logger by loggerDelegate()
-    private val closedFlag = AtomicBoolean(false)
     private var connectChannelFuture: ChannelFuture? = null
 
     var finallyTunnelRequest: TunnelRequest? = null
         internal set
 
-    val isClosed get() = closedFlag.get()
+    private val activeClosedFlag = AtomicBoolean(false)
+    val isActiveClosed get() = activeClosedFlag.get()
 
     internal fun connect(callback: OnConnectFailureCallback? = null) {
-        if (closedFlag.get()) {
+        if (isActiveClosed) {
             logger.warn("This tunnel already closed.")
             return
         }
@@ -38,7 +38,8 @@ class TunnelConnectFd(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = tunnelRequest.toBytes()))
+                    val head = (finallyTunnelRequest ?: tunnelRequest).toBytes()
+                    future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
                     future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(this)
                 } else {
                     callback?.onConnectFailure(this)
@@ -47,7 +48,7 @@ class TunnelConnectFd(
     }
 
     internal fun close() {
-        closedFlag.set(true)
+        activeClosedFlag.set(true)
         connectChannelFuture?.apply {
             channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(null)
             channel().close()

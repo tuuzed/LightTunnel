@@ -1,6 +1,5 @@
 package lighttunnel.server
 
-import io.netty.handler.ssl.util.SelfSignedCertificate
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.server.http.HttpPluginImplStaticFile
 import lighttunnel.util.SslContextUtil
@@ -23,6 +22,7 @@ class TunnelServerTest {
         ))
         LoggerFactory.configConsole(level = Level.ALL)
         tunnelServer = TunnelServer(
+            bindAddr = "::",
             bindPort = 5080,
             sslBindPort = 5443,
             sslContext = SslContextUtil.forBuiltinServer(),

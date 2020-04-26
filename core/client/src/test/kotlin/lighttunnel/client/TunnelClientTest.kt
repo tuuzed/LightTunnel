@@ -20,7 +20,7 @@ class TunnelClientTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        tunnelClient = TunnelClient(dashboardBindPort = 5081)
+        tunnelClient = TunnelClient(dashBindAddr = "::", dashboardBindPort = 5081)
     }
 
     @Test
