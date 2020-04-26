@@ -10,7 +10,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-
 class HttpRegistry {
     private val logger by loggerDelegate()
 

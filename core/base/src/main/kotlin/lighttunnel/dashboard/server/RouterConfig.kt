@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class RouterConfig internal constructor() {
     private val mapping = ConcurrentHashMap<String, RouteCallback>()
+
     private var notfound: RouteCallback = {
         DefaultFullHttpResponse(
             HttpVersion.HTTP_1_1,

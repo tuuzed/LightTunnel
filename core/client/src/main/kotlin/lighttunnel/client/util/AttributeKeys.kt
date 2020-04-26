@@ -16,8 +16,6 @@ object AttributeKeys {
 
     val AK_TUNNEL_REQUEST: AttributeKey<TunnelRequest> = AttributeKey.newInstance("\$tunnel_request")
 
-    val AK_ERROR_FLAG: AttributeKey<Boolean> = AttributeKey.newInstance("\$error_flag")
-
     val AK_ERROR_CAUSE: AttributeKey<Throwable> = AttributeKey.newInstance("\$error_cause")
 
     val AK_TUNNEL_CONNECT_FD: AttributeKey<TunnelConnectFd> = AttributeKey.newInstance("\$tunnel_connect_fd")

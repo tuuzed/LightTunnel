@@ -14,8 +14,6 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.callback.OnTunnelStateCallback
-import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
@@ -38,7 +36,7 @@ class TunnelClient(
     private val dashBindAddr: String? = null,
     private val dashboardBindPort: Int? = null,
     private val onTunnelStateListener: OnTunnelStateListener? = null
-) : TunnelConnectFd.OnConnectFailureCallback, OnTunnelStateCallback {
+) : TunnelConnectFd.OnConnectFailureCallback, TunnelClientChannelHandler.OnChannelStateListener {
     private val logger by loggerDelegate()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
     private val bootstrap = Bootstrap()
@@ -60,24 +58,19 @@ class TunnelClient(
         }
     }
 
-    override fun onTunnelInactive(ctx: ChannelHandlerContext) {
-        super.onTunnelInactive(ctx)
+    override fun onChannelInactive(ctx: ChannelHandlerContext) {
+        super.onChannelInactive(ctx)
         val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
         if (fd != null) {
-            val errFlag = ctx.channel().attr(AttributeKeys.AK_ERROR_FLAG).get()
-            val errCause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
-            if (errFlag == true) {
-                onTunnelStateListener?.onDisconnect(fd, true, errCause)
-                logger.trace("{}", errCause.message)
-            } else {
-                onTunnelStateListener?.onDisconnect(fd, false, null)
-                tryReconnect(fd)
-            }
+            val cause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
+            onTunnelStateListener?.onDisconnect(fd, cause)
+            logger.trace("{}", cause?.message)
+            tryReconnect(fd)
         }
     }
 
-    override fun onTunnelConnected(ctx: ChannelHandlerContext) {
-        super.onTunnelConnected(ctx)
+    override fun onChannelConnected(ctx: ChannelHandlerContext) {
+        super.onChannelConnected(ctx)
         val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
         if (fd != null) {
             onTunnelStateListener?.onConnected(fd)
@@ -96,7 +89,7 @@ class TunnelClient(
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(createChannelInitializer(null))
+            .handler(InnerChannelInitializer(localTcpClient, this))
     }
 
     fun connect(
@@ -107,7 +100,7 @@ class TunnelClient(
     ): TunnelConnectFd {
         startDashboardServer()
         val fd = TunnelConnectFd(
-            if (sslContext == null) bootstrap else getSslBootstrap(sslContext),
+            sslContext?.bootstrap ?: bootstrap,
             serverAddr,
             serverPort,
             tunnelRequest
@@ -147,21 +140,26 @@ class TunnelClient(
                     )
                 }
             }
-            dashboardServer = server
             server.start()
+            dashboardServer = server
         }
     }
 
-    private fun getSslBootstrap(sslContext: SslContext): Bootstrap {
-        return cachedSslBootstraps[sslContext] ?: Bootstrap()
+    private val SslContext.bootstrap: Bootstrap
+        get() = cachedSslBootstraps[this] ?: Bootstrap()
             .group(workerGroup)
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(createChannelInitializer(sslContext)).also { cachedSslBootstraps[sslContext] = it }
-    }
+            .handler(InnerChannelInitializer(
+                localTcpClient, this@TunnelClient, this
+            )).also { cachedSslBootstraps[this] = it }
 
-    private fun createChannelInitializer(sslContext: SslContext?) = object : ChannelInitializer<SocketChannel>() {
+    private class InnerChannelInitializer(
+        private val localTcpClient: LocalTcpClient,
+        private val onChannelStateListener: TunnelClientChannelHandler.OnChannelStateListener,
+        private val sslContext: SslContext? = null
+    ) : ChannelInitializer<SocketChannel>() {
         override fun initChannel(ch: SocketChannel?) {
             ch ?: return
             if (sslContext != null) {
@@ -173,10 +171,15 @@ class TunnelClient(
                 .addLast("decoder", ProtoMessageDecoder())
                 .addLast("encoder", ProtoMessageEncoder())
                 .addLast("handler", TunnelClientChannelHandler(
-                    localTcpClient, this@TunnelClient
+                    localTcpClient,
+                    onChannelStateListener
                 ))
         }
     }
 
-
+    interface OnTunnelStateListener {
+        fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {}
+        fun onConnected(fd: TunnelConnectFd) {}
+        fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {}
+    }
 }

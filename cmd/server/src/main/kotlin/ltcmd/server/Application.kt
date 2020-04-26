@@ -1,7 +1,7 @@
 package ltcmd.server
 
+import lighttunnel.BuildConfig
 import lighttunnel.cmd.AbstractApplication
-import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.TunnelServer

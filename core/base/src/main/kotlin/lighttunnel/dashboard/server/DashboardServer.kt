@@ -6,7 +6,10 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.FullHttpResponse
+import io.netty.handler.codec.http.HttpObjectAggregator
+import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
@@ -46,7 +49,7 @@ class DashboardServer(
 
     }
 
-    fun router(block: RouteBlock): DashboardServer {
+    fun router(block: RouterConfig.() -> Unit): DashboardServer {
         block(routerConfig)
         return this
     }

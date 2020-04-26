@@ -1,9 +1,9 @@
 package lighttunnel.server
 
-import io.netty.handler.ssl.SslContextBuilder
 import io.netty.handler.ssl.util.SelfSignedCertificate
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.server.http.HttpPluginImplStaticFile
+import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
@@ -22,12 +22,14 @@ class TunnelServerTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        val ssc = SelfSignedCertificate()
         tunnelServer = TunnelServer(
+            bindPort = 5080,
+            sslBindPort = 5443,
+            sslContext = SslContextUtil.forBuiltinServer(),
             httpBindPort = 8080,
             httpsBindPort = 8443,
-            httpsContext = SslContextBuilder.forServer(ssc.key(), ssc.cert()).build(),
-            dashboardBindPort = 4000,
+            httpsContext = SslContextUtil.forBuiltinServer(),
+            dashboardBindPort = 5081,
             httpPlugin = HttpPluginImplStaticFile(
                 rootPathList = listOf("C:\\", "D:\\"),
                 domainPrefixList = listOf("127.0.0.1")

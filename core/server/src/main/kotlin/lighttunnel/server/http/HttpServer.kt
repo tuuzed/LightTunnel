@@ -17,6 +17,7 @@ import lighttunnel.server.interceptor.HttpRequestInterceptor
 class HttpServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
+    private val registry: HttpRegistry,
     private val bindAddr: String?,
     private val bindPort: Int,
     private val sslContext: SslContext? = null,
@@ -24,7 +25,6 @@ class HttpServer(
     private val httpPlugin: HttpPlugin? = null
 ) {
     private val logger by loggerDelegate()
-    val registry = HttpRegistry()
     private val serverBootstrap = ServerBootstrap()
     private val isHttps: Boolean get() = sslContext != null
 
@@ -67,5 +67,4 @@ class HttpServer(
         )
     }
 
-    fun depose() = registry.depose()
 }

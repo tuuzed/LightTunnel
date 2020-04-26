@@ -7,15 +7,14 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import lighttunnel.proto.ProtoException
-import lighttunnel.util.PortUtil
 import lighttunnel.server.util.SessionChannels
+import lighttunnel.util.PortUtil
 
 class TcpServer(
     bossGroup: NioEventLoopGroup,
-    workerGroup: NioEventLoopGroup
+    workerGroup: NioEventLoopGroup,
+    private val registry: TcpRegistry
 ) {
-
-    val registry = TcpRegistry()
 
     private val serverBootstrap = ServerBootstrap()
 
@@ -45,7 +44,5 @@ class TcpServer(
         }
         registry.register(port, sessionChannels, TcpFd(addr, port, sessionChannels, bindChannelFuture))
     }
-
-    fun depose() = registry.depose()
 
 }

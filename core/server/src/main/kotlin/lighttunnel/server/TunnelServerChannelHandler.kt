@@ -9,8 +9,9 @@ import lighttunnel.proto.ProtoException
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.server.http.HttpServer
+import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.interceptor.TunnelRequestInterceptor
+import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.server.util.AttributeKeys
 import lighttunnel.server.util.SessionChannels
@@ -20,9 +21,13 @@ import lighttunnel.util.LongUtil
 class TunnelServerChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
     private val tunnelIds: IncIds,
+    // tcp
     private val tcpServer: TcpServer? = null,
-    private val httpServer: HttpServer? = null,
-    private val httpsServer: HttpServer? = null
+    private val tcpRegistry: TcpRegistry? = null,
+    // http
+    private val httpRegistry: HttpRegistry? = null,
+    // https
+    private val httpsRegistry: HttpRegistry? = null
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
     private val logger by loggerDelegate()
 
@@ -34,9 +39,9 @@ class TunnelServerChannelHandler(
         }
         ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get()?.also { sc ->
             when (sc.tunnelRequest.type) {
-                TunnelRequest.Type.TCP -> tcpServer?.also { it.registry.unregister(sc.tunnelRequest.remotePort) }
-                TunnelRequest.Type.HTTP -> httpServer?.also { it.registry.unregister(sc.tunnelRequest.host) }
-                TunnelRequest.Type.HTTPS -> httpsServer?.also { it.registry.unregister(sc.tunnelRequest.host) }
+                TunnelRequest.Type.TCP -> tcpRegistry?.unregister(sc.tunnelRequest.remotePort)
+                TunnelRequest.Type.HTTP -> httpRegistry?.unregister(sc.tunnelRequest.host)
+                TunnelRequest.Type.HTTPS -> httpsRegistry?.unregister(sc.tunnelRequest.host)
                 else -> {
                     // Nothing
                 }
@@ -85,11 +90,11 @@ class TunnelServerChannelHandler(
                         ?: throw ProtoException("TCP协议隧道未开启")
                 }
                 TunnelRequest.Type.HTTP -> {
-                    httpServer?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
+                    httpRegistry?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
                         ?: throw ProtoException("HTTP协议隧道未开启")
                 }
                 TunnelRequest.Type.HTTPS -> {
-                    httpsServer?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
+                    httpsRegistry?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
                         ?: throw ProtoException("HTTPS协议隧道未开启")
                 }
                 else -> throw ProtoException("不支持的隧道类型")
@@ -103,20 +108,14 @@ class TunnelServerChannelHandler(
 
     @Throws(Exception::class)
     private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        val sessionPool = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
-        when (sessionPool.tunnelRequest.type) {
-            TunnelRequest.Type.TCP -> {
-                tcpServer?.registry?.getSessionChannel(msg.tunnelId, msg.sessionId)?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
-            }
-            TunnelRequest.Type.HTTP -> {
-                httpServer?.registry?.getSessionChannel(msg.tunnelId, msg.sessionId)?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
-            }
-            TunnelRequest.Type.HTTPS -> {
-                httpsServer?.registry?.getSessionChannel(msg.tunnelId, msg.sessionId)?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
-            }
-            else -> {
-            }
+        val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
+        val channel = when (sessionChannels.tunnelRequest.type) {
+            TunnelRequest.Type.TCP -> tcpRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
+            TunnelRequest.Type.HTTP -> httpRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
+            TunnelRequest.Type.HTTPS -> httpsRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
+            else -> null
         }
+        channel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
     }
 
     @Throws(Exception::class)
@@ -148,16 +147,16 @@ class TunnelServerChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun handleHttpRequestMessage(ctx: ChannelHandlerContext, server: HttpServer, tunnelRequest: TunnelRequest) {
+    private fun handleHttpRequestMessage(ctx: ChannelHandlerContext, registry: HttpRegistry, tunnelRequest: TunnelRequest) {
         @Suppress("NAME_SHADOWING")
         val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(tunnelRequest)
-        if (server.registry.isRegistered(tunnelRequest.host)) {
+        if (registry.isRegistered(tunnelRequest.host)) {
             throw ProtoException("host(${tunnelRequest.host}) already used")
         }
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionChannels)
-        server.registry.register(tunnelRequest.host, sessionChannels)
+        registry.register(tunnelRequest.host, sessionChannels)
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))

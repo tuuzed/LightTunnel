@@ -27,7 +27,7 @@ class TunnelConnectFd(
 
     val isClosed get() = closedFlag.get()
 
-    fun connect(callback: OnConnectFailureCallback? = null) {
+    internal fun connect(callback: OnConnectFailureCallback? = null) {
         if (closedFlag.get()) {
             logger.warn("This tunnel already closed.")
             return
@@ -46,7 +46,7 @@ class TunnelConnectFd(
             })
     }
 
-    fun close() {
+    internal fun close() {
         closedFlag.set(true)
         connectChannelFuture?.apply {
             channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(null)

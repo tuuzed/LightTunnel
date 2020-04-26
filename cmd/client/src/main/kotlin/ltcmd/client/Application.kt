@@ -1,12 +1,11 @@
 package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
+import lighttunnel.BuildConfig
 import lighttunnel.client.TunnelClient
-import lighttunnel.client.callback.OnTunnelStateListener
 import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
-import lighttunnel.cmd.base.BuildConfig
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.TunnelRequest
@@ -19,19 +18,19 @@ import org.ini4j.Ini
 import org.ini4j.Profile
 import java.io.File
 
-class Application : AbstractApplication(), OnTunnelStateListener {
+class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
     private val logger by loggerDelegate()
 
-    override fun onConnecting(fd: TunnelConnectFd, reconnect: Boolean) {
-        logger.info("onConnecting: {}, reconnect: {}", fd, reconnect)
+    override fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {
+        logger.info("onConnecting: {}, retryConnect: {}", fd, retryConnect)
     }
 
     override fun onConnected(fd: TunnelConnectFd) {
         logger.info("onConnected: {}", fd)
     }
 
-    override fun onDisconnect(fd: TunnelConnectFd, err: Boolean, errCause: Throwable?) {
-        logger.info("onDisconnect: {}, err: {}", fd, err, errCause)
+    override fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {
+        logger.info("onDisconnect: {}, cause: {}", fd, cause)
     }
 
     override val options: Options

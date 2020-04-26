@@ -18,7 +18,6 @@ class TcpServerChannelHandler(
 ) : SimpleChannelInboundHandler<ByteBuf>() {
     private val logger by loggerDelegate()
 
-
     override fun channelActive(ctx: ChannelHandlerContext?) {
         if (ctx != null) {
             val tcpFd = ctx.tcpFd
@@ -43,9 +42,9 @@ class TcpServerChannelHandler(
             if (tcpFd != null) {
                 val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
                 if (sessionId != null) {
-                    tcpFd.sessionChannels.removeChannel(sessionId)
-                        ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                        ?.addListener(ChannelFutureListener.CLOSE)
+                    tcpFd.sessionChannels.removeChannel(sessionId)?.also {
+                        it.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+                    }
                 }
                 // 解决 HTTP/1.x 数据传输问题
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
@@ -70,17 +69,17 @@ class TcpServerChannelHandler(
         ctx ?: return
         msg ?: return
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get() ?: return
-        val descriptor = ctx.tcpFd ?: return
-        val head = LongUtil.toBytes(descriptor.tunnelId, sessionId)
+        val fd = ctx.tcpFd ?: return
+        val head = LongUtil.toBytes(fd.tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)
-        descriptor.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
+        fd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
     private val ChannelHandlerContext?.tcpFd: TcpFd?
         get() {
             this ?: return null
-            val sa = this.channel().localAddress() as InetSocketAddress
-            return registry.getTcpFd(sa.port)
+            val sa = this.channel().localAddress()
+            return if (sa is InetSocketAddress) registry.getTcpFd(sa.port) else null
         }
 
 }

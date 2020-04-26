@@ -41,6 +41,9 @@ launch4j {
     headerType = "console"
     mainClassName = project.MainClass
     jar = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
+    productName = "${project.AppName ?: project.name}.exe"
+    internalName = "${project.AppName ?: project.name}"
+    fileDescription = "${project.AppName ?: project.name}"
     outfile = "${project.AppName ?: project.name}.exe"
 }
 

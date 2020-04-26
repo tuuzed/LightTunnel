@@ -38,23 +38,23 @@ class LocalTcpClient(
             })
     }
 
-    fun getLocalChannel(
+    fun withLocalChannel(
         localAddr: String, localPort: Int,
         tunnelId: Long, sessionId: Long,
         tunnelClientChannel: Channel,
-        callback: OnGetLocalChannelCallback?
+        callback: OnArriveLocalChannelCallback? = null
     ) {
         logger.trace("cachedChannels: {}", cachedChannels)
         val cachedLocalChannel = getCachedChannel(tunnelId, sessionId)
         if (cachedLocalChannel != null && cachedLocalChannel.isActive) {
-            callback?.onSuccess(cachedLocalChannel)
+            callback?.onArrived(cachedLocalChannel)
             return
         }
         bootstrap.connect(localAddr, localPort).addListener(ChannelFutureListener { future ->
             // 二次检查是否有可用的Channel缓存
             val localChannel = getCachedChannel(tunnelId, sessionId)
             if (localChannel != null && localChannel.isActive) {
-                callback?.onSuccess(localChannel)
+                callback?.onArrived(localChannel)
                 future.channel().close()
                 return@ChannelFutureListener
             }
@@ -64,9 +64,9 @@ class LocalTcpClient(
                 future.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
                 future.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).set(tunnelClientChannel)
                 putCachedChannel(tunnelId, sessionId, future.channel())
-                callback?.onSuccess(future.channel())
+                callback?.onArrived(future.channel())
             } else {
-                callback?.onError(future.cause())
+                callback?.onUnableArrive(future.cause())
             }
         })
     }
@@ -98,14 +98,11 @@ class LocalTcpClient(
         return lock.write { cachedChannels.remove(key) }
     }
 
-    private fun getCachedChannelKey(tunnelId: Long, sessionId: Long): String {
-        return String.format("tunnelId:%d, sessionId:%d", tunnelId, sessionId)
-    }
+    private fun getCachedChannelKey(tunnelId: Long, sessionId: Long): String = "tunnelId:$tunnelId, sessionId:$sessionId"
 
-    interface OnGetLocalChannelCallback {
-        fun onSuccess(localChannel: Channel) {}
-
-        fun onError(cause: Throwable) {}
+    interface OnArriveLocalChannelCallback {
+        fun onArrived(localChannel: Channel)
+        fun onUnableArrive(cause: Throwable) {}
     }
 
 }

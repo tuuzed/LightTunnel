@@ -2,7 +2,6 @@ package lighttunnel.server.http
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
-import lighttunnel.logger.loggerDelegate
 import java.io.File
 import java.net.URLDecoder
 
@@ -10,8 +9,6 @@ class HttpPluginImplStaticFile(
     private val rootPathList: List<String>,
     private val domainPrefixList: List<String>
 ) : HttpPlugin {
-
-    private val logger by loggerDelegate()
 
     override fun doHandle(request: HttpRequest): FullHttpResponse? {
         val host = request.headers().get(HttpHeaderNames.HOST)

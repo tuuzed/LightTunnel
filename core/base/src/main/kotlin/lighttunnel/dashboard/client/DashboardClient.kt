@@ -10,7 +10,6 @@ import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import io.netty.util.AttributeKey
-import lighttunnel.logger.loggerDelegate
 import java.net.URI
 
 class DashboardClient(
@@ -23,7 +22,6 @@ class DashboardClient(
             AttributeKey.newInstance("dashboard.client.RequestCallback")
     }
 
-    private val logger by loggerDelegate()
     private val bootstrap = Bootstrap()
 
     init {
