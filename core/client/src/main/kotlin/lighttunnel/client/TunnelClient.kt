@@ -40,8 +40,8 @@ class TunnelClient(
 ) : TunnelConnectFd.OnConnectFailureCallback, TunnelClientChannelHandler.OnChannelStateListener {
 
     companion object {
-        const val RETRY_CONNECT_POLICY_LOSE = 0x01.toByte()
-        const val RETRY_CONNECT_POLICY_ERROR = 0x02.toByte()
+        const val RETRY_CONNECT_POLICY_LOSE = 0x01.toByte()  // 0000_0001
+        const val RETRY_CONNECT_POLICY_ERROR = 0x02.toByte() // 0000_0010
     }
 
     private val logger by loggerDelegate()
@@ -128,7 +128,7 @@ class TunnelClient(
             return
         }
         if (error) {
-            if ((retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) != 0.toByte()) {
+            if ((retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) == RETRY_CONNECT_POLICY_ERROR) {
                 // 连接失败，3秒后发起重连
                 TimeUnit.SECONDS.sleep(3)
                 fd.connect(this)
@@ -139,7 +139,7 @@ class TunnelClient(
             }
             return
         }
-        if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) != 0.toByte()) {
+        if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) == RETRY_CONNECT_POLICY_LOSE) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
             fd.connect(this)
