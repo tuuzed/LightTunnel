@@ -58,6 +58,7 @@ class TunnelServerChannelHandler(
     }
 
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: ProtoMessage?) {
+        logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
         when (msg.type) {
@@ -108,14 +109,15 @@ class TunnelServerChannelHandler(
 
     @Throws(Exception::class)
     private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleTransferMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
-        val channel = when (sessionChannels.tunnelRequest.type) {
+        val sessionChannel = when (sessionChannels.tunnelRequest.type) {
             TunnelRequest.Type.TCP -> tcpRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
             TunnelRequest.Type.HTTP -> httpRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
             TunnelRequest.Type.HTTPS -> httpsRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
             else -> null
         }
-        channel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
+        sessionChannel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
     }
 
     @Throws(Exception::class)

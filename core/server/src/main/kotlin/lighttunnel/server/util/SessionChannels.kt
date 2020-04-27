@@ -15,26 +15,25 @@ class SessionChannels(
     val tunnelChannel: Channel
 ) {
     private val ids = IncIds()
-    private val cachedChannels = HashMap<Long, Channel>()
+    private val cachedSessionIdChannels = HashMap<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
 
-    val cachedChannelCount: Int get() = cachedChannels.count()
+    val cachedChannelCount: Int get() = cachedSessionIdChannels.count()
 
     fun putChannel(channel: Channel): Long {
         val sessionId = ids.nextId
-        lock.write { cachedChannels[sessionId] = channel }
+        lock.write { cachedSessionIdChannels[sessionId] = channel }
         return sessionId
     }
 
-    fun getChannel(sessionId: Long): Channel? = lock.read { cachedChannels[sessionId] }
+    fun getChannel(sessionId: Long): Channel? = lock.read { cachedSessionIdChannels[sessionId] }
 
-    fun removeChannel(sessionId: Long): Channel? = lock.write { cachedChannels.remove(sessionId) }
+    fun removeChannel(sessionId: Long): Channel? = lock.write { cachedSessionIdChannels.remove(sessionId) }
 
-    fun destroy() = lock.write {
-        cachedChannels.forEach { (_, ch) ->
+    fun depose() = lock.write {
+        cachedSessionIdChannels.forEach { (_, ch) ->
             ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         }
-        cachedChannels.clear()
-        Unit
+        cachedSessionIdChannels.clear()
     }
 }

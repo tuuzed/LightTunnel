@@ -22,6 +22,6 @@ class TcpFd(
 
     fun close() {
         bindChannelFuture.channel().close()
-        sessionChannels.destroy()
+        sessionChannels.depose()
     }
 }

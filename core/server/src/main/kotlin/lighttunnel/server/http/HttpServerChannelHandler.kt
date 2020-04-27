@@ -42,7 +42,6 @@ class HttpServerChannelHandler(
             ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(null)
         }
         super.channelInactive(ctx)
-        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
     @Throws(Exception::class)
@@ -52,13 +51,14 @@ class HttpServerChannelHandler(
     }
 
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: FullHttpRequest?) {
+        logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
         val httpPluginResponse = httpPlugin?.doHandle(msg)
         if (httpPluginResponse != null) {
             ctx.channel().writeAndFlush(httpPluginResponse).addListener(ChannelFutureListener.CLOSE)
         }
-        val host = HttpUtil.getDomainHost(msg)
+        val host = HttpUtil.getHostWithoutPort(msg)
         if (host == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
@@ -80,5 +80,4 @@ class HttpServerChannelHandler(
         val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg))
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
-
 }

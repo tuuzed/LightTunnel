@@ -43,7 +43,10 @@ class LocalTcpClientChannelHandler(
     }
 
     @Throws(Exception::class)
-    override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
+    override fun channelRead0(ctx: ChannelHandlerContext?, msg: ByteBuf?) {
+        logger.trace("channelRead0: {}", ctx)
+        ctx ?: return
+        msg ?: return
         val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
         val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
         val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()

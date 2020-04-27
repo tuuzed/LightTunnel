@@ -15,6 +15,6 @@ class HttpFd(
 
     val channelCount get() = sessionChannels.cachedChannelCount
 
-    fun close() = sessionChannels.destroy()
+    fun close() = sessionChannels.depose()
 
 }

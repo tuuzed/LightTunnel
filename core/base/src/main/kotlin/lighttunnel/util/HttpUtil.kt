@@ -11,7 +11,7 @@ object HttpUtil {
     private const val CRLF = "\r\n"
     private val CHARSET = StandardCharsets.UTF_8
 
-    fun getDomainHost(request: HttpRequest): String? {
+    fun getHostWithoutPort(request: HttpRequest): String? {
         val host = request.headers().get(HttpHeaderNames.HOST) ?: return null
         return host.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
     }

@@ -19,6 +19,7 @@ class TcpServerChannelHandler(
     private val logger by loggerDelegate()
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
+        logger.trace("channelActive: {}", ctx)
         if (ctx != null) {
             val tcpFd = ctx.tcpFd
             if (tcpFd != null) {
@@ -37,6 +38,7 @@ class TcpServerChannelHandler(
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
+        logger.trace("channelInactive: {}", ctx)
         if (ctx != null) {
             val tcpFd = ctx.tcpFd
             if (tcpFd != null) {

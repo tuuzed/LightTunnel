@@ -171,11 +171,12 @@ class TunnelServer(
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
                         .addLast("handler", TunnelServerChannelHandler(
-                            tunnelRequestInterceptor,
-                            tunnelIds,
-                            tcpServer, tcpRegistry,
-                            httpRegistry,
-                            httpsRegistry
+                            tunnelRequestInterceptor = tunnelRequestInterceptor,
+                            tunnelIds = tunnelIds,
+                            tcpServer = tcpServer,
+                            tcpRegistry = tcpRegistry,
+                            httpRegistry = httpRegistry,
+                            httpsRegistry = httpsRegistry
                         ))
                 }
             })

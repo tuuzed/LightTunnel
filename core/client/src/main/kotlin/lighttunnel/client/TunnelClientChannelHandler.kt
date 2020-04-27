@@ -111,6 +111,7 @@ class TunnelClientChannelHandler(
                     ctx.channel(),
                     object : LocalTcpClient.OnArriveLocalChannelCallback {
                         override fun onArrived(localChannel: Channel) {
+                            logger.trace("onArrived: {}", localChannel)
                             localChannel.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
                         }
 
