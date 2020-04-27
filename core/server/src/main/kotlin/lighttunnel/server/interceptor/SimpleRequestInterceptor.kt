@@ -1,11 +1,12 @@
 package lighttunnel.server.interceptor
 
+import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.proto.TunnelRequest.Factory.copyTcp
+import lighttunnel.util.HttpUtil
 import lighttunnel.util.PortUtil
-import lighttunnel.util.http.basicAuthorization
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.charset.StandardCharsets
@@ -50,19 +51,16 @@ class SimpleRequestInterceptor(
         }
     }
 
-    override fun handleHttpRequest(
-        localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
-    ): HttpResponse? {
+    override fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? {
+        val localAddress = ctx.channel().localAddress()
+        val remoteAddress = ctx.channel().remoteAddress()
         handleRewriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)
         handleWriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)
         return if (tunnelRequest.enableBasicAuth) handleHttpBasicAuth(tunnelRequest, httpRequest) else null
     }
 
-    private fun handleHttpBasicAuth(
-        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
-    ): HttpResponse? {
-        val account = httpRequest.basicAuthorization
+    private fun handleHttpBasicAuth(tunnelRequest: TunnelRequest, httpRequest: HttpRequest): FullHttpResponse? {
+        val account = HttpUtil.getBasicAuthorization(httpRequest)
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
         if (account == null || username != account[0] || password != account[1]) {
@@ -71,8 +69,9 @@ class SimpleRequestInterceptor(
                 HttpResponseStatus.UNAUTHORIZED
             )
             val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
-            httpResponse.headers()
-                .add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\"")
+            httpResponse.headers().add(
+                HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\""
+            )
             httpResponse.headers().add(HttpHeaderNames.CONNECTION, "keep-alive")
             httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, "bytes")
 
@@ -129,4 +128,5 @@ class SimpleRequestInterceptor(
             }
         }
     }
+
 }

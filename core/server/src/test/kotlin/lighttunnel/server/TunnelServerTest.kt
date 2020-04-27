@@ -9,6 +9,13 @@ import org.junit.Test
 
 class TunnelServerTest {
 
+
+    @Test
+    fun start() {
+        tunnelServer.start()
+        Thread.currentThread().join()
+    }
+
     private lateinit var tunnelServer: TunnelServer
 
     @Before
@@ -22,7 +29,6 @@ class TunnelServerTest {
         ))
         LoggerFactory.configConsole(level = Level.ALL)
         tunnelServer = TunnelServer(
-            bindAddr = "::",
             bindPort = 5080,
             sslBindPort = 5443,
             sslContext = SslContextUtil.forBuiltinServer(),
@@ -37,10 +43,5 @@ class TunnelServerTest {
         )
     }
 
-    @Test
-    fun start() {
-        tunnelServer.start()
-        Thread.currentThread().join()
-    }
 
 }

@@ -10,7 +10,7 @@ class HttpPluginImplStaticFile(
     private val domainPrefixList: List<String>
 ) : HttpPlugin {
 
-    override fun doHandle(request: HttpRequest): FullHttpResponse? {
+    override fun doHandle(request: FullHttpRequest): FullHttpResponse? {
         val host = request.headers().get(HttpHeaderNames.HOST)
         if (domainPrefixList.firstOrNull { it.startsWith(host) } == null) {
             return null

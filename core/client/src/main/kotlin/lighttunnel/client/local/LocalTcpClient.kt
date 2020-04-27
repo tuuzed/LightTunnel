@@ -15,9 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class LocalTcpClient(
-    workerGroup: NioEventLoopGroup
-) {
+class LocalTcpClient(workerGroup: NioEventLoopGroup) {
     private val logger by loggerDelegate()
     private val bootstrap = Bootstrap()
     private val cachedChannels = hashMapOf<String, Channel>()
@@ -38,23 +36,28 @@ class LocalTcpClient(
             })
     }
 
-    fun withLocalChannel(
+
+    fun acquireLocalChannel(
         localAddr: String, localPort: Int,
         tunnelId: Long, sessionId: Long,
         tunnelClientChannel: Channel,
         callback: OnArriveLocalChannelCallback? = null
     ) {
-        logger.trace("cachedChannels: {}", cachedChannels)
-        val cachedLocalChannel = getCachedChannel(tunnelId, sessionId)
-        if (cachedLocalChannel != null && cachedLocalChannel.isActive) {
-            callback?.onArrived(cachedLocalChannel)
+        val checkCachedLocalChannel: (() -> Boolean) = {
+            val cachedLocalChannel = getCachedChannel(tunnelId, sessionId)
+            if (cachedLocalChannel != null && cachedLocalChannel.isActive) {
+                callback?.onArrived(cachedLocalChannel)
+                true
+            } else {
+                false
+            }
+        }
+        if (checkCachedLocalChannel()) {
             return
         }
         bootstrap.connect(localAddr, localPort).addListener(ChannelFutureListener { future ->
             // 二次检查是否有可用的Channel缓存
-            val localChannel = getCachedChannel(tunnelId, sessionId)
-            if (localChannel != null && localChannel.isActive) {
-                callback?.onArrived(localChannel)
+            if (checkCachedLocalChannel()) {
                 future.channel().close()
                 return@ChannelFutureListener
             }

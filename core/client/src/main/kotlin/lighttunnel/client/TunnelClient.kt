@@ -70,7 +70,7 @@ class TunnelClient(
         if (fd != null) {
             val cause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
             onTunnelStateListener?.onDisconnect(fd, cause)
-            logger.trace("cause: {}", cause?.message)
+            logger.trace("onChannelInactive: ", cause)
             tryReconnect(fd, cause != null)
         }
     }

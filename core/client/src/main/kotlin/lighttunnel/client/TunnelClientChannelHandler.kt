@@ -105,7 +105,7 @@ class TunnelClientChannelHandler(
         val request = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
         when (request?.type) {
             TunnelRequest.Type.TCP, TunnelRequest.Type.HTTP, TunnelRequest.Type.HTTPS -> {
-                localTcpClient.withLocalChannel(
+                localTcpClient.acquireLocalChannel(
                     request.localAddr, request.localPort,
                     msg.tunnelId, msg.sessionId,
                     ctx.channel(),
@@ -134,7 +134,7 @@ class TunnelClientChannelHandler(
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(msg.sessionId)
         val tunnelRequest = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
         if (tunnelRequest != null) {
-            localTcpClient.withLocalChannel(
+            localTcpClient.acquireLocalChannel(
                 tunnelRequest.localAddr, tunnelRequest.localPort,
                 msg.tunnelId, msg.sessionId,
                 ctx.channel()

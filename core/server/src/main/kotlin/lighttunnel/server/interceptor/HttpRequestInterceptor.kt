@@ -1,17 +1,12 @@
 package lighttunnel.server.interceptor
 
-import io.netty.handler.codec.http.HttpRequest
-import io.netty.handler.codec.http.HttpResponse
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.FullHttpResponse
 import lighttunnel.proto.TunnelRequest
-import java.net.SocketAddress
 
 interface HttpRequestInterceptor {
 
-    fun handleHttpRequest(
-        localAddress: SocketAddress,
-        remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest,
-        httpRequest: HttpRequest
-    ): HttpResponse? = null
+    fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? = null
 
 }

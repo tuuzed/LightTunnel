@@ -8,6 +8,29 @@ import org.junit.Test
 
 class TunnelClientTest {
 
+    @Test
+    fun connect() {
+        tunnelClient.connect(
+            serverAddr = "127.0.0.1",
+            serverPort = 5080,
+            tunnelRequest = TunnelRequest.forTcp(localAddr = "139.199.221.244", localPort = 22, remotePort = 10022),
+            sslContext = null
+        )
+        tunnelClient.connect(
+            serverAddr = "127.0.0.1",
+            serverPort = 5080,
+            tunnelRequest = TunnelRequest.forTcp(localAddr = "139.199.221.244", localPort = 5212, remotePort = 10080),
+            sslContext = null
+        )
+        tunnelClient.connect(
+            serverAddr = "127.0.0.1",
+            serverPort = 5080,
+            tunnelRequest = TunnelRequest.forHttp(localAddr = "139.199.221.244", localPort = 5212, host = "t1.tunnel.lo"),
+            sslContext = null
+        )
+        Thread.currentThread().join()
+    }
+
     private lateinit var tunnelClient: TunnelClient
 
     @Before
@@ -20,21 +43,7 @@ class TunnelClientTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        tunnelClient = TunnelClient(dashBindAddr = "::", dashboardBindPort = 5081)
+        tunnelClient = TunnelClient(dashboardBindPort = 5081)
     }
 
-    @Test
-    fun connect() {
-        tunnelClient.connect(
-            serverAddr = "127.0.0.1",
-            serverPort = 5080,
-            tunnelRequest = TunnelRequest.forTcp(
-                localAddr = "192.168.1.1",
-                localPort = 80,
-                remotePort = 10080
-            ),
-            sslContext = null
-        )
-        Thread.currentThread().join()
-    }
 }

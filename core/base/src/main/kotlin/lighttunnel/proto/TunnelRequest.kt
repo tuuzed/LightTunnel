@@ -112,7 +112,7 @@ data class TunnelRequest internal constructor(
             localAddr: String,
             localPort: Int,
             host: String,
-            https: Boolean,
+            https: Boolean = false,
             name: String? = null,
             authToken: String? = null,
             enableBasicAuth: Boolean = false,
@@ -226,8 +226,7 @@ data class TunnelRequest internal constructor(
             else -> ""
         }
     }
-
-
+    
     enum class Type(val code: Byte) {
         UNKNOWN(0x00.toByte()),
         TCP(0x10.toByte()),
