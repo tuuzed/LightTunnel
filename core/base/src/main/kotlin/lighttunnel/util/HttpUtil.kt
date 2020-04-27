@@ -3,10 +3,7 @@ package lighttunnel.util
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.base64.Base64
-import io.netty.handler.codec.http.FullHttpResponse
-import io.netty.handler.codec.http.HttpHeaderNames
-import io.netty.handler.codec.http.HttpRequest
-import io.netty.handler.codec.http.HttpResponse
+import io.netty.handler.codec.http.*
 import java.nio.charset.StandardCharsets
 
 
@@ -31,7 +28,7 @@ object HttpUtil {
         return if (tmp.size == 2) tmp.toTypedArray() else null
     }
 
-    fun toBytes(request: HttpRequest): ByteArray {
+    fun toByteBuf(request: HttpRequest): ByteBuf {
         val raw = StringBuilder()
         val method = request.method()
         val uri = request.uri()
@@ -44,7 +41,15 @@ object HttpUtil {
             raw.append(next.key).append(": ").append(next.value).append(CRLF)
         }
         raw.append(CRLF)
-        return raw.toString().toByteArray(CHARSET)
+        return if (request is FullHttpRequest) {
+            val responseLineAndHeader = raw.toString().toByteArray(CHARSET)
+            val content = request.content()
+            val buffer = Unpooled.buffer(responseLineAndHeader.size + content.readableBytes())
+            buffer.writeBytes(responseLineAndHeader).writeBytes(content)
+            buffer
+        } else {
+            Unpooled.wrappedBuffer(raw.toString().toByteArray(CHARSET))
+        }
     }
 
     fun toByteBuf(response: HttpResponse): ByteBuf {
