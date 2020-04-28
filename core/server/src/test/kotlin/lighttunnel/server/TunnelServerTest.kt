@@ -37,8 +37,8 @@ class TunnelServerTest {
             httpsContext = SslContextUtil.forBuiltinServer(),
             dashboardBindPort = 5081,
             httpPlugin = HttpPluginImplStaticFile(
-                rootPathList = listOf("C:\\", "D:\\"),
-                domainPrefixList = listOf("127.0.0.1")
+                paths = listOf("C:\\", "D:\\"),
+                hosts = listOf("127.0.0.1")
             )
         )
     }

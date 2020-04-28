@@ -56,35 +56,40 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
         val ini = Ini()
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
-        setupLogger(basic)
+        //
+        loadLogConf(basic)
         val client = newTunnelClient(basic)
         val serverAddr = basic["server_addr"] ?: "127.0.0.1"
         val serverPort = basic["server_port"].asInt() ?: 5080
         val sslContext = newSslContext(basic)
         val sslServerPort = basic["ssl_server_port"].asInt() ?: 5443
-        ini.entries.filter { it.key != "basic" }.map {
-            Pair(it.value["ssl"]?.toUpperCase() == "TRUE", newTunnelRequest(basic, it.value))
-        }.forEach {
-            val ssl = it.first
-            val request = it.second
-            if (request != null) {
-                if (ssl) {
-                    client.connect(serverAddr, sslServerPort, request, sslContext)
-                } else {
-                    client.connect(serverAddr, serverPort, request, null)
+        ini.entries
+            .filter {
+                it.key != "basic"
+            }
+            .map {
+                Pair(it.value["ssl"]?.toUpperCase() == "TRUE", newTunnelRequest(basic, it.value))
+            }.forEach {
+                val ssl = it.first
+                val request = it.second
+                if (request != null) {
+                    if (ssl) {
+                        client.connect(serverAddr, sslServerPort, request, sslContext)
+                    } else {
+                        client.connect(serverAddr, serverPort, request, null)
+                    }
                 }
             }
-        }
     }
 
     private fun newSslContext(basic: Profile.Section): SslContext {
-        val jks = basic["ssl_jks"] ?: return SslContextUtil.forBuiltinClient()
-        val storePassword = basic["ssl_store_password"] ?: return SslContextUtil.forBuiltinClient()
+        val jks = basic["ssl_jks"] ?: "ltc.jks"
+        val storePassword = basic["ssl_store_password"] ?: "ltcpass"
         return try {
             SslContextUtil.forClient(jks, storePassword)
         } catch (e: Exception) {
             logger.warn("tunnel ssl used builtin jks.")
-            SslContextUtil.forBuiltinServer()
+            SslContextUtil.forBuiltinClient()
         }
     }
 
@@ -135,7 +140,7 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
         val authToken = basic["auth_token"]
         val localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
-        val customDomain = tunnel["custom_domain"] ?: return null
+        val host = tunnel["host"] ?: return null
         val proxySetHeaders = mapOf(
             *tunnel.entries
                 .filter { it.key.startsWith("pxy_header_set_") && it.value.isNotEmpty() }
@@ -156,7 +161,7 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
             https = https,
             name = tunnel.name,
             authToken = authToken,
-            host = customDomain,
+            host = host,
             pxySetHeaders = proxySetHeaders,
             pxyAddHeaders = proxyAddHeaders,
             enableBasicAuth = enableBasicAuth,
@@ -166,7 +171,7 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
         )
     }
 
-    private fun setupLogger(basic: Profile.Section) {
+    private fun loadLogConf(basic: Profile.Section) {
         val logLevel = Level.toLevel(basic["log_level"], Level.INFO)
         val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3

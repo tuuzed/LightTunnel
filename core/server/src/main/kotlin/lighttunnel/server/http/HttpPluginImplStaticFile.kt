@@ -2,21 +2,22 @@ package lighttunnel.server.http
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
+import lighttunnel.util.HttpUtil
 import java.io.File
 import java.net.URLDecoder
 
 class HttpPluginImplStaticFile(
-    private val rootPathList: List<String>,
-    private val domainPrefixList: List<String>
+    private val paths: List<String>,
+    private val hosts: List<String>
 ) : HttpPlugin {
 
     override fun doHandle(request: FullHttpRequest): FullHttpResponse? {
-        val host = request.headers().get(HttpHeaderNames.HOST)
-        if (domainPrefixList.firstOrNull { it.startsWith(host) } == null) {
+        val host = HttpUtil.getHostWithoutPort(request) ?: ""
+        if (hosts.firstOrNull { it == host } == null) {
             return null
         }
         val path = URLDecoder.decode(request.uri().split('?').first(), "utf-8")
-        val file = rootPathList.firstOrNull {
+        val file = paths.firstOrNull {
             File(it, path).let { f -> f.exists() && f.isFile }
         }?.let { File(it, path) }
         return if (file == null) {

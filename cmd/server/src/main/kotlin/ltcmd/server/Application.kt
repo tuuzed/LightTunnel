@@ -41,7 +41,7 @@ class Application : AbstractApplication() {
         val ini = Ini()
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
-        setupLogger(basic)
+        loadLogConf(basic)
         tunnelServer = newTunnelServer(basic)
         start()
     }
@@ -55,13 +55,13 @@ class Application : AbstractApplication() {
         val allowPorts = basic["allow_ports"]
         val interceptor = SimpleRequestInterceptor(authToken, allowPorts)
 
-        val pluginSfRootPaths = basic["plugin_sf_root_paths"]?.split(',')
-        val pluginSfDomainPrefixes = basic["plugin_sf_domain_prefixes"]?.split(',')
-        var staticFilePlugin: HttpPlugin? = null
-        if (!pluginSfRootPaths.isNullOrEmpty() && !pluginSfDomainPrefixes.isNullOrEmpty()) {
-            staticFilePlugin = HttpPluginImplStaticFile(
-                rootPathList = pluginSfRootPaths,
-                domainPrefixList = pluginSfDomainPrefixes
+        val pluginSfPaths = basic["plugin_sf_paths"]?.split(',')
+        val pluginSfHosts = basic["plugin_sf_hosts"]?.split(',')
+        var staticFileHttpPlugin: HttpPlugin? = null
+        if (!pluginSfPaths.isNullOrEmpty() && !pluginSfHosts.isNullOrEmpty()) {
+            staticFileHttpPlugin = HttpPluginImplStaticFile(
+                paths = pluginSfPaths,
+                hosts = pluginSfHosts
             )
         }
         return TunnelServer(
@@ -106,13 +106,13 @@ class Application : AbstractApplication() {
             },
             httpsRequestInterceptor = interceptor,
             // plugin
-            httpPlugin = staticFilePlugin,
+            httpPlugin = staticFileHttpPlugin,
             // dashboard
             dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )
     }
 
-    private fun setupLogger(basic: Profile.Section) {
+    private fun loadLogConf(basic: Profile.Section) {
         val logLevel = Level.toLevel(basic["log_level"], Level.INFO)
         val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3
