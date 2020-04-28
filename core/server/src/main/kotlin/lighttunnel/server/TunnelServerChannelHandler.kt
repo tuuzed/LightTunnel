@@ -111,12 +111,8 @@ class TunnelServerChannelHandler(
     private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleTransferMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
-        val sessionChannel = when (sessionChannels.tunnelRequest.type) {
-            TunnelRequest.Type.TCP -> tcpRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
-            TunnelRequest.Type.HTTP -> httpRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
-            TunnelRequest.Type.HTTPS -> httpsRegistry?.getSessionChannel(msg.tunnelId, msg.sessionId)
-            else -> null
-        }
+        val sessionChannel = sessionChannels.getChannel(msg.sessionId)
+        logger.trace("doHandleTransferMessage# sessionChannel={}", sessionChannel)
         sessionChannel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
     }
 
@@ -130,7 +126,7 @@ class TunnelServerChannelHandler(
     private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("handleLocalDisconnectMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
-        val sessionChannel = sessionChannels.getChannel(msg.sessionId)
+        val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
         // 解决 HTTP/1.x 数据传输问题
         sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
     }

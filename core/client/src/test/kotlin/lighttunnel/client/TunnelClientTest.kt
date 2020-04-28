@@ -19,13 +19,13 @@ class TunnelClientTest {
         tunnelClient.connect(
             serverAddr = "127.0.0.1",
             serverPort = 5080,
-            tunnelRequest = TunnelRequest.forTcp(localAddr = "139.199.221.244", localPort = 5212, remotePort = 10080),
+            tunnelRequest = TunnelRequest.forTcp(localAddr = "139.199.221.244", localPort = 80, remotePort = 10080),
             sslContext = null
         )
         tunnelClient.connect(
             serverAddr = "127.0.0.1",
             serverPort = 5080,
-            tunnelRequest = TunnelRequest.forHttp(localAddr = "139.199.221.244", localPort = 5212, host = "t1.tunnel.lo"),
+            tunnelRequest = TunnelRequest.forHttp(localAddr = "139.199.221.244", localPort = 80, host = "t1.tunnel.lo"),
             sslContext = null
         )
         Thread.currentThread().join()

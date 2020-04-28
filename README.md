@@ -3,14 +3,14 @@
 支持TCP、HTTP、HTTPS穿透。
 
 ![Java CI](https://github.com/tuuzed/LightTunnel/workflows/Java%20CI/badge.svg)
-![LightTunnel LaseVersion](https://img.shields.io/badge/LightTunnel-v0.5.17-blue.svg)
+![LightTunnel LaseVersion](https://img.shields.io/badge/LightTunnel-v0.5.24-blue.svg)
 ![Thank Idea](https://img.shields.io/badge/Thank-jetbrains.com-green.svg)
 
 ## 0x00 发行版下载
 
-[Github下载 LightTunnel-v0.5.17.tar.gz](https://github.com/tuuzed/LightTunnel/releases/download/v0.5.17/LightTunnel-v0.5.17.tar.gz)
+[Github下载 LightTunnel-v0.5.24.tar.gz](https://github.com/tuuzed/LightTunnel/releases/download/v0.5.24/LightTunnel-v0.5.24.tar.gz)
 
-[Gitee下载 LightTunnel-v0.5.17.tar.gz](https://gitee.com/tuuzed/LightTunnel/attach_files/382298/download)
+[Gitee下载 LightTunnel-v0.5.24.tar.gz](https://gitee.com/tuuzed/LightTunnel/attach_files/383444/download)
 
 ## 0x01 文件说明
 
