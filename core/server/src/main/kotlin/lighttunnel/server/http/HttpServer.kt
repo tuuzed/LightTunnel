@@ -7,8 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.HttpObjectAggregator
-import io.netty.handler.codec.http.HttpServerCodec
-import io.netty.handler.logging.LoggingHandler
+import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
@@ -22,7 +21,7 @@ class HttpServer(
     private val bindAddr: String?,
     private val bindPort: Int,
     private val sslContext: SslContext? = null,
-    private val maxContentLength: Int = 512 * 1024,
+    private val maxContentLength: Int = 1024 * 1024 * 8,
     private val httpPlugin: HttpPlugin? = null,
     private val interceptor: HttpRequestInterceptor
 ) {
@@ -44,7 +43,7 @@ class HttpServer(
                         )
                     }
                     ch.pipeline()
-                        .addLast("codec", HttpServerCodec())
+                        .addLast("decoder", HttpRequestDecoder())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
                         .addLast("handler", HttpServerChannelHandler(
                             registry = registry,
