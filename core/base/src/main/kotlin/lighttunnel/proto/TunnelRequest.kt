@@ -30,9 +30,9 @@ data class TunnelRequest internal constructor(
         // http & https
         private const val HOST = "\$host"
         private const val ENABLE_BASIC_AUTH = "\$enable_basic_auth"
-        private const val BASIC_AUTH_REALM = "\$auth_realm"
-        private const val BASIC_AUTH_USERNAME = "\$auth_username"
-        private const val BASIC_AUTH_PASSWORD = "\$auth_password"
+        private const val BASIC_AUTH_REALM = "\$basic_auth_realm"
+        private const val BASIC_AUTH_USERNAME = "\$basic_auth_username"
+        private const val BASIC_AUTH_PASSWORD = "\$basic_auth_password"
         private const val PXY_SET_HEADERS = "\$pxy_set_headers"
         private const val PXY_ADD_HEADERS = "\$pxy_add_headers"
 
@@ -198,7 +198,7 @@ data class TunnelRequest internal constructor(
 
     // http & https
     val host get() = options.getOrDefault<String?>(HOST, null) ?: error("host == null")
-    val enableBasicAuth get() = options.getOrDefault(ENABLE_BASIC_AUTH, false)
+    val enableBasicAuth get() = options.getOrDefault(ENABLE_BASIC_AUTH, "false").toUpperCase() == "TRUE"
     val basicAuthRealm get() = options.getOrDefault(BASIC_AUTH_REALM, ".")
     val basicAuthUsername get() = options.getOrDefault(BASIC_AUTH_USERNAME, "")
     val basicAuthPassword get() = options.getOrDefault(BASIC_AUTH_PASSWORD, "")
@@ -226,7 +226,7 @@ data class TunnelRequest internal constructor(
             else -> ""
         }
     }
-    
+
     enum class Type(val code: Byte) {
         UNKNOWN(0x00.toByte()),
         TCP(0x10.toByte()),
