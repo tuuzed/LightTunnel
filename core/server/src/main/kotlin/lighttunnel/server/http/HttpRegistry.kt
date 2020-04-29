@@ -1,6 +1,5 @@
 package lighttunnel.server.http
 
-import io.netty.channel.Channel
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
 import lighttunnel.server.util.SessionChannels
@@ -13,7 +12,6 @@ import kotlin.concurrent.write
 class HttpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdHttpFds = hashMapOf<Long, HttpFd>()
     private val hostHttpFds = hashMapOf<String, HttpFd>()
     private val lock = ReentrantReadWriteLock()
 
@@ -24,12 +22,9 @@ class HttpRegistry {
         }
         val httpFd = HttpFd(host, sessionChannels)
         lock.write {
-            tunnelIdHttpFds[sessionChannels.tunnelId] = httpFd
             hostHttpFds[host] = httpFd
         }
-        logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
-        logger.trace("hostHttpFds: {}", hostHttpFds)
-        logger.trace("tunnelIdHttpFds: {}", tunnelIdHttpFds)
+        logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
     fun unregister(host: String?) = lock.write {
@@ -46,14 +41,12 @@ class HttpRegistry {
 
     fun isRegistered(host: String): Boolean = lock.read { hostHttpFds.contains(host) }
 
-    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? = lock.read { tunnelIdHttpFds[tunnelId]?.sessionChannels?.getChannel(sessionId) }
-
     fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
 
     val snapshot: JSONArray
         get() = lock.read {
             JSONArray().also { array ->
-                tunnelIdHttpFds.values.forEach { fd ->
+                hostHttpFds.values.forEach { fd ->
                     array.put(JSONObject().also { obj ->
                         obj.put("host", fd.host)
                         obj.put("conns", fd.channelCount)
@@ -68,9 +61,8 @@ class HttpRegistry {
     private fun unsafeUnregister(host: String?) {
         host ?: return
         hostHttpFds[host]?.also {
-            tunnelIdHttpFds.remove(it.tunnelId)
             it.close()
-            logger.info("Shutdown Tunnel: {}", it.tunnelRequest)
+            logger.debug("Shutdown Tunnel: {}", it.tunnelRequest)
         }
     }
 

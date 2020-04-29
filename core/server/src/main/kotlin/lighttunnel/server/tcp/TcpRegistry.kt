@@ -1,6 +1,5 @@
 package lighttunnel.server.tcp
 
-import io.netty.channel.Channel
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
 import lighttunnel.server.util.SessionChannels
@@ -13,7 +12,6 @@ import kotlin.concurrent.write
 class TcpRegistry {
     private val logger by loggerDelegate()
 
-    private val tunnelIdTcpFds = hashMapOf<Long, TcpFd>()
     private val portTcpFds = hashMapOf<Int, TcpFd>()
     private val lock = ReentrantReadWriteLock()
 
@@ -22,41 +20,38 @@ class TcpRegistry {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
-        lock.write {
-            tunnelIdTcpFds[sessionChannels.tunnelId] = descriptor
-            portTcpFds[port] = descriptor
-        }
-        logger.info("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
+        lock.write { portTcpFds[port] = descriptor }
+        logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
     fun unregister(port: Int) = lock.write {
         unsafeUnregister(port)
-        portTcpFds.remove(port)
+        val tcpFd = portTcpFds.remove(port)
+        tcpFd?.close()
         Unit
     }
 
     fun depose() = lock.write {
-        portTcpFds.forEach { (host, _) -> unsafeUnregister(host) }
+        portTcpFds.forEach { (port, _) -> unsafeUnregister(port) }
         portTcpFds.clear()
         Unit
     }
 
     fun isRegistered(port: Int): Boolean = lock.read { portTcpFds.contains(port) }
 
-    fun getSessionChannel(tunnelId: Long, sessionId: Long): Channel? = lock.read { tunnelIdTcpFds[tunnelId]?.sessionChannels?.getChannel(sessionId) }
 
     fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
 
     val snapshot: JSONArray
         get() = lock.read {
             JSONArray().also { array ->
-                tunnelIdTcpFds.values.forEach {
+                portTcpFds.values.forEach { fd ->
                     array.put(JSONObject().also { obj ->
-                        obj.put("port", it.port)
-                        obj.put("conns", it.channelCount)
-                        obj.put("name", it.tunnelRequest.name)
-                        obj.put("local_addr", it.tunnelRequest.localAddr)
-                        obj.put("local_port", it.tunnelRequest.localPort)
+                        obj.put("port", fd.port)
+                        obj.put("conns", fd.channelCount)
+                        obj.put("name", fd.tunnelRequest.name)
+                        obj.put("local_addr", fd.tunnelRequest.localAddr)
+                        obj.put("local_port", fd.tunnelRequest.localPort)
                     })
                 }
             }
@@ -64,9 +59,8 @@ class TcpRegistry {
 
     private fun unsafeUnregister(port: Int) {
         portTcpFds[port]?.also {
-            tunnelIdTcpFds.remove(it.tunnelId)
             it.close()
-            logger.info("Shutdown Tunnel: {}", it.tunnelRequest)
+            logger.debug("Shutdown Tunnel: {}", it.tunnelRequest)
         }
     }
 

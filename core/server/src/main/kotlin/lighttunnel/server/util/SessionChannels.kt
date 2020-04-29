@@ -15,7 +15,7 @@ class SessionChannels(
     val tunnelChannel: Channel
 ) {
     private val ids = IncIds()
-    private val cachedSessionIdChannels = HashMap<Long, Channel>()
+    private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
 
     val cachedChannelCount: Int get() = lock.read { cachedSessionIdChannels.count() }
