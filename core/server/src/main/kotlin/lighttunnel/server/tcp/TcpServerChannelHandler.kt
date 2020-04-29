@@ -44,16 +44,13 @@ class TcpServerChannelHandler(
             if (tcpFd != null) {
                 val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
                 if (sessionId != null) {
-                    tcpFd.sessionChannels.removeChannel(sessionId)?.also {
-                        it.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
-                    }
+                    val sessionChannel = tcpFd.sessionChannels.removeChannel(sessionId)
+                    // 解决 HTTP/1.x 数据传输问题
+                    sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
                 }
-                // 解决 HTTP/1.x 数据传输问题
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
                     val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
-                    tcpFd.tunnelChannel.writeAndFlush(
-                        ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head)
-                    )
+                    tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
                 }
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)

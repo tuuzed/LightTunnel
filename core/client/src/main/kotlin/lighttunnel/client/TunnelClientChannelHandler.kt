@@ -24,19 +24,13 @@ class TunnelClientChannelHandler(
 
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext?) {
+        logger.trace("channelInactive: {}", ctx)
         // 隧道断开
         if (ctx != null) {
-            val request = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
             val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
             val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
-            when (request?.type) {
-                TunnelRequest.Type.TCP, TunnelRequest.Type.HTTP, TunnelRequest.Type.HTTPS -> {
-                    if (tunnelId != null && sessionId != null) {
-                        localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
-                    }
-                }
-                else -> {
-                }
+            if (tunnelId != null && sessionId != null) {
+                localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
             }
             onChannelStateListener.onChannelInactive(ctx)
         }
@@ -70,12 +64,14 @@ class TunnelClientChannelHandler(
     /** Ping */
     @Throws(Exception::class)
     private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandlePingMessage : {}, {}", ctx, msg)
         ctx.writeAndFlush(ProtoMessage(ProtoMessageType.PONG))
     }
 
     /** 隧道建立成功 */
     @Throws(Exception::class)
     private fun doHandleResponseOkMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleResponseOkMessage : {}, {}", ctx, msg)
         val request = TunnelRequest.fromBytes(msg.data)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(request)
@@ -88,18 +84,19 @@ class TunnelClientChannelHandler(
     /** 隧道建立失败 */
     @Throws(Exception::class)
     private fun doHandleResponseErrMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleResponseErrMessage : {}, {}", ctx, msg)
         val errMessage = String(msg.head, StandardCharsets.UTF_8)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(null)
         ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).set(Exception(errMessage))
         ctx.channel().close()
-        logger.trace("Open Tunnel Error: {}", errMessage)
+        logger.debug("Open Tunnel Error: {}", errMessage)
     }
 
     /** 数据透传消息 */
     @Throws(Exception::class)
     private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("handleTransferMessage: msg: {}", msg)
+        logger.trace("doHandleTransferMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(msg.sessionId)
         val request = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
@@ -131,6 +128,7 @@ class TunnelClientChannelHandler(
     /** 连接本地隧道消息 */
     @Throws(Exception::class)
     private fun doHandleRemoteConnectedMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleRemoteConnectedMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(msg.sessionId)
         val tunnelRequest = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
@@ -146,6 +144,7 @@ class TunnelClientChannelHandler(
     /** 用户隧道断开消息 */
     @Throws(Exception::class)
     private fun doHandleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleRemoteDisconnectMessage : {}, {}", ctx, msg)
         localTcpClient.removeLocalChannel(msg.tunnelId, msg.sessionId)
             ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
             ?.addListener(ChannelFutureListener.CLOSE)

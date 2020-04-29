@@ -19,27 +19,30 @@ class LocalTcpClientChannelHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelInactive(ctx: ChannelHandlerContext) {
+    override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
-        val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
-        val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
-        if (tunnelId != null && sessionId != null) {
-            localTcpClient.removeLocalChannel(tunnelId, sessionId)
-                ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                ?.addListener(ChannelFutureListener.CLOSE)
-            val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()
-            if (nextChannel != null) {
-                val head = LongUtil.toBytes(tunnelId, sessionId)
-                nextChannel.writeAndFlush(ProtoMessage(ProtoMessageType.LOCAL_DISCONNECT, head))
+        if (ctx != null) {
+            val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
+            val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
+            if (tunnelId != null && sessionId != null) {
+                localTcpClient.removeLocalChannel(tunnelId, sessionId)
+                    ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
+                    ?.addListener(ChannelFutureListener.CLOSE)
+                val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()
+                if (nextChannel != null) {
+                    val head = LongUtil.toBytes(tunnelId, sessionId)
+                    nextChannel.writeAndFlush(ProtoMessage(ProtoMessageType.LOCAL_DISCONNECT, head))
+                }
             }
         }
         super.channelInactive(ctx)
     }
 
     @Throws(Exception::class)
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+    override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
-        ctx.close()
+        ctx ?: return
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
     @Throws(Exception::class)

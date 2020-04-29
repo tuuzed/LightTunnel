@@ -20,15 +20,12 @@ class HeartbeatHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelIdle(ctx: ChannelHandlerContext, evt: IdleStateEvent) {
-        when (evt) {
-            IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> {
-                logger.trace("channel write timeout {}", ctx)
-                ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.PING))
-            }
-            IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT -> {
-                logger.trace("channel read timeout {}", ctx)
-                ctx.channel().close()
+    override fun channelIdle(ctx: ChannelHandlerContext?, evt: IdleStateEvent?) {
+        logger.trace("channelIdle: {}, {}", ctx, evt)
+        if (ctx != null) {
+            when (evt) {
+                IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.PING))
+                IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT -> ctx.channel().close()
             }
         }
         super.channelIdle(ctx, evt)

@@ -1,7 +1,7 @@
 package lighttunnel.server
 
 import lighttunnel.logger.LoggerFactory
-import lighttunnel.server.http.HttpPluginImplStaticFile
+import lighttunnel.server.http.HttpPlugin
 import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
 import org.junit.Before
@@ -36,7 +36,7 @@ class TunnelServerTest {
             httpsBindPort = 8443,
             httpsContext = SslContextUtil.forBuiltinServer(),
             dashboardBindPort = 5081,
-            httpPlugin = HttpPluginImplStaticFile(
+            httpPlugin = HttpPlugin.StaticFileImpl(
                 paths = listOf("C:\\", "D:\\"),
                 hosts = listOf("tunnel.lo")
             )

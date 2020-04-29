@@ -22,31 +22,34 @@ class HttpServerChannelHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelActive(ctx: ChannelHandlerContext) {
+    override fun channelActive(ctx: ChannelHandlerContext?) {
         logger.trace("channelActive: {}", ctx)
         super.channelActive(ctx)
     }
 
     @Throws(Exception::class)
-    override fun channelInactive(ctx: ChannelHandlerContext) {
+    override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
-        val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
-        val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
-        if (host != null && sessionId != null) {
-            val httpFd = registry.getHttpFd(host)
-            if (httpFd != null) {
-                val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
-                httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
+        if (ctx != null) {
+            val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
+            val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
+            if (host != null && sessionId != null) {
+                val httpFd = registry.getHttpFd(host)
+                if (httpFd != null) {
+                    val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
+                    httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head))
+                }
+                ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).set(null)
+                ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(null)
             }
-            ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).set(null)
-            ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(null)
         }
         super.channelInactive(ctx)
     }
 
     @Throws(Exception::class)
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+    override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
+        ctx ?: return
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 

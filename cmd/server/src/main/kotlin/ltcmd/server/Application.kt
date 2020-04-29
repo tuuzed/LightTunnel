@@ -6,7 +6,6 @@ import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.TunnelServer
 import lighttunnel.server.http.HttpPlugin
-import lighttunnel.server.http.HttpPluginImplStaticFile
 import lighttunnel.server.interceptor.SimpleRequestInterceptor
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
@@ -57,9 +56,9 @@ class Application : AbstractApplication() {
 
         val pluginSfPaths = basic["plugin_sf_paths"]?.split(',')
         val pluginSfHosts = basic["plugin_sf_hosts"]?.split(',')
-        var staticFileHttpPlugin: HttpPlugin? = null
+        var sfHttpPlugin: HttpPlugin? = null
         if (!pluginSfPaths.isNullOrEmpty() && !pluginSfHosts.isNullOrEmpty()) {
-            staticFileHttpPlugin = HttpPluginImplStaticFile(
+            sfHttpPlugin = HttpPlugin.StaticFileImpl(
                 paths = pluginSfPaths,
                 hosts = pluginSfHosts
             )
@@ -106,7 +105,7 @@ class Application : AbstractApplication() {
             },
             httpsRequestInterceptor = interceptor,
             // plugin
-            httpPlugin = staticFileHttpPlugin,
+            httpPlugin = sfHttpPlugin,
             // dashboard
             dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )
