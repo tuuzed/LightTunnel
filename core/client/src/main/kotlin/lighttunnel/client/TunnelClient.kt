@@ -178,7 +178,9 @@ class TunnelClient(
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(InnerChannelInitializer(
-                localTcpClient, this@TunnelClient, this
+                localTcpClient = localTcpClient,
+                onChannelStateListener = this@TunnelClient,
+                sslContext = this
             )).also { cachedSslBootstraps[this] = it }
 
     private class InnerChannelInitializer(
@@ -197,8 +199,8 @@ class TunnelClient(
                 .addLast("decoder", ProtoMessageDecoder())
                 .addLast("encoder", ProtoMessageEncoder())
                 .addLast("handler", TunnelClientChannelHandler(
-                    localTcpClient,
-                    onChannelStateListener
+                    localTcpClient = localTcpClient,
+                    onChannelStateListener = onChannelStateListener
                 ))
         }
     }

@@ -16,12 +16,13 @@ class TunnelConnectFd(
     private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
-    val tunnelRequest: TunnelRequest
+    private val tunnelRequest: TunnelRequest
 ) {
     private val logger by loggerDelegate()
     private var connectChannelFuture: ChannelFuture? = null
 
-    var finallyTunnelRequest: TunnelRequest? = null
+    val originalTunnelRequest get() = tunnelRequest
+    var finalTunnelRequest: TunnelRequest? = null
         internal set
 
     private val activeClosedFlag = AtomicBoolean(false)
@@ -38,7 +39,7 @@ class TunnelConnectFd(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    val head = (finallyTunnelRequest ?: tunnelRequest).toBytes()
+                    val head = (finalTunnelRequest ?: originalTunnelRequest).toBytes()
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
                     future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(this)
                 } else {
@@ -56,7 +57,7 @@ class TunnelConnectFd(
     }
 
     override fun toString(): String {
-        return finallyTunnelRequest?.toString(serverAddr) ?: tunnelRequest.toString(serverAddr)
+        return (finalTunnelRequest ?: originalTunnelRequest).toString(serverAddr)
     }
 
     interface OnConnectFailureCallback {

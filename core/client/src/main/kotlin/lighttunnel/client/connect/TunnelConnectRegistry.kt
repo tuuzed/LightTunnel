@@ -14,7 +14,6 @@ class TunnelConnectRegistry {
 
     fun unregister(fd: TunnelConnectFd) = lock.write { cached.remove(fd) }
 
-
     fun depose() = lock.write {
         cached.forEach { it.close() }
         cached.clear()
@@ -24,7 +23,7 @@ class TunnelConnectRegistry {
         get() = lock.read {
             JSONArray().also { array ->
                 cached.forEach { fd ->
-                    val request = fd.finallyTunnelRequest ?: fd.tunnelRequest
+                    val request = fd.finalTunnelRequest ?: fd.originalTunnelRequest
                     array.put(JSONObject().also {
                         it.put("name", request.name)
                         it.put("tunnel", request.toString(fd.serverAddr))

@@ -75,28 +75,30 @@ class TunnelServerChannelHandler(
 
     @Throws(Exception::class)
     private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("handlePingMessage# {}, {}", ctx, msg)
+        logger.trace("doHandlePingMessage# {}, {}", ctx, msg)
         ctx.writeAndFlush(ProtoMessage(ProtoMessageType.PONG))
     }
 
     @Throws(Exception::class)
     private fun doHandleRequestMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("handleRequestMessage# {}, {}", ctx, msg)
+        logger.trace("doHandleRequestMessage# {}, {}", ctx, msg)
         try {
-            val tunnelRequest = TunnelRequest.fromBytes(msg.head)
-            logger.trace("tunnelRequest: {}", tunnelRequest)
-            when (tunnelRequest.type) {
+            val originalTunnelRequest = TunnelRequest.fromBytes(msg.head)
+            val finalTunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(originalTunnelRequest)
+            logger.trace("originalTunnelRequest: {}, finalTunnelRequest: {}", originalTunnelRequest, finalTunnelRequest)
+            when (finalTunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {
-                    tcpServer?.also { handleTcpRequestMessage(ctx, it, tunnelRequest) }
-                        ?: throw ProtoException("TCP协议隧道未开启")
+                    val server = tcpServer ?: throw ProtoException("TCP协议隧道未开启")
+                    val registry = tcpRegistry ?: throw ProtoException("TCP协议隧道未开启")
+                    server.handleTcpRequestMessage(ctx, registry, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTP -> {
-                    httpRegistry?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
-                        ?: throw ProtoException("HTTP协议隧道未开启")
+                    val registry = httpRegistry ?: throw ProtoException("HTTP协议隧道未开启")
+                    handleHttpRequestMessage(ctx, registry, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTPS -> {
-                    httpsRegistry?.also { handleHttpRequestMessage(ctx, it, tunnelRequest) }
-                        ?: throw ProtoException("HTTPS协议隧道未开启")
+                    val registry = httpsRegistry ?: throw ProtoException("HTTPS协议隧道未开启")
+                    handleHttpRequestMessage(ctx, registry, finalTunnelRequest)
                 }
                 else -> throw ProtoException("不支持的隧道类型")
             }
@@ -112,19 +114,18 @@ class TunnelServerChannelHandler(
         logger.trace("doHandleTransferMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
         val sessionChannel = sessionChannels.getChannel(msg.sessionId)
-        logger.trace("doHandleTransferMessage# sessionChannel={}", sessionChannel)
         sessionChannel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
     }
 
     @Throws(Exception::class)
     private fun doHandleLocalConnectedMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("handleLocalConnectedMessage# {}, {}", ctx, msg)
+        logger.trace("doHandleLocalConnectedMessage# {}, {}", ctx, msg)
         // 无须处理
     }
 
     @Throws(Exception::class)
     private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("handleLocalDisconnectMessage# {}, {}", ctx, msg)
+        logger.trace("doHandleLocalDisconnectMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
         val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
         // 解决 HTTP/1.x 数据传输问题
@@ -132,13 +133,14 @@ class TunnelServerChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun handleTcpRequestMessage(ctx: ChannelHandlerContext, server: TcpServer, tunnelRequest: TunnelRequest) {
-        @Suppress("NAME_SHADOWING")
-        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(tunnelRequest)
+    private fun TcpServer.handleTcpRequestMessage(ctx: ChannelHandlerContext, registry: TcpRegistry, tunnelRequest: TunnelRequest) {
+        if (registry.isRegistered(tunnelRequest.remotePort)) {
+            throw ProtoException("remotePort(${tunnelRequest.remotePort}) already used")
+        }
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionChannels)
-        server.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
+        this.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
@@ -146,8 +148,6 @@ class TunnelServerChannelHandler(
 
     @Throws(Exception::class)
     private fun handleHttpRequestMessage(ctx: ChannelHandlerContext, registry: HttpRegistry, tunnelRequest: TunnelRequest) {
-        @Suppress("NAME_SHADOWING")
-        val tunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(tunnelRequest)
         if (registry.isRegistered(tunnelRequest.host)) {
             throw ProtoException("host(${tunnelRequest.host}) already used")
         }

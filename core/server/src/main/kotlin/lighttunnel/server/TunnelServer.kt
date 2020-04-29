@@ -64,8 +64,8 @@ class TunnelServer(
 
     private val tunnelIds = IncIds()
 
-    private val bossGroup by lazy { if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup() }
-    private val workerGroup by lazy { if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup() }
+    private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
+    private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
 
     private var tcpServer: TcpServer? = null
     private var tcpRegistry: TcpRegistry? = null
@@ -88,52 +88,17 @@ class TunnelServer(
             registry = TcpRegistry().also { tcpRegistry = it }
         )
         if (httpBindPort != null) {
-            httpServer = HttpServer(
-                bossGroup = bossGroup,
-                workerGroup = workerGroup,
-                bindAddr = bindAddr,
-                bindPort = httpBindPort,
-                sslContext = null,
-                interceptor = httpRequestInterceptor,
-                httpPlugin = httpPlugin,
-                registry = HttpRegistry().also { httpRegistry = it }
-            )
+            initHttpServer(httpBindPort)
         }
         if (httpsBindPort != null) {
             requireNotNull(httpsContext) { "httpsContext == null" }
-            httpsServer = HttpServer(
-                bossGroup = bossGroup,
-                workerGroup = workerGroup,
-                bindAddr = bindAddr,
-                bindPort = httpsBindPort,
-                sslContext = httpsContext,
-                interceptor = httpsRequestInterceptor,
-                httpPlugin = httpPlugin,
-                registry = HttpRegistry().also { httpsRegistry = it }
-            )
+            initHttpsServer(httpsBindPort, httpsContext)
         }
         if (dashboardBindPort != null) {
-            val server = DashboardServer(
-                bossGroup = bossGroup,
-                workerGroup = workerGroup,
-                bindAddr = bindAddr,
-                bindPort = dashboardBindPort
-            ).also { dashboardServer = it }
-            server.router {
-                route("/api/snapshot") {
-                    val obj = JSONObject()
-                    obj.put("tcp", tcpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
-                    obj.put("http", httpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
-                    obj.put("https", httpsRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
-                    DefaultFullHttpResponse(
-                        HttpVersion.HTTP_1_1,
-                        HttpResponseStatus.OK,
-                        Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
-                    )
-                }
-            }
+            initDashboardServer(dashboardBindPort)
         }
     }
+
 
     @Throws(Exception::class)
     fun start(): Unit = lock.withLock {
@@ -151,6 +116,54 @@ class TunnelServer(
         dashboardServer?.depose()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
+    }
+
+    private fun initHttpServer(bindPort: Int) {
+        httpServer = HttpServer(
+            bossGroup = bossGroup,
+            workerGroup = workerGroup,
+            bindAddr = bindAddr,
+            bindPort = bindPort,
+            sslContext = null,
+            interceptor = httpRequestInterceptor,
+            httpPlugin = httpPlugin,
+            registry = HttpRegistry().also { httpRegistry = it }
+        )
+    }
+
+    private fun initHttpsServer(bindPort: Int, sslContext: SslContext) {
+        httpsServer = HttpServer(
+            bossGroup = bossGroup,
+            workerGroup = workerGroup,
+            bindAddr = bindAddr,
+            bindPort = bindPort,
+            sslContext = sslContext,
+            interceptor = httpsRequestInterceptor,
+            httpPlugin = httpPlugin,
+            registry = HttpRegistry().also { httpsRegistry = it }
+        )
+    }
+
+    private fun initDashboardServer(bindPort: Int) {
+        val server = DashboardServer(
+            bossGroup = bossGroup,
+            workerGroup = workerGroup,
+            bindAddr = bindAddr,
+            bindPort = bindPort
+        ).also { dashboardServer = it }
+        server.router {
+            route("/api/snapshot") {
+                val obj = JSONObject()
+                obj.put("tcp", tcpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                obj.put("http", httpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                obj.put("https", httpsRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
+                )
+            }
+        }
     }
 
     private fun startService(sslContext: SslContext?) {

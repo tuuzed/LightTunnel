@@ -18,7 +18,7 @@ class SessionChannels(
     private val cachedSessionIdChannels = HashMap<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
 
-    val cachedChannelCount: Int get() = cachedSessionIdChannels.count()
+    val cachedChannelCount: Int get() = lock.read { cachedSessionIdChannels.count() }
 
     fun putChannel(channel: Channel): Long {
         val sessionId = ids.nextId
