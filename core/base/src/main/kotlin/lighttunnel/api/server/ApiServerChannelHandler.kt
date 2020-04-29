@@ -1,4 +1,4 @@
-package lighttunnel.dashboard.server
+package lighttunnel.api.server
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
@@ -7,8 +7,8 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 
 
-class DashboardServerChannelHandler(
-    private val server: DashboardServer
+class ApiServerChannelHandler(
+    private val server: ApiServer
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
 
     override fun channelReadComplete(ctx: ChannelHandlerContext) {

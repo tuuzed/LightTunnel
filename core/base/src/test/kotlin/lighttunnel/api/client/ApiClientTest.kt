@@ -1,4 +1,4 @@
-package lighttunnel.dashboard.client
+package lighttunnel.api.client
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.nio.NioEventLoopGroup
@@ -6,13 +6,13 @@ import io.netty.handler.codec.http.HttpMethod
 import org.junit.Before
 import org.junit.Test
 
-class DashboardClientTest {
+class ApiClientTest {
 
-    lateinit var client: DashboardClient
+    lateinit var client: ApiClient
 
     @Before
     fun setUp() {
-        client = DashboardClient(NioEventLoopGroup())
+        client = ApiClient(NioEventLoopGroup())
     }
 
     @Test

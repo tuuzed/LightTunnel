@@ -10,15 +10,13 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import io.netty.handler.codec.http.DefaultFullHttpResponse
-import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
+import lighttunnel.api.server.ApiServer
 import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
-import lighttunnel.dashboard.server.DashboardServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
@@ -50,7 +48,7 @@ class TunnelClient(
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
     private val tunnelConnectRegistry = TunnelConnectRegistry()
-    private var dashboardServer: DashboardServer? = null
+    private var dashboardServer: ApiServer? = null
     private val lock = ReentrantLock()
 
     init {
@@ -152,22 +150,27 @@ class TunnelClient(
 
     private fun startDashboardServer() = lock.withLock {
         if (dashboardServer == null && dashboardBindPort != null) {
-            val server = DashboardServer(
+            val server = ApiServer(
                 bossGroup = workerGroup,
                 workerGroup = workerGroup,
                 bindAddr = dashBindAddr,
                 bindPort = dashboardBindPort
-            ).router {
+            ).also { dashboardServer = it }
+            server.router {
                 route("/api/snapshot") {
+                    val content = Unpooled.copiedBuffer(tunnelConnectRegistry.snapshot.toString(2), Charsets.UTF_8)
                     DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1,
                         HttpResponseStatus.OK,
-                        Unpooled.copiedBuffer(tunnelConnectRegistry.snapshot.toString(2), Charsets.UTF_8)
-                    )
+                        content
+                    ).also {
+                        it.headers()
+                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                    }
                 }
             }
             server.start()
-            dashboardServer = server
         }
     }
 

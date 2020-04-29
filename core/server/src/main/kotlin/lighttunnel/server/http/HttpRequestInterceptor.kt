@@ -1,4 +1,4 @@
-package lighttunnel.server.interceptor
+package lighttunnel.server.http
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -13,7 +13,12 @@ interface HttpRequestInterceptor {
 
     fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? = null
 
-    class DefaultImpl : HttpRequestInterceptor {
+    companion object {
+        @JvmStatic
+        val defaultImpl: HttpRequestInterceptor by lazy { DefaultImpl() }
+    }
+
+    private class DefaultImpl : HttpRequestInterceptor {
 
         companion object {
             /** remote_addr 魔法值 */

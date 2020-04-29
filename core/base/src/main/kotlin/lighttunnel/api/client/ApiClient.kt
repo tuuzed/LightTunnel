@@ -1,4 +1,4 @@
-package lighttunnel.dashboard.client
+package lighttunnel.api.client
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelInitializer
@@ -12,14 +12,14 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.util.AttributeKey
 import java.net.URI
 
-class DashboardClient(
+class ApiClient(
     workerGroup: NioEventLoopGroup,
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 512 * 1024
 ) {
     companion object {
-        internal val REQUEST_CALLBACK: AttributeKey<RequestCallback> =
-            AttributeKey.newInstance("dashboard.client.RequestCallback")
+        internal val AK_REQUEST_CALLBACK: AttributeKey<RequestCallback> =
+            AttributeKey.newInstance("lighttunnel.api.client.RequestCallback")
     }
 
     private val bootstrap = Bootstrap()
@@ -41,7 +41,7 @@ class DashboardClient(
                     ch.pipeline()
                         .addLast("codec", HttpClientCodec())
                         .addLast("aggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", DashboardClientChannelHandler())
+                        .addLast("handler", ApiClientChannelHandler())
                 }
 
             })
@@ -57,7 +57,7 @@ class DashboardClient(
         } else {
             uri.port
         }).sync().channel().also {
-            it.attr(REQUEST_CALLBACK).set(callback)
+            it.attr(AK_REQUEST_CALLBACK).set(callback)
         }.writeAndFlush(request)
     }
 

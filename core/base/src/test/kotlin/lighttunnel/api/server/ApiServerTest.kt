@@ -1,4 +1,4 @@
-package lighttunnel.dashboard.server
+package lighttunnel.api.server
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
@@ -8,12 +8,12 @@ import io.netty.handler.codec.http.HttpVersion
 import org.junit.Before
 import org.junit.Test
 
-class DashboardServerTest {
-    private lateinit var server: DashboardServer
+class ApiServerTest {
+    private lateinit var server: ApiServer
 
     @Before
     fun before() {
-        server = DashboardServer(
+        server = ApiServer(
             NioEventLoopGroup(),
             NioEventLoopGroup(),
             null,

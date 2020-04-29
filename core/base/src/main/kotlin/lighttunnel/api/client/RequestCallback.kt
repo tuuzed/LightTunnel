@@ -1,4 +1,4 @@
-package lighttunnel.dashboard.client
+package lighttunnel.api.client
 
 import io.netty.handler.codec.http.FullHttpResponse
 

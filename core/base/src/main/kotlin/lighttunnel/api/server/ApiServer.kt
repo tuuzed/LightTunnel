@@ -1,4 +1,4 @@
-package lighttunnel.dashboard.server
+package lighttunnel.api.server
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelFuture
@@ -15,7 +15,7 @@ import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
 
 
-class DashboardServer(
+class ApiServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val bindAddr: String?,
@@ -43,14 +43,14 @@ class DashboardServer(
                     ch.pipeline()
                         .addLast("codec", HttpServerCodec())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", DashboardServerChannelHandler(this@DashboardServer))
+                        .addLast("handler", ApiServerChannelHandler(this@ApiServer))
                 }
             })
 
     }
 
-    fun router(block: RouterConfig.() -> Unit): DashboardServer {
-        block(routerConfig)
+    fun router(block: RouterConfig.() -> Unit): ApiServer {
+        routerConfig.block()
         return this
     }
 

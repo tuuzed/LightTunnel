@@ -4,9 +4,10 @@ import lighttunnel.BuildConfig
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
+import lighttunnel.server.TunnelRequestInterceptor
 import lighttunnel.server.TunnelServer
 import lighttunnel.server.http.HttpPlugin
-import lighttunnel.server.interceptor.SimpleRequestInterceptor
+import lighttunnel.server.http.HttpRequestInterceptor
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
@@ -52,8 +53,12 @@ class Application : AbstractApplication() {
     private fun newTunnelServer(basic: Profile.Section): TunnelServer {
         val authToken = basic["auth_token"]
         val allowPorts = basic["allow_ports"]
-        val interceptor = SimpleRequestInterceptor(authToken, allowPorts)
-
+        val httpRequestInterceptor = HttpRequestInterceptor.defaultImpl
+        val tunnelRequestInterceptor = if (authToken != null || allowPorts != null) {
+            TunnelRequestInterceptor.defaultImpl(authToken, allowPorts)
+        } else {
+            TunnelRequestInterceptor.emptyImpl
+        }
         val pluginSfPaths = basic["plugin_sf_paths"]?.split(',')
         val pluginSfHosts = basic["plugin_sf_hosts"]?.split(',')
         var sfHttpPlugin: HttpPlugin? = null
@@ -84,10 +89,10 @@ class Application : AbstractApplication() {
             } else {
                 null
             },
-            tunnelRequestInterceptor = interceptor,
+            tunnelRequestInterceptor = tunnelRequestInterceptor,
             // http
             httpBindPort = basic["vhost_http_port"].asInt(),
-            httpRequestInterceptor = interceptor,
+            httpRequestInterceptor = httpRequestInterceptor,
             // https
             httpsBindPort = basic["vhost_https_port"].asInt(),
             httpsContext = if (basic["vhost_https_port"] != null) {
@@ -103,7 +108,7 @@ class Application : AbstractApplication() {
             } else {
                 null
             },
-            httpsRequestInterceptor = interceptor,
+            httpsRequestInterceptor = httpRequestInterceptor,
             // plugin
             httpPlugin = sfHttpPlugin,
             // dashboard

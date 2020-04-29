@@ -9,21 +9,17 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.DefaultFullHttpResponse
-import io.netty.handler.codec.http.HttpResponseStatus
-import io.netty.handler.codec.http.HttpVersion
+import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
-import lighttunnel.dashboard.server.DashboardServer
+import lighttunnel.api.server.ApiServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
 import lighttunnel.proto.ProtoMessageEncoder
 import lighttunnel.server.http.HttpPlugin
 import lighttunnel.server.http.HttpRegistry
+import lighttunnel.server.http.HttpRequestInterceptor
 import lighttunnel.server.http.HttpServer
-import lighttunnel.server.interceptor.HttpRequestInterceptor
-import lighttunnel.server.interceptor.SimpleRequestInterceptor
-import lighttunnel.server.interceptor.TunnelRequestInterceptor
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.util.IncIds
@@ -41,14 +37,14 @@ class TunnelServer(
     // ssl tunnel
     private val sslBindPort: Int? = null,
     private val sslContext: SslContext? = null,
-    private val tunnelRequestInterceptor: TunnelRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
+    private val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl,
     // http
     private val httpBindPort: Int? = null,
-    private val httpRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
+    private val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,
     // https
     private val httpsBindPort: Int? = null,
     private val httpsContext: SslContext? = null,
-    private val httpsRequestInterceptor: HttpRequestInterceptor = SimpleRequestInterceptor.defaultImpl,
+    private val httpsRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,
     // plugin
     private val httpPlugin: HttpPlugin? = null,
     // dashboard
@@ -76,7 +72,7 @@ class TunnelServer(
     private var httpsServer: HttpServer? = null
     private var httpsRegistry: HttpRegistry? = null
 
-    private var dashboardServer: DashboardServer? = null
+    private var dashboardServer: ApiServer? = null
 
     init {
         if (sslBindPort != null) {
@@ -145,7 +141,7 @@ class TunnelServer(
     }
 
     private fun initDashboardServer(bindPort: Int) {
-        val server = DashboardServer(
+        val server = ApiServer(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             bindAddr = bindAddr,
@@ -157,11 +153,16 @@ class TunnelServer(
                 obj.put("tcp", tcpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
                 obj.put("http", httpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
                 obj.put("https", httpsRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                val content = Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
-                    Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
-                )
+                    content
+                ).also {
+                    it.headers()
+                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                }
             }
         }
     }
