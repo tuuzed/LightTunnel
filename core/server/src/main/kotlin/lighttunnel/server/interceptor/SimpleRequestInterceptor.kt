@@ -59,7 +59,7 @@ class SimpleRequestInterceptor(
         return if (tunnelRequest.enableBasicAuth) handleHttpBasicAuth(tunnelRequest, httpRequest) else null
     }
 
-    private fun handleHttpBasicAuth(tunnelRequest: TunnelRequest, httpRequest: HttpRequest): FullHttpResponse? {
+    private fun handleHttpBasicAuth(tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? {
         val account = HttpUtil.getBasicAuthorization(httpRequest)
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
@@ -85,14 +85,14 @@ class SimpleRequestInterceptor(
 
     private fun handleRewriteHttpHeaders(
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest
     ) {
         handleProxyHttpHeaders(true, localAddress, remoteAddress, tunnelRequest, httpRequest)
     }
 
     private fun handleWriteHttpHeaders(
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest
     ) {
         handleProxyHttpHeaders(false, localAddress, remoteAddress, tunnelRequest, httpRequest)
     }
@@ -101,7 +101,7 @@ class SimpleRequestInterceptor(
     private fun handleProxyHttpHeaders(
         isPxySet: Boolean,
         localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: HttpRequest
+        tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest
     ) {
         val headers = if (isPxySet) tunnelRequest.pxySetHeaders else tunnelRequest.pxyAddHeaders
         if (headers.isEmpty()) {

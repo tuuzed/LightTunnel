@@ -38,7 +38,7 @@ class TunnelServerTest {
             dashboardBindPort = 5081,
             httpPlugin = HttpPluginImplStaticFile(
                 paths = listOf("C:\\", "D:\\"),
-                hosts = listOf("127.0.0.1")
+                hosts = listOf("tunnel.lo")
             )
         )
     }

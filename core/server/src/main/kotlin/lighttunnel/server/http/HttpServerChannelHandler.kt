@@ -56,7 +56,7 @@ class HttpServerChannelHandler(
         msg ?: return
         val httpPluginResponse = httpPlugin?.doHandle(msg)
         if (httpPluginResponse != null) {
-            ctx.channel().writeAndFlush(httpPluginResponse).addListener(ChannelFutureListener.CLOSE)
+            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpPluginResponse)).addListener(ChannelFutureListener.CLOSE)
         }
         val host = HttpUtil.getHostWithoutPort(msg)
         if (host == null) {
@@ -71,7 +71,7 @@ class HttpServerChannelHandler(
         }
         val httpInterceptorResponse = interceptor.handleHttpRequest(ctx, httpFd.tunnelRequest, msg)
         if (httpInterceptorResponse != null) {
-            ctx.channel().writeAndFlush(httpPluginResponse)
+            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpInterceptorResponse))
             return
         }
         val sessionId = httpFd.sessionChannels.putChannel(ctx.channel())
