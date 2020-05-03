@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
+import lighttunnel.server.util.SessionChannels
 
 
 class HttpServer(
@@ -65,6 +66,13 @@ class HttpServer(
             bindAddr ?: "any address",
             bindPort
         )
+    }
+
+    fun stopTunnel(host: String) = registry.unregister(host)
+
+    @Throws(Exception::class)
+    fun startTunnel(host: String, sessionChannels: SessionChannels): HttpFd {
+        return registry.register(host, sessionChannels)
     }
 
 }

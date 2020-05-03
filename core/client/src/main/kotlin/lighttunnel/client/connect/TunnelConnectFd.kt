@@ -28,7 +28,7 @@ class TunnelConnectFd(
     private val activeClosedFlag = AtomicBoolean(false)
     val isActiveClosed get() = activeClosedFlag.get()
 
-    internal fun connect(callback: OnConnectFailureCallback? = null) {
+    internal fun connect(callback: OnConnectFailureCallback) {
         if (isActiveClosed) {
             logger.warn("This tunnel already closed.")
             return
@@ -43,7 +43,7 @@ class TunnelConnectFd(
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
                     future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(this)
                 } else {
-                    callback?.onConnectFailure(this)
+                    callback.onConnectFailure(this)
                 }
             })
     }

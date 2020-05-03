@@ -24,4 +24,9 @@ class TcpFd(
         bindChannelFuture.channel().close()
         sessionChannels.depose()
     }
+
+    override fun toString(): String {
+        return tunnelRequest.toString()
+    }
+
 }

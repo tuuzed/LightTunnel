@@ -17,4 +17,8 @@ class HttpFd(
 
     fun close() = sessionChannels.depose()
 
+    override fun toString(): String {
+        return tunnelRequest.toString()
+    }
+
 }

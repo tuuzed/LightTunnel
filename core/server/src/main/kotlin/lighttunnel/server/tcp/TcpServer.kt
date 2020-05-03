@@ -32,8 +32,10 @@ class TcpServer(
             })
     }
 
+    fun stopTunnel(port: Int) = registry.unregister(port)
+
     @Throws(Exception::class)
-    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels) {
+    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels): TcpFd {
         if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
             throw ProtoException("port($port) already used")
         }
@@ -42,7 +44,9 @@ class TcpServer(
         } else {
             serverBootstrap.bind(addr, port)
         }
-        registry.register(port, sessionChannels, TcpFd(addr, port, sessionChannels, bindChannelFuture))
+        val fd = TcpFd(addr, port, sessionChannels, bindChannelFuture)
+        registry.register(port, sessionChannels, fd)
+        return fd
     }
 
 }

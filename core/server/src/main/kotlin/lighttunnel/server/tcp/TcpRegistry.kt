@@ -24,11 +24,11 @@ class TcpRegistry {
         logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
-    fun unregister(port: Int) = lock.write {
+    fun unregister(port: Int): TcpFd? = lock.write {
         unsafeUnregister(port)
         val tcpFd = portTcpFds.remove(port)
         tcpFd?.close()
-        Unit
+        tcpFd
     }
 
     fun depose() = lock.write {
@@ -38,7 +38,6 @@ class TcpRegistry {
     }
 
     fun isRegistered(port: Int): Boolean = lock.read { portTcpFds.contains(port) }
-
 
     fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
 

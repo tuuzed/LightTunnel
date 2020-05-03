@@ -16,7 +16,6 @@ import lighttunnel.api.server.ApiServer
 import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
-import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
@@ -61,21 +60,17 @@ class TunnelClient(
             .handler(InnerChannelInitializer(localTcpClient, this))
     }
 
-
-    override fun onChannelInactive(ctx: ChannelHandlerContext) {
-        super.onChannelInactive(ctx)
-        val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
+    override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {
+        super.onChannelInactive(ctx, fd, cause)
         if (fd != null) {
-            val cause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
             onTunnelStateListener?.onDisconnect(fd, cause)
             logger.trace("onChannelInactive: ", cause)
             tryReconnect(fd, cause != null)
         }
     }
 
-    override fun onChannelConnected(ctx: ChannelHandlerContext) {
-        super.onChannelConnected(ctx)
-        val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
+    override fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {
+        super.onChannelConnected(ctx, fd)
         if (fd != null) {
             onTunnelStateListener?.onConnected(fd)
         }
@@ -85,7 +80,6 @@ class TunnelClient(
         super.onConnectFailure(fd)
         tryReconnect(fd, false)
     }
-
 
     fun connect(
         serverAddr: String,
@@ -209,8 +203,8 @@ class TunnelClient(
     }
 
     interface OnTunnelStateListener {
-        fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {}
-        fun onConnected(fd: TunnelConnectFd) {}
-        fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {}
+        fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean)
+        fun onConnected(fd: TunnelConnectFd)
+        fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?)
     }
 }

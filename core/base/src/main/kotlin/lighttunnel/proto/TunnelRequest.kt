@@ -213,7 +213,7 @@ data class TunnelRequest internal constructor(
     fun toBytes() = toBytesInternal()
 
     override fun toString(): String {
-        return toString("tunnel")
+        return toString("::")
     }
 
     val optionsString get() = options.toString()

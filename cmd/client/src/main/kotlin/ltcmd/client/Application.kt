@@ -21,19 +21,22 @@ import org.ini4j.Profile
 import java.io.File
 import kotlin.experimental.or
 
-class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
+class Application : AbstractApplication() {
     private val logger by loggerDelegate()
 
-    override fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {
-        logger.info("onConnecting: {}, retryConnect: {}", fd, retryConnect)
-    }
+    private val onTunnelStateListener = object : TunnelClient.OnTunnelStateListener {
+        override fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {
+            logger.info("onConnecting: {}, retryConnect: {}", fd, retryConnect)
+        }
 
-    override fun onConnected(fd: TunnelConnectFd) {
-        logger.info("onConnected: {}", fd)
-    }
+        override fun onConnected(fd: TunnelConnectFd) {
+            logger.info("onConnected: {}", fd)
+        }
 
-    override fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {
-        logger.info("onDisconnect: {}, cause: {}", fd, cause)
+        override fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {
+            logger.info("onDisconnect: {}, cause: {}", fd, cause)
+        }
+
     }
 
     override val options: Options
@@ -98,7 +101,7 @@ class Application : AbstractApplication(), TunnelClient.OnTunnelStateListener {
         return TunnelClient(
             workerThreads = workerThreads,
             retryConnectPolicy = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-            onTunnelStateListener = this,
+            onTunnelStateListener = onTunnelStateListener,
             // dashboard
             dashboardBindPort = basic["dashboard_bind_port"].asInt()
         )

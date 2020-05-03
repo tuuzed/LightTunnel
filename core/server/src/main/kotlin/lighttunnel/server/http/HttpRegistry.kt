@@ -16,21 +16,20 @@ class HttpRegistry {
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
-    fun register(host: String, sessionChannels: SessionChannels) {
+    fun register(host: String, sessionChannels: SessionChannels): HttpFd {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
-        val httpFd = HttpFd(host, sessionChannels)
-        lock.write {
-            hostHttpFds[host] = httpFd
-        }
+        val fd = HttpFd(host, sessionChannels)
+        lock.write { hostHttpFds[host] = fd }
         logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
+        return fd
     }
 
-    fun unregister(host: String?) = lock.write {
+    fun unregister(host: String?): HttpFd? = lock.write {
         unsafeUnregister(host)
-        hostHttpFds.remove(host)
-        Unit
+        val fd = hostHttpFds.remove(host)
+        fd
     }
 
     fun depose() = lock.write {

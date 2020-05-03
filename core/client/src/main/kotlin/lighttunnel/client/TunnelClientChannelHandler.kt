@@ -7,6 +7,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
+import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
@@ -16,7 +17,7 @@ import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.LongUtil
 import java.nio.charset.StandardCharsets
 
-class TunnelClientChannelHandler(
+internal class TunnelClientChannelHandler(
     private val localTcpClient: LocalTcpClient,
     private val onChannelStateListener: OnChannelStateListener
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
@@ -32,7 +33,9 @@ class TunnelClientChannelHandler(
             if (tunnelId != null && sessionId != null) {
                 localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
             }
-            onChannelStateListener.onChannelInactive(ctx)
+            val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
+            val cause = ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).get()
+            onChannelStateListener.onChannelInactive(ctx, fd, cause)
         }
         super.channelInactive(ctx)
     }
@@ -76,9 +79,10 @@ class TunnelClientChannelHandler(
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).set(request)
         ctx.channel().attr(AttributeKeys.AK_ERROR_CAUSE).set(null)
-        ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()?.finalTunnelRequest = request
+        val fd = ctx.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).get()
+        fd?.finalTunnelRequest = request
         logger.debug("Opened Tunnel: {}", request)
-        onChannelStateListener.onChannelConnected(ctx)
+        onChannelStateListener.onChannelConnected(ctx, fd)
     }
 
     /** 隧道建立失败 */
@@ -150,9 +154,9 @@ class TunnelClientChannelHandler(
             ?.addListener(ChannelFutureListener.CLOSE)
     }
 
-    interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext) {}
-        fun onChannelConnected(ctx: ChannelHandlerContext) {}
+    internal interface OnChannelStateListener {
+        fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {}
+        fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {}
     }
 
 }

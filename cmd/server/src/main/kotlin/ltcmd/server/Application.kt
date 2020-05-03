@@ -6,8 +6,10 @@ import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.TunnelRequestInterceptor
 import lighttunnel.server.TunnelServer
+import lighttunnel.server.http.HttpFd
 import lighttunnel.server.http.HttpPlugin
 import lighttunnel.server.http.HttpRequestInterceptor
+import lighttunnel.server.tcp.TcpFd
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
@@ -20,6 +22,24 @@ import java.io.File
 class Application : AbstractApplication() {
     private val logger by loggerDelegate()
     private var tunnelServer: TunnelServer? = null
+    private val onTcpTunnelStateListener = object : TunnelServer.OnTcpTunnelStateListener {
+        override fun onConnected(fd: TcpFd) {
+            logger.info("onConnected: {}", fd)
+        }
+
+        override fun onDisconnect(fd: TcpFd) {
+            logger.info("onDisconnect: {}", fd)
+        }
+    }
+    private val onHttpTunnelStateListener = object : TunnelServer.OnHttpTunnelStateListener {
+        override fun onConnected(fd: HttpFd) {
+            logger.info("onConnected: {}", fd)
+        }
+
+        override fun onDisconnect(fd: HttpFd) {
+            logger.info("onDisconnect: {}", fd)
+        }
+    }
 
     override val options: Options
         get() = Options().apply {
@@ -112,7 +132,10 @@ class Application : AbstractApplication() {
             // plugin
             httpPlugin = sfHttpPlugin,
             // dashboard
-            dashboardBindPort = basic["dashboard_bind_port"].asInt()
+            dashboardBindPort = basic["dashboard_bind_port"].asInt(),
+            // listener
+            onTcpTunnelStateListener = onTcpTunnelStateListener,
+            onHttpTunnelStateListener = onHttpTunnelStateListener
         )
     }
 

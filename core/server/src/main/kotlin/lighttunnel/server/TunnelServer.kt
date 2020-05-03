@@ -4,6 +4,7 @@ package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.Unpooled
+import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
@@ -16,10 +17,8 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
 import lighttunnel.proto.ProtoMessageEncoder
-import lighttunnel.server.http.HttpPlugin
-import lighttunnel.server.http.HttpRegistry
-import lighttunnel.server.http.HttpRequestInterceptor
-import lighttunnel.server.http.HttpServer
+import lighttunnel.server.http.*
+import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.util.IncIds
@@ -48,8 +47,11 @@ class TunnelServer(
     // plugin
     private val httpPlugin: HttpPlugin? = null,
     // dashboard
-    private val dashboardBindPort: Int? = null
-) {
+    private val dashboardBindPort: Int? = null,
+    // listener
+    private val onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
+    private val onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
+) : TunnelServerChannelHandler.OnChannelStateListener {
     companion object {
         private val EMPTY_JSON_ARRAY = JSONArray(emptyList<Any>())
     }
@@ -113,6 +115,7 @@ class TunnelServer(
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }
+
 
     private fun initHttpServer(bindPort: Int) {
         httpServer = HttpServer(
@@ -187,10 +190,7 @@ class TunnelServer(
                         .addLast("handler", TunnelServerChannelHandler(
                             tunnelRequestInterceptor = tunnelRequestInterceptor,
                             tunnelIds = tunnelIds,
-                            tcpServer = tcpServer,
-                            tcpRegistry = tcpRegistry,
-                            httpRegistry = httpRegistry,
-                            httpsRegistry = httpsRegistry
+                            tcpServer = tcpServer
                         ))
                 }
             })
@@ -209,6 +209,44 @@ class TunnelServer(
             }
             logger.info("Serving tunnel with ssl on {} port {}", bindAddr ?: "any address", sslBindPort)
         }
+    }
+
+    override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
+        super.onChannelConnected(ctx, tcpFd)
+        if (tcpFd != null) {
+            onTcpTunnelStateListener?.onConnected(tcpFd)
+        }
+    }
+
+    override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
+        super.onChannelInactive(ctx, tcpFd)
+        if (tcpFd != null) {
+            onTcpTunnelStateListener?.onDisconnect(tcpFd)
+        }
+    }
+
+    override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
+        super.onChannelConnected(ctx, httpFd)
+        if (httpFd != null) {
+            onHttpTunnelStateListener?.onDisconnect(httpFd)
+        }
+    }
+
+    override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
+        super.onChannelInactive(ctx, httpFd)
+        if (httpFd != null) {
+            onHttpTunnelStateListener?.onConnected(httpFd)
+        }
+    }
+
+    interface OnTcpTunnelStateListener {
+        fun onConnected(fd: TcpFd)
+        fun onDisconnect(fd: TcpFd)
+    }
+
+    interface OnHttpTunnelStateListener {
+        fun onConnected(fd: HttpFd)
+        fun onDisconnect(fd: HttpFd)
     }
 
 }
