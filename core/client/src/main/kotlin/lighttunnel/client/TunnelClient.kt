@@ -34,7 +34,7 @@ class TunnelClient(
     private val dashBindAddr: String? = null,
     private val dashboardBindPort: Int? = null,
     private val onTunnelStateListener: OnTunnelStateListener? = null
-) : TunnelConnectFd.OnConnectFailureCallback, TunnelClientChannelHandler.OnChannelStateListener {
+) {
 
     companion object {
         const val RETRY_CONNECT_POLICY_LOSE = 0x01.toByte()  // 0000_0001
@@ -50,6 +50,30 @@ class TunnelClient(
     private var dashboardServer: ApiServer? = null
     private val lock = ReentrantLock()
 
+    private val onConnectFailureCallback = object : TunnelConnectFd.OnConnectFailureCallback {
+        override fun onConnectFailure(fd: TunnelConnectFd) {
+            super.onConnectFailure(fd)
+            tryReconnect(fd, false)
+        }
+    }
+    private val onChannelStateListener = object : TunnelClientChannelHandler.OnChannelStateListener {
+        override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {
+            super.onChannelInactive(ctx, fd, cause)
+            if (fd != null) {
+                onTunnelStateListener?.onDisconnect(fd, cause)
+                logger.trace("onChannelInactive: ", cause)
+                tryReconnect(fd, cause != null)
+            }
+        }
+
+        override fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {
+            super.onChannelConnected(ctx, fd)
+            if (fd != null) {
+                onTunnelStateListener?.onConnected(fd)
+            }
+        }
+    }
+
     init {
         localTcpClient = LocalTcpClient(workerGroup)
         bootstrap
@@ -57,29 +81,9 @@ class TunnelClient(
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(InnerChannelInitializer(localTcpClient, this))
+            .handler(InnerChannelInitializer(localTcpClient, onChannelStateListener))
     }
 
-    override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {
-        super.onChannelInactive(ctx, fd, cause)
-        if (fd != null) {
-            onTunnelStateListener?.onDisconnect(fd, cause)
-            logger.trace("onChannelInactive: ", cause)
-            tryReconnect(fd, cause != null)
-        }
-    }
-
-    override fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {
-        super.onChannelConnected(ctx, fd)
-        if (fd != null) {
-            onTunnelStateListener?.onConnected(fd)
-        }
-    }
-
-    override fun onConnectFailure(fd: TunnelConnectFd) {
-        super.onConnectFailure(fd)
-        tryReconnect(fd, false)
-    }
 
     fun connect(
         serverAddr: String,
@@ -94,7 +98,7 @@ class TunnelClient(
             serverPort,
             tunnelRequest
         )
-        fd.connect(this)
+        fd.connect(onConnectFailureCallback)
         onTunnelStateListener?.onConnecting(fd, false)
         tunnelConnectRegistry.register(fd)
         return fd
@@ -123,7 +127,7 @@ class TunnelClient(
             if ((retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) == RETRY_CONNECT_POLICY_ERROR) {
                 // 连接失败，3秒后发起重连
                 TimeUnit.SECONDS.sleep(3)
-                fd.connect(this)
+                fd.connect(onConnectFailureCallback)
                 onTunnelStateListener?.onConnecting(fd, true)
             } else {
                 // 不需要自动重连时移除缓存
@@ -134,7 +138,7 @@ class TunnelClient(
         if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) == RETRY_CONNECT_POLICY_LOSE) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
-            fd.connect(this)
+            fd.connect(onConnectFailureCallback)
             onTunnelStateListener?.onConnecting(fd, true)
         } else {
             // 不需要自动重连时移除缓存
@@ -176,7 +180,7 @@ class TunnelClient(
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(InnerChannelInitializer(
                 localTcpClient = localTcpClient,
-                onChannelStateListener = this@TunnelClient,
+                onChannelStateListener = onChannelStateListener,
                 sslContext = this
             )).also { cachedSslBootstraps[this] = it }
 
@@ -203,8 +207,8 @@ class TunnelClient(
     }
 
     interface OnTunnelStateListener {
-        fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean)
-        fun onConnected(fd: TunnelConnectFd)
-        fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?)
+        fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {}
+        fun onConnected(fd: TunnelConnectFd) {}
+        fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {}
     }
 }

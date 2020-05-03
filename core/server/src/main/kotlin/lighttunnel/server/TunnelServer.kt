@@ -51,7 +51,7 @@ class TunnelServer(
     // listener
     private val onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
     private val onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
-) : TunnelServerChannelHandler.OnChannelStateListener {
+) {
     companion object {
         private val EMPTY_JSON_ARRAY = JSONArray(emptyList<Any>())
     }
@@ -76,6 +76,36 @@ class TunnelServer(
 
     private var dashboardServer: ApiServer? = null
 
+    private val onChannelStateListener = object : TunnelServerChannelHandler.OnChannelStateListener {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
+            super.onChannelConnected(ctx, tcpFd)
+            if (tcpFd != null) {
+                onTcpTunnelStateListener?.onConnected(tcpFd)
+            }
+        }
+
+        override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
+            super.onChannelInactive(ctx, tcpFd)
+            if (tcpFd != null) {
+                onTcpTunnelStateListener?.onDisconnect(tcpFd)
+            }
+        }
+
+        override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
+            super.onChannelConnected(ctx, httpFd)
+            if (httpFd != null) {
+                onHttpTunnelStateListener?.onConnected(httpFd)
+            }
+        }
+
+        override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
+            super.onChannelInactive(ctx, httpFd)
+            if (httpFd != null) {
+                onHttpTunnelStateListener?.onDisconnect(httpFd)
+            }
+        }
+    }
+
     init {
         if (sslBindPort != null) {
             requireNotNull(sslContext) { "sslContext == null" }
@@ -96,7 +126,6 @@ class TunnelServer(
             initDashboardServer(dashboardBindPort)
         }
     }
-
 
     @Throws(Exception::class)
     fun start(): Unit = lock.withLock {
@@ -190,7 +219,10 @@ class TunnelServer(
                         .addLast("handler", TunnelServerChannelHandler(
                             tunnelRequestInterceptor = tunnelRequestInterceptor,
                             tunnelIds = tunnelIds,
-                            tcpServer = tcpServer
+                            tcpServer = tcpServer,
+                            httpServer = httpServer,
+                            httpsServer = httpsServer,
+                            onChannelStateListener = onChannelStateListener
                         ))
                 }
             })
@@ -211,42 +243,15 @@ class TunnelServer(
         }
     }
 
-    override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
-        super.onChannelConnected(ctx, tcpFd)
-        if (tcpFd != null) {
-            onTcpTunnelStateListener?.onConnected(tcpFd)
-        }
-    }
-
-    override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
-        super.onChannelInactive(ctx, tcpFd)
-        if (tcpFd != null) {
-            onTcpTunnelStateListener?.onDisconnect(tcpFd)
-        }
-    }
-
-    override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
-        super.onChannelConnected(ctx, httpFd)
-        if (httpFd != null) {
-            onHttpTunnelStateListener?.onDisconnect(httpFd)
-        }
-    }
-
-    override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
-        super.onChannelInactive(ctx, httpFd)
-        if (httpFd != null) {
-            onHttpTunnelStateListener?.onConnected(httpFd)
-        }
-    }
 
     interface OnTcpTunnelStateListener {
-        fun onConnected(fd: TcpFd)
-        fun onDisconnect(fd: TcpFd)
+        fun onConnected(fd: TcpFd) {}
+        fun onDisconnect(fd: TcpFd) {}
     }
 
     interface OnHttpTunnelStateListener {
-        fun onConnected(fd: HttpFd)
-        fun onDisconnect(fd: HttpFd)
+        fun onConnected(fd: HttpFd) {}
+        fun onDisconnect(fd: HttpFd) {}
     }
 
 }

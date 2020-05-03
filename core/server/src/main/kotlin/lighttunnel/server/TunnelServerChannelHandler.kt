@@ -94,8 +94,8 @@ internal class TunnelServerChannelHandler(
             logger.trace("originalTunnelRequest: {}, finalTunnelRequest: {}", originalTunnelRequest, finalTunnelRequest)
             when (finalTunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {
-                    tcpServer ?: throw ProtoException("TCP协议隧道未开启")
-                    tcpServer.handleTcpRequestMessage(ctx, finalTunnelRequest)
+                    val server = tcpServer ?: throw ProtoException("TCP协议隧道未开启")
+                    server.handleTcpRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTP -> {
                     val server = httpServer ?: throw ProtoException("HTTP协议隧道未开启")
