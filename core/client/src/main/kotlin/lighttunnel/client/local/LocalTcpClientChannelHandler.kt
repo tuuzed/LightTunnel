@@ -12,7 +12,7 @@ import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.util.LongUtil
 
-class LocalTcpClientChannelHandler(
+internal class LocalTcpClientChannelHandler(
     private val localTcpClient: LocalTcpClient
 ) : SimpleChannelInboundHandler<ByteBuf>() {
 

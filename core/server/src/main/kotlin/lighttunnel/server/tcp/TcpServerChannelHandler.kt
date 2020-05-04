@@ -13,7 +13,7 @@ import lighttunnel.server.util.AttributeKeys
 import lighttunnel.util.LongUtil
 import java.net.InetSocketAddress
 
-class TcpServerChannelHandler(
+internal class TcpServerChannelHandler(
     private val registry: TcpRegistry
 ) : SimpleChannelInboundHandler<ByteBuf>() {
     private val logger by loggerDelegate()

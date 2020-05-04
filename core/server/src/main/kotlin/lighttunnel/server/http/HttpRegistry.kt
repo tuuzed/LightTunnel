@@ -16,7 +16,7 @@ class HttpRegistry {
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
-    fun register(host: String, sessionChannels: SessionChannels): HttpFd {
+    internal fun register(host: String, sessionChannels: SessionChannels): HttpFd {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
@@ -26,21 +26,21 @@ class HttpRegistry {
         return fd
     }
 
-    fun unregister(host: String?): HttpFd? = lock.write {
+    internal fun unregister(host: String?): HttpFd? = lock.write {
         unsafeUnregister(host)
         val fd = hostHttpFds.remove(host)
         fd
     }
 
-    fun depose() = lock.write {
+    internal fun depose() = lock.write {
         hostHttpFds.forEach { (host, _) -> unsafeUnregister(host) }
         hostHttpFds.clear()
         Unit
     }
 
-    fun isRegistered(host: String): Boolean = lock.read { hostHttpFds.contains(host) }
+    internal fun isRegistered(host: String): Boolean = lock.read { hostHttpFds.contains(host) }
 
-    fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
+    internal fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
 
     val snapshot: JSONArray
         get() = lock.read {

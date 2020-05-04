@@ -11,7 +11,14 @@ interface HttpPlugin {
 
     fun doHandle(request: FullHttpRequest): FullHttpResponse? = null
 
-    class StaticFileImpl(
+    companion object {
+        @JvmStatic
+        fun staticFileImpl(paths: List<String>, hosts: List<String>): HttpPlugin {
+            return StaticFileImpl(paths, hosts)
+        }
+    }
+
+    private class StaticFileImpl(
         private val paths: List<String>,
         private val hosts: List<String>
     ) : HttpPlugin {

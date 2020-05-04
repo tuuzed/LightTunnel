@@ -4,7 +4,7 @@ import lighttunnel.server.util.SessionChannels
 
 class HttpFd(
     val host: String,
-    val sessionChannels: SessionChannels
+    internal val sessionChannels: SessionChannels
 ) {
 
     val tunnelId get() = sessionChannels.tunnelId

@@ -14,7 +14,7 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.util.SessionChannels
 
 
-class HttpServer(
+internal class HttpServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val registry: HttpRegistry,

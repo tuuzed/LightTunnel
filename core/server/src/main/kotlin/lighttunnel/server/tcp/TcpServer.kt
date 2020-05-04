@@ -10,7 +10,7 @@ import lighttunnel.proto.ProtoException
 import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.PortUtil
 
-class TcpServer(
+internal class TcpServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val registry: TcpRegistry

@@ -7,7 +7,7 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 
 
-class ApiServerChannelHandler(
+internal class ApiServerChannelHandler(
     private val server: ApiServer
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
 

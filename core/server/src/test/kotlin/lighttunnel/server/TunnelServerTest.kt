@@ -36,7 +36,7 @@ class TunnelServerTest {
             httpsBindPort = 8443,
             httpsContext = SslContextUtil.forBuiltinServer(),
             dashboardBindPort = 5081,
-            httpPlugin = HttpPlugin.StaticFileImpl(
+            httpPlugin = HttpPlugin.staticFileImpl(
                 paths = listOf("C:\\", "D:\\"),
                 hosts = listOf("tunnel.lo")
             )

@@ -13,7 +13,7 @@ import lighttunnel.server.util.AttributeKeys
 import lighttunnel.util.HttpUtil
 import lighttunnel.util.LongUtil
 
-class HttpServerChannelHandler(
+internal class HttpServerChannelHandler(
     private val registry: HttpRegistry,
     private val interceptor: HttpRequestInterceptor,
     private val httpPlugin: HttpPlugin? = null

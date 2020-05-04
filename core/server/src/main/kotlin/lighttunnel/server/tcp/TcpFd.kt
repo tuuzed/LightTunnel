@@ -8,7 +8,7 @@ import lighttunnel.server.util.SessionChannels
 class TcpFd(
     val addr: String?,
     val port: Int,
-    val sessionChannels: SessionChannels,
+    internal val sessionChannels: SessionChannels,
     private val bindChannelFuture: ChannelFuture
 ) {
 

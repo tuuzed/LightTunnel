@@ -16,7 +16,7 @@ class TcpRegistry {
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
-    fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpFd) {
+    internal fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpFd) {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
@@ -24,22 +24,22 @@ class TcpRegistry {
         logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
-    fun unregister(port: Int): TcpFd? = lock.write {
+    internal fun unregister(port: Int): TcpFd? = lock.write {
         unsafeUnregister(port)
         val tcpFd = portTcpFds.remove(port)
         tcpFd?.close()
         tcpFd
     }
 
-    fun depose() = lock.write {
+    internal fun depose() = lock.write {
         portTcpFds.forEach { (port, _) -> unsafeUnregister(port) }
         portTcpFds.clear()
         Unit
     }
 
-    fun isRegistered(port: Int): Boolean = lock.read { portTcpFds.contains(port) }
+    internal fun isRegistered(port: Int): Boolean = lock.read { portTcpFds.contains(port) }
 
-    fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
+    internal fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
 
     val snapshot: JSONArray
         get() = lock.read {

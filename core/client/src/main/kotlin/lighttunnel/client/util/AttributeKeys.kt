@@ -6,7 +6,7 @@ import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.proto.TunnelRequest
 
 
-object AttributeKeys {
+internal object AttributeKeys {
 
     val AK_TUNNEL_ID: AttributeKey<Long> = AttributeKey.newInstance("\$tunnel_id")
 

@@ -83,7 +83,7 @@ class Application : AbstractApplication() {
         val pluginSfHosts = basic["plugin_sf_hosts"]?.split(',')
         var sfHttpPlugin: HttpPlugin? = null
         if (!pluginSfPaths.isNullOrEmpty() && !pluginSfHosts.isNullOrEmpty()) {
-            sfHttpPlugin = HttpPlugin.StaticFileImpl(
+            sfHttpPlugin = HttpPlugin.staticFileImpl(
                 paths = pluginSfPaths,
                 hosts = pluginSfHosts
             )
