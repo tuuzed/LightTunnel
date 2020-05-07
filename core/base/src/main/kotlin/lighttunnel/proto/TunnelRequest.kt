@@ -145,7 +145,7 @@ data class TunnelRequest internal constructor(
     val pxyAddHeaders by lazy { options.getOrDefault<JSONObject?>(PXY_ADD_HEADERS, null).toStringMap() }
 
     // option
-    fun option(key: String): String? = options.getOrDefault(key, null)
+    fun option(key: String) = options.getOrDefault<String?>(key, null)
 
     fun toBytes() = toBytesInternal()
 
