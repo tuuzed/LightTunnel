@@ -2,7 +2,6 @@ package lighttunnel.server
 
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.proto.TunnelRequest.Factory.copyTcp
 import lighttunnel.util.PortUtil
 
 interface TunnelRequestInterceptor {

@@ -1,4 +1,4 @@
-@file:Suppress("DuplicatedCode")
+@file:Suppress("unused", "DuplicatedCode")
 
 package lighttunnel.proto
 
@@ -7,17 +7,19 @@ import io.netty.buffer.Unpooled
 import lighttunnel.util.json.getOrDefault
 import lighttunnel.util.json.toStringMap
 import org.json.JSONObject
+import java.io.Serializable
 import java.nio.charset.StandardCharsets
 
-@Suppress("unused")
 data class TunnelRequest internal constructor(
     val type: Type,
     val localAddr: String,
     val localPort: Int,
     private val options: JSONObject
-) {
+) : Serializable {
 
-    companion object Factory {
+    companion object {
+        private const val serialVersionUID = 1L
+
         private val CHARSET = StandardCharsets.UTF_8
 
         // common
@@ -36,6 +38,7 @@ data class TunnelRequest internal constructor(
         private const val PXY_SET_HEADERS = "\$pxy_set_headers"
         private const val PXY_ADD_HEADERS = "\$pxy_add_headers"
 
+        @JvmStatic
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): TunnelRequest {
             val buffer = Unpooled.wrappedBuffer(bytes)
@@ -56,25 +59,7 @@ data class TunnelRequest internal constructor(
             }
         }
 
-        private fun TunnelRequest.toBytesInternal(): ByteArray {
-            val buffer = Unpooled.buffer()
-            try {
-                buffer.writeByte(type.code.toInt())
-                buffer.writeInt(localPort)
-                localAddr.toByteArray(CHARSET).also {
-                    buffer.writeInt(it.size)
-                    buffer.writeBytes(it)
-                }
-                options.toString().toByteArray(CHARSET).also {
-                    buffer.writeInt(it.size)
-                    buffer.writeBytes(it)
-                }
-                return ByteBufUtil.getBytes(buffer)
-            } finally {
-                buffer.release()
-            }
-        }
-
+        @JvmStatic
         fun forTcp(
             localAddr: String,
             localPort: Int,
@@ -92,22 +77,7 @@ data class TunnelRequest internal constructor(
             return TunnelRequest(type = Type.TCP, localAddr = localAddr, localPort = localPort, options = objOptions)
         }
 
-        fun TunnelRequest.copyTcp(
-            localAddr: String = this.localAddr,
-            localPort: Int = this.localPort,
-            remotePort: Int = this.remotePort,
-            name: String? = this.name,
-            authToken: String? = this.authToken,
-            vararg options: Pair<String, String> = this.options().map { it.key to it.value }.toTypedArray()
-        ) = forTcp(
-            localAddr = localAddr,
-            localPort = localPort,
-            remotePort = remotePort,
-            name = name,
-            authToken = authToken,
-            options = *options
-        )
-
+        @JvmStatic
         fun forHttp(
             localAddr: String,
             localPort: Int,
@@ -156,37 +126,6 @@ data class TunnelRequest internal constructor(
                 options = objOptions
             )
         }
-
-        fun TunnelRequest.copyHttp(
-            localAddr: String = this.localAddr,
-            localPort: Int = this.localPort,
-            host: String = this.host,
-            https: Boolean = this.type == Type.HTTPS,
-            name: String? = this.name,
-            authToken: String? = this.authToken,
-            enableBasicAuth: Boolean = this.enableBasicAuth,
-            basicAuthRealm: String = this.basicAuthRealm,
-            basicAuthUsername: String = this.basicAuthUsername,
-            basicAuthPassword: String = this.basicAuthPassword,
-            pxySetHeaders: Map<String, String> = this.pxySetHeaders,
-            pxyAddHeaders: Map<String, String> = this.pxyAddHeaders,
-            vararg options: Pair<String, String> = this.options().map { it.key to it.value }.toTypedArray()
-        ) = forHttp(
-            localAddr = localAddr,
-            localPort = localPort,
-            host = host,
-            https = https,
-            name = name,
-            authToken = authToken,
-            enableBasicAuth = enableBasicAuth,
-            basicAuthRealm = basicAuthRealm,
-            basicAuthUsername = basicAuthUsername,
-            basicAuthPassword = basicAuthPassword,
-            pxyAddHeaders = pxySetHeaders,
-            pxySetHeaders = pxyAddHeaders,
-            options = *options
-        )
-
     }
 
     // common
@@ -206,11 +145,55 @@ data class TunnelRequest internal constructor(
     val pxyAddHeaders by lazy { options.getOrDefault<JSONObject?>(PXY_ADD_HEADERS, null).toStringMap() }
 
     // option
-    fun option(key: String): String? = options.getOrDefault<String?>(key, null)
-
-    private fun options() = options.toStringMap().filterNot { it.key.startsWith("\$") }
+    fun option(key: String): String? = options.getOrDefault(key, null)
 
     fun toBytes() = toBytesInternal()
+
+    fun copyTcp(
+        localAddr: String = this.localAddr,
+        localPort: Int = this.localPort,
+        remotePort: Int = this.remotePort,
+        name: String? = this.name,
+        authToken: String? = this.authToken,
+        vararg options: Pair<String, String> = this.options().map { it.key to it.value }.toTypedArray()
+    ) = forTcp(
+        localAddr = localAddr,
+        localPort = localPort,
+        remotePort = remotePort,
+        name = name,
+        authToken = authToken,
+        options = *options
+    )
+
+    fun copyHttp(
+        localAddr: String = this.localAddr,
+        localPort: Int = this.localPort,
+        host: String = this.host,
+        https: Boolean = this.type == Type.HTTPS,
+        name: String? = this.name,
+        authToken: String? = this.authToken,
+        enableBasicAuth: Boolean = this.enableBasicAuth,
+        basicAuthRealm: String = this.basicAuthRealm,
+        basicAuthUsername: String = this.basicAuthUsername,
+        basicAuthPassword: String = this.basicAuthPassword,
+        pxySetHeaders: Map<String, String> = this.pxySetHeaders,
+        pxyAddHeaders: Map<String, String> = this.pxyAddHeaders,
+        vararg options: Pair<String, String> = this.options().map { it.key to it.value }.toTypedArray()
+    ) = forHttp(
+        localAddr = localAddr,
+        localPort = localPort,
+        host = host,
+        https = https,
+        name = name,
+        authToken = authToken,
+        enableBasicAuth = enableBasicAuth,
+        basicAuthRealm = basicAuthRealm,
+        basicAuthUsername = basicAuthUsername,
+        basicAuthPassword = basicAuthPassword,
+        pxyAddHeaders = pxySetHeaders,
+        pxySetHeaders = pxyAddHeaders,
+        options = *options
+    )
 
     override fun toString(): String {
         return toString("::")
@@ -226,6 +209,27 @@ data class TunnelRequest internal constructor(
             else -> ""
         }
     }
+
+    private fun toBytesInternal(): ByteArray {
+        val buffer = Unpooled.buffer()
+        try {
+            buffer.writeByte(type.code.toInt())
+            buffer.writeInt(localPort)
+            localAddr.toByteArray(CHARSET).also {
+                buffer.writeInt(it.size)
+                buffer.writeBytes(it)
+            }
+            options.toString().toByteArray(CHARSET).also {
+                buffer.writeInt(it.size)
+                buffer.writeBytes(it)
+            }
+            return ByteBufUtil.getBytes(buffer)
+        } finally {
+            buffer.release()
+        }
+    }
+
+    private fun options() = options.toStringMap().filterNot { it.key.startsWith("\$") }
 
     enum class Type(val code: Byte) {
         UNKNOWN(0x00.toByte()),
