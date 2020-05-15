@@ -50,12 +50,7 @@ class TunnelClient(
     private var dashboardServer: ApiServer? = null
     private val lock = ReentrantLock()
 
-    private val onConnectFailureCallback = object : TunnelConnectFd.OnConnectFailureCallback {
-        override fun onConnectFailure(fd: TunnelConnectFd) {
-            super.onConnectFailure(fd)
-            tryReconnect(fd, false)
-        }
-    }
+    private val connectFailureCallback = { fd: TunnelConnectFd -> tryReconnect(fd, false) }
     private val onChannelStateListener = object : TunnelClientChannelHandler.OnChannelStateListener {
         override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {
             super.onChannelInactive(ctx, fd, cause)
@@ -84,7 +79,6 @@ class TunnelClient(
             .handler(InnerChannelInitializer(localTcpClient, onChannelStateListener))
     }
 
-
     fun connect(
         serverAddr: String,
         serverPort: Int,
@@ -93,12 +87,15 @@ class TunnelClient(
     ): TunnelConnectFd {
         startDashboardServer()
         val fd = TunnelConnectFd(
-            sslContext?.bootstrap ?: bootstrap,
-            serverAddr,
-            serverPort,
-            tunnelRequest
+            serverAddr = serverAddr,
+            serverPort = serverPort,
+            tunnelRequest = tunnelRequest,
+            sslContext = sslContext
         )
-        fd.connect(onConnectFailureCallback)
+        fd.connect(
+            bootstrap = fd.sslContext?.bootstrap ?: bootstrap,
+            connectFailureCallback = connectFailureCallback
+        )
         onTunnelStateListener?.onConnecting(fd, false)
         tunnelConnectRegistry.register(fd)
         return fd
@@ -127,18 +124,22 @@ class TunnelClient(
             if ((retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) == RETRY_CONNECT_POLICY_ERROR) {
                 // 连接失败，3秒后发起重连
                 TimeUnit.SECONDS.sleep(3)
-                fd.connect(onConnectFailureCallback)
+                fd.connect(
+                    bootstrap = fd.sslContext?.bootstrap ?: bootstrap,
+                    connectFailureCallback = connectFailureCallback
+                )
                 onTunnelStateListener?.onConnecting(fd, true)
             } else {
                 // 不需要自动重连时移除缓存
                 tunnelConnectRegistry.unregister(fd)
             }
-            return
-        }
-        if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) == RETRY_CONNECT_POLICY_LOSE) {
+        } else if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) == RETRY_CONNECT_POLICY_LOSE) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
-            fd.connect(onConnectFailureCallback)
+            fd.connect(
+                bootstrap = fd.sslContext?.bootstrap ?: bootstrap,
+                connectFailureCallback = connectFailureCallback
+            )
             onTunnelStateListener?.onConnecting(fd, true)
         } else {
             // 不需要自动重连时移除缓存

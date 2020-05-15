@@ -5,6 +5,7 @@ package lighttunnel.client.connect
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
+import io.netty.handler.ssl.SslContext
 import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
@@ -13,10 +14,10 @@ import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TunnelConnectFd(
-    private val bootstrap: Bootstrap,
     val serverAddr: String,
     val serverPort: Int,
-    private val tunnelRequest: TunnelRequest
+    private val tunnelRequest: TunnelRequest,
+    internal val sslContext: SslContext? = null
 ) {
     private val logger by loggerDelegate()
     private var connectChannelFuture: ChannelFuture? = null
@@ -28,7 +29,7 @@ class TunnelConnectFd(
     private val activeClosedFlag = AtomicBoolean(false)
     val isActiveClosed get() = activeClosedFlag.get()
 
-    internal fun connect(callback: OnConnectFailureCallback) {
+    internal fun connect(bootstrap: Bootstrap, connectFailureCallback: (fd: TunnelConnectFd) -> Unit) {
         if (isActiveClosed) {
             logger.warn("This tunnel already closed.")
             return
@@ -43,7 +44,7 @@ class TunnelConnectFd(
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
                     future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(this)
                 } else {
-                    callback.onConnectFailure(this)
+                    connectFailureCallback.invoke(this)
                 }
             })
     }
@@ -60,8 +61,5 @@ class TunnelConnectFd(
         return (finalTunnelRequest ?: originalTunnelRequest).toString(serverAddr)
     }
 
-    interface OnConnectFailureCallback {
-        fun onConnectFailure(fd: TunnelConnectFd) {}
-    }
 
 }
