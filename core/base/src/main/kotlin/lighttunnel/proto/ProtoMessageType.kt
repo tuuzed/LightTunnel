@@ -45,12 +45,14 @@ enum class ProtoMessageType(val code: Byte) {
     /**
      * 远程连接成功
      * 消息流向：Client <- Server
+     * data {@see lighttunnel.proto.RemoteInfo}
      */
     REMOTE_CONNECTED(0x40.toByte()),
 
     /**
      * 远程断开连接
      * 消息流向：Client <- Server
+     * data {@see lighttunnel.proto.RemoteInfo}
      */
     REMOTE_DISCONNECT(0x41.toByte()),
 

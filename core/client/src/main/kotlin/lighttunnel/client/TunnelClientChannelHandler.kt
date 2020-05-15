@@ -13,13 +13,15 @@ import lighttunnel.client.util.AttributeKeys
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
+import lighttunnel.proto.RemoteInfo
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.LongUtil
 import java.nio.charset.StandardCharsets
 
 internal class TunnelClientChannelHandler(
     private val localTcpClient: LocalTcpClient,
-    private val onChannelStateListener: OnChannelStateListener
+    private val onChannelStateListener: OnChannelStateListener,
+    private val onRemoteConnectListener: TunnelClient.OnRemoteConnectListener?
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
     private val logger by loggerDelegate()
 
@@ -135,6 +137,12 @@ internal class TunnelClientChannelHandler(
         logger.trace("doHandleRemoteConnectedMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(msg.sessionId)
+        val remoteInfo = try {
+            RemoteInfo.fromBytes(msg.data)
+        } catch (e: Exception) {
+            null
+        }
+        onRemoteConnectListener?.onRemoteConnected(remoteInfo)
         val tunnelRequest = ctx.channel().attr(AttributeKeys.AK_TUNNEL_REQUEST).get()
         if (tunnelRequest != null) {
             localTcpClient.acquireLocalChannel(
@@ -149,6 +157,12 @@ internal class TunnelClientChannelHandler(
     @Throws(Exception::class)
     private fun doHandleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleRemoteDisconnectMessage : {}, {}", ctx, msg)
+        val remoteInfo = try {
+            RemoteInfo.fromBytes(msg.data)
+        } catch (e: Exception) {
+            null
+        }
+        onRemoteConnectListener?.onRemoteDisconnect(remoteInfo)
         localTcpClient.removeLocalChannel(msg.tunnelId, msg.sessionId)
             ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
             ?.addListener(ChannelFutureListener.CLOSE)

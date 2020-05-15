@@ -17,10 +17,7 @@ import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.HeartbeatHandler
-import lighttunnel.proto.ProtoMessageDecoder
-import lighttunnel.proto.ProtoMessageEncoder
-import lighttunnel.proto.TunnelRequest
+import lighttunnel.proto.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -33,7 +30,8 @@ class TunnelClient(
     private val retryConnectPolicy: Byte = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
     private val dashBindAddr: String? = null,
     private val dashboardBindPort: Int? = null,
-    private val onTunnelStateListener: OnTunnelStateListener? = null
+    private val onTunnelStateListener: OnTunnelStateListener? = null,
+    private val onRemoteConnectListener: OnRemoteConnectListener? = null
 ) {
 
     companion object {
@@ -76,7 +74,7 @@ class TunnelClient(
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(InnerChannelInitializer(localTcpClient, onChannelStateListener))
+            .handler(newChannelInitializer(null))
     }
 
     fun connect(
@@ -179,31 +177,27 @@ class TunnelClient(
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(InnerChannelInitializer(
-                localTcpClient = localTcpClient,
-                onChannelStateListener = onChannelStateListener,
-                sslContext = this
-            )).also { cachedSslBootstraps[this] = it }
+            .handler(newChannelInitializer(this))
+            .also { cachedSslBootstraps[this] = it }
 
-    private class InnerChannelInitializer(
-        private val localTcpClient: LocalTcpClient,
-        private val onChannelStateListener: TunnelClientChannelHandler.OnChannelStateListener,
-        private val sslContext: SslContext? = null
-    ) : ChannelInitializer<SocketChannel>() {
-        override fun initChannel(ch: SocketChannel?) {
-            ch ?: return
-            if (sslContext != null) {
+    private fun newChannelInitializer(sslContext: SslContext?): ChannelInitializer<SocketChannel> {
+        return object : ChannelInitializer<SocketChannel>() {
+            override fun initChannel(ch: SocketChannel?) {
+                ch ?: return
+                if (sslContext != null) {
+                    ch.pipeline()
+                        .addFirst("ssl", sslContext.newHandler(ch.alloc()))
+                }
                 ch.pipeline()
-                    .addFirst("ssl", sslContext.newHandler(ch.alloc()))
+                    .addLast("heartbeat", HeartbeatHandler())
+                    .addLast("decoder", ProtoMessageDecoder())
+                    .addLast("encoder", ProtoMessageEncoder())
+                    .addLast("handler", TunnelClientChannelHandler(
+                        localTcpClient = localTcpClient,
+                        onChannelStateListener = onChannelStateListener,
+                        onRemoteConnectListener = onRemoteConnectListener
+                    ))
             }
-            ch.pipeline()
-                .addLast("heartbeat", HeartbeatHandler())
-                .addLast("decoder", ProtoMessageDecoder())
-                .addLast("encoder", ProtoMessageEncoder())
-                .addLast("handler", TunnelClientChannelHandler(
-                    localTcpClient = localTcpClient,
-                    onChannelStateListener = onChannelStateListener
-                ))
         }
     }
 
@@ -212,4 +206,10 @@ class TunnelClient(
         fun onConnected(fd: TunnelConnectFd) {}
         fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {}
     }
+
+    interface OnRemoteConnectListener {
+        fun onRemoteConnected(remoteInfo: RemoteInfo?) {}
+        fun onRemoteDisconnect(remoteInfo: RemoteInfo?) {}
+    }
+
 }

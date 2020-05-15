@@ -10,6 +10,7 @@ import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
+import lighttunnel.proto.RemoteInfo
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
@@ -23,6 +24,16 @@ import kotlin.experimental.or
 
 class Application : AbstractApplication() {
     private val logger by loggerDelegate()
+
+    private val onRemoteConnectListener = object : TunnelClient.OnRemoteConnectListener {
+        override fun onRemoteConnected(remoteInfo: RemoteInfo?) {
+            logger.info("onRemoteConnected: {}", remoteInfo)
+        }
+
+        override fun onRemoteDisconnect(remoteInfo: RemoteInfo?) {
+            logger.info("onRemoteDisconnect: {}", remoteInfo)
+        }
+    }
 
     private val onTunnelStateListener = object : TunnelClient.OnTunnelStateListener {
         override fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {
@@ -101,9 +112,9 @@ class Application : AbstractApplication() {
         return TunnelClient(
             workerThreads = workerThreads,
             retryConnectPolicy = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
+            dashboardBindPort = basic["dashboard_bind_port"].asInt(),
             onTunnelStateListener = onTunnelStateListener,
-            // dashboard
-            dashboardBindPort = basic["dashboard_bind_port"].asInt()
+            onRemoteConnectListener = onRemoteConnectListener
         )
     }
 
