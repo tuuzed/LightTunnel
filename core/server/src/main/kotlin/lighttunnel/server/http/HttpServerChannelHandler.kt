@@ -78,7 +78,7 @@ internal class HttpServerChannelHandler(
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpInterceptorResponse))
             return
         }
-        val sessionId = httpFd.sessionChannels.putChannel(ctx.channel())
+        val sessionId = httpFd.putChannel(ctx.channel())
         ctx.channel().attr(AK_SESSION_ID).set(sessionId)
         val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))

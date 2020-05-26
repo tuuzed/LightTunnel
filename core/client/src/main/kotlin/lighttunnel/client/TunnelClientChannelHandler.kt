@@ -178,7 +178,7 @@ internal class TunnelClientChannelHandler(
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
         ctx.channel().attr(AK_ERROR_CAUSE).set(Exception("ForcedOffline"))
-        ctx.channel().close()
+        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE_REPLY)).addListener(ChannelFutureListener.CLOSE)
     }
 
     internal interface OnChannelStateListener {

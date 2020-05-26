@@ -26,7 +26,7 @@ internal class TcpServerChannelHandler(
             if (tcpFd != null) {
                 var sessionId = ctx.channel().attr(AK_SESSION_ID).get()
                 if (sessionId == null) {
-                    sessionId = tcpFd.sessionChannels.putChannel(ctx.channel())
+                    sessionId = tcpFd.putChannel(ctx.channel())
                     ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 }
                 val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
@@ -45,7 +45,7 @@ internal class TcpServerChannelHandler(
             if (tcpFd != null) {
                 val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
                 if (sessionId != null) {
-                    val sessionChannel = tcpFd.sessionChannels.removeChannel(sessionId)
+                    val sessionChannel = tcpFd.removeChannel(sessionId)
                     // 解决 HTTP/1.x 数据传输问题
                     sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
                 }
@@ -69,10 +69,10 @@ internal class TcpServerChannelHandler(
         ctx ?: return
         msg ?: return
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get() ?: return
-        val fd = ctx.tcpFd ?: return
-        val head = LongUtil.toBytes(fd.tunnelId, sessionId)
+        val tcpFd = ctx.tcpFd ?: return
+        val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)
-        fd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
+        tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
     private val ChannelHandlerContext?.tcpFd: TcpFd?

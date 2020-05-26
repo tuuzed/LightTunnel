@@ -73,6 +73,7 @@ internal class TunnelServerChannelHandler(
             ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg)
             ProtoMessageType.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
             ProtoMessageType.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
+            ProtoMessageType.FORCED_OFFLINE_REPLY -> doHandleForcedOfflineReplyMessage(ctx, msg)
             else -> {
                 // Nothing
             }
@@ -135,6 +136,13 @@ internal class TunnelServerChannelHandler(
         val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
         // 解决 HTTP/1.x 数据传输问题
         sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
+    }
+
+
+    @Throws(Exception::class)
+    private fun doHandleForcedOfflineReplyMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleForcedOfflineReplyMessage# {}, {}", ctx, msg)
+        ctx.channel()?.close()
     }
 
     @Suppress("DuplicatedCode")

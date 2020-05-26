@@ -42,9 +42,7 @@ class TcpRegistry internal constructor() {
 
     internal fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
 
-    fun forcedOffline(port: Int) = getTcpFd(port)?.apply {
-        sessionChannels.forcedOffline()
-    }
+    fun forcedOffline(port: Int) = getTcpFd(port)?.apply { forcedOffline() }
 
     val snapshot: JSONArray
         get() = lock.read {
@@ -55,7 +53,7 @@ class TcpRegistry internal constructor() {
                     portTcpFds.values.forEach { fd ->
                         array.put(JSONObject().also { obj ->
                             obj.put("port", fd.port)
-                            obj.put("conns", fd.channelCount)
+                            obj.put("conns", fd.cachedChannelCount)
                             obj.put("name", fd.tunnelRequest.name)
                             obj.put("local_addr", fd.tunnelRequest.localAddr)
                             obj.put("local_port", fd.tunnelRequest.localPort)

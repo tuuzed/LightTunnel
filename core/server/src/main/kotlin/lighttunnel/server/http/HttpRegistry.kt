@@ -43,9 +43,7 @@ class HttpRegistry internal constructor() {
 
     internal fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
 
-    fun forcedOffline(host: String) = getHttpFd(host)?.apply {
-        sessionChannels.forcedOffline()
-    }
+    fun forcedOffline(host: String) = getHttpFd(host)?.apply { forcedOffline() }
 
     val snapshot: JSONArray
         get() = lock.read {
@@ -56,7 +54,7 @@ class HttpRegistry internal constructor() {
                     hostHttpFds.values.forEach { fd ->
                         array.put(JSONObject().also { obj ->
                             obj.put("host", fd.host)
-                            obj.put("conns", fd.channelCount)
+                            obj.put("conns", fd.cachedChannelCount)
                             obj.put("name", fd.tunnelRequest.name)
                             obj.put("local_addr", fd.tunnelRequest.localAddr)
                             obj.put("local_port", fd.tunnelRequest.localPort)
