@@ -64,11 +64,11 @@ class Application : AbstractApplication() {
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         loadLogConf(basic)
-        tunnelServer = createTunnelServer(ini, basic)
+        tunnelServer = createTunnelServer(basic)
         tunnelServer?.start()
     }
 
-    private fun createTunnelServer(ini: Ini, basic: Profile.Section): TunnelServer {
+    private fun createTunnelServer(basic: Profile.Section): TunnelServer {
         val tunnelRequestInterceptor = createTunnelRequestInterceptor(basic)
         val tunnelServiceArgs = createTunnelServiceArgs(basic, tunnelRequestInterceptor)
         val sslTunnelServiceArgs = createSslTunnelServiceArgs(basic, tunnelRequestInterceptor)

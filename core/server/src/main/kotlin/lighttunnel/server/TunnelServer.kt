@@ -1,5 +1,3 @@
-@file:Suppress("CanBeParameter")
-
 package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
@@ -22,23 +20,20 @@ import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpServer
 import lighttunnel.util.IncIds
 import lighttunnel.web.server.WebServer
-import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class TunnelServer(
-    private val bossThreads: Int = -1,
-    private val workerThreads: Int = -1,
-    // tunnel
+    bossThreads: Int = -1,
+    workerThreads: Int = -1,
     private val tunnelServiceArgs: TunnelServiceArgs = TunnelServiceArgs(),
     private val sslTunnelServiceArgs: SslTunnelServiceArgs? = null,
     private val httpServerArgs: HttpServerArgs? = null,
     private val httpsServerArgs: HttpsServerArgs? = null,
     private val webServerArgs: WebServerArgs? = null,
-    // listener
-    private val onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
-    private val onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
+    onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
+    onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
 ) {
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
@@ -80,9 +75,9 @@ class TunnelServer(
     }
 
     fun depose(): Unit = lock.withLock {
-        tcpRegistry?.depose()
-        httpRegistry?.depose()
-        httpsRegistry?.depose()
+        tcpRegistry.depose()
+        httpRegistry.depose()
+        httpsRegistry.depose()
         webServer?.depose()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()

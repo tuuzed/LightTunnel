@@ -11,11 +11,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class SessionChannels internal constructor(
+internal class SessionChannels(
     val tunnelId: Long,
     val tunnelRequest: TunnelRequest,
     val tunnelChannel: Channel
 ) {
+
     private val ids = IncIds()
     private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
@@ -33,7 +34,7 @@ class SessionChannels internal constructor(
     fun removeChannel(sessionId: Long): Channel? = lock.write { cachedSessionIdChannels.remove(sessionId) }
 
     fun forcedOffline() {
-        tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE)).addListener(ChannelFutureListener.CLOSE)
+        tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE))
     }
 
     fun depose() = lock.write {
@@ -42,4 +43,5 @@ class SessionChannels internal constructor(
         }
         cachedSessionIdChannels.clear()
     }
+
 }
