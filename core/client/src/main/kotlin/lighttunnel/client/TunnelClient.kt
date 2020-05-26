@@ -50,12 +50,15 @@ class TunnelClient(
 
     private val connectFailureCallback = { fd: TunnelConnectFd -> tryReconnect(fd, false) }
     private val onChannelStateListener = object : TunnelClientChannelHandler.OnChannelStateListener {
-        override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {
-            super.onChannelInactive(ctx, fd, cause)
+
+        override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, forceOffline: Boolean, cause: Throwable?) {
+            super.onChannelInactive(ctx, fd, forceOffline, cause)
             if (fd != null) {
                 onTunnelStateListener?.onDisconnect(fd, cause)
                 logger.trace("onChannelInactive: ", cause)
-                tryReconnect(fd, cause != null)
+                if (!forceOffline) {
+                    tryReconnect(fd, cause != null)
+                }
             }
         }
 

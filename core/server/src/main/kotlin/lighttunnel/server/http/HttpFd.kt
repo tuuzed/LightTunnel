@@ -2,10 +2,12 @@ package lighttunnel.server.http
 
 import io.netty.channel.Channel
 import lighttunnel.server.util.SessionChannels
+import java.util.*
 
 class HttpFd internal constructor(
     val host: String,
-    private val sessionChannels: SessionChannels
+    private val sessionChannels: SessionChannels,
+    val createAt: Date = Date()
 ) {
 
     val tunnelId get() = sessionChannels.tunnelId

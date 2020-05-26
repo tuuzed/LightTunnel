@@ -57,6 +57,7 @@ class TcpRegistry internal constructor() {
                             obj.put("name", fd.tunnelRequest.name)
                             obj.put("local_addr", fd.tunnelRequest.localAddr)
                             obj.put("local_port", fd.tunnelRequest.localPort)
+                            obj.put("date", fd.createAt)
                         })
                     }
                 }

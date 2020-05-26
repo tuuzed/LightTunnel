@@ -5,12 +5,14 @@ package lighttunnel.server.tcp
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import lighttunnel.server.util.SessionChannels
+import java.util.*
 
 class TcpFd internal constructor(
     val addr: String?,
     val port: Int,
     private val sessionChannels: SessionChannels,
-    private val bindChannelFuture: ChannelFuture
+    private val bindChannelFuture: ChannelFuture,
+    val createAt: Date = Date()
 ) {
 
     val tunnelId get() = sessionChannels.tunnelId

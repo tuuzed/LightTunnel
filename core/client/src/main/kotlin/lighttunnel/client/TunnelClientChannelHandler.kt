@@ -37,7 +37,8 @@ internal class TunnelClientChannelHandler(
             }
             val fd = ctx.channel().attr(AK_TUNNEL_CONNECT_FD).get()
             val cause = ctx.channel().attr(AK_ERROR_CAUSE).get()
-            onChannelStateListener.onChannelInactive(ctx, fd, cause)
+            val forcedOffline = ctx.channel().attr(AK_FORCED_OFFLINE).get() ?: false
+            onChannelStateListener.onChannelInactive(ctx, fd, forcedOffline, cause)
         }
         super.channelInactive(ctx)
     }
@@ -177,12 +178,13 @@ internal class TunnelClientChannelHandler(
         logger.trace("doHandleForcedOfflineMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
+        ctx.channel().attr(AK_FORCED_OFFLINE).set(true)
         ctx.channel().attr(AK_ERROR_CAUSE).set(Exception("ForcedOffline"))
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE_REPLY)).addListener(ChannelFutureListener.CLOSE)
     }
 
     internal interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, cause: Throwable?) {}
+        fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, forceOffline: Boolean, cause: Throwable?) {}
         fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {}
     }
 
