@@ -18,6 +18,7 @@ import lighttunnel.server.http.*
 import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpServer
+import lighttunnel.server.traffic.TrafficHandler
 import lighttunnel.util.IncIds
 import lighttunnel.web.server.WebServer
 import org.json.JSONObject
@@ -94,6 +95,7 @@ class TunnelServer(
                 override fun initChannel(ch: SocketChannel?) {
                     ch ?: return
                     ch.pipeline()
+                        .addLast("traffic", TrafficHandler())
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
@@ -128,6 +130,7 @@ class TunnelServer(
                     ch ?: return
                     ch.pipeline()
                         .addFirst("ssl", args.sslContext.newHandler(ch.alloc()))
+                        .addLast("traffic", TrafficHandler())
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())

@@ -5,21 +5,15 @@ package lighttunnel.server.tcp
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import lighttunnel.server.util.SessionChannels
-import java.util.*
 
 class TcpFd internal constructor(
     val addr: String?,
     val port: Int,
-    private val sessionChannels: SessionChannels,
-    private val bindChannelFuture: ChannelFuture,
-    val createAt: Date = Date()
+    internal val sessionChannels: SessionChannels,
+    private val bindChannelFuture: ChannelFuture
 ) {
 
     val tunnelId get() = sessionChannels.tunnelId
-
-    val tunnelRequest get() = sessionChannels.tunnelRequest
-
-    val cachedChannelCount get() = sessionChannels.cachedChannelCount
 
     internal val tunnelChannel get() = sessionChannels.tunnelChannel
 
@@ -34,6 +28,6 @@ class TcpFd internal constructor(
 
     internal fun removeChannel(sessionId: Long) = sessionChannels.removeChannel(sessionId)
 
-    override fun toString(): String = tunnelRequest.toString()
+    override fun toString(): String = sessionChannels.tunnelRequest.toString()
 
 }

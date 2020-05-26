@@ -2,21 +2,17 @@ package lighttunnel.server.http
 
 import io.netty.channel.Channel
 import lighttunnel.server.util.SessionChannels
-import java.util.*
 
 class HttpFd internal constructor(
     val host: String,
-    private val sessionChannels: SessionChannels,
-    val createAt: Date = Date()
+    internal val sessionChannels: SessionChannels
 ) {
 
     val tunnelId get() = sessionChannels.tunnelId
 
     val tunnelRequest get() = sessionChannels.tunnelRequest
 
-    val cachedChannelCount get() = sessionChannels.cachedChannelCount
-
-    override fun toString(): String = tunnelRequest.toString()
+    override fun toString(): String = sessionChannels.tunnelRequest.toString()
 
     internal val tunnelChannel get() = sessionChannels.tunnelChannel
 

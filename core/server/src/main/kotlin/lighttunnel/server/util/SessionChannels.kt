@@ -7,6 +7,8 @@ import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.IncIds
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -20,6 +22,9 @@ internal class SessionChannels(
     private val ids = IncIds()
     private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
+    internal val createAt: Date = Date()
+    internal val inboundBytes = AtomicLong(0)
+    internal val outboundBytes = AtomicLong(0)
 
     val cachedChannelCount: Int get() = lock.read { cachedSessionIdChannels.count() }
 

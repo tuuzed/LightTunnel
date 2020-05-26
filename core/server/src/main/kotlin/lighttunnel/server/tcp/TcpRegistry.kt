@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package lighttunnel.server.tcp
 
 import lighttunnel.logger.loggerDelegate
@@ -51,13 +53,15 @@ class TcpRegistry internal constructor() {
             } else {
                 JSONArray().also { array ->
                     portTcpFds.values.forEach { fd ->
-                        array.put(JSONObject().also { obj ->
-                            obj.put("port", fd.port)
-                            obj.put("conns", fd.cachedChannelCount)
-                            obj.put("name", fd.tunnelRequest.name)
-                            obj.put("local_addr", fd.tunnelRequest.localAddr)
-                            obj.put("local_port", fd.tunnelRequest.localPort)
-                            obj.put("date", fd.createAt)
+                        array.put(JSONObject().apply {
+                            put("port", fd.port)
+                            put("conns", fd.sessionChannels.cachedChannelCount)
+                            put("name", fd.sessionChannels.tunnelRequest.name)
+                            put("local_addr", fd.sessionChannels.tunnelRequest.localAddr)
+                            put("local_port", fd.sessionChannels.tunnelRequest.localPort)
+                            put("date", fd.sessionChannels.createAt)
+                            put("inbound_bytes", fd.sessionChannels.inboundBytes)
+                            put("outbound_bytes", fd.sessionChannels.outboundBytes)
                         })
                     }
                 }
@@ -67,7 +71,7 @@ class TcpRegistry internal constructor() {
     private fun unsafeUnregister(port: Int) {
         portTcpFds[port]?.also {
             it.close()
-            logger.debug("Shutdown Tunnel: {}", it.tunnelRequest)
+            logger.debug("Shutdown Tunnel: {}", it.sessionChannels.tunnelRequest)
         }
     }
 
