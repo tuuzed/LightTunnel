@@ -23,6 +23,7 @@ internal class SessionChannels(
     private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
     internal val createAt: Date = Date()
+    internal val updateAt: Date = Date()
     internal val inboundBytes = AtomicLong(0)
     internal val outboundBytes = AtomicLong(0)
 

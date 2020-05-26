@@ -12,7 +12,10 @@ internal class TrafficHandler : ChannelDuplexHandler() {
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
-            ctx.channel().attr(AK_SESSION_CHANNELS).get()?.inboundBytes?.getAndAdd(msg.readableBytes().toLong())
+            ctx.channel().attr(AK_SESSION_CHANNELS).get()?.apply {
+                inboundBytes.getAndAdd(msg.readableBytes().toLong())
+                updateAt.time = System.currentTimeMillis()
+            }
         }
         ctx.fireChannelRead(msg)
     }
@@ -20,7 +23,10 @@ internal class TrafficHandler : ChannelDuplexHandler() {
     @Throws(Exception::class)
     override fun write(ctx: ChannelHandlerContext, msg: Any, promise: ChannelPromise?) {
         if (msg is ByteBuf) {
-            ctx.channel().attr(AK_SESSION_CHANNELS).get()?.outboundBytes?.getAndAdd(msg.readableBytes().toLong())
+            ctx.channel().attr(AK_SESSION_CHANNELS).get()?.apply {
+                outboundBytes.getAndAdd(msg.readableBytes().toLong())
+                updateAt.time = System.currentTimeMillis()
+            }
         }
         super.write(ctx, msg, promise)
     }

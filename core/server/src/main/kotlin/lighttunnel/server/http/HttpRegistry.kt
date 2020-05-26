@@ -63,6 +63,7 @@ class HttpRegistry internal constructor() {
                             put("local_addr", fd.sessionChannels.tunnelRequest.localAddr)
                             put("local_port", fd.sessionChannels.tunnelRequest.localPort)
                             put("conn_date", sdf.format(fd.sessionChannels.createAt))
+                            put("last_contact_date", sdf.format(fd.sessionChannels.updateAt))
                             put("inbound_bytes", fd.sessionChannels.inboundBytes.get())
                             put("outbound_bytes", fd.sessionChannels.outboundBytes.get())
                         })
