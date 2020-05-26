@@ -10,7 +10,7 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.RemoteInfo
-import lighttunnel.server.util.AttributeKeys
+import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.LongUtil
 import java.net.InetSocketAddress
 
@@ -24,10 +24,10 @@ internal class TcpServerChannelHandler(
         if (ctx != null) {
             val tcpFd = ctx.tcpFd
             if (tcpFd != null) {
-                var sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
+                var sessionId = ctx.channel().attr(AK_SESSION_ID).get()
                 if (sessionId == null) {
                     sessionId = tcpFd.sessionChannels.putChannel(ctx.channel())
-                    ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
+                    ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 }
                 val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
                 tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
@@ -43,7 +43,7 @@ internal class TcpServerChannelHandler(
         if (ctx != null) {
             val tcpFd = ctx.tcpFd
             if (tcpFd != null) {
-                val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
+                val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
                 if (sessionId != null) {
                     val sessionChannel = tcpFd.sessionChannels.removeChannel(sessionId)
                     // 解决 HTTP/1.x 数据传输问题
@@ -68,7 +68,7 @@ internal class TcpServerChannelHandler(
         logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
-        val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get() ?: return
+        val sessionId = ctx.channel().attr(AK_SESSION_ID).get() ?: return
         val fd = ctx.tcpFd ?: return
         val head = LongUtil.toBytes(fd.tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)

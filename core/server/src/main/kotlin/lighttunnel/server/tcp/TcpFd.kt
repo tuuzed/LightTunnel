@@ -5,7 +5,7 @@ package lighttunnel.server.tcp
 import io.netty.channel.ChannelFuture
 import lighttunnel.server.util.SessionChannels
 
-class TcpFd(
+class TcpFd internal constructor(
     val addr: String?,
     val port: Int,
     internal val sessionChannels: SessionChannels,
@@ -16,11 +16,11 @@ class TcpFd(
 
     val tunnelRequest get() = sessionChannels.tunnelRequest
 
-    val tunnelChannel get() = sessionChannels.tunnelChannel
+    internal val tunnelChannel get() = sessionChannels.tunnelChannel
 
     val channelCount get() = sessionChannels.cachedChannelCount
 
-    fun close() {
+    internal fun close() {
         bindChannelFuture.channel().close()
         sessionChannels.depose()
     }

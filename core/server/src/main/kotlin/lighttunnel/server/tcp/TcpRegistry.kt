@@ -2,6 +2,7 @@ package lighttunnel.server.tcp
 
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
+import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
 import org.json.JSONArray
 import org.json.JSONObject
@@ -9,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class TcpRegistry {
+class TcpRegistry internal constructor() {
     private val logger by loggerDelegate()
 
     private val portTcpFds = hashMapOf<Int, TcpFd>()
@@ -41,17 +42,25 @@ class TcpRegistry {
 
     internal fun getTcpFd(port: Int): TcpFd? = lock.read { portTcpFds[port] }
 
+    fun forcedOffline(port: Int) = getTcpFd(port)?.apply {
+        sessionChannels.forcedOffline()
+    }
+
     val snapshot: JSONArray
         get() = lock.read {
-            JSONArray().also { array ->
-                portTcpFds.values.forEach { fd ->
-                    array.put(JSONObject().also { obj ->
-                        obj.put("port", fd.port)
-                        obj.put("conns", fd.channelCount)
-                        obj.put("name", fd.tunnelRequest.name)
-                        obj.put("local_addr", fd.tunnelRequest.localAddr)
-                        obj.put("local_port", fd.tunnelRequest.localPort)
-                    })
+            if (portTcpFds.isEmpty()) {
+                EMPTY_JSON_ARRAY
+            } else {
+                JSONArray().also { array ->
+                    portTcpFds.values.forEach { fd ->
+                        array.put(JSONObject().also { obj ->
+                            obj.put("port", fd.port)
+                            obj.put("conns", fd.channelCount)
+                            obj.put("name", fd.tunnelRequest.name)
+                            obj.put("local_addr", fd.tunnelRequest.localAddr)
+                            obj.put("local_port", fd.tunnelRequest.localPort)
+                        })
+                    }
                 }
             }
         }
