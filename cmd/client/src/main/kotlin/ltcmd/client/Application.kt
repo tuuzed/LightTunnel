@@ -108,11 +108,10 @@ class Application : AbstractApplication() {
     }
 
     private fun newTunnelClient(basic: Profile.Section): TunnelClient {
-        val workerThreads = basic["worker_threads"].asInt() ?: -1
         return TunnelClient(
-            workerThreads = workerThreads,
+            workerThreads = basic["worker_threads"].asInt() ?: -1,
             retryConnectPolicy = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-            dashboardBindPort = basic["dashboard_bind_port"].asInt(),
+            webBindPort = basic["web_bind_port"].asInt(),
             onTunnelStateListener = onTunnelStateListener,
             onRemoteConnectListener = onRemoteConnectListener
         )

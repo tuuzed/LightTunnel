@@ -12,12 +12,12 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
-import lighttunnel.api.server.ApiServer
 import lighttunnel.client.connect.TunnelConnectFd
 import lighttunnel.client.connect.TunnelConnectRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.*
+import lighttunnel.web.server.WebServer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -28,8 +28,8 @@ import kotlin.experimental.or
 class TunnelClient(
     private val workerThreads: Int = -1,
     private val retryConnectPolicy: Byte = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-    private val dashBindAddr: String? = null,
-    private val dashboardBindPort: Int? = null,
+    private val webAddr: String? = null,
+    private val webBindPort: Int? = null,
     private val onTunnelStateListener: OnTunnelStateListener? = null,
     private val onRemoteConnectListener: OnRemoteConnectListener? = null
 ) {
@@ -45,7 +45,7 @@ class TunnelClient(
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
     private val tunnelConnectRegistry = TunnelConnectRegistry()
-    private var dashboardServer: ApiServer? = null
+    private var webServer: WebServer? = null
     private val lock = ReentrantLock()
 
     private val connectFailureCallback = { fd: TunnelConnectFd -> tryReconnect(fd, false) }
@@ -83,7 +83,7 @@ class TunnelClient(
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
     ): TunnelConnectFd {
-        startDashboardServer()
+        startWebServer()
         val fd = TunnelConnectFd(
             serverAddr = serverAddr,
             serverPort = serverPort,
@@ -108,7 +108,7 @@ class TunnelClient(
         tunnelConnectRegistry.depose()
         cachedSslBootstraps.clear()
         localTcpClient.depose()
-        dashboardServer?.depose()
+        webServer?.depose()
         workerGroup.shutdownGracefully()
     }
 
@@ -145,14 +145,14 @@ class TunnelClient(
         }
     }
 
-    private fun startDashboardServer() = lock.withLock {
-        if (dashboardServer == null && dashboardBindPort != null) {
-            val server = ApiServer(
+    private fun startWebServer() = lock.withLock {
+        if (webServer == null && webBindPort != null) {
+            val server = WebServer(
                 bossGroup = workerGroup,
                 workerGroup = workerGroup,
-                bindAddr = dashBindAddr,
-                bindPort = dashboardBindPort
-            ).also { dashboardServer = it }
+                bindAddr = webAddr,
+                bindPort = webBindPort
+            ).also { webServer = it }
             server.router {
                 route("/api/snapshot") {
                     val content = Unpooled.copiedBuffer(tunnelConnectRegistry.snapshot.toString(2), Charsets.UTF_8)

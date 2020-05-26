@@ -1,4 +1,4 @@
-package lighttunnel.api.server
+package lighttunnel.web.server
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
@@ -7,8 +7,8 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 
 
-internal class ApiServerChannelHandler(
-    private val server: ApiServer
+internal class WebServerChannelHandler(
+    private val server: WebServer
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
 
     override fun channelReadComplete(ctx: ChannelHandlerContext) {
@@ -18,12 +18,12 @@ internal class ApiServerChannelHandler(
     @Throws(Exception::class)
     override fun channelRead0(ctx: ChannelHandlerContext, request: FullHttpRequest) {
         if (HttpUtil.is100ContinueExpected(request)) {
-            ctx.write(DefaultFullHttpResponse(
+            ctx.writeAndFlush(DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.CONTINUE)
             )
         }
-        val response = server.doRequest(request)
+        val response = server.doDispatch(request)
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
     }
 

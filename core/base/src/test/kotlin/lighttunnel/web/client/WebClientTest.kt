@@ -1,4 +1,4 @@
-package lighttunnel.api.client
+package lighttunnel.web.client
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.nio.NioEventLoopGroup
@@ -6,13 +6,13 @@ import io.netty.handler.codec.http.HttpMethod
 import org.junit.Before
 import org.junit.Test
 
-class ApiClientTest {
+class WebClientTest {
 
-    lateinit var client: ApiClient
+    lateinit var client: WebClient
 
     @Before
     fun setUp() {
-        client = ApiClient(NioEventLoopGroup())
+        client = WebClient(NioEventLoopGroup())
     }
 
     @Test

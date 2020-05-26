@@ -1,4 +1,4 @@
-package lighttunnel.api.server
+package lighttunnel.web.server
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelFuture
@@ -7,7 +7,6 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.FullHttpResponse
 import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.ssl.SslContext
@@ -15,7 +14,7 @@ import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
 
 
-class ApiServer(
+class WebServer(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val bindAddr: String?,
@@ -43,13 +42,13 @@ class ApiServer(
                     ch.pipeline()
                         .addLast("codec", HttpServerCodec())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", ApiServerChannelHandler(this@ApiServer))
+                        .addLast("handler", WebServerChannelHandler(this@WebServer))
                 }
             })
 
     }
 
-    fun router(block: RouterConfig.() -> Unit): ApiServer {
+    fun router(block: RouterConfig.() -> Unit): WebServer {
         routerConfig.block()
         return this
     }
@@ -68,9 +67,7 @@ class ApiServer(
         )
     }
 
-    internal fun doRequest(request: FullHttpRequest): FullHttpResponse {
-        return routerConfig.doRequest(request)
-    }
+    internal fun doDispatch(request: FullHttpRequest) = routerConfig.doHandle(request)
 
     fun depose() {
         bindChannelFuture?.channel()?.close()

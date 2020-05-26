@@ -1,6 +1,8 @@
-package lighttunnel.api.client
+package lighttunnel.web.client
 
 import io.netty.bootstrap.Bootstrap
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
@@ -12,14 +14,14 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.util.AttributeKey
 import java.net.URI
 
-class ApiClient(
+class WebClient(
     workerGroup: NioEventLoopGroup,
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 512 * 1024
 ) {
     companion object {
-        internal val AK_REQUEST_CALLBACK: AttributeKey<RequestCallback> =
-            AttributeKey.newInstance("lighttunnel.api.client.RequestCallback")
+        internal val REQUEST_CALLBACK: AttributeKey<(response: FullHttpResponse) -> Unit> =
+            AttributeKey.newInstance("lighttunnel.web.client.REQUEST_CALLBACK")
     }
 
     private val bootstrap = Bootstrap()
@@ -41,25 +43,23 @@ class ApiClient(
                     ch.pipeline()
                         .addLast("codec", HttpClientCodec())
                         .addLast("aggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", ApiClientChannelHandler())
+                        .addLast("handler", WebClientChannelHandler())
                 }
 
             })
     }
 
     @Throws(Exception::class)
-    fun request(url: String, method: HttpMethod, callback: RequestCallback) {
+    fun request(url: String, method: HttpMethod, content: ByteBuf = Unpooled.EMPTY_BUFFER, callback: (response: FullHttpResponse) -> Unit) {
         val uri = URI.create(url)
-        val request = DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, url)
-        println(uri.host)
+        val request = DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, url, content)
         bootstrap.connect(uri.path, if (uri.port == -1) {
             if ("https".equals(uri.scheme, true)) 443 else 80
         } else {
             uri.port
         }).sync().channel().also {
-            it.attr(AK_REQUEST_CALLBACK).set(callback)
+            it.attr(REQUEST_CALLBACK).set(callback)
         }.writeAndFlush(request)
     }
-
 
 }

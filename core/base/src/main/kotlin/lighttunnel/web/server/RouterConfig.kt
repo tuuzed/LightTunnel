@@ -1,4 +1,4 @@
-package lighttunnel.api.server
+package lighttunnel.web.server
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
@@ -7,9 +7,11 @@ import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
 class RouterConfig internal constructor() {
-    private val mapping = ConcurrentHashMap<String, RouteCallback>()
 
-    var notFoundRouteCallback: RouteCallback = {
+    private val mapping = ConcurrentHashMap<String, (request: FullHttpRequest) -> FullHttpResponse>()
+
+    @Suppress("PrivatePropertyName")
+    private val NOT_FOUND_ROUTE_CALLBACK: (request: FullHttpRequest) -> FullHttpResponse = {
         val content = Unpooled.copiedBuffer(HttpResponseStatus.NOT_FOUND.toString(), CharsetUtil.UTF_8)
         DefaultFullHttpResponse(
             HttpVersion.HTTP_1_1,
@@ -22,13 +24,16 @@ class RouterConfig internal constructor() {
         }
     }
 
-    fun route(path: String, callback: RouteCallback) {
+    fun route(path: String, callback: (request: FullHttpRequest) -> FullHttpResponse) {
         mapping[path] = callback
     }
 
     @Throws(IOException::class)
-    internal fun doRequest(request: FullHttpRequest): FullHttpResponse {
-        val callback = mapping.getOrDefault(request.uri(), null) ?: return notFoundRouteCallback(request)
+    internal fun doHandle(request: FullHttpRequest): FullHttpResponse {
+        val callback = mapping.getOrDefault(
+            request.uri(), null)
+            ?: return NOT_FOUND_ROUTE_CALLBACK(request)
         return callback(request)
     }
+
 }
