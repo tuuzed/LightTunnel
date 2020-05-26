@@ -67,6 +67,12 @@ enum class ProtoMessageType(val code: Byte) {
      * 消息流向：Client -> Server
      */
     LOCAL_DISCONNECT(0x43.toByte()),
+
+    /**
+     * 强制下线
+     * 消息流向：Server -> Client
+     */
+    FORCED_OFFLINE(0x50.toByte())
     ;
 
     companion object {

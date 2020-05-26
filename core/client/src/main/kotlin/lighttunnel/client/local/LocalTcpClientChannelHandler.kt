@@ -6,7 +6,9 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.client.util.AttributeKeys
+import lighttunnel.client.util.AK_NEXT_CHANNEL
+import lighttunnel.client.util.AK_SESSION_ID
+import lighttunnel.client.util.AK_TUNNEL_ID
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
@@ -22,13 +24,13 @@ internal class LocalTcpClientChannelHandler(
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
         if (ctx != null) {
-            val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
-            val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
+            val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
+            val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
             if (tunnelId != null && sessionId != null) {
                 localTcpClient.removeLocalChannel(tunnelId, sessionId)
                     ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
                     ?.addListener(ChannelFutureListener.CLOSE)
-                val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()
+                val nextChannel = ctx.channel().attr(AK_NEXT_CHANNEL).get()
                 if (nextChannel != null) {
                     val head = LongUtil.toBytes(tunnelId, sessionId)
                     nextChannel.writeAndFlush(ProtoMessage(ProtoMessageType.LOCAL_DISCONNECT, head))
@@ -50,9 +52,9 @@ internal class LocalTcpClientChannelHandler(
         logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
-        val tunnelId = ctx.channel().attr(AttributeKeys.AK_TUNNEL_ID).get()
-        val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
-        val nextChannel = ctx.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).get()
+        val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
+        val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
+        val nextChannel = ctx.channel().attr(AK_NEXT_CHANNEL).get()
         if (tunnelId != null && sessionId != null && nextChannel != null) {
             val head = LongUtil.toBytes(tunnelId, sessionId)
             val data = ByteBufUtil.getBytes(msg)

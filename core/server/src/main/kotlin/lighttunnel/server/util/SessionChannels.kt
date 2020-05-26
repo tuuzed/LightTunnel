@@ -3,13 +3,15 @@ package lighttunnel.server.util
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
+import lighttunnel.proto.ProtoMessage
+import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.IncIds
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class SessionChannels(
+class SessionChannels internal constructor(
     val tunnelId: Long,
     val tunnelRequest: TunnelRequest,
     val tunnelChannel: Channel
@@ -29,6 +31,10 @@ class SessionChannels(
     fun getChannel(sessionId: Long): Channel? = lock.read { cachedSessionIdChannels[sessionId] }
 
     fun removeChannel(sessionId: Long): Channel? = lock.write { cachedSessionIdChannels.remove(sessionId) }
+
+    fun forcedOffline() {
+        tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE)).addListener(ChannelFutureListener.CLOSE)
+    }
 
     fun depose() = lock.write {
         cachedSessionIdChannels.forEach { (_, ch) ->

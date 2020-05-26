@@ -2,6 +2,7 @@ package lighttunnel.server.http
 
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
+import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
 import org.json.JSONArray
 import org.json.JSONObject
@@ -9,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class HttpRegistry {
+class HttpRegistry internal constructor() {
     private val logger by loggerDelegate()
 
     private val hostHttpFds = hashMapOf<String, HttpFd>()
@@ -42,17 +43,26 @@ class HttpRegistry {
 
     internal fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
 
+    fun forcedOffline(host: String) = getHttpFd(host)?.apply {
+        sessionChannels.forcedOffline()
+    }
+
     val snapshot: JSONArray
         get() = lock.read {
-            JSONArray().also { array ->
-                hostHttpFds.values.forEach { fd ->
-                    array.put(JSONObject().also { obj ->
-                        obj.put("host", fd.host)
-                        obj.put("conns", fd.channelCount)
-                        obj.put("name", fd.tunnelRequest.name)
-                        obj.put("local_addr", fd.tunnelRequest.localAddr)
-                        obj.put("local_port", fd.tunnelRequest.localPort)
-                    })
+            if (hostHttpFds.isEmpty()) {
+                EMPTY_JSON_ARRAY
+            } else {
+                JSONArray().also { array ->
+                    hostHttpFds.values.forEach { fd ->
+                        array.put(JSONObject().also { obj ->
+                            obj.put("host", fd.host)
+                            obj.put("conns", fd.channelCount)
+                            obj.put("name", fd.tunnelRequest.name)
+                            obj.put("local_addr", fd.tunnelRequest.localAddr)
+                            obj.put("local_port", fd.tunnelRequest.localPort)
+                        })
+                    }
+
                 }
             }
         }

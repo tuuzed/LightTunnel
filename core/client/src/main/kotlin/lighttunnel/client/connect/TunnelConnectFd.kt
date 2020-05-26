@@ -6,7 +6,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.util.AttributeKeys
+import lighttunnel.client.util.AK_TUNNEL_CONNECT_FD
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
@@ -42,7 +42,7 @@ class TunnelConnectFd(
                     // 连接成功，向服务器发送请求建立隧道消息
                     val head = (finalTunnelRequest ?: originalTunnelRequest).toBytes()
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
-                    future.channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(this)
+                    future.channel().attr(AK_TUNNEL_CONNECT_FD).set(this)
                 } else {
                     connectFailureCallback.invoke(this)
                 }
@@ -52,7 +52,7 @@ class TunnelConnectFd(
     internal fun close() {
         activeClosedFlag.set(true)
         connectChannelFuture?.apply {
-            channel().attr(AttributeKeys.AK_TUNNEL_CONNECT_FD).set(null)
+            channel().attr(AK_TUNNEL_CONNECT_FD).set(null)
             channel().close()
         }
     }

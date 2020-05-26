@@ -9,14 +9,14 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import lighttunnel.client.util.AttributeKeys
-import lighttunnel.logger.loggerDelegate
+import lighttunnel.client.util.AK_NEXT_CHANNEL
+import lighttunnel.client.util.AK_SESSION_ID
+import lighttunnel.client.util.AK_TUNNEL_ID
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class LocalTcpClient(workerGroup: NioEventLoopGroup) {
-    private val logger by loggerDelegate()
     private val bootstrap = Bootstrap()
     private val cachedChannels = hashMapOf<String, Channel>()
     private val lock = ReentrantReadWriteLock()
@@ -63,9 +63,9 @@ class LocalTcpClient(workerGroup: NioEventLoopGroup) {
             }
             removeLocalChannel(tunnelId, sessionId)
             if (future.isSuccess) {
-                future.channel().attr(AttributeKeys.AK_TUNNEL_ID).set(tunnelId)
-                future.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
-                future.channel().attr(AttributeKeys.AK_NEXT_CHANNEL).set(tunnelClientChannel)
+                future.channel().attr(AK_TUNNEL_ID).set(tunnelId)
+                future.channel().attr(AK_SESSION_ID).set(sessionId)
+                future.channel().attr(AK_NEXT_CHANNEL).set(tunnelClientChannel)
                 putCachedChannel(tunnelId, sessionId, future.channel())
                 callback?.onArrived(future.channel())
             } else {

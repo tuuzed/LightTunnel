@@ -40,10 +40,6 @@ class TunnelServer(
     private val onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
     private val onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
 ) {
-    companion object {
-        private val EMPTY_JSON_ARRAY = JSONArray(emptyList<Any>())
-    }
-
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
     private val tunnelIds = IncIds()
@@ -51,28 +47,34 @@ class TunnelServer(
     private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
     private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
 
-    private var tcpServer: TcpServer? = null
-    private var tcpRegistry: TcpRegistry? = null
+    private val tcpServer: TcpServer
+    private val tcpRegistry = TcpRegistry()
 
-    private var httpServer: HttpServer? = null
-    private var httpRegistry: HttpRegistry? = null
+    private var httpServer: HttpServer?
+    private val httpRegistry = HttpRegistry()
 
-    private var httpsServer: HttpServer? = null
-    private var httpsRegistry: HttpRegistry? = null
+    private var httpsServer: HttpServer?
+    private val httpsRegistry = HttpRegistry()
 
-    private var webServer: WebServer? = null
+    private val webServer: WebServer?
 
     private val onChannelStateListener = OnChannelStateListenerImpl(
         onTcpTunnelStateListener,
         onHttpTunnelStateListener
     )
 
+    init {
+        tcpServer = createTcpServer(tcpRegistry)
+        httpServer = createHttpServer(httpRegistry)
+        httpsServer = createHttpsServer(httpsRegistry)
+        webServer = createWebServer()
+    }
+
     @Throws(Exception::class)
     fun start(): Unit = lock.withLock {
-        tcpServer = createTcpServer()
-        httpServer = createHttpServer()?.apply { start() }
-        httpsServer = createHttpsServer()?.apply { start() }
-        webServer = createWebServer()?.apply { start() }
+        httpServer?.start()
+        httpsServer?.start()
+        webServer?.start()
         startTunnelService()
         startSslTunnelService()
     }
@@ -152,15 +154,15 @@ class TunnelServer(
         logger.info("Serving tunnel with ssl on {} port {}", args.bindAddr ?: "::", args.bindPort)
     }
 
-    private fun createTcpServer(): TcpServer {
+    private fun createTcpServer(registry: TcpRegistry): TcpServer {
         return TcpServer(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
-            registry = TcpRegistry().also { tcpRegistry = it }
+            registry = registry
         )
     }
 
-    private fun createHttpServer(): HttpServer? {
+    private fun createHttpServer(registry: HttpRegistry): HttpServer? {
         val args = httpServerArgs ?: return null
         return HttpServer(
             bossGroup = bossGroup,
@@ -170,11 +172,11 @@ class TunnelServer(
             sslContext = null,
             interceptor = args.httpRequestInterceptor,
             httpPlugin = args.httpPlugin,
-            registry = HttpRegistry().also { httpRegistry = it }
+            registry = registry
         )
     }
 
-    private fun createHttpsServer(): HttpServer? {
+    private fun createHttpsServer(registry: HttpRegistry): HttpServer? {
         val args = httpsServerArgs ?: return null
         if (args.bindPort == null) return null
         return HttpServer(
@@ -185,7 +187,7 @@ class TunnelServer(
             sslContext = args.sslContext,
             interceptor = args.httpRequestInterceptor,
             httpPlugin = args.httpPlugin,
-            registry = HttpRegistry().also { httpsRegistry = it }
+            registry = registry
         )
     }
 
@@ -197,13 +199,12 @@ class TunnelServer(
             bindAddr = args.bindAddr,
             bindPort = args.bindPort ?: return null
         ).apply {
-            webServer = this
             router {
                 route("/api/snapshot") {
                     val obj = JSONObject()
-                    obj.put("tcp", tcpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
-                    obj.put("http", httpRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
-                    obj.put("https", httpsRegistry?.snapshot ?: EMPTY_JSON_ARRAY)
+                    obj.put("tcp", tcpRegistry.snapshot)
+                    obj.put("http", httpRegistry.snapshot)
+                    obj.put("https", httpsRegistry.snapshot)
                     val content = Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
                     DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1,

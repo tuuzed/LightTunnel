@@ -10,7 +10,8 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.RemoteInfo
-import lighttunnel.server.util.AttributeKeys
+import lighttunnel.server.util.AK_HTTP_HOST
+import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.HttpUtil
 import lighttunnel.util.LongUtil
 
@@ -31,16 +32,16 @@ internal class HttpServerChannelHandler(
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
         if (ctx != null) {
-            val host = ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).get()
-            val sessionId = ctx.channel().attr(AttributeKeys.AK_SESSION_ID).get()
+            val host = ctx.channel().attr(AK_HTTP_HOST).get()
+            val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
             if (host != null && sessionId != null) {
                 val httpFd = registry.getHttpFd(host)
                 if (httpFd != null) {
                     val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
                     httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
                 }
-                ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).set(null)
-                ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(null)
+                ctx.channel().attr(AK_HTTP_HOST).set(null)
+                ctx.channel().attr(AK_SESSION_ID).set(null)
             }
         }
         super.channelInactive(ctx)
@@ -66,7 +67,7 @@ internal class HttpServerChannelHandler(
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        ctx.channel().attr(AttributeKeys.AK_HTTP_HOST).set(host)
+        ctx.channel().attr(AK_HTTP_HOST).set(host)
         val httpFd = registry.getHttpFd(host)
         if (httpFd == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -78,7 +79,7 @@ internal class HttpServerChannelHandler(
             return
         }
         val sessionId = httpFd.sessionChannels.putChannel(ctx.channel())
-        ctx.channel().attr(AttributeKeys.AK_SESSION_ID).set(sessionId)
+        ctx.channel().attr(AK_SESSION_ID).set(sessionId)
         val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
         val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg))

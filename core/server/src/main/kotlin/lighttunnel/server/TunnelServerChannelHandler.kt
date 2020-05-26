@@ -13,7 +13,7 @@ import lighttunnel.server.http.HttpFd
 import lighttunnel.server.http.HttpServer
 import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpServer
-import lighttunnel.server.util.AttributeKeys
+import lighttunnel.server.util.AK_SESSION_CHANNELS
 import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.IncIds
 import lighttunnel.util.LongUtil
@@ -34,7 +34,7 @@ internal class TunnelServerChannelHandler(
             super.channelInactive(ctx)
             return
         }
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get()?.also { sc ->
+        ctx.channel().attr(AK_SESSION_CHANNELS).get()?.also { sc ->
             when (sc.tunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {
                     val fd = tcpServer?.stopTunnel(sc.tunnelRequest.remotePort)
@@ -53,7 +53,7 @@ internal class TunnelServerChannelHandler(
                 }
             }
         }
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(null)
+        ctx.channel().attr(AK_SESSION_CHANNELS).set(null)
         super.channelInactive(ctx)
     }
 
@@ -117,7 +117,7 @@ internal class TunnelServerChannelHandler(
     @Throws(Exception::class)
     private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleTransferMessage# {}, {}", ctx, msg)
-        val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
+        val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
         val sessionChannel = sessionChannels.getChannel(msg.sessionId)
         sessionChannel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
     }
@@ -131,7 +131,7 @@ internal class TunnelServerChannelHandler(
     @Throws(Exception::class)
     private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleLocalDisconnectMessage# {}, {}", ctx, msg)
-        val sessionChannels = ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).get() ?: return
+        val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
         val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
         // 解决 HTTP/1.x 数据传输问题
         sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
@@ -142,7 +142,7 @@ internal class TunnelServerChannelHandler(
     private fun TcpServer.handleTcpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionChannels)
+        ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
         val fd = this.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
         onChannelStateListener?.onChannelConnected(ctx, fd)
         val head = LongUtil.toBytes(tunnelId, 0L)
@@ -155,7 +155,7 @@ internal class TunnelServerChannelHandler(
     private fun HttpServer.handleHttpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
-        ctx.channel().attr(AttributeKeys.AK_SESSION_CHANNELS).set(sessionChannels)
+        ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
         val fd = this.startTunnel(tunnelRequest.host, sessionChannels)
         onChannelStateListener?.onChannelConnected(ctx, fd)
         val head = LongUtil.toBytes(tunnelId, 0L)
