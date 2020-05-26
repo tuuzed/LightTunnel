@@ -8,6 +8,7 @@ import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -17,6 +18,7 @@ class HttpRegistry internal constructor() {
 
     private val hostHttpFds = hashMapOf<String, HttpFd>()
     private val lock = ReentrantReadWriteLock()
+    private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     @Throws(ProtoException::class)
     internal fun register(host: String, sessionChannels: SessionChannels): HttpFd {
@@ -60,7 +62,7 @@ class HttpRegistry internal constructor() {
                             put("name", fd.sessionChannels.tunnelRequest.name)
                             put("local_addr", fd.sessionChannels.tunnelRequest.localAddr)
                             put("local_port", fd.sessionChannels.tunnelRequest.localPort)
-                            put("date", fd.sessionChannels.createAt)
+                            put("conn_date", sdf.format(fd.sessionChannels.createAt))
                             put("inbound_bytes", fd.sessionChannels.inboundBytes.get())
                             put("outbound_bytes", fd.sessionChannels.outboundBytes.get())
                         })
