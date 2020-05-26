@@ -59,12 +59,12 @@ class TcpRegistry internal constructor() {
                             put("port", fd.port)
                             put("conns", fd.sessionChannels.cachedChannelCount)
                             put("name", fd.sessionChannels.tunnelRequest.name)
-                            put("local_addr", fd.sessionChannels.tunnelRequest.localAddr)
-                            put("local_port", fd.sessionChannels.tunnelRequest.localPort)
-                            put("conn_date", sdf.format(fd.sessionChannels.createAt))
-                            put("last_contact_date", sdf.format(fd.sessionChannels.updateAt))
-                            put("inbound_bytes", fd.sessionChannels.inboundBytes.get())
-                            put("outbound_bytes", fd.sessionChannels.outboundBytes.get())
+                            put("localAddr", fd.sessionChannels.tunnelRequest.localAddr)
+                            put("localPort", fd.sessionChannels.tunnelRequest.localPort)
+                            put("createAt", sdf.format(fd.sessionChannels.createAt))
+                            put("updateAt", sdf.format(fd.sessionChannels.updateAt))
+                            put("inboundBytes", fd.sessionChannels.inboundBytes.get())
+                            put("outboundBytes", fd.sessionChannels.outboundBytes.get())
                         })
                     }
                 }
