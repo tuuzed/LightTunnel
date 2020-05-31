@@ -27,8 +27,6 @@ dependencies {
     testCompile "junit:junit:4.12"
 }
 
-apply from: rootProject.file("./gradle/common.gradle").absolutePath
-apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
 
 apply plugin: 'de.fuerstenau.buildconfig'
 
@@ -47,3 +45,7 @@ buildConfig {
     buildConfigField 'String', 'LAST_COMMIT_DATE', s(GitVC.LAST_COMMIT_DATE)
     buildConfigField 'String', 'BUILD_DATA', s(new Date())
 }
+
+apply from: rootProject.file("./gradle/common.gradle").absolutePath
+apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
+apply from: rootProject.file("./gradle/publish.gradle").absolutePath
