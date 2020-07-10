@@ -1,4 +1,4 @@
-package lighttunnel.client.connect
+package lighttunnel.client.conn
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -6,13 +6,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class TunnelConnectRegistry {
-    private val cached = arrayListOf<TunnelConnectFd>()
+class TunnelConnectionRegistry {
+    private val cached = arrayListOf<TunnelConnection>()
     private val lock = ReentrantReadWriteLock()
 
-    fun register(fd: TunnelConnectFd) = lock.write { cached.add(fd) }
+    fun register(conn: TunnelConnection) = lock.write { cached.add(conn) }
 
-    fun unregister(fd: TunnelConnectFd) = lock.write { cached.remove(fd) }
+    fun unregister(conn: TunnelConnection) = lock.write { cached.remove(conn) }
 
     fun depose() = lock.write {
         cached.forEach { it.close() }

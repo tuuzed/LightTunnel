@@ -5,7 +5,7 @@ import lighttunnel.BuildConfig
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
-import lighttunnel.client.connect.TunnelConnectFd
+import lighttunnel.client.conn.TunnelConnection
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.logger.LoggerFactory
@@ -36,16 +36,16 @@ class Application : AbstractApplication() {
     }
 
     private val onTunnelStateListener = object : TunnelClient.OnTunnelStateListener {
-        override fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {
-            logger.info("onConnecting: {}, retryConnect: {}", fd, retryConnect)
+        override fun onConnecting(conn: TunnelConnection, retryConnect: Boolean) {
+            logger.info("onConnecting: {}, retryConnect: {}", conn, retryConnect)
         }
 
-        override fun onConnected(fd: TunnelConnectFd) {
-            logger.info("onConnected: {}", fd)
+        override fun onConnected(conn: TunnelConnection) {
+            logger.info("onConnected: {}", conn)
         }
 
-        override fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {
-            logger.info("onDisconnect: {}, cause: {}", fd, cause)
+        override fun onDisconnect(conn: TunnelConnection, cause: Throwable?) {
+            logger.info("onDisconnect: {}, cause: {}", conn, cause)
         }
 
     }

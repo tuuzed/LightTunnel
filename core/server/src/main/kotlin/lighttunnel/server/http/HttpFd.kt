@@ -12,8 +12,6 @@ class HttpFd internal constructor(
 
     val tunnelRequest get() = sessionChannels.tunnelRequest
 
-    override fun toString(): String = sessionChannels.tunnelRequest.toString()
-
     internal val tunnelChannel get() = sessionChannels.tunnelChannel
 
     internal fun close() = sessionChannels.depose()
@@ -21,6 +19,8 @@ class HttpFd internal constructor(
     internal fun forcedOffline() = sessionChannels.forcedOffline()
 
     internal fun putChannel(channel: Channel) = sessionChannels.putChannel(channel)
+
+    override fun toString(): String = sessionChannels.tunnelRequest.toString()
 
 
 }

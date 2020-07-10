@@ -6,7 +6,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
 import lighttunnel.server.util.AK_SESSION_CHANNELS
 
-
 internal class TrafficHandler : ChannelDuplexHandler() {
 
     @Throws(Exception::class)

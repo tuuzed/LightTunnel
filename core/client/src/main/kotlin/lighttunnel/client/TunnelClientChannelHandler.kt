@@ -7,7 +7,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.client.connect.TunnelConnectFd
+import lighttunnel.client.conn.TunnelConnection
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.*
 import lighttunnel.logger.loggerDelegate
@@ -28,18 +28,19 @@ internal class TunnelClientChannelHandler(
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
-        // 隧道断开
-        if (ctx != null) {
-            val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
-            val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
-            if (tunnelId != null && sessionId != null) {
-                localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
-            }
-            val fd = ctx.channel().attr(AK_TUNNEL_CONNECT_FD).get()
-            val cause = ctx.channel().attr(AK_ERROR_CAUSE).get()
-            val forcedOffline = ctx.channel().attr(AK_FORCED_OFFLINE).get() ?: false
-            onChannelStateListener.onChannelInactive(ctx, fd, forcedOffline, cause)
+        if (ctx == null) {
+            super.channelInactive(ctx)
+            return
         }
+        val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
+        val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
+        if (tunnelId != null && sessionId != null) {
+            localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
+        }
+        val fd = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
+        val cause = ctx.channel().attr(AK_ERROR_CAUSE).get()
+        val forcedOffline = ctx.channel().attr(AK_FORCED_OFFLINE).get() ?: false
+        onChannelStateListener.onChannelInactive(ctx, fd, forcedOffline, cause)
         super.channelInactive(ctx)
     }
 
@@ -85,7 +86,7 @@ internal class TunnelClientChannelHandler(
             channel().attr(AK_TUNNEL_REQUEST).set(request)
             channel().attr(AK_ERROR_CAUSE).set(null)
         }
-        val fd = ctx.channel().attr(AK_TUNNEL_CONNECT_FD).get()
+        val fd = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
         fd?.finalTunnelRequest = request
         logger.debug("Opened Tunnel: {}", request)
         onChannelStateListener.onChannelConnected(ctx, fd)
@@ -109,11 +110,11 @@ internal class TunnelClientChannelHandler(
         logger.trace("doHandleTransferMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AK_SESSION_ID).set(msg.sessionId)
-        val request = ctx.channel().attr(AK_TUNNEL_REQUEST).get()
-        when (request?.type) {
+        val tunnelRequest = ctx.channel().attr(AK_TUNNEL_REQUEST).get()
+        when (tunnelRequest?.type) {
             TunnelRequest.Type.TCP, TunnelRequest.Type.HTTP, TunnelRequest.Type.HTTPS -> {
                 localTcpClient.acquireLocalChannel(
-                    request.localAddr, request.localPort,
+                    tunnelRequest.localAddr, tunnelRequest.localPort,
                     msg.tunnelId, msg.sessionId,
                     ctx.channel(),
                     object : LocalTcpClient.OnArriveLocalChannelCallback {
@@ -184,8 +185,8 @@ internal class TunnelClientChannelHandler(
     }
 
     internal interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, forceOffline: Boolean, cause: Throwable?) {}
-        fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {}
+        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, forceOffline: Boolean, cause: Throwable?) {}
+        fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {}
     }
 
 }

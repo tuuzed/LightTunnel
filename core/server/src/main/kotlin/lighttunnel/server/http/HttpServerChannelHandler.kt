@@ -31,18 +31,20 @@ internal class HttpServerChannelHandler(
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx != null) {
-            val host = ctx.channel().attr(AK_HTTP_HOST).get()
-            val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
-            if (host != null && sessionId != null) {
-                val httpFd = registry.getHttpFd(host)
-                if (httpFd != null) {
-                    val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
-                    httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
-                }
-                ctx.channel().attr(AK_HTTP_HOST).set(null)
-                ctx.channel().attr(AK_SESSION_ID).set(null)
+        if (ctx == null) {
+            super.channelInactive(ctx)
+            return
+        }
+        val httpHost = ctx.channel().attr(AK_HTTP_HOST).get()
+        val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
+        if (httpHost != null && sessionId != null) {
+            val httpFd = registry.getHttpFd(httpHost)
+            if (httpFd != null) {
+                val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
+                httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
             }
+            ctx.channel().attr(AK_HTTP_HOST).set(null)
+            ctx.channel().attr(AK_SESSION_ID).set(null)
         }
         super.channelInactive(ctx)
     }
@@ -62,13 +64,13 @@ internal class HttpServerChannelHandler(
         if (httpPluginResponse != null) {
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpPluginResponse)).addListener(ChannelFutureListener.CLOSE)
         }
-        val host = HttpUtil.getHostWithoutPort(msg)
-        if (host == null) {
+        val httpHost = HttpUtil.getHostWithoutPort(msg)
+        if (httpHost == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
-        ctx.channel().attr(AK_HTTP_HOST).set(host)
-        val httpFd = registry.getHttpFd(host)
+        ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
+        val httpFd = registry.getHttpFd(httpHost)
         if (httpFd == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return

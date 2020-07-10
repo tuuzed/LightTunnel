@@ -1,26 +1,24 @@
-@file:Suppress("MemberVisibilityCanBePrivate")
-
-package lighttunnel.client.connect
+package lighttunnel.client.conn
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.util.AK_TUNNEL_CONNECT_FD
+import lighttunnel.client.util.AK_TUNNEL_CONNECTION
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TunnelConnectFd(
+class TunnelConnection(
     val serverAddr: String,
     val serverPort: Int,
     private val tunnelRequest: TunnelRequest,
     internal val sslContext: SslContext? = null
 ) {
     private val logger by loggerDelegate()
-    private var connectChannelFuture: ChannelFuture? = null
+    private var openChannelFuture: ChannelFuture? = null
 
     val originalTunnelRequest get() = tunnelRequest
     var finalTunnelRequest: TunnelRequest? = null
@@ -29,30 +27,30 @@ class TunnelConnectFd(
     private val activeClosedFlag = AtomicBoolean(false)
     val isActiveClosed get() = activeClosedFlag.get()
 
-    internal fun connect(bootstrap: Bootstrap, connectFailureCallback: (fd: TunnelConnectFd) -> Unit) {
+    internal fun open(bootstrap: Bootstrap, failure: (conn: TunnelConnection) -> Unit) {
         if (isActiveClosed) {
             logger.warn("This tunnel already closed.")
             return
         }
         @Suppress("RedundantSamConstructor")
         bootstrap.connect(serverAddr, serverPort)
-            .also { connectChannelFuture = it }
+            .also { openChannelFuture = it }
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
                     val head = (finalTunnelRequest ?: originalTunnelRequest).toBytes()
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
-                    future.channel().attr(AK_TUNNEL_CONNECT_FD).set(this)
+                    future.channel().attr(AK_TUNNEL_CONNECTION).set(this)
                 } else {
-                    connectFailureCallback.invoke(this)
+                    failure.invoke(this)
                 }
             })
     }
 
     internal fun close() {
         activeClosedFlag.set(true)
-        connectChannelFuture?.apply {
-            channel().attr(AK_TUNNEL_CONNECT_FD).set(null)
+        openChannelFuture?.apply {
+            channel().attr(AK_TUNNEL_CONNECTION).set(null)
             channel().close()
         }
     }

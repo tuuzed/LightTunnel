@@ -12,8 +12,8 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.connect.TunnelConnectFd
-import lighttunnel.client.connect.TunnelConnectRegistry
+import lighttunnel.client.conn.TunnelConnection
+import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.*
@@ -44,28 +44,27 @@ class TunnelClient(
     private val bootstrap = Bootstrap()
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
-    private val tunnelConnectRegistry = TunnelConnectRegistry()
+    private val tunnelConnectRegistry = TunnelConnectionRegistry()
     private var webServer: WebServer? = null
     private val lock = ReentrantLock()
 
-    private val connectFailureCallback = { fd: TunnelConnectFd -> tryReconnect(fd, false) }
+    private val openFailureCallback = { conn: TunnelConnection -> tryReconnect(conn, false) }
     private val onChannelStateListener = object : TunnelClientChannelHandler.OnChannelStateListener {
-
-        override fun onChannelInactive(ctx: ChannelHandlerContext, fd: TunnelConnectFd?, forceOffline: Boolean, cause: Throwable?) {
-            super.onChannelInactive(ctx, fd, forceOffline, cause)
-            if (fd != null) {
-                onTunnelStateListener?.onDisconnect(fd, cause)
+        override fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, forceOffline: Boolean, cause: Throwable?) {
+            super.onChannelInactive(ctx, conn, forceOffline, cause)
+            if (conn != null) {
+                onTunnelStateListener?.onDisconnect(conn, cause)
                 logger.trace("onChannelInactive: ", cause)
                 if (!forceOffline) {
-                    tryReconnect(fd, cause != null)
+                    tryReconnect(conn, cause != null)
                 }
             }
         }
 
-        override fun onChannelConnected(ctx: ChannelHandlerContext, fd: TunnelConnectFd?) {
-            super.onChannelConnected(ctx, fd)
-            if (fd != null) {
-                onTunnelStateListener?.onConnected(fd)
+        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {
+            super.onChannelConnected(ctx, conn)
+            if (conn != null) {
+                onTunnelStateListener?.onConnected(conn)
             }
         }
     }
@@ -85,26 +84,26 @@ class TunnelClient(
         serverPort: Int,
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
-    ): TunnelConnectFd {
+    ): TunnelConnection {
         startWebServer()
-        val fd = TunnelConnectFd(
+        val conn = TunnelConnection(
             serverAddr = serverAddr,
             serverPort = serverPort,
             tunnelRequest = tunnelRequest,
             sslContext = sslContext
         )
-        fd.connect(
-            bootstrap = fd.sslContext?.bootstrap ?: bootstrap,
-            connectFailureCallback = connectFailureCallback
+        conn.open(
+            bootstrap = conn.sslContext?.bootstrap ?: bootstrap,
+            failure = openFailureCallback
         )
-        onTunnelStateListener?.onConnecting(fd, false)
-        tunnelConnectRegistry.register(fd)
-        return fd
+        onTunnelStateListener?.onConnecting(conn, false)
+        tunnelConnectRegistry.register(conn)
+        return conn
     }
 
-    fun close(fd: TunnelConnectFd) {
-        fd.close()
-        tunnelConnectRegistry.unregister(fd)
+    fun close(conn: TunnelConnection) {
+        conn.close()
+        tunnelConnectRegistry.unregister(conn)
     }
 
     fun depose() = lock.withLock {
@@ -115,36 +114,36 @@ class TunnelClient(
         workerGroup.shutdownGracefully()
     }
 
-    private fun tryReconnect(fd: TunnelConnectFd, error: Boolean) {
-        if (fd.isActiveClosed) {
+    private fun tryReconnect(conn: TunnelConnection, error: Boolean) {
+        if (conn.isActiveClosed) {
             // 不需要自动重连时移除缓存
-            tunnelConnectRegistry.unregister(fd)
+            tunnelConnectRegistry.unregister(conn)
             return
         }
         if (error) {
             if ((retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) == RETRY_CONNECT_POLICY_ERROR) {
                 // 连接失败，3秒后发起重连
                 TimeUnit.SECONDS.sleep(3)
-                fd.connect(
-                    bootstrap = fd.sslContext?.bootstrap ?: bootstrap,
-                    connectFailureCallback = connectFailureCallback
+                conn.open(
+                    bootstrap = conn.sslContext?.bootstrap ?: bootstrap,
+                    failure = openFailureCallback
                 )
-                onTunnelStateListener?.onConnecting(fd, true)
+                onTunnelStateListener?.onConnecting(conn, true)
             } else {
                 // 不需要自动重连时移除缓存
-                tunnelConnectRegistry.unregister(fd)
+                tunnelConnectRegistry.unregister(conn)
             }
         } else if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) == RETRY_CONNECT_POLICY_LOSE) {
             // 连接失败，3秒后发起重连
             TimeUnit.SECONDS.sleep(3)
-            fd.connect(
-                bootstrap = fd.sslContext?.bootstrap ?: bootstrap,
-                connectFailureCallback = connectFailureCallback
+            conn.open(
+                bootstrap = conn.sslContext?.bootstrap ?: bootstrap,
+                failure = openFailureCallback
             )
-            onTunnelStateListener?.onConnecting(fd, true)
+            onTunnelStateListener?.onConnecting(conn, true)
         } else {
             // 不需要自动重连时移除缓存
-            tunnelConnectRegistry.unregister(fd)
+            tunnelConnectRegistry.unregister(conn)
         }
     }
 
@@ -205,9 +204,9 @@ class TunnelClient(
     }
 
     interface OnTunnelStateListener {
-        fun onConnecting(fd: TunnelConnectFd, retryConnect: Boolean) {}
-        fun onConnected(fd: TunnelConnectFd) {}
-        fun onDisconnect(fd: TunnelConnectFd, cause: Throwable?) {}
+        fun onConnecting(conn: TunnelConnection, retryConnect: Boolean) {}
+        fun onConnected(conn: TunnelConnection) {}
+        fun onDisconnect(conn: TunnelConnection, cause: Throwable?) {}
     }
 
     interface OnRemoteConnectListener {
