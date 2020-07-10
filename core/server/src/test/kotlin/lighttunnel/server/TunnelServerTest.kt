@@ -28,20 +28,20 @@ class TunnelServerTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        val tunnelServiceArgs = TunnelServer.TunnelDaemonArgs(
+        val tunnelDaemonArgs = TunnelServer.TunnelDaemonArgs(
             bindPort = 5080
         )
-        val sslTunnelServiceArgs = TunnelServer.SslTunnelDaemonArgs(
+        val sslTunnelDaemonArgs = TunnelServer.SslTunnelDaemonArgs(
             bindPort = 5443,
             sslContext = SslContextUtil.forBuiltinServer())
-        val httpServerArgs = TunnelServer.HttpTunnelArgs(
+        val httpTunnelArgs = TunnelServer.HttpTunnelArgs(
             bindPort = 8080,
             httpPlugin = HttpPlugin.staticFileImpl(
                 paths = listOf("C:\\", "D:\\"),
                 hosts = listOf("tunnel.lo")
             )
         )
-        val httpsServerArgs = TunnelServer.HttpsTunnelArgs(
+        val httpsTunnelArgs = TunnelServer.HttpsTunnelArgs(
             bindPort = 8443,
             httpPlugin = HttpPlugin.staticFileImpl(
                 paths = listOf("C:\\", "D:\\"),
@@ -54,10 +54,10 @@ class TunnelServerTest {
 
         )
         tunnelServer = TunnelServer(
-            tunnelServiceArgs = tunnelServiceArgs,
-            sslTunnelServiceArgs = sslTunnelServiceArgs,
-            httpTunnelArgs = httpServerArgs,
-            httpsTunnelArgs = httpsServerArgs,
+            tunnelDaemonArgs = tunnelDaemonArgs,
+            sslTunnelDaemonArgs = sslTunnelDaemonArgs,
+            httpTunnelArgs = httpTunnelArgs,
+            httpsTunnelArgs = httpsTunnelArgs,
             webServerArgs = webServerArgs
         )
     }
