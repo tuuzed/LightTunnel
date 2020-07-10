@@ -10,9 +10,9 @@ import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.server.http.HttpFd
-import lighttunnel.server.http.HttpServer
+import lighttunnel.server.http.HttpTunnel
 import lighttunnel.server.tcp.TcpFd
-import lighttunnel.server.tcp.TcpServer
+import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.util.AK_SESSION_CHANNELS
 import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.IncIds
@@ -21,9 +21,9 @@ import lighttunnel.util.LongUtil
 internal class TunnelServerChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
     private val tunnelIds: IncIds,
-    private val tcpServer: TcpServer? = null,
-    private val httpServer: HttpServer? = null,
-    private val httpsServer: HttpServer? = null,
+    private val tcpTunnel: TcpTunnel? = null,
+    private val httpTunnel: HttpTunnel? = null,
+    private val httpsTunnel: HttpTunnel? = null,
     private val onChannelStateListener: OnChannelStateListener? = null
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
     private val logger by loggerDelegate()
@@ -37,15 +37,15 @@ internal class TunnelServerChannelHandler(
         ctx.channel().attr(AK_SESSION_CHANNELS).get()?.also { sc ->
             when (sc.tunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {
-                    val fd = tcpServer?.stopTunnel(sc.tunnelRequest.remotePort)
+                    val fd = tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort)
                     onChannelStateListener?.onChannelInactive(ctx, fd)
                 }
                 TunnelRequest.Type.HTTP -> {
-                    val fd = httpServer?.stopTunnel(sc.tunnelRequest.host)
+                    val fd = httpTunnel?.stopTunnel(sc.tunnelRequest.host)
                     onChannelStateListener?.onChannelInactive(ctx, fd)
                 }
                 TunnelRequest.Type.HTTPS -> {
-                    val fd = httpsServer?.stopTunnel(sc.tunnelRequest.host)
+                    val fd = httpsTunnel?.stopTunnel(sc.tunnelRequest.host)
                     onChannelStateListener?.onChannelInactive(ctx, fd)
                 }
                 else -> {
@@ -95,15 +95,15 @@ internal class TunnelServerChannelHandler(
             logger.trace("originalTunnelRequest: {}, finalTunnelRequest: {}", originalTunnelRequest, finalTunnelRequest)
             when (finalTunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {
-                    val server = tcpServer ?: throw ProtoException("TCP协议隧道未开启")
+                    val server = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
                     server.handleTcpRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTP -> {
-                    val server = httpServer ?: throw ProtoException("HTTP协议隧道未开启")
+                    val server = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
                     server.handleHttpRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTPS -> {
-                    val server = httpsServer ?: throw ProtoException("HTTPS协议隧道未开启")
+                    val server = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
                     server.handleHttpRequestMessage(ctx, finalTunnelRequest)
                 }
                 else -> throw ProtoException("不支持的隧道类型")
@@ -147,7 +147,7 @@ internal class TunnelServerChannelHandler(
 
     @Suppress("DuplicatedCode")
     @Throws(Exception::class)
-    private fun TcpServer.handleTcpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
+    private fun TcpTunnel.handleTcpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
@@ -160,7 +160,7 @@ internal class TunnelServerChannelHandler(
 
     @Suppress("DuplicatedCode")
     @Throws(Exception::class)
-    private fun HttpServer.handleHttpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
+    private fun HttpTunnel.handleHttpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)

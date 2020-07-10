@@ -10,7 +10,7 @@ import lighttunnel.proto.ProtoException
 import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.PortUtil
 
-internal class TcpServer(
+internal class TcpTunnel(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val registry: TcpRegistry
@@ -27,7 +27,7 @@ internal class TcpServer(
                 override fun initChannel(ch: SocketChannel?) {
                     ch ?: return
                     ch.pipeline()
-                        .addLast("handler", TcpServerChannelHandler(registry))
+                        .addLast("handler", TcpTunnelChannelHandler(registry))
                 }
             })
     }

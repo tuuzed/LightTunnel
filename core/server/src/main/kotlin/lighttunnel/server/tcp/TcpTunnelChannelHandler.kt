@@ -14,7 +14,7 @@ import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.LongUtil
 import java.net.InetSocketAddress
 
-internal class TcpServerChannelHandler(
+internal class TcpTunnelChannelHandler(
     private val registry: TcpRegistry
 ) : SimpleChannelInboundHandler<ByteBuf>() {
     private val logger by loggerDelegate()

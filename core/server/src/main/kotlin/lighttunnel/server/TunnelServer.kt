@@ -17,7 +17,7 @@ import lighttunnel.proto.ProtoMessageEncoder
 import lighttunnel.server.http.*
 import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpRegistry
-import lighttunnel.server.tcp.TcpServer
+import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.traffic.TrafficHandler
 import lighttunnel.util.IncIds
 import lighttunnel.web.server.WebServer
@@ -28,11 +28,11 @@ import kotlin.concurrent.withLock
 class TunnelServer(
     bossThreads: Int = -1,
     workerThreads: Int = -1,
-    private val tunnelServiceArgs: TunnelServiceArgs = TunnelServiceArgs(),
-    private val sslTunnelServiceArgs: SslTunnelServiceArgs? = null,
-    private val httpServerArgs: HttpServerArgs? = null,
-    private val httpsServerArgs: HttpsServerArgs? = null,
-    private val webServerArgs: WebServerArgs? = null,
+    private val tunnelDaemonArgs: TunnelDaemonArgs = TunnelDaemonArgs(),
+    private val sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
+    httpTunnelArgs: HttpTunnelArgs? = null,
+    httpsTunnelArgs: HttpsTunnelArgs? = null,
+    webServerArgs: WebServerArgs? = null,
     onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
     onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
 ) {
@@ -43,36 +43,29 @@ class TunnelServer(
     private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
     private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
 
-    private val tcpServer: TcpServer
-    private val tcpRegistry = TcpRegistry()
+    private val tcpRegistry by lazy { TcpRegistry() }
+    private val tcpTunnel: TcpTunnel = createTcpTunnel(tcpRegistry)
 
-    private var httpServer: HttpServer?
-    private val httpRegistry = HttpRegistry()
+    private val httpRegistry by lazy { HttpRegistry() }
+    private val httpTunnel: HttpTunnel? = httpTunnelArgs?.let { createHttpTunnel(httpRegistry, it) }
 
-    private var httpsServer: HttpServer?
-    private val httpsRegistry = HttpRegistry()
+    private val httpsRegistry by lazy { HttpRegistry() }
+    private val httpsTunnel: HttpTunnel? = httpsTunnelArgs?.let { createHttpsTunnel(httpsRegistry, it) }
 
-    private val webServer: WebServer?
+    private val webServer: WebServer? = webServerArgs?.let { createWebServer(it) }
 
     private val onChannelStateListener = OnChannelStateListenerImpl(
         onTcpTunnelStateListener,
         onHttpTunnelStateListener
     )
 
-    init {
-        tcpServer = createTcpServer(tcpRegistry)
-        httpServer = createHttpServer(httpRegistry)
-        httpsServer = createHttpsServer(httpsRegistry)
-        webServer = createWebServer()
-    }
-
     @Throws(Exception::class)
     fun start(): Unit = lock.withLock {
-        httpServer?.start()
-        httpsServer?.start()
+        httpTunnel?.start()
+        httpsTunnel?.start()
         webServer?.start()
-        startTunnelService()
-        startSslTunnelService()
+        startTunnelDaemon(tunnelDaemonArgs)
+        sslTunnelDaemonArgs?.also { startSslTunnelDaemon(it) }
     }
 
     fun depose(): Unit = lock.withLock {
@@ -84,8 +77,7 @@ class TunnelServer(
         workerGroup.shutdownGracefully()
     }
 
-    private fun startTunnelService() {
-        val args = tunnelServiceArgs
+    private fun startTunnelDaemon(args: TunnelDaemonArgs) {
         val serverBootstrap = ServerBootstrap()
         serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel::class.java)
@@ -102,9 +94,9 @@ class TunnelServer(
                         .addLast("handler", TunnelServerChannelHandler(
                             tunnelRequestInterceptor = args.tunnelRequestInterceptor,
                             tunnelIds = tunnelIds,
-                            tcpServer = tcpServer,
-                            httpServer = httpServer,
-                            httpsServer = httpsServer,
+                            tcpTunnel = tcpTunnel,
+                            httpTunnel = httpTunnel,
+                            httpsTunnel = httpsTunnel,
                             onChannelStateListener = onChannelStateListener
                         ))
                 }
@@ -117,8 +109,7 @@ class TunnelServer(
         logger.info("Serving tunnel on {} port {}", args.bindAddr ?: "::", args.bindPort)
     }
 
-    private fun startSslTunnelService() {
-        val args = sslTunnelServiceArgs ?: return
+    private fun startSslTunnelDaemon(args: SslTunnelDaemonArgs) {
         if (args.bindPort == null) return
         val serverBootstrap = ServerBootstrap()
         serverBootstrap.group(bossGroup, workerGroup)
@@ -137,9 +128,9 @@ class TunnelServer(
                         .addLast("handler", TunnelServerChannelHandler(
                             tunnelRequestInterceptor = args.tunnelRequestInterceptor,
                             tunnelIds = tunnelIds,
-                            tcpServer = tcpServer,
-                            httpServer = httpServer,
-                            httpsServer = httpsServer,
+                            tcpTunnel = tcpTunnel,
+                            httpTunnel = httpTunnel,
+                            httpsTunnel = httpsTunnel,
                             onChannelStateListener = onChannelStateListener
                         ))
                 }
@@ -152,21 +143,21 @@ class TunnelServer(
         logger.info("Serving tunnel with ssl on {} port {}", args.bindAddr ?: "::", args.bindPort)
     }
 
-    private fun createTcpServer(registry: TcpRegistry): TcpServer {
-        return TcpServer(
+    private fun createTcpTunnel(registry: TcpRegistry): TcpTunnel {
+        return TcpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             registry = registry
         )
     }
 
-    private fun createHttpServer(registry: HttpRegistry): HttpServer? {
-        val args = httpServerArgs ?: return null
-        return HttpServer(
+    private fun createHttpTunnel(registry: HttpRegistry, args: HttpTunnelArgs): HttpTunnel? {
+        if (args.bindPort == null) return null
+        return HttpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             bindAddr = args.bindAddr,
-            bindPort = args.bindPort ?: return null,
+            bindPort = args.bindPort,
             sslContext = null,
             interceptor = args.httpRequestInterceptor,
             httpPlugin = args.httpPlugin,
@@ -174,10 +165,9 @@ class TunnelServer(
         )
     }
 
-    private fun createHttpsServer(registry: HttpRegistry): HttpServer? {
-        val args = httpsServerArgs ?: return null
+    private fun createHttpsTunnel(registry: HttpRegistry, args: HttpsTunnelArgs): HttpTunnel? {
         if (args.bindPort == null) return null
-        return HttpServer(
+        return HttpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             bindAddr = args.bindAddr,
@@ -189,13 +179,13 @@ class TunnelServer(
         )
     }
 
-    private fun createWebServer(): WebServer? {
-        val args = webServerArgs ?: return null
+    private fun createWebServer(args: WebServerArgs): WebServer? {
+        if (args.bindPort == null) return null
         return WebServer(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             bindAddr = args.bindAddr,
-            bindPort = args.bindPort ?: return null
+            bindPort = args.bindPort
         ).apply {
             router {
                 route("/api/snapshot") {
@@ -218,27 +208,27 @@ class TunnelServer(
         }
     }
 
-    class TunnelServiceArgs(
+    class TunnelDaemonArgs(
         val bindAddr: String? = null,
         val bindPort: Int = 5080,
         val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl
     )
 
-    class SslTunnelServiceArgs(
+    class SslTunnelDaemonArgs(
         val bindAddr: String? = null,
         val bindPort: Int? = null,
         val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl,
         val sslContext: SslContext
     )
 
-    class HttpServerArgs(
+    class HttpTunnelArgs(
         val bindAddr: String? = null,
         val bindPort: Int? = null,
         val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,
         val httpPlugin: HttpPlugin? = null
     )
 
-    class HttpsServerArgs(
+    class HttpsTunnelArgs(
         val bindAddr: String? = null,
         val bindPort: Int? = null,
         val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,

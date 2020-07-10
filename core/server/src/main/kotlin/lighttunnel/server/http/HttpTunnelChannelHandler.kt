@@ -15,7 +15,7 @@ import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.HttpUtil
 import lighttunnel.util.LongUtil
 
-internal class HttpServerChannelHandler(
+internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
     private val interceptor: HttpRequestInterceptor,
     private val httpPlugin: HttpPlugin? = null

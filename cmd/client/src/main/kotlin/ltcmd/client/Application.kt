@@ -5,12 +5,11 @@ import lighttunnel.BuildConfig
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
-import lighttunnel.client.conn.TunnelConnection
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
+import lighttunnel.cmd.asInt
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.RemoteInfo
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
@@ -24,31 +23,8 @@ import kotlin.experimental.or
 
 class Application : AbstractApplication() {
     private val logger by loggerDelegate()
-
-    private val onRemoteConnectListener = object : TunnelClient.OnRemoteConnectListener {
-        override fun onRemoteConnected(remoteInfo: RemoteInfo?) {
-            logger.info("onRemoteConnected: {}", remoteInfo)
-        }
-
-        override fun onRemoteDisconnect(remoteInfo: RemoteInfo?) {
-            logger.info("onRemoteDisconnect: {}", remoteInfo)
-        }
-    }
-
-    private val onTunnelStateListener = object : TunnelClient.OnTunnelStateListener {
-        override fun onConnecting(conn: TunnelConnection, retryConnect: Boolean) {
-            logger.info("onConnecting: {}, retryConnect: {}", conn, retryConnect)
-        }
-
-        override fun onConnected(conn: TunnelConnection) {
-            logger.info("onConnected: {}", conn)
-        }
-
-        override fun onDisconnect(conn: TunnelConnection, cause: Throwable?) {
-            logger.info("onDisconnect: {}, cause: {}", conn, cause)
-        }
-
-    }
+    private val onRemoteConnectListener = OnRemoteConnectListenerImpl()
+    private val onTunnelStateListener = OnTunnelStateListenerImpl()
 
     override val options: Options
         get() = Options().apply {
@@ -71,26 +47,23 @@ class Application : AbstractApplication() {
         ini.load(File(configFilePath))
         val basic = ini["basic"] ?: return
         //
-        loadLogConf(basic)
-        val client = newTunnelClient(basic)
+        setupLogConf(basic)
+        val tunnelClient = newTunnelClient(basic)
         val serverAddr = basic["server_addr"] ?: "127.0.0.1"
         val serverPort = basic["server_port"].asInt() ?: 5080
         val sslContext = newSslContext(basic)
         val sslServerPort = basic["ssl_server_port"].asInt() ?: 5443
         ini.entries
-            .filter {
-                it.key != "basic"
-            }
-            .map {
-                Pair(it.value["ssl"]?.toUpperCase() == "TRUE", newTunnelRequest(basic, it.value))
-            }.forEach {
+            .filter { it.key != "basic" }
+            .map { Pair(it.value["ssl"]?.toUpperCase() == "TRUE", loadTunnelRequest(basic, it.value)) }
+            .forEach {
                 val ssl = it.first
-                val request = it.second
-                if (request != null) {
+                val tunnelRequest = it.second
+                if (tunnelRequest != null) {
                     if (ssl) {
-                        client.connect(serverAddr, sslServerPort, request, sslContext)
+                        tunnelClient.connect(serverAddr, sslServerPort, tunnelRequest, sslContext)
                     } else {
-                        client.connect(serverAddr, serverPort, request, null)
+                        tunnelClient.connect(serverAddr, serverPort, tunnelRequest, null)
                     }
                 }
             }
@@ -117,17 +90,17 @@ class Application : AbstractApplication() {
         )
     }
 
-    private fun newTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
+    private fun loadTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
         val type = tunnel["type"] ?: "tcp"
         return when (type.toUpperCase()) {
-            "TCP" -> newTcpTunnelRequest(basic, tunnel)
-            "HTTP" -> newHttpTunnelRequest(basic, tunnel)
-            "HTTPS" -> newHttpsTunnelRequest(basic, tunnel)
+            "TCP" -> loadTcpTunnelRequest(basic, tunnel)
+            "HTTP" -> loadHttpOrHttpsTunnelRequest(basic, tunnel, false)
+            "HTTPS" -> loadHttpOrHttpsTunnelRequest(basic, tunnel, true)
             else -> null
         }
     }
 
-    private fun newTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
+    private fun loadTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
         val authToken = basic["auth_token"]
         val localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
@@ -141,15 +114,7 @@ class Application : AbstractApplication() {
         )
     }
 
-    private fun newHttpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
-        return newHttpOrHttpsTunnelRequest(basic, tunnel, false)
-    }
-
-    private fun newHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
-        return newHttpOrHttpsTunnelRequest(basic, tunnel, true)
-    }
-
-    private fun newHttpOrHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
+    private fun loadHttpOrHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
         val authToken = basic["auth_token"]
         val localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1"
         val localPort = tunnel["local_port"].asInt() ?: 80
@@ -184,7 +149,7 @@ class Application : AbstractApplication() {
         )
     }
 
-    private fun loadLogConf(basic: Profile.Section) {
+    private fun setupLogConf(basic: Profile.Section) {
         val logLevel = Level.toLevel(basic["log_level"], Level.INFO)
         val logFile = basic["log_file"]
         val logCount = basic["log_count"].asInt() ?: 3
@@ -206,13 +171,4 @@ class Application : AbstractApplication() {
             )
         }
     }
-
-    private fun String?.asInt(): Int? {
-        return try {
-            this?.toInt()
-        } catch (e: NumberFormatException) {
-            return null
-        }
-    }
-
 }

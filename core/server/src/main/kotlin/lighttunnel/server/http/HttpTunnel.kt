@@ -14,7 +14,7 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.server.util.SessionChannels
 
 
-internal class HttpServer(
+internal class HttpTunnel(
     bossGroup: NioEventLoopGroup,
     workerGroup: NioEventLoopGroup,
     private val registry: HttpRegistry,
@@ -45,7 +45,7 @@ internal class HttpServer(
                     ch.pipeline()
                         .addLast("decoder", HttpRequestDecoder())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", HttpServerChannelHandler(
+                        .addLast("handler", HttpTunnelChannelHandler(
                             registry = registry,
                             interceptor = interceptor,
                             httpPlugin = httpPlugin
