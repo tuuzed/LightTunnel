@@ -15,6 +15,7 @@ import io.netty.handler.ssl.SslContext
 import lighttunnel.client.conn.TunnelConnection
 import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient
+import lighttunnel.client.util.InactiveExtra
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.*
 import lighttunnel.web.server.WebServer
@@ -50,13 +51,13 @@ class TunnelClient(
 
     private val openFailureCallback = { conn: TunnelConnection -> tryReconnect(conn, false) }
     private val onChannelStateListener = object : TunnelClientChannelHandler.OnChannelStateListener {
-        override fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, forceOffline: Boolean, cause: Throwable?) {
-            super.onChannelInactive(ctx, conn, forceOffline, cause)
+        override fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, extra: InactiveExtra?) {
+            super.onChannelInactive(ctx, conn, extra)
             if (conn != null) {
-                onTunnelStateListener?.onDisconnect(conn, cause)
-                logger.trace("onChannelInactive: ", cause)
-                if (!forceOffline) {
-                    tryReconnect(conn, cause != null)
+                onTunnelStateListener?.onDisconnect(conn, extra?.cause)
+                logger.trace("onChannelInactive: ", extra?.cause)
+                if (extra?.forceOffline != true) {
+                    tryReconnect(conn, extra?.cause != null)
                 }
             }
         }

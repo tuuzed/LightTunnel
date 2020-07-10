@@ -50,7 +50,7 @@ internal class TcpServerChannelHandler(
                     sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
                 }
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
-                    val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
+                    val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId ?: 0)
                     tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
                 }
             }

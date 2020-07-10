@@ -1,5 +1,3 @@
-@file:Suppress("UNUSED_PARAMETER")
-
 package lighttunnel.client
 
 import io.netty.buffer.Unpooled
@@ -23,6 +21,7 @@ internal class TunnelClientChannelHandler(
     private val onChannelStateListener: OnChannelStateListener,
     private val onRemoteConnectListener: TunnelClient.OnRemoteConnectListener?
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
+
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
@@ -37,10 +36,9 @@ internal class TunnelClientChannelHandler(
         if (tunnelId != null && sessionId != null) {
             localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
         }
-        val fd = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
-        val cause = ctx.channel().attr(AK_ERROR_CAUSE).get()
-        val forcedOffline = ctx.channel().attr(AK_FORCED_OFFLINE).get() ?: false
-        onChannelStateListener.onChannelInactive(ctx, fd, forcedOffline, cause)
+        val conn = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
+        val extra = ctx.channel().attr(AK_INACTIVE_EXTRA).get()
+        onChannelStateListener.onChannelInactive(ctx, conn, extra)
         super.channelInactive(ctx)
     }
 
@@ -80,28 +78,26 @@ internal class TunnelClientChannelHandler(
     @Throws(Exception::class)
     private fun doHandleResponseOkMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleResponseOkMessage : {}, {}", ctx, msg)
-        val request = TunnelRequest.fromBytes(msg.data)
-        ctx.run {
-            channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
-            channel().attr(AK_TUNNEL_REQUEST).set(request)
-            channel().attr(AK_ERROR_CAUSE).set(null)
-        }
-        val fd = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
-        fd?.finalTunnelRequest = request
-        logger.debug("Opened Tunnel: {}", request)
-        onChannelStateListener.onChannelConnected(ctx, fd)
+        val tunnelRequest = TunnelRequest.fromBytes(msg.data)
+        ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
+        ctx.channel().attr(AK_TUNNEL_REQUEST).set(tunnelRequest)
+        ctx.channel().attr(AK_INACTIVE_EXTRA).set(null)
+        val conn = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
+        conn?.finalTunnelRequest = tunnelRequest
+        logger.debug("Opened Tunnel: {}", tunnelRequest)
+        onChannelStateListener.onChannelConnected(ctx, conn)
     }
 
     /** 隧道建立失败 */
     @Throws(Exception::class)
     private fun doHandleResponseErrMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleResponseErrMessage : {}, {}", ctx, msg)
-        val errMessage = String(msg.head, StandardCharsets.UTF_8)
+        val errMsg = String(msg.head, StandardCharsets.UTF_8)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
-        ctx.channel().attr(AK_ERROR_CAUSE).set(Exception(errMessage))
+        ctx.channel().attr(AK_INACTIVE_EXTRA).set(InactiveExtra(false, Exception(errMsg)))
         ctx.channel().close()
-        logger.debug("Open Tunnel Error: {}", errMessage)
+        logger.debug("Open Tunnel Error: {}", errMsg)
     }
 
     /** 数据透传消息 */
@@ -179,13 +175,12 @@ internal class TunnelClientChannelHandler(
         logger.trace("doHandleForcedOfflineMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
-        ctx.channel().attr(AK_FORCED_OFFLINE).set(true)
-        ctx.channel().attr(AK_ERROR_CAUSE).set(Exception("ForcedOffline"))
+        ctx.channel().attr(AK_INACTIVE_EXTRA).set(InactiveExtra(true, Exception("ForcedOffline")))
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE_REPLY)).addListener(ChannelFutureListener.CLOSE)
     }
 
     internal interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, forceOffline: Boolean, cause: Throwable?) {}
+        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, extra: InactiveExtra?) {}
         fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {}
     }
 
