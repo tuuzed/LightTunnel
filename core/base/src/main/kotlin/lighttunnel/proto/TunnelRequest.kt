@@ -10,7 +10,7 @@ import org.json.JSONObject
 import java.io.Serializable
 import java.nio.charset.StandardCharsets
 
-data class TunnelRequest internal constructor(
+class TunnelRequest private constructor(
     val type: Type,
     val localAddr: String,
     val localPort: Int,

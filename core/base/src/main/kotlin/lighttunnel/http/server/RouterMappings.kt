@@ -1,4 +1,4 @@
-package lighttunnel.web.server
+package lighttunnel.http.server
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
@@ -6,7 +6,7 @@ import io.netty.util.CharsetUtil
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
-class RouterConfig internal constructor() {
+class RouterMappings internal constructor() {
 
     private val mapping = ConcurrentHashMap<String, (request: FullHttpRequest) -> FullHttpResponse>()
 

@@ -4,6 +4,7 @@ package lighttunnel.client.util
 
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
+import lighttunnel.client.TunnelClientChannelHandler
 import lighttunnel.client.conn.TunnelConnection
 import lighttunnel.proto.TunnelRequest
 
@@ -17,4 +18,4 @@ internal val AK_TUNNEL_REQUEST: AttributeKey<TunnelRequest?> = AttributeKey.newI
 
 internal val AK_TUNNEL_CONNECTION: AttributeKey<TunnelConnection?> = AttributeKey.newInstance("\$lighttunnel.client.TunnelConnection")
 
-internal val AK_INACTIVE_EXTRA: AttributeKey<InactiveExtra?> = AttributeKey.newInstance("\$lighttunnel.client.InactiveExtra")
+internal val AK_CHANNEL_INACTIVE_EXTRA: AttributeKey<TunnelClientChannelHandler.ChannelInactiveExtra?> = AttributeKey.newInstance("\$lighttunnel.client.ChannelInactiveExtra")

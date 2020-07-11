@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
@@ -10,6 +12,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
+import lighttunnel.http.server.HttpServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
@@ -20,7 +23,7 @@ import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.traffic.TrafficHandler
 import lighttunnel.util.IncIds
-import lighttunnel.web.server.WebServer
+import lighttunnel.util.SslContextUtil
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -32,9 +35,9 @@ class TunnelServer(
     private val sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
     httpTunnelArgs: HttpTunnelArgs? = null,
     httpsTunnelArgs: HttpsTunnelArgs? = null,
-    webServerArgs: WebServerArgs? = null,
-    onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
-    onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
+    httpRpcServerArgs: HttpRpcServerArgs? = null,
+    private val onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
+    private val onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
 ) {
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
@@ -43,27 +46,22 @@ class TunnelServer(
     private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
     private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
 
-    private val tcpRegistry by lazy { TcpRegistry() }
-    private val tcpTunnel: TcpTunnel = createTcpTunnel(tcpRegistry)
+    private val tcpRegistry = TcpRegistry()
+    private val tcpTunnel: TcpTunnel = getTcpTunnel(tcpRegistry)
 
-    private val httpRegistry by lazy { HttpRegistry() }
-    private val httpTunnel: HttpTunnel? = httpTunnelArgs?.let { createHttpTunnel(httpRegistry, it) }
+    private val httpRegistry = HttpRegistry()
+    private val httpTunnel: HttpTunnel? = httpTunnelArgs?.let { getHttpTunnel(httpRegistry, it) }
 
-    private val httpsRegistry by lazy { HttpRegistry() }
-    private val httpsTunnel: HttpTunnel? = httpsTunnelArgs?.let { createHttpsTunnel(httpsRegistry, it) }
+    private val httpsRegistry = HttpRegistry()
+    private val httpsTunnel: HttpTunnel? = httpsTunnelArgs?.let { getHttpsTunnel(httpsRegistry, it) }
 
-    private val webServer: WebServer? = webServerArgs?.let { createWebServer(it) }
-
-    private val onChannelStateListener = OnChannelStateListenerImpl(
-        onTcpTunnelStateListener,
-        onHttpTunnelStateListener
-    )
+    private val httpRpcServer: HttpServer? = httpRpcServerArgs?.let { getHttpRpcServer(it) }
 
     @Throws(Exception::class)
     fun start(): Unit = lock.withLock {
         httpTunnel?.start()
         httpsTunnel?.start()
-        webServer?.start()
+        httpRpcServer?.start()
         startTunnelDaemon(tunnelDaemonArgs)
         sslTunnelDaemonArgs?.also { startSslTunnelDaemon(it) }
     }
@@ -72,10 +70,19 @@ class TunnelServer(
         tcpRegistry.depose()
         httpRegistry.depose()
         httpsRegistry.depose()
-        webServer?.depose()
+        httpRpcServer?.depose()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }
+
+    fun tcpFds() = tcpRegistry.tcpFds()
+    fun httpFds() = httpRegistry.httpFds()
+    fun httpsFds() = httpsRegistry.httpFds()
+    fun forceOff(fd: TcpFd) = tcpRegistry.forceOff(fd.port)
+    fun forceOff(fd: HttpFd, https: Boolean) = (if (https) httpsRegistry else httpRegistry).forceOff(fd.host)
+    fun getTcpFdRequest(fd: TcpFd) = fd.sessionChannels.tunnelRequest
+    fun getHttpFdRequest(fd: HttpFd) = fd.sessionChannels.tunnelRequest
+
 
     private fun startTunnelDaemon(args: TunnelDaemonArgs) {
         val serverBootstrap = ServerBootstrap()
@@ -91,14 +98,7 @@ class TunnelServer(
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
-                        .addLast("handler", TunnelServerChannelHandler(
-                            tunnelRequestInterceptor = args.tunnelRequestInterceptor,
-                            tunnelIds = tunnelIds,
-                            tcpTunnel = tcpTunnel,
-                            httpTunnel = httpTunnel,
-                            httpsTunnel = httpsTunnel,
-                            onChannelStateListener = onChannelStateListener
-                        ))
+                        .addLast("handler", InnerTunnelServerChannelHandler(args.tunnelRequestInterceptor))
                 }
             })
         if (args.bindAddr == null) {
@@ -125,14 +125,7 @@ class TunnelServer(
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
-                        .addLast("handler", TunnelServerChannelHandler(
-                            tunnelRequestInterceptor = args.tunnelRequestInterceptor,
-                            tunnelIds = tunnelIds,
-                            tcpTunnel = tcpTunnel,
-                            httpTunnel = httpTunnel,
-                            httpsTunnel = httpsTunnel,
-                            onChannelStateListener = onChannelStateListener
-                        ))
+                        .addLast("handler", InnerTunnelServerChannelHandler(args.tunnelRequestInterceptor))
                 }
             })
         if (args.bindAddr == null) {
@@ -143,7 +136,7 @@ class TunnelServer(
         logger.info("Serving tunnel with ssl on {} port {}", args.bindAddr ?: "::", args.bindPort)
     }
 
-    private fun createTcpTunnel(registry: TcpRegistry): TcpTunnel {
+    private fun getTcpTunnel(registry: TcpRegistry): TcpTunnel {
         return TcpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
@@ -151,7 +144,7 @@ class TunnelServer(
         )
     }
 
-    private fun createHttpTunnel(registry: HttpRegistry, args: HttpTunnelArgs): HttpTunnel? {
+    private fun getHttpTunnel(registry: HttpRegistry, args: HttpTunnelArgs): HttpTunnel? {
         if (args.bindPort == null) return null
         return HttpTunnel(
             bossGroup = bossGroup,
@@ -165,7 +158,7 @@ class TunnelServer(
         )
     }
 
-    private fun createHttpsTunnel(registry: HttpRegistry, args: HttpsTunnelArgs): HttpTunnel? {
+    private fun getHttpsTunnel(registry: HttpRegistry, args: HttpsTunnelArgs): HttpTunnel? {
         if (args.bindPort == null) return null
         return HttpTunnel(
             bossGroup = bossGroup,
@@ -179,30 +172,28 @@ class TunnelServer(
         )
     }
 
-    private fun createWebServer(args: WebServerArgs): WebServer? {
+    private fun getHttpRpcServer(args: HttpRpcServerArgs): HttpServer? {
         if (args.bindPort == null) return null
-        return WebServer(
+        return HttpServer(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             bindAddr = args.bindAddr,
             bindPort = args.bindPort
-        ).apply {
-            router {
-                route("/api/snapshot") {
-                    val obj = JSONObject()
-                    obj.put("tcp", tcpRegistry.snapshot)
-                    obj.put("http", httpRegistry.snapshot)
-                    obj.put("https", httpsRegistry.snapshot)
-                    val content = Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
-                    DefaultFullHttpResponse(
-                        HttpVersion.HTTP_1_1,
-                        HttpResponseStatus.OK,
-                        content
-                    ).also {
-                        it.headers()
-                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-                    }
+        ) {
+            route("/api/snapshot") {
+                val obj = JSONObject()
+                obj.put("tcp", tcpRegistry.toJson())
+                obj.put("http", httpRegistry.toJson())
+                obj.put("https", httpsRegistry.toJson())
+                val content = Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
+                DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    content
+                ).apply {
+                    headers()
+                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
                 }
             }
         }
@@ -218,7 +209,7 @@ class TunnelServer(
         val bindAddr: String? = null,
         val bindPort: Int? = null,
         val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl,
-        val sslContext: SslContext
+        val sslContext: SslContext = SslContextUtil.forBuiltinServer()
     )
 
     class HttpTunnelArgs(
@@ -233,55 +224,54 @@ class TunnelServer(
         val bindPort: Int? = null,
         val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,
         val httpPlugin: HttpPlugin? = null,
-        val sslContext: SslContext
+        val sslContext: SslContext = SslContextUtil.forBuiltinServer()
     )
 
-    class WebServerArgs(
+    class HttpRpcServerArgs(
         val bindAddr: String? = null,
         val bindPort: Int? = null
     )
 
-    private class OnChannelStateListenerImpl(
-        private val onTcpTunnelStateListener: OnTcpTunnelStateListener?,
-        private val onHttpTunnelStateListener: OnHttpTunnelStateListener?
-    ) : TunnelServerChannelHandler.OnChannelStateListener {
+    private inner class InnerTunnelServerChannelHandler(tunnelRequestInterceptor: TunnelRequestInterceptor) : TunnelServerChannelHandler(
+        tunnelRequestInterceptor = tunnelRequestInterceptor,
+        tunnelIds = tunnelIds,
+        tcpTunnel = tcpTunnel,
+        httpTunnel = httpTunnel,
+        httpsTunnel = httpsTunnel
+    ) {
         override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
-            super.onChannelConnected(ctx, tcpFd)
             if (tcpFd != null) {
-                onTcpTunnelStateListener?.onConnected(tcpFd)
+                onTcpTunnelStateListener?.onTcpTunnelConnected(tcpFd)
             }
         }
 
         override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
-            super.onChannelInactive(ctx, tcpFd)
             if (tcpFd != null) {
-                onTcpTunnelStateListener?.onDisconnect(tcpFd)
+                onTcpTunnelStateListener?.onTcpTunnelDisconnect(tcpFd)
             }
         }
 
         override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
-            super.onChannelConnected(ctx, httpFd)
             if (httpFd != null) {
-                onHttpTunnelStateListener?.onConnected(httpFd)
+                onHttpTunnelStateListener?.onHttpTunnelConnected(httpFd)
             }
         }
 
         override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
-            super.onChannelInactive(ctx, httpFd)
             if (httpFd != null) {
-                onHttpTunnelStateListener?.onDisconnect(httpFd)
+                onHttpTunnelStateListener?.onHttpTunnelDisconnect(httpFd)
             }
         }
     }
 
     interface OnTcpTunnelStateListener {
-        fun onConnected(fd: TcpFd) {}
-        fun onDisconnect(fd: TcpFd) {}
+        fun onTcpTunnelConnected(fd: TcpFd) {}
+        fun onTcpTunnelDisconnect(fd: TcpFd) {}
     }
 
     interface OnHttpTunnelStateListener {
-        fun onConnected(fd: HttpFd) {}
-        fun onDisconnect(fd: HttpFd) {}
+        fun onHttpTunnelConnected(fd: HttpFd) {}
+        fun onHttpTunnelDisconnect(fd: HttpFd) {}
     }
 
 

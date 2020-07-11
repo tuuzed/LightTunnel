@@ -6,7 +6,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class TunnelConnectionRegistry {
+internal class TunnelConnectionRegistry {
+
     private val cached = arrayListOf<TunnelConnection>()
     private val lock = ReentrantReadWriteLock()
 
@@ -19,17 +20,16 @@ class TunnelConnectionRegistry {
         cached.clear()
     }
 
-    val snapshot: JSONArray
-        get() = lock.read {
-            JSONArray().also { array ->
-                cached.forEach { fd ->
-                    val request = fd.finalTunnelRequest ?: fd.originalTunnelRequest
-                    array.put(JSONObject().also {
-                        it.put("name", request.name)
-                        it.put("tunnel", request.toString(fd.serverAddr))
-                    })
-                }
+    val conns: List<TunnelConnection> get() = cached
+
+    fun toJson() = lock.read {
+        JSONArray(conns.map {
+            JSONObject().apply {
+                put("name", it.request.name)
+                put("conn", it.toString())
             }
-        }
+        })
+    }
+
 
 }

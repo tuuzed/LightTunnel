@@ -33,7 +33,8 @@ class TunnelServerTest {
         )
         val sslTunnelDaemonArgs = TunnelServer.SslTunnelDaemonArgs(
             bindPort = 5443,
-            sslContext = SslContextUtil.forBuiltinServer())
+            sslContext = SslContextUtil.forBuiltinServer()
+        )
         val httpTunnelArgs = TunnelServer.HttpTunnelArgs(
             bindPort = 8080,
             httpPlugin = HttpPlugin.staticFileImpl(
@@ -49,16 +50,15 @@ class TunnelServerTest {
             ),
             sslContext = SslContextUtil.forBuiltinServer()
         )
-        val webServerArgs = TunnelServer.WebServerArgs(
+        val httpServerArgs = TunnelServer.HttpRpcServerArgs(
             bindPort = 5081
-
         )
         tunnelServer = TunnelServer(
             tunnelDaemonArgs = tunnelDaemonArgs,
             sslTunnelDaemonArgs = sslTunnelDaemonArgs,
             httpTunnelArgs = httpTunnelArgs,
             httpsTunnelArgs = httpsTunnelArgs,
-            webServerArgs = webServerArgs
+            httpRpcServerArgs = httpServerArgs
         )
     }
 

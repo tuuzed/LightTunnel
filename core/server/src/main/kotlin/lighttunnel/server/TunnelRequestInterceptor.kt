@@ -10,10 +10,7 @@ interface TunnelRequestInterceptor {
     fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest = tunnelRequest
 
     companion object {
-        @JvmStatic
         val emptyImpl: TunnelRequestInterceptor by lazy { object : TunnelRequestInterceptor {} }
-
-        @JvmStatic
         fun defaultImpl(authToken: String? = null, allowPorts: String? = null): TunnelRequestInterceptor = DefaultImpl(authToken, allowPorts)
     }
 

@@ -6,7 +6,7 @@ import java.io.Serializable
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
-data class RemoteInfo constructor(
+data class RemoteConnection constructor(
     val address: SocketAddress
 ) : Serializable {
 
@@ -16,7 +16,7 @@ data class RemoteInfo constructor(
 
         @JvmStatic
         @Throws(ProtoException::class)
-        fun fromBytes(bytes: ByteArray): RemoteInfo {
+        fun fromBytes(bytes: ByteArray): RemoteConnection {
             val address = try {
                 val json = JSONObject(String(bytes, Charsets.UTF_8))
                 InetSocketAddress(
@@ -26,8 +26,9 @@ data class RemoteInfo constructor(
             } catch (e: Exception) {
                 throw ProtoException("解析失败，数据异常", e)
             }
-            return RemoteInfo(address)
+            return RemoteConnection(address)
         }
+
     }
 
     fun toBytes(): ByteArray {

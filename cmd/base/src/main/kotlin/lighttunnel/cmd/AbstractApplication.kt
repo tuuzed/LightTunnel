@@ -9,11 +9,10 @@ abstract class AbstractApplication {
     fun execute(args: Array<String>) {
         val parser = DefaultParser()
         val commandLine = parser.parse(options, args)
-        main(commandLine)
+        run(commandLine)
     }
 
     abstract val options: Options
-
 
     fun printUsage() {
         System.out.printf("Usage:%n")
@@ -22,6 +21,6 @@ abstract class AbstractApplication {
         }
     }
 
-    abstract fun main(commandLine: CommandLine)
+    abstract fun run(commandLine: CommandLine)
 
 }

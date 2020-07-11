@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class LocalTcpClient(workerGroup: NioEventLoopGroup) {
+internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {
     private val bootstrap = Bootstrap()
     private val cachedChannels = hashMapOf<String, Channel>()
     private val lock = ReentrantReadWriteLock()

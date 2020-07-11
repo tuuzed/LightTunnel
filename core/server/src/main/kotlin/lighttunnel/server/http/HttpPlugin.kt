@@ -12,7 +12,6 @@ interface HttpPlugin {
     fun doHandle(request: FullHttpRequest): FullHttpResponse? = null
 
     companion object {
-        @JvmStatic
         fun staticFileImpl(paths: List<String>, hosts: List<String>): HttpPlugin {
             return StaticFileImpl(paths, hosts)
         }
@@ -35,8 +34,8 @@ interface HttpPlugin {
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.NOT_FOUND,
                     content
-                ).also {
-                    it.headers()
+                ).apply {
+                    headers()
                         .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
                         .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
                 }
@@ -47,8 +46,8 @@ interface HttpPlugin {
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
                     Unpooled.wrappedBuffer(content)
-                ).also {
-                    it.headers()
+                ).apply {
+                    headers()
                         .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.BINARY)
                         .set(HttpHeaderNames.CONTENT_LENGTH, content.size)
                 }

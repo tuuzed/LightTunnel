@@ -1,4 +1,4 @@
-package lighttunnel.web.client
+package lighttunnel.http.client
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
@@ -14,7 +14,7 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.util.AttributeKey
 import java.net.URI
 
-class WebClient(
+class HttpClient(
     workerGroup: NioEventLoopGroup,
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 512 * 1024
@@ -43,7 +43,7 @@ class WebClient(
                     ch.pipeline()
                         .addLast("codec", HttpClientCodec())
                         .addLast("aggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", WebClientChannelHandler())
+                        .addLast("handler", HttpClientChannelHandler())
                 }
 
             })

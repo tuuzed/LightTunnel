@@ -1,4 +1,4 @@
-package lighttunnel.web.server
+package lighttunnel.http.server
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
@@ -9,16 +9,16 @@ import org.junit.Before
 import org.junit.Test
 
 class WebServerTest {
-    private lateinit var server: WebServer
+    private lateinit var server: HttpServer
 
     @Before
     fun before() {
-        server = WebServer(
-            NioEventLoopGroup(),
-            NioEventLoopGroup(),
-            null,
-            80
-        ).router {
+        server = HttpServer(
+            bossGroup = NioEventLoopGroup(),
+            workerGroup = NioEventLoopGroup(),
+            bindAddr = "0.0.0.0",
+            bindPort = 80
+        ) {
             route("/") {
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,

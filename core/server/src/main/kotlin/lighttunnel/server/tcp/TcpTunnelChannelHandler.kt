@@ -9,7 +9,7 @@ import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
-import lighttunnel.proto.RemoteInfo
+import lighttunnel.proto.RemoteConnection
 import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.LongUtil
 import java.net.InetSocketAddress
@@ -30,7 +30,9 @@ internal class TcpTunnelChannelHandler(
                     ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 }
                 val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
-                tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
+                tcpFd.tunnelChannel.writeAndFlush(
+                    ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+                )
             } else {
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             }
@@ -51,7 +53,9 @@ internal class TcpTunnelChannelHandler(
                 }
                 ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
                     val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId ?: 0)
-                    tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
+                    tcpFd.tunnelChannel.writeAndFlush(
+                        ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+                    )
                 }
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)

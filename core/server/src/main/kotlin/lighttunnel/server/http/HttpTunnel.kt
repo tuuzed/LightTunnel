@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
+import lighttunnel.proto.ProtoException
 import lighttunnel.server.util.SessionChannels
 
 
@@ -71,7 +72,15 @@ internal class HttpTunnel(
     fun stopTunnel(host: String) = registry.unregister(host)
 
     @Throws(Exception::class)
+    fun requireNotRegistered(host: String) {
+        if (registry.isRegistered(host)) {
+            throw ProtoException("host($host) already used")
+        }
+    }
+
+    @Throws(Exception::class)
     fun startTunnel(host: String, sessionChannels: SessionChannels): HttpFd {
+        requireNotRegistered(host)
         return registry.register(host, sessionChannels)
     }
 

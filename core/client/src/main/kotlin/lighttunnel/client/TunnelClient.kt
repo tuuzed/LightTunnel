@@ -1,4 +1,4 @@
-@file:Suppress("CanBeParameter")
+@file:Suppress("unused")
 
 package lighttunnel.client
 
@@ -15,10 +15,9 @@ import io.netty.handler.ssl.SslContext
 import lighttunnel.client.conn.TunnelConnection
 import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient
-import lighttunnel.client.util.InactiveExtra
+import lighttunnel.http.server.HttpServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.*
-import lighttunnel.web.server.WebServer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -27,12 +26,12 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 class TunnelClient(
-    private val workerThreads: Int = -1,
+    workerThreads: Int = -1,
     private val retryConnectPolicy: Byte = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-    private val webAddr: String? = null,
-    private val webBindPort: Int? = null,
-    private val onTunnelStateListener: OnTunnelStateListener? = null,
-    private val onRemoteConnectListener: OnRemoteConnectListener? = null
+    private val httpRpcBindAddr: String? = null,
+    private val httpRpcBindPort: Int? = null,
+    private val onTunnelConnectionListener: OnTunnelConnectionListener? = null,
+    private val onRemoteConnectionListener: OnRemoteConnectionListener? = null
 ) {
 
     companion object {
@@ -45,30 +44,12 @@ class TunnelClient(
     private val bootstrap = Bootstrap()
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
-    private val tunnelConnectRegistry = TunnelConnectionRegistry()
-    private var webServer: WebServer? = null
+    private val tunnelConnectionRegistry = TunnelConnectionRegistry()
     private val lock = ReentrantLock()
+    private var httpRpcServer: HttpServer? = null
 
     private val openFailureCallback = { conn: TunnelConnection -> tryReconnect(conn, false) }
-    private val onChannelStateListener = object : TunnelClientChannelHandler.OnChannelStateListener {
-        override fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, extra: InactiveExtra?) {
-            super.onChannelInactive(ctx, conn, extra)
-            if (conn != null) {
-                onTunnelStateListener?.onDisconnect(conn, extra?.cause)
-                logger.trace("onChannelInactive: ", extra?.cause)
-                if (extra?.forceOffline != true) {
-                    tryReconnect(conn, extra?.cause != null)
-                }
-            }
-        }
-
-        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {
-            super.onChannelConnected(ctx, conn)
-            if (conn != null) {
-                onTunnelStateListener?.onConnected(conn)
-            }
-        }
-    }
+    private val onChannelStateListener = OnChannelStateListenerImpl()
 
     init {
         localTcpClient = LocalTcpClient(workerGroup)
@@ -77,7 +58,7 @@ class TunnelClient(
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(newChannelInitializer(null))
+            .handler(InnerChannelInitializer(null))
     }
 
     fun connect(
@@ -86,7 +67,7 @@ class TunnelClient(
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
     ): TunnelConnection {
-        startWebServer()
+        tryStartHttpRpcServer()
         val conn = TunnelConnection(
             serverAddr = serverAddr,
             serverPort = serverPort,
@@ -97,68 +78,59 @@ class TunnelClient(
             bootstrap = conn.sslContext?.bootstrap ?: bootstrap,
             failure = openFailureCallback
         )
-        onTunnelStateListener?.onConnecting(conn, false)
-        tunnelConnectRegistry.register(conn)
+        onTunnelConnectionListener?.onTunnelConnecting(conn, false)
+        tunnelConnectionRegistry.register(conn)
         return conn
     }
 
     fun close(conn: TunnelConnection) {
         conn.close()
-        tunnelConnectRegistry.unregister(conn)
+        tunnelConnectionRegistry.unregister(conn)
     }
 
+    fun getConns() = tunnelConnectionRegistry.conns
+
+    fun getConnRequest(conn: TunnelConnection) = conn.request
+
     fun depose() = lock.withLock {
-        tunnelConnectRegistry.depose()
+        tunnelConnectionRegistry.depose()
         cachedSslBootstraps.clear()
         localTcpClient.depose()
-        webServer?.depose()
+        httpRpcServer?.depose()
         workerGroup.shutdownGracefully()
+        Unit
     }
 
     private fun tryReconnect(conn: TunnelConnection, error: Boolean) {
-        if (conn.isActiveClosed) {
-            // 不需要自动重连时移除缓存
-            tunnelConnectRegistry.unregister(conn)
-            return
-        }
-        if (error) {
-            if ((retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) == RETRY_CONNECT_POLICY_ERROR) {
+        when {
+            // 主动关闭
+            conn.isActiveClosed -> close(conn)
+            // 错误且未设置错误重连策略
+            error && (retryConnectPolicy and RETRY_CONNECT_POLICY_ERROR) != RETRY_CONNECT_POLICY_ERROR -> close(conn)
+            // 未设置断线重连策略
+            (retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) != RETRY_CONNECT_POLICY_LOSE -> close(conn)
+            else -> {
                 // 连接失败，3秒后发起重连
                 TimeUnit.SECONDS.sleep(3)
                 conn.open(
                     bootstrap = conn.sslContext?.bootstrap ?: bootstrap,
                     failure = openFailureCallback
                 )
-                onTunnelStateListener?.onConnecting(conn, true)
-            } else {
-                // 不需要自动重连时移除缓存
-                tunnelConnectRegistry.unregister(conn)
+                onTunnelConnectionListener?.onTunnelConnecting(conn, true)
             }
-        } else if ((retryConnectPolicy and RETRY_CONNECT_POLICY_LOSE) == RETRY_CONNECT_POLICY_LOSE) {
-            // 连接失败，3秒后发起重连
-            TimeUnit.SECONDS.sleep(3)
-            conn.open(
-                bootstrap = conn.sslContext?.bootstrap ?: bootstrap,
-                failure = openFailureCallback
-            )
-            onTunnelStateListener?.onConnecting(conn, true)
-        } else {
-            // 不需要自动重连时移除缓存
-            tunnelConnectRegistry.unregister(conn)
         }
     }
 
-    private fun startWebServer() = lock.withLock {
-        if (webServer == null && webBindPort != null) {
-            val server = WebServer(
+    private fun tryStartHttpRpcServer() = lock.withLock {
+        if (httpRpcServer == null && httpRpcBindPort != null) {
+            httpRpcServer = HttpServer(
                 bossGroup = workerGroup,
                 workerGroup = workerGroup,
-                bindAddr = webAddr,
-                bindPort = webBindPort
-            ).also { webServer = it }
-            server.router {
+                bindAddr = httpRpcBindAddr,
+                bindPort = httpRpcBindPort
+            ) {
                 route("/api/snapshot") {
-                    val content = Unpooled.copiedBuffer(tunnelConnectRegistry.snapshot.toString(2), Charsets.UTF_8)
+                    val content = Unpooled.copiedBuffer(tunnelConnectionRegistry.toJson().toString(2), Charsets.UTF_8)
                     DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1,
                         HttpResponseStatus.OK,
@@ -169,8 +141,7 @@ class TunnelClient(
                             .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
                     }
                 }
-            }
-            server.start()
+            }.also { it.start() }
         }
     }
 
@@ -180,39 +151,62 @@ class TunnelClient(
             .channel(NioSocketChannel::class.java)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(newChannelInitializer(this))
+            .handler(InnerChannelInitializer(this))
             .also { cachedSslBootstraps[this] = it }
 
-    private fun newChannelInitializer(sslContext: SslContext?): ChannelInitializer<SocketChannel> {
-        return object : ChannelInitializer<SocketChannel>() {
-            override fun initChannel(ch: SocketChannel?) {
-                ch ?: return
-                if (sslContext != null) {
-                    ch.pipeline()
-                        .addFirst("ssl", sslContext.newHandler(ch.alloc()))
-                }
+    private inner class InnerChannelInitializer(private val sslContext: SslContext?) : ChannelInitializer<SocketChannel>() {
+        override fun initChannel(ch: SocketChannel?) {
+            ch ?: return
+            if (sslContext != null) {
                 ch.pipeline()
-                    .addLast("heartbeat", HeartbeatHandler())
-                    .addLast("decoder", ProtoMessageDecoder())
-                    .addLast("encoder", ProtoMessageEncoder())
-                    .addLast("handler", TunnelClientChannelHandler(
-                        localTcpClient = localTcpClient,
-                        onChannelStateListener = onChannelStateListener,
-                        onRemoteConnectListener = onRemoteConnectListener
-                    ))
+                    .addFirst("ssl", sslContext.newHandler(ch.alloc()))
+            }
+            ch.pipeline()
+                .addLast("heartbeat", HeartbeatHandler())
+                .addLast("decoder", ProtoMessageDecoder())
+                .addLast("encoder", ProtoMessageEncoder())
+                .addLast("handler", TunnelClientChannelHandler(
+                    localTcpClient = localTcpClient,
+                    onChannelStateListener = onChannelStateListener,
+                    onRemoteConnectListener = onRemoteConnectionListener
+                ))
+        }
+    }
+
+    private inner class OnChannelStateListenerImpl : TunnelClientChannelHandler.OnChannelStateListener {
+
+        override fun onChannelInactive(
+            ctx: ChannelHandlerContext,
+            conn: TunnelConnection?,
+            extra: TunnelClientChannelHandler.ChannelInactiveExtra?
+        ) {
+            super.onChannelInactive(ctx, conn, extra)
+            if (conn != null) {
+                onTunnelConnectionListener?.onTunnelDisconnect(conn, extra?.cause)
+                logger.trace("onChannelInactive: ", extra?.cause)
+                if (extra?.forceOff != true) {
+                    tryReconnect(conn, extra?.cause != null)
+                }
+            }
+        }
+
+        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {
+            super.onChannelConnected(ctx, conn)
+            if (conn != null) {
+                onTunnelConnectionListener?.onTunnelConnected(conn)
             }
         }
     }
 
-    interface OnTunnelStateListener {
-        fun onConnecting(conn: TunnelConnection, retryConnect: Boolean) {}
-        fun onConnected(conn: TunnelConnection) {}
-        fun onDisconnect(conn: TunnelConnection, cause: Throwable?) {}
+    interface OnTunnelConnectionListener {
+        fun onTunnelConnecting(conn: TunnelConnection, retryConnect: Boolean) {}
+        fun onTunnelConnected(conn: TunnelConnection) {}
+        fun onTunnelDisconnect(conn: TunnelConnection, cause: Throwable?) {}
     }
 
-    interface OnRemoteConnectListener {
-        fun onRemoteConnected(remoteInfo: RemoteInfo?) {}
-        fun onRemoteDisconnect(remoteInfo: RemoteInfo?) {}
+    interface OnRemoteConnectionListener {
+        fun onRemoteConnected(conn: RemoteConnection) {}
+        fun onRemoteDisconnect(conn: RemoteConnection) {}
     }
 
 }

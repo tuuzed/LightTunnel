@@ -11,7 +11,7 @@ import lighttunnel.client.util.*
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
-import lighttunnel.proto.RemoteInfo
+import lighttunnel.proto.RemoteConnection
 import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.LongUtil
 import java.nio.charset.StandardCharsets
@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
 internal class TunnelClientChannelHandler(
     private val localTcpClient: LocalTcpClient,
     private val onChannelStateListener: OnChannelStateListener,
-    private val onRemoteConnectListener: TunnelClient.OnRemoteConnectListener?
+    private val onRemoteConnectListener: TunnelClient.OnRemoteConnectionListener?
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
 
     private val logger by loggerDelegate()
@@ -37,7 +37,7 @@ internal class TunnelClientChannelHandler(
             localTcpClient.removeLocalChannel(tunnelId, sessionId)?.close()
         }
         val conn = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
-        val extra = ctx.channel().attr(AK_INACTIVE_EXTRA).get()
+        val extra = ctx.channel().attr(AK_CHANNEL_INACTIVE_EXTRA).get()
         onChannelStateListener.onChannelInactive(ctx, conn, extra)
         super.channelInactive(ctx)
     }
@@ -61,7 +61,7 @@ internal class TunnelClientChannelHandler(
             ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg)
             ProtoMessageType.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg)
             ProtoMessageType.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg)
-            ProtoMessageType.FORCED_OFFLINE -> doHandleForcedOfflineMessage(ctx, msg)
+            ProtoMessageType.FORCE_OFF -> doHandleForceOffMessage(ctx, msg)
             else -> {
             }
         }
@@ -81,7 +81,7 @@ internal class TunnelClientChannelHandler(
         val tunnelRequest = TunnelRequest.fromBytes(msg.data)
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(tunnelRequest)
-        ctx.channel().attr(AK_INACTIVE_EXTRA).set(null)
+        ctx.channel().attr(AK_CHANNEL_INACTIVE_EXTRA).set(null)
         val conn = ctx.channel().attr(AK_TUNNEL_CONNECTION).get()
         conn?.finalTunnelRequest = tunnelRequest
         logger.debug("Opened Tunnel: {}", tunnelRequest)
@@ -95,7 +95,7 @@ internal class TunnelClientChannelHandler(
         val errMsg = String(msg.head, StandardCharsets.UTF_8)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
-        ctx.channel().attr(AK_INACTIVE_EXTRA).set(InactiveExtra(false, Exception(errMsg)))
+        ctx.channel().attr(AK_CHANNEL_INACTIVE_EXTRA).set(ChannelInactiveExtra(false, Exception(errMsg)))
         ctx.channel().close()
         logger.debug("Open Tunnel Error: {}", errMsg)
     }
@@ -138,12 +138,14 @@ internal class TunnelClientChannelHandler(
         logger.trace("doHandleRemoteConnectedMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AK_SESSION_ID).set(msg.sessionId)
-        val remoteInfo = try {
-            RemoteInfo.fromBytes(msg.data)
+        val conn = try {
+            RemoteConnection.fromBytes(msg.data)
         } catch (e: Exception) {
             null
         }
-        onRemoteConnectListener?.onRemoteConnected(remoteInfo)
+        if (conn != null) {
+            onRemoteConnectListener?.onRemoteConnected(conn)
+        }
         val tunnelRequest = ctx.channel().attr(AK_TUNNEL_REQUEST).get()
         if (tunnelRequest != null) {
             localTcpClient.acquireLocalChannel(
@@ -158,12 +160,14 @@ internal class TunnelClientChannelHandler(
     @Throws(Exception::class)
     private fun doHandleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleRemoteDisconnectMessage : {}, {}", ctx, msg)
-        val remoteInfo = try {
-            RemoteInfo.fromBytes(msg.data)
+        val conn = try {
+            RemoteConnection.fromBytes(msg.data)
         } catch (e: Exception) {
             null
         }
-        onRemoteConnectListener?.onRemoteDisconnect(remoteInfo)
+        if (conn != null) {
+            onRemoteConnectListener?.onRemoteDisconnect(conn)
+        }
         localTcpClient.removeLocalChannel(msg.tunnelId, msg.sessionId)
             ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
             ?.addListener(ChannelFutureListener.CLOSE)
@@ -171,17 +175,19 @@ internal class TunnelClientChannelHandler(
 
     /** 强制下线消息 */
     @Throws(Exception::class)
-    private fun doHandleForcedOfflineMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("doHandleForcedOfflineMessage : {}, {}", ctx, msg)
+    private fun doHandleForceOffMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleForceOffMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
-        ctx.channel().attr(AK_INACTIVE_EXTRA).set(InactiveExtra(true, Exception("ForcedOffline")))
-        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE_REPLY)).addListener(ChannelFutureListener.CLOSE)
+        ctx.channel().attr(AK_CHANNEL_INACTIVE_EXTRA).set(ChannelInactiveExtra(true, Exception("ForceOff")))
+        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.FORCE_OFF_REPLY)).addListener(ChannelFutureListener.CLOSE)
     }
 
-    internal interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, extra: InactiveExtra?) {}
+    interface OnChannelStateListener {
+        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, extra: ChannelInactiveExtra?) {}
         fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {}
     }
+
+    class ChannelInactiveExtra(val forceOff: Boolean, val cause: Throwable?)
 
 }

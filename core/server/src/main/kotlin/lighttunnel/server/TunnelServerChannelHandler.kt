@@ -18,14 +18,14 @@ import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.IncIds
 import lighttunnel.util.LongUtil
 
-internal class TunnelServerChannelHandler(
+internal abstract class TunnelServerChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
     private val tunnelIds: IncIds,
     private val tcpTunnel: TcpTunnel? = null,
     private val httpTunnel: HttpTunnel? = null,
-    private val httpsTunnel: HttpTunnel? = null,
-    private val onChannelStateListener: OnChannelStateListener? = null
+    private val httpsTunnel: HttpTunnel? = null
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
+
     private val logger by loggerDelegate()
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
@@ -36,18 +36,9 @@ internal class TunnelServerChannelHandler(
         }
         ctx.channel().attr(AK_SESSION_CHANNELS).get()?.also { sc ->
             when (sc.tunnelRequest.type) {
-                TunnelRequest.Type.TCP -> {
-                    val fd = tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort)
-                    onChannelStateListener?.onChannelInactive(ctx, fd)
-                }
-                TunnelRequest.Type.HTTP -> {
-                    val fd = httpTunnel?.stopTunnel(sc.tunnelRequest.host)
-                    onChannelStateListener?.onChannelInactive(ctx, fd)
-                }
-                TunnelRequest.Type.HTTPS -> {
-                    val fd = httpsTunnel?.stopTunnel(sc.tunnelRequest.host)
-                    onChannelStateListener?.onChannelInactive(ctx, fd)
-                }
+                TunnelRequest.Type.TCP -> onChannelInactive(ctx, tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort))
+                TunnelRequest.Type.HTTP -> onChannelInactive(ctx, httpTunnel?.stopTunnel(sc.tunnelRequest.host))
+                TunnelRequest.Type.HTTPS -> onChannelInactive(ctx, httpsTunnel?.stopTunnel(sc.tunnelRequest.host))
                 else -> {
                     // Nothing
                 }
@@ -59,8 +50,7 @@ internal class TunnelServerChannelHandler(
 
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
-        ctx ?: return
-        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+        ctx?.apply { channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE) }
     }
 
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: ProtoMessage?) {
@@ -73,7 +63,7 @@ internal class TunnelServerChannelHandler(
             ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg)
             ProtoMessageType.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
             ProtoMessageType.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
-            ProtoMessageType.FORCED_OFFLINE_REPLY -> doHandleForcedOfflineReplyMessage(ctx, msg)
+            ProtoMessageType.FORCE_OFF_REPLY -> doHandleForcedOfflineReplyMessage(ctx, msg)
             else -> {
                 // Nothing
             }
@@ -92,19 +82,19 @@ internal class TunnelServerChannelHandler(
         try {
             val originalTunnelRequest = TunnelRequest.fromBytes(msg.head)
             val finalTunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(originalTunnelRequest)
-            logger.trace("originalTunnelRequest: {}, finalTunnelRequest: {}", originalTunnelRequest, finalTunnelRequest)
+            logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
             when (finalTunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {
-                    val server = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
-                    server.handleTcpRequestMessage(ctx, finalTunnelRequest)
+                    val tcpTunnel = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
+                    tcpTunnel.handleTcpRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTP -> {
-                    val server = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
-                    server.handleHttpRequestMessage(ctx, finalTunnelRequest)
+                    val httpTunnel = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
+                    httpTunnel.handleHttpRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelRequest.Type.HTTPS -> {
-                    val server = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
-                    server.handleHttpRequestMessage(ctx, finalTunnelRequest)
+                    val httpsTunnel = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
+                    httpsTunnel.handleHttpRequestMessage(ctx, finalTunnelRequest)
                 }
                 else -> throw ProtoException("不支持的隧道类型")
             }
@@ -145,37 +135,33 @@ internal class TunnelServerChannelHandler(
         ctx.channel()?.close()
     }
 
-    @Suppress("DuplicatedCode")
     @Throws(Exception::class)
     private fun TcpTunnel.handleTcpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
+        requireNotRegistered(tunnelRequest.remotePort)
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
-        val fd = this.startTunnel(null, tunnelRequest.remotePort, sessionChannels)
-        onChannelStateListener?.onChannelConnected(ctx, fd)
+        onChannelConnected(ctx, startTunnel(null, tunnelRequest.remotePort, sessionChannels))
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
     }
 
-    @Suppress("DuplicatedCode")
     @Throws(Exception::class)
     private fun HttpTunnel.handleHttpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
+        requireNotRegistered(tunnelRequest.host)
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
-        val fd = this.startTunnel(tunnelRequest.host, sessionChannels)
-        onChannelStateListener?.onChannelConnected(ctx, fd)
+        onChannelConnected(ctx, startTunnel(tunnelRequest.host, sessionChannels))
         val head = LongUtil.toBytes(tunnelId, 0L)
         val data = tunnelRequest.toBytes()
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
     }
 
-    internal interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {}
-        fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {}
-        fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {}
-        fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {}
-    }
+    abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?)
+    abstract fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?)
+    abstract fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?)
+    abstract fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?)
 
 }

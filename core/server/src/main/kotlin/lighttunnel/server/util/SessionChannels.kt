@@ -22,10 +22,10 @@ internal class SessionChannels(
     private val ids = IncIds()
     private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
-    internal val createAt: Date = Date()
-    internal val updateAt: Date = Date()
-    internal val inboundBytes = AtomicLong(0)
-    internal val outboundBytes = AtomicLong(0)
+    val createAt: Date = Date()
+    val updateAt: Date = Date()
+    val inboundBytes = AtomicLong(0)
+    val outboundBytes = AtomicLong(0)
 
     val cachedChannelCount: Int get() = lock.read { cachedSessionIdChannels.count() }
 
@@ -39,8 +39,8 @@ internal class SessionChannels(
 
     fun removeChannel(sessionId: Long): Channel? = lock.write { cachedSessionIdChannels.remove(sessionId) }
 
-    fun forcedOffline() {
-        tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.FORCED_OFFLINE))
+    fun forceOff() {
+        tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.FORCE_OFF))
     }
 
     fun depose() = lock.write {

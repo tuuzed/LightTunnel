@@ -11,21 +11,24 @@ import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TunnelConnection(
-    val serverAddr: String,
-    val serverPort: Int,
+class TunnelConnection internal constructor(
+    internal val serverAddr: String,
+    internal val serverPort: Int,
     private val tunnelRequest: TunnelRequest,
     internal val sslContext: SslContext? = null
 ) {
+
     private val logger by loggerDelegate()
+
+    internal val request get() = finalTunnelRequest ?: tunnelRequest
+
     private var openChannelFuture: ChannelFuture? = null
 
-    val originalTunnelRequest get() = tunnelRequest
-    var finalTunnelRequest: TunnelRequest? = null
-        internal set
+    internal var finalTunnelRequest: TunnelRequest? = null
 
     private val activeClosedFlag = AtomicBoolean(false)
-    val isActiveClosed get() = activeClosedFlag.get()
+
+    internal val isActiveClosed get() = activeClosedFlag.get()
 
     internal fun open(bootstrap: Bootstrap, failure: (conn: TunnelConnection) -> Unit) {
         if (isActiveClosed) {
@@ -38,11 +41,11 @@ class TunnelConnection(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    val head = (finalTunnelRequest ?: originalTunnelRequest).toBytes()
+                    val head = request.toBytes()
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
                     future.channel().attr(AK_TUNNEL_CONNECTION).set(this)
                 } else {
-                    failure.invoke(this)
+                    failure(this)
                 }
             })
     }
@@ -55,9 +58,6 @@ class TunnelConnection(
         }
     }
 
-    override fun toString(): String {
-        return (finalTunnelRequest ?: originalTunnelRequest).toString(serverAddr)
-    }
-
+    override fun toString(): String = request.toString(serverAddr)
 
 }

@@ -1,4 +1,4 @@
-package lighttunnel.web.client
+package lighttunnel.http.client
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.nio.NioEventLoopGroup
@@ -8,11 +8,11 @@ import org.junit.Test
 
 class WebClientTest {
 
-    lateinit var client: WebClient
+    lateinit var client: HttpClient
 
     @Before
     fun setUp() {
-        client = WebClient(NioEventLoopGroup())
+        client = HttpClient(NioEventLoopGroup())
     }
 
     @Test

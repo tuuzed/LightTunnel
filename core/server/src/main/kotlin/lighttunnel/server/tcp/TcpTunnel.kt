@@ -32,13 +32,18 @@ internal class TcpTunnel(
             })
     }
 
+    @Throws(Exception::class)
+    fun requireNotRegistered(port: Int) {
+        if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
+            throw ProtoException("port($port) already used")
+        }
+    }
+
     fun stopTunnel(port: Int) = registry.unregister(port)
 
     @Throws(Exception::class)
     fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels): TcpFd {
-        if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
-            throw ProtoException("port($port) already used")
-        }
+        requireNotRegistered(port)
         val bindChannelFuture = if (addr == null) {
             serverBootstrap.bind(port)
         } else {

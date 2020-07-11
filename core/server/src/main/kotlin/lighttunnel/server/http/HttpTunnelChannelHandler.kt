@@ -9,7 +9,7 @@ import io.netty.handler.codec.http.FullHttpRequest
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
-import lighttunnel.proto.RemoteInfo
+import lighttunnel.proto.RemoteConnection
 import lighttunnel.server.util.AK_HTTP_HOST
 import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.HttpUtil
@@ -41,7 +41,9 @@ internal class HttpTunnelChannelHandler(
             val httpFd = registry.getHttpFd(httpHost)
             if (httpFd != null) {
                 val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
-                httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
+                httpFd.tunnelChannel.writeAndFlush(
+                    ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+                )
             }
             ctx.channel().attr(AK_HTTP_HOST).set(null)
             ctx.channel().attr(AK_SESSION_ID).set(null)
@@ -83,7 +85,9 @@ internal class HttpTunnelChannelHandler(
         val sessionId = httpFd.putChannel(ctx.channel())
         ctx.channel().attr(AK_SESSION_ID).set(sessionId)
         val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
-        httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteInfo(ctx.channel().remoteAddress()).toBytes()))
+        httpFd.tunnelChannel.writeAndFlush(
+            ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+        )
         val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg))
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
