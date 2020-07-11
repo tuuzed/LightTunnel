@@ -18,6 +18,8 @@ import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.http.server.HttpServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.*
+import lighttunnel.util.BuildConfig
+import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -68,7 +70,7 @@ class TunnelClient(
         sslContext: SslContext? = null
     ): TunnelConnection {
         tryStartHttpRpcServer()
-        val conn = TunnelConnection(
+        val conn = TunnelConnection.newInstance(
             serverAddr = serverAddr,
             serverPort = serverPort,
             tunnelRequest = tunnelRequest,
@@ -88,7 +90,7 @@ class TunnelClient(
         tunnelConnectionRegistry.unregister(conn)
     }
 
-    fun getConns() = tunnelConnectionRegistry.conns
+    fun getTunnelConnectionList() = tunnelConnectionRegistry.conns
 
     fun depose() = lock.withLock {
         tunnelConnectionRegistry.depose()
@@ -121,25 +123,47 @@ class TunnelClient(
 
     private fun tryStartHttpRpcServer() = lock.withLock {
         if (httpRpcServer == null && httpRpcBindPort != null) {
-            httpRpcServer = HttpServer(
-                bossGroup = workerGroup,
-                workerGroup = workerGroup,
-                bindAddr = httpRpcBindAddr,
-                bindPort = httpRpcBindPort
-            ) {
-                route("/api/snapshot") {
-                    val content = Unpooled.copiedBuffer(tunnelConnectionRegistry.toJson().toString(2), Charsets.UTF_8)
-                    DefaultFullHttpResponse(
-                        HttpVersion.HTTP_1_1,
-                        HttpResponseStatus.OK,
-                        content
-                    ).also {
-                        it.headers()
-                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-                    }
+            getHttpRpcServer(httpRpcBindPort).also {
+                httpRpcServer = it
+            }.start()
+        }
+    }
+
+    private fun getHttpRpcServer(httpRpcBindPort: Int): HttpServer {
+        return HttpServer(
+            bossGroup = workerGroup,
+            workerGroup = workerGroup,
+            bindAddr = httpRpcBindAddr,
+            bindPort = httpRpcBindPort
+        ) {
+            route("/api/version") {
+                val content = JSONObject().apply {
+                    put("version", BuildConfig.VERSION_NAME)
+                }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+                DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    content
+                ).apply {
+                    headers()
+                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
                 }
-            }.also { it.start() }
+            }
+            route("/api/snapshot") {
+                val content = tunnelConnectionRegistry.toJson().let {
+                    Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
+                }
+                DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    content
+                ).also {
+                    it.headers()
+                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                }
+            }
         }
     }
 

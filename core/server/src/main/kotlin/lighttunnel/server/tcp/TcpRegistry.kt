@@ -21,11 +21,11 @@ internal class TcpRegistry {
     private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     @Throws(ProtoException::class)
-    fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpFd) {
+    fun register(port: Int, sessionChannels: SessionChannels, fd: TcpFd) {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
-        lock.write { portTcpFds[port] = descriptor }
+        lock.write { portTcpFds[port] = fd }
         logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
@@ -55,14 +55,14 @@ internal class TcpRegistry {
                 portTcpFds.values.map { fd ->
                     JSONObject().apply {
                         put("port", fd.port)
-                        put("conns", fd.sessionChannels.cachedChannelCount)
-                        put("name", fd.sessionChannels.tunnelRequest.name)
-                        put("localAddr", fd.sessionChannels.tunnelRequest.localAddr)
-                        put("localPort", fd.sessionChannels.tunnelRequest.localPort)
-                        put("createAt", sdf.format(fd.sessionChannels.createAt))
-                        put("updateAt", sdf.format(fd.sessionChannels.updateAt))
-                        put("inboundBytes", fd.sessionChannels.inboundBytes.get())
-                        put("outboundBytes", fd.sessionChannels.outboundBytes.get())
+                        put("conns", fd.connectionCount)
+                        put("name", fd.tunnelRequest.name)
+                        put("localAddr", fd.tunnelRequest.localAddr)
+                        put("localPort", fd.tunnelRequest.localPort)
+                        put("inboundBytes", fd.statistics.inboundBytes)
+                        put("outboundBytes", fd.statistics.outboundBytes)
+                        put("createAt", sdf.format(fd.statistics.createAt))
+                        put("updateAt", sdf.format(fd.statistics.updateAt))
                     }
                 }
             )

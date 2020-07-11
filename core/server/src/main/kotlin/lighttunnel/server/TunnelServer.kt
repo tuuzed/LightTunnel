@@ -22,6 +22,7 @@ import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.traffic.TrafficHandler
+import lighttunnel.util.BuildConfig
 import lighttunnel.util.IncIds
 import lighttunnel.util.SslContextUtil
 import org.json.JSONObject
@@ -75,13 +76,11 @@ class TunnelServer(
         workerGroup.shutdownGracefully()
     }
 
-    fun tcpFds() = tcpRegistry.tcpFds()
-    fun httpFds() = httpRegistry.httpFds()
-    fun httpsFds() = httpsRegistry.httpFds()
+    fun getTcpFdList() = tcpRegistry.tcpFds()
+    fun getHttpFdList() = httpRegistry.httpFds()
+    fun getHttpsFdList() = httpsRegistry.httpFds()
     fun forceOff(fd: TcpFd) = tcpRegistry.forceOff(fd.port)
-    fun forceOff(fd: HttpFd, https: Boolean) = (if (https) httpsRegistry else httpRegistry).forceOff(fd.host)
-    fun getTcpFdRequest(fd: TcpFd) = fd.sessionChannels.tunnelRequest
-    fun getHttpFdRequest(fd: HttpFd) = fd.sessionChannels.tunnelRequest
+    fun forceOff(fd: HttpFd) = (if (fd.isHttps) httpsRegistry else httpRegistry).forceOff(fd.host)
 
 
     private fun startTunnelDaemon(args: TunnelDaemonArgs) {
@@ -110,7 +109,9 @@ class TunnelServer(
     }
 
     private fun startSslTunnelDaemon(args: SslTunnelDaemonArgs) {
-        if (args.bindPort == null) return
+        if (args.bindPort == null) {
+            return
+        }
         val serverBootstrap = ServerBootstrap()
         serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel::class.java)
@@ -145,7 +146,9 @@ class TunnelServer(
     }
 
     private fun getHttpTunnel(registry: HttpRegistry, args: HttpTunnelArgs): HttpTunnel? {
-        if (args.bindPort == null) return null
+        if (args.bindPort == null) {
+            return null
+        }
         return HttpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
@@ -159,7 +162,9 @@ class TunnelServer(
     }
 
     private fun getHttpsTunnel(registry: HttpRegistry, args: HttpsTunnelArgs): HttpTunnel? {
-        if (args.bindPort == null) return null
+        if (args.bindPort == null) {
+            return null
+        }
         return HttpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
@@ -173,19 +178,35 @@ class TunnelServer(
     }
 
     private fun getHttpRpcServer(args: HttpRpcServerArgs): HttpServer? {
-        if (args.bindPort == null) return null
+        if (args.bindPort == null) {
+            return null
+        }
         return HttpServer(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
             bindAddr = args.bindAddr,
             bindPort = args.bindPort
         ) {
+            route("/api/version") {
+                val content = JSONObject().apply {
+                    put("version", BuildConfig.VERSION_NAME)
+                }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+                DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    content
+                ).apply {
+                    headers()
+                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                }
+            }
             route("/api/snapshot") {
-                val obj = JSONObject()
-                obj.put("tcp", tcpRegistry.toJson())
-                obj.put("http", httpRegistry.toJson())
-                obj.put("https", httpsRegistry.toJson())
-                val content = Unpooled.copiedBuffer(obj.toString(2), Charsets.UTF_8)
+                val content = JSONObject().apply {
+                    put("tcp", tcpRegistry.toJson())
+                    put("http", httpRegistry.toJson())
+                    put("https", httpsRegistry.toJson())
+                }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,

@@ -25,7 +25,7 @@ internal class TunnelConnectionRegistry {
     fun toJson() = lock.read {
         JSONArray(conns.map {
             JSONObject().apply {
-                put("name", it.request.name)
+                put("name", it.tunnelRequest.name)
                 put("conn", it.toString())
             }
         })

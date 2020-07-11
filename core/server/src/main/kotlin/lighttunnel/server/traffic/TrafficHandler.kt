@@ -12,8 +12,7 @@ internal class TrafficHandler : ChannelDuplexHandler() {
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         if (msg is ByteBuf) {
             ctx.channel().attr(AK_SESSION_CHANNELS).get()?.apply {
-                inboundBytes.getAndAdd(msg.readableBytes().toLong())
-                updateAt.time = System.currentTimeMillis()
+                statistics.incInboundBytes(msg.readableBytes())
             }
         }
         ctx.fireChannelRead(msg)
@@ -23,8 +22,7 @@ internal class TrafficHandler : ChannelDuplexHandler() {
     override fun write(ctx: ChannelHandlerContext, msg: Any, promise: ChannelPromise?) {
         if (msg is ByteBuf) {
             ctx.channel().attr(AK_SESSION_CHANNELS).get()?.apply {
-                outboundBytes.getAndAdd(msg.readableBytes().toLong())
-                updateAt.time = System.currentTimeMillis()
+                statistics.incOutboundBytes(msg.readableBytes())
             }
         }
         super.write(ctx, msg, promise)

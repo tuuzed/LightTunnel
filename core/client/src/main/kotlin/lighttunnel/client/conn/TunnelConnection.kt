@@ -11,16 +11,26 @@ import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TunnelConnection internal constructor(
+@Suppress("MemberVisibilityCanBePrivate")
+class TunnelConnection private constructor(
     val serverAddr: String,
     val serverPort: Int,
-    private val tunnelRequest: TunnelRequest,
-    internal val sslContext: SslContext? = null
+    private val originalTunnelRequest: TunnelRequest,
+    internal val sslContext: SslContext?
 ) {
-
     private val logger by loggerDelegate()
 
-    val request get() = finalTunnelRequest ?: tunnelRequest
+    @Suppress("ClassName")
+    internal companion object `-Companion` {
+        fun newInstance(
+            serverAddr: String,
+            serverPort: Int,
+            tunnelRequest: TunnelRequest,
+            sslContext: SslContext? = null
+        ) = TunnelConnection(serverAddr, serverPort, tunnelRequest, sslContext)
+    }
+
+    val tunnelRequest get() = finalTunnelRequest ?: originalTunnelRequest
 
     private var openChannelFuture: ChannelFuture? = null
 
@@ -41,7 +51,7 @@ class TunnelConnection internal constructor(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    val head = request.toBytes()
+                    val head = originalTunnelRequest.toBytes()
                     future.channel().writeAndFlush(ProtoMessage(ProtoMessageType.REQUEST, head = head))
                     future.channel().attr(AK_TUNNEL_CONNECTION).set(this)
                 } else {
@@ -58,6 +68,6 @@ class TunnelConnection internal constructor(
         }
     }
 
-    override fun toString(): String = request.toString(serverAddr)
+    override fun toString(): String = tunnelRequest.toString(serverAddr)
 
 }

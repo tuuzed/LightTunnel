@@ -3,14 +3,26 @@ package lighttunnel.server.http
 import io.netty.channel.Channel
 import lighttunnel.server.util.SessionChannels
 
-class HttpFd internal constructor(
-    internal val host: String,
+class HttpFd private constructor(
+    val isHttps: Boolean,
+    val host: String,
     internal val sessionChannels: SessionChannels
 ) {
 
-    internal val tunnelId get() = sessionChannels.tunnelId
+    val tunnelRequest get() = sessionChannels.tunnelRequest
+    val connectionCount get() = sessionChannels.cachedChannelCount
+    val statistics get() = sessionChannels.statistics
 
-    internal val tunnelRequest get() = sessionChannels.tunnelRequest
+    @Suppress("ClassName")
+    internal companion object `-Companion` {
+        fun newInstance(
+            isHttps: Boolean,
+            host: String,
+            sessionChannels: SessionChannels
+        ) = HttpFd(isHttps, host, sessionChannels)
+    }
+
+    internal val tunnelId get() = sessionChannels.tunnelId
 
     internal val tunnelChannel get() = sessionChannels.tunnelChannel
 
@@ -20,7 +32,7 @@ class HttpFd internal constructor(
 
     internal fun putChannel(channel: Channel) = sessionChannels.putChannel(channel)
 
-    override fun toString(): String = sessionChannels.tunnelRequest.toString()
+    override fun toString(): String = tunnelRequest.toString()
 
 
 }

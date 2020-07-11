@@ -81,7 +81,7 @@ internal class HttpTunnel(
     @Throws(Exception::class)
     fun startTunnel(host: String, sessionChannels: SessionChannels): HttpFd {
         requireNotRegistered(host)
-        return registry.register(host, sessionChannels)
+        return registry.register(isHttps, host, sessionChannels)
     }
 
 }

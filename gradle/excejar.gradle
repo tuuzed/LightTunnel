@@ -47,11 +47,7 @@ launch4j {
     outfile = "${project.AppName ?: project.name}.exe"
 }
 
-task _mixinProguardJar(
-        group: "package",
-        type: proguard.gradle.ProGuardTask,
-        dependsOn: jar
-) {
+task proguardJar(group: "package", type: proguard.gradle.ProGuardTask, dependsOn: "jar") {
     List<File> proguardRules = new ArrayList<>()
     proguardRules.add(rootProject.file("./gradle/proguardrules/basic.txt"))
     proguardRules.add(rootProject.file("./gradle/proguardrules/third-party.txt"))
@@ -61,25 +57,13 @@ task _mixinProguardJar(
     outjars rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
 }
 
-
-task packageClean(
-        group: "package",
-        type: Delete,
-        dependsOn: clean
-) {
+task packageClean(group: "package", type: Delete, dependsOn: clean) {
     delete rootProject.file("dists/${project.version}")
 }
 
-task packageJar(
-        group: "package",
-        dependsOn: _mixinProguardJar
-)
+task packageJar(group: "package", dependsOn: proguardJar)
 
-task dists(
-        group: "package",
-        type: Copy,
-        dependsOn: [_mixinProguardJar, createExe]
-) {
+task dists(group: "package", type: Copy) {
     from new File(project.buildDir, "launch4j/${project.AppName ?: project.name}.exe")
     from(rootProject.file("resources")) {
         include '*.ini'
@@ -107,6 +91,7 @@ task dists(
         runFile.setExecutable(true, false)
     }
 }
+dists.dependsOn(proguardJar, createExe)
 
 
 static def copyOf(InputStream src, OutputStream dst) {

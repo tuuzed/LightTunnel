@@ -21,13 +21,13 @@ internal class HttpRegistry {
     private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     @Throws(ProtoException::class)
-    fun register(host: String, sessionChannels: SessionChannels): HttpFd {
+    fun register(isHttps: Boolean, host: String, sessionChannels: SessionChannels): HttpFd {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
-        return HttpFd(host, sessionChannels).also { fd ->
+        return HttpFd.newInstance(isHttps, host, sessionChannels).also { fd ->
             lock.write { hostHttpFds[host] = fd }
-            logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
+            logger.debug("Start Tunnel: {}, Options: {}", fd.tunnelRequest, fd.tunnelRequest.optionsString)
         }
     }
 
@@ -57,14 +57,14 @@ internal class HttpRegistry {
                 hostHttpFds.values.map { fd ->
                     JSONObject().apply {
                         put("host", fd.host)
-                        put("conns", fd.sessionChannels.cachedChannelCount)
-                        put("name", fd.sessionChannels.tunnelRequest.name)
-                        put("localAddr", fd.sessionChannels.tunnelRequest.localAddr)
-                        put("localPort", fd.sessionChannels.tunnelRequest.localPort)
-                        put("createAt", sdf.format(fd.sessionChannels.createAt))
-                        put("updateAt", sdf.format(fd.sessionChannels.updateAt))
-                        put("inboundBytes", fd.sessionChannels.inboundBytes.get())
-                        put("outboundBytes", fd.sessionChannels.outboundBytes.get())
+                        put("conns", fd.connectionCount)
+                        put("name", fd.tunnelRequest.name)
+                        put("localAddr", fd.tunnelRequest.localAddr)
+                        put("localPort", fd.tunnelRequest.localPort)
+                        put("inboundBytes", fd.statistics.inboundBytes)
+                        put("outboundBytes", fd.statistics.outboundBytes)
+                        put("createAt", sdf.format(fd.statistics.createAt))
+                        put("updateAt", sdf.format(fd.statistics.updateAt))
                     }
                 }
             )

@@ -14,7 +14,6 @@ data class RemoteConnection constructor(
 
         private const val serialVersionUID = 1L
 
-        @JvmStatic
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): RemoteConnection {
             val address = try {

@@ -24,8 +24,8 @@ class RouterMappings internal constructor() {
         }
     }
 
-    fun route(path: String, callback: (request: FullHttpRequest) -> FullHttpResponse) {
-        mapping[path] = callback
+    fun route(path: String, handler: (request: FullHttpRequest) -> FullHttpResponse) {
+        mapping[path] = handler
     }
 
     @Throws(IOException::class)

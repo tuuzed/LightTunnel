@@ -2,7 +2,6 @@
 
 package ltcmd.server
 
-import lighttunnel.BuildConfig
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.asInt
 import lighttunnel.logger.LoggerFactory
@@ -13,6 +12,7 @@ import lighttunnel.server.http.HttpFd
 import lighttunnel.server.http.HttpPlugin
 import lighttunnel.server.http.HttpRequestInterceptor
 import lighttunnel.server.tcp.TcpFd
+import lighttunnel.util.BuildConfig
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options

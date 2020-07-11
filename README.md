@@ -8,7 +8,7 @@
 
 ## 0x00 发行版下载
 
-[Github下载 LightTunnel-v0.5.62.tar.gz](https://github.com/tuuzed/LightTunnel/releases/download/v0.5.62/LightTunnel-v0.5.62.tar.gz)
+[Github下载 LightTunnel-v0.6.0.tar.gz](https://github.com/tuuzed/LightTunnel/releases/download/v0.6.0/LightTunnel-v0.6.0.tar.gz)
 
 ## 0x01 文件说明
 
@@ -91,8 +91,8 @@
   # TCP隧道允许使用的端口
   allow_ports = 10000,10001,10002-50000
   
-  # 仪表盘绑定端口，为空时不启用仪表盘
-  web_bind_port = 5081
+  # Http Rpc绑定端口，为空时不启用Http Rpc
+  http_rpc_port = 5081
   
   # ssl
   # ssl绑定端口号，为空时不启用http服务
@@ -105,11 +105,11 @@
   
   # http
   # http服务绑定端口，为空时不启用http服务
-  http_bind_port = 8080
+  http_port = 8080
   
   # https
   # https服务绑定端口，为空时不启用https服务
-  https_bind_port = 8443
+  https_port = 8443
   # https jks证书文件，加载失败时会默认使用程序内建的证书
   https_jks = lts.jks
   https_key_password = ltspass
@@ -154,8 +154,8 @@
   ssl_jks = ltc.jks
   ssl_store_password = ltcpass
   
-  # 仪表盘绑定端口，为空时不启用仪表盘
-  web_bind_port = 5082
+  # Http Rpc绑定端口，为空时不启用Http Rpc
+  http_rpc_port = 5082
   
   # 日志
   # 日志等级由低到高 ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF

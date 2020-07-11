@@ -38,7 +38,6 @@ class TunnelRequest private constructor(
         private const val PXY_SET_HEADERS = "\$pxy_set_headers"
         private const val PXY_ADD_HEADERS = "\$pxy_add_headers"
 
-        @JvmStatic
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): TunnelRequest {
             val buffer = Unpooled.wrappedBuffer(bytes)
@@ -59,7 +58,6 @@ class TunnelRequest private constructor(
             }
         }
 
-        @JvmStatic
         fun forTcp(
             localAddr: String,
             localPort: Int,
@@ -77,7 +75,6 @@ class TunnelRequest private constructor(
             return TunnelRequest(type = Type.TCP, localAddr = localAddr, localPort = localPort, options = objOptions)
         }
 
-        @JvmStatic
         fun forHttp(
             localAddr: String,
             localPort: Int,

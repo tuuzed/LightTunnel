@@ -1,7 +1,6 @@
 package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
-import lighttunnel.BuildConfig
 import lighttunnel.client.TunnelClient
 import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
@@ -13,6 +12,7 @@ import lighttunnel.logger.LoggerFactory
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.RemoteConnection
 import lighttunnel.proto.TunnelRequest
+import lighttunnel.util.BuildConfig
 import lighttunnel.util.SslContextUtil
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options

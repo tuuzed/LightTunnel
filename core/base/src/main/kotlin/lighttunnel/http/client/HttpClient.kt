@@ -21,7 +21,7 @@ class HttpClient(
 ) {
     companion object {
         internal val REQUEST_CALLBACK: AttributeKey<(response: FullHttpResponse) -> Unit> =
-            AttributeKey.newInstance("lighttunnel.web.client.REQUEST_CALLBACK")
+            AttributeKey.newInstance("lighttunnel.http.client.REQUEST_CALLBACK")
     }
 
     private val bootstrap = Bootstrap()
