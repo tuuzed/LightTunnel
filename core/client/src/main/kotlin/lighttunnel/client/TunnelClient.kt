@@ -90,8 +90,6 @@ class TunnelClient(
 
     fun getConns() = tunnelConnectionRegistry.conns
 
-    fun getConnRequest(conn: TunnelConnection) = conn.request
-
     fun depose() = lock.withLock {
         tunnelConnectionRegistry.depose()
         cachedSslBootstraps.clear()

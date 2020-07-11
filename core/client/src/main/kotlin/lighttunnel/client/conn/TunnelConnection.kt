@@ -12,15 +12,15 @@ import lighttunnel.proto.TunnelRequest
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TunnelConnection internal constructor(
-    internal val serverAddr: String,
-    internal val serverPort: Int,
+    val serverAddr: String,
+    val serverPort: Int,
     private val tunnelRequest: TunnelRequest,
     internal val sslContext: SslContext? = null
 ) {
 
     private val logger by loggerDelegate()
 
-    internal val request get() = finalTunnelRequest ?: tunnelRequest
+    val request get() = finalTunnelRequest ?: tunnelRequest
 
     private var openChannelFuture: ChannelFuture? = null
 
