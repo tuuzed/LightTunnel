@@ -6,7 +6,6 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
 import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
-import lighttunnel.util.PortUtil
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -23,7 +22,7 @@ internal class TcpRegistry {
 
     @Throws(ProtoException::class)
     fun register(port: Int, sessionChannels: SessionChannels, descriptor: TcpFd) {
-        if (isRegistered(port) || !PortUtil.isAvailablePort(port)) {
+        if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
         lock.write { portTcpFds[port] = descriptor }
