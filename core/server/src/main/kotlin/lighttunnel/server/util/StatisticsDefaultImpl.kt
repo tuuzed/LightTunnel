@@ -9,9 +9,11 @@ internal class StatisticsDefaultImpl : Statistics {
 
     @Volatile
     override var inboundBytes = 0L
+        private set
 
     @Volatile
     override var outboundBytes = 0L
+        private set
 
     fun incInboundBytes(bytes: Int) {
         inboundBytes += bytes
