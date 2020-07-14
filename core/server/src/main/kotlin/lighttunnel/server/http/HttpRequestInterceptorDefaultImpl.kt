@@ -50,37 +50,51 @@ internal class HttpRequestInterceptorDefaultImpl : HttpRequestInterceptor {
     }
 
     private fun handleRewriteHttpHeaders(
-        localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest
-    ) = handleProxyHttpHeaders(true, localAddress, remoteAddress, tunnelRequest, httpRequest)
+        localAddress: SocketAddress,
+        remoteAddress: SocketAddress,
+        tunnelRequest: TunnelRequest,
+        httpRequest: FullHttpRequest
+    ) = handleProxyHttpHeaders(
+        tunnelRequest.pxyAddHeaders,
+        localAddress,
+        remoteAddress,
+        tunnelRequest,
+        httpRequest
+    ) { name, value -> add(name, value) }
 
     private fun handleWriteHttpHeaders(
-        localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest
-    ) = handleProxyHttpHeaders(false, localAddress, remoteAddress, tunnelRequest, httpRequest)
+        localAddress: SocketAddress,
+        remoteAddress: SocketAddress,
+        tunnelRequest: TunnelRequest,
+        httpRequest: FullHttpRequest
+    ) = handleProxyHttpHeaders(
+        tunnelRequest.pxySetHeaders,
+        localAddress,
+        remoteAddress,
+        tunnelRequest,
+        httpRequest
+    ) { name, value -> if (contains(name)) set(name, value) }
 
     @Suppress("UNUSED_PARAMETER")
-    private fun handleProxyHttpHeaders(
-        pxySet: Boolean,
-        localAddress: SocketAddress, remoteAddress: SocketAddress,
-        tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest
+    private inline fun handleProxyHttpHeaders(
+        pxyHeaders: Map<String, String>,
+        localAddress: SocketAddress,
+        remoteAddress: SocketAddress,
+        tunnelRequest: TunnelRequest,
+        httpRequest: FullHttpRequest,
+        apply: HttpHeaders.(name: String, value: String) -> Unit
     ) {
-        val headers = if (pxySet) tunnelRequest.pxySetHeaders else tunnelRequest.pxyAddHeaders
-        if (headers.isEmpty()) {
+        if (pxyHeaders.isEmpty()) {
             return
         }
-        val remoteAddr = if (remoteAddress is InetSocketAddress) remoteAddress.address.toString() else null
-        for (it in headers.entries) {
+        for (it in pxyHeaders.entries) {
             val name = it.key
+            // 需要处理魔法值
             val value = when (it.value) {
-                MAGIC_VALUE_REMOTE_ADDR -> remoteAddr
+                MAGIC_VALUE_REMOTE_ADDR -> if (remoteAddress is InetSocketAddress) remoteAddress.address.toString() else null
                 else -> it.value
             } ?: continue
-            if (pxySet && httpRequest.headers().contains(name)) {
-                httpRequest.headers().set(name, value)
-            } else {
-                httpRequest.headers().add(name, value)
-            }
+            httpRequest.headers().apply(name, value)
         }
     }
 }
