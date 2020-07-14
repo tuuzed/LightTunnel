@@ -1,17 +1,14 @@
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
-group = "${rootProject.group}.core"
+group = "${rootProject.group}.sdk"
 version = rootProject.version
 
 sourceCompatibility = rootProject.jvm_version
 
 dependencies {
     compile project(":core:base")
-    // 单元测试
-    testCompile "junit:junit:4.12"
+    compile project(":core:client")
 }
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
-apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
-apply from: rootProject.file("./gradle/publish.gradle").absolutePath
-
+apply from: rootProject.file("./gradle/sdk.gradle").absolutePath

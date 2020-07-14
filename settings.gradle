@@ -8,3 +8,6 @@ include ":cmd:base"
 include ":cmd:client"
 include ":cmd:server"
 
+include ":sdk:client"
+include ":sdk:server"
+
