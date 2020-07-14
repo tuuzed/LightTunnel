@@ -1,4 +1,4 @@
-rootProject.name = 'LightTunnel'
+rootProject.name = "LightTunnel"
 
 include ":core:base"
 include ":core:client"

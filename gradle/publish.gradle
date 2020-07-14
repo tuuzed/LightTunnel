@@ -1,4 +1,4 @@
-apply plugin: 'com.jfrog.bintray'
+apply plugin: "com.jfrog.bintray"
 
 def group = project.group ?: rootProject.group
 def version = project.version ?: rootProject.version
@@ -7,19 +7,19 @@ def siteUrl = "https://github.com/tuuzed/LightTunnel"
 
 
 bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_API_KEY')
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_API_KEY")
 
-    configurations = ['archives'] //When uploading configuration files
+    configurations = ["archives"] //When uploading configuration files
     pkg {
-        repo = 'maven'
+        repo = "maven"
         name = "$group:${project.name}"
-        desc = '一个内网穿透工具，支持TCP、HTTP、HTTPS穿透'
+        desc = "一个内网穿透工具，支持TCP、HTTP、HTTPS穿透"
         websiteUrl = siteUrl
         issueTrackerUrl = "$siteUrl/issues"
         vcsUrl = "${siteUrl}.git"
-        licenses = ['GPL-3.0']
-        labels = ['java', 'kotlin', 'tunnel']
+        licenses = ["GPL-3.0"]
+        labels = ["java", "kotlin", "tunnel"]
         publicDownloadNumbers = true
         dryRun = false
         override = true

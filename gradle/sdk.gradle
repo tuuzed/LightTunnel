@@ -8,28 +8,28 @@ buildscript {
         }
     }
     dependencies {
-        classpath ':proguard:'
+        classpath ":proguard:"
     }
 }
 
 jar {
-    exclude 'META-INF/**/**'
-    exclude 'META-INF/**'
-    exclude 'OSGI-OPT/'
-    exclude 'LICENSE'
-    exclude 'kotlin/*.kotlin_module'
-    exclude 'kotlin/*.kotlin_metadata'
-    exclude 'kotlin/*.kotlin_builtins'
-    exclude 'kotlin/**/*.kotlin_module'
-    exclude 'kotlin/**/*.kotlin_metadata'
-    exclude 'kotlin/**/*.kotlin_builtins'
+    exclude "META-INF/**/**"
+    exclude "META-INF/**"
+    exclude "OSGI-OPT/"
+    exclude "LICENSE"
+    exclude "kotlin/*.kotlin_module"
+    exclude "kotlin/*.kotlin_metadata"
+    exclude "kotlin/*.kotlin_builtins"
+    exclude "kotlin/**/*.kotlin_module"
+    exclude "kotlin/**/*.kotlin_metadata"
+    exclude "kotlin/**/*.kotlin_builtins"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
-        attributes 'LightTunnel-VersionCode': String.valueOf(GitVC.VERSION_CODE)
-        attributes 'LightTunnel-VersionName': String.valueOf(GitVC.VERSION_NAME)
-        attributes 'LightTunnel-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
-        attributes 'LightTunnel-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
-        attributes 'LightTunnel-BuildDate': String.valueOf(new Date())
+        attributes "LightTunnel-VersionCode": String.valueOf(GitVC.VERSION_CODE)
+        attributes "LightTunnel-VersionName": String.valueOf(GitVC.VERSION_NAME)
+        attributes "LightTunnel-LastCommitSHA": String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes "LightTunnel-LastCommitDate": String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes "LightTunnel-BuildDate": String.valueOf(new Date())
     }
 }
 

@@ -1,4 +1,6 @@
-apply plugin: 'org.jetbrains.kotlin.jvm'
+import java.text.SimpleDateFormat
+
+apply plugin: "org.jetbrains.kotlin.jvm"
 
 group = "${rootProject.group}.core"
 version = rootProject.version
@@ -6,9 +8,9 @@ version = rootProject.version
 sourceCompatibility = rootProject.jvm_version
 
 dependencies {
-    compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     // Netty
-    def netty_version = '4.1.51.Final'
+    def netty_version = "4.1.51.Final"
     compile "io.netty:netty-all:$netty_version"
     // compile "io.netty:netty-buffer:$netty_version"
     // compile "io.netty:netty-codec:$netty_version"
@@ -18,32 +20,32 @@ dependencies {
     // compile "io.netty:netty-resolver:$netty_version"
     // compile "io.netty:netty-transport:$netty_version"
     // Logger
-    def slf4j_version = '1.7.25'
+    def slf4j_version = "1.7.25"
     compile "org.slf4j:slf4j-api:$slf4j_version"
     compile "org.slf4j:slf4j-log4j12:$slf4j_version"
     // Json
-    compile 'org.json:json:20190722'
+    compile "org.json:json:20190722"
     // 单元测试
     testCompile "junit:junit:4.12"
 }
 
 
-apply plugin: 'de.fuerstenau.buildconfig'
+apply plugin: "de.fuerstenau.buildconfig"
 
 static def s(Object o) { return o.toString() }
 
 buildConfig {
     appName = "LightTunnel"
     version = project.version
-    clsName = 'BuildConfig'
+    clsName = "BuildConfig"
     packageName = "${rootProject.group}"
-    charset = 'UTF-8'
+    charset = "UTF-8"
 
-    buildConfigField 'int', 'VERSION_CODE', "${GitVC.VERSION_CODE}"
-    buildConfigField 'String', 'VERSION_NAME', s(GitVC.VERSION_NAME)
-    buildConfigField 'String', 'LAST_COMMIT_SHA', s(GitVC.LAST_COMMIT_SHA)
-    buildConfigField 'String', 'LAST_COMMIT_DATE', s(GitVC.LAST_COMMIT_DATE)
-    buildConfigField 'String', 'BUILD_DATA', s(new Date())
+    buildConfigField "int", "VERSION_CODE", "${GitVC.VERSION_CODE}"
+    buildConfigField "String", "VERSION_NAME", s(GitVC.VERSION_NAME)
+    buildConfigField "String", "LAST_COMMIT_SHA", s(GitVC.LAST_COMMIT_SHA)
+    buildConfigField "String", "LAST_COMMIT_DATE", s(GitVC.LAST_COMMIT_DATE)
+    buildConfigField "String", "BUILD_DATA", s(BUILD_DATE)
 }
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath

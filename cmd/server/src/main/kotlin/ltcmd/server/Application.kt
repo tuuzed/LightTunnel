@@ -19,6 +19,7 @@ import lighttunnel.openapi.listener.OnTcpTunnelStateListener
 import lighttunnel.openapi.tcp.TcpFd
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
+import org.apache.commons.cli.ParseException
 import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
 import org.ini4j.Ini
@@ -27,18 +28,16 @@ import java.io.File
 
 class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunnelStateListener {
 
-    override val options: Options
-        get() = Options().apply {
-            addOption("h", "help", false, "帮助信息")
-            addOption("v", "version", false, "版本信息")
-            addOption("c", "config", true, "配置文件, 默认为lts.ini")
-        }
+    override val options: Options = Options().apply {
+        addOption("h", "help", false, "帮助信息")
+        addOption("v", "version", false, "版本信息")
+        addOption("c", "config", true, "配置文件, 默认为lts.ini")
+    }
 
-
+    @Throws(ParseException::class)
     override fun run(commandLine: CommandLine) {
         if (commandLine.hasOption("h")) {
-            printUsage()
-            return
+            throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
             System.out.printf("%s%n", BuildConfig.VERSION_NAME)

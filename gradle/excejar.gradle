@@ -8,7 +8,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath ':proguard:'
+        classpath ":proguard:"
     }
 }
 
@@ -16,24 +16,24 @@ apply plugin: "edu.sc.seis.launch4j"
 
 
 jar {
-    exclude 'META-INF/**/**'
-    exclude 'META-INF/**'
-    exclude 'OSGI-OPT/'
-    exclude 'LICENSE'
-    exclude 'kotlin/*.kotlin_module'
-    exclude 'kotlin/*.kotlin_metadata'
-    exclude 'kotlin/*.kotlin_builtins'
-    exclude 'kotlin/**/*.kotlin_module'
-    exclude 'kotlin/**/*.kotlin_metadata'
-    exclude 'kotlin/**/*.kotlin_builtins'
+    exclude "META-INF/**/**"
+    exclude "META-INF/**"
+    exclude "OSGI-OPT/"
+    exclude "LICENSE"
+    exclude "kotlin/*.kotlin_module"
+    exclude "kotlin/*.kotlin_metadata"
+    exclude "kotlin/*.kotlin_builtins"
+    exclude "kotlin/**/*.kotlin_module"
+    exclude "kotlin/**/*.kotlin_metadata"
+    exclude "kotlin/**/*.kotlin_builtins"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
-        attributes 'Main-Class': project.MainClass
-        attributes 'LightTunnel-VersionCode': String.valueOf(GitVC.VERSION_CODE)
-        attributes 'LightTunnel-VersionName': String.valueOf(GitVC.VERSION_NAME)
-        attributes 'LightTunnel-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
-        attributes 'LightTunnel-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
-        attributes 'LightTunnel-BuildDate': String.valueOf(new Date())
+        attributes "Main-Class": project.MainClass
+        attributes "LightTunnel-VersionCode": String.valueOf(GitVC.VERSION_CODE)
+        attributes "LightTunnel-VersionName": String.valueOf(GitVC.VERSION_NAME)
+        attributes "LightTunnel-LastCommitSHA": String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes "LightTunnel-LastCommitDate": String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes "LightTunnel-BuildDate": String.valueOf(new Date())
     }
 }
 
@@ -66,20 +66,20 @@ task packageJar(group: "package", dependsOn: _mixinProguardJar)
 task dists(group: "package", type: Copy, dependsOn: [_mixinProguardJar, createExe]) {
     from new File(project.buildDir, "launch4j/${project.AppName ?: project.name}.exe")
     from(rootProject.file("resources")) {
-        include '*.ini'
-        include '*.jks'
+        include "*.ini"
+        include "*.jks"
     }
     into rootProject.file("dists/${project.version}")
     doLast {
         def jarFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
         def stubFile = rootProject.file("gradle/stub.sh")
-        def runFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.sh")
+        def shFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}")
         if (!jarFile.exists()) {
             return
         }
         def srcJar = new FileInputStream(jarFile)
         def srcStub = new FileInputStream(stubFile)
-        def dst = new FileOutputStream(runFile)
+        def dst = new FileOutputStream(shFile)
 
         copyOf(srcStub, dst)
         copyOf(srcJar, dst)
@@ -88,7 +88,7 @@ task dists(group: "package", type: Copy, dependsOn: [_mixinProguardJar, createEx
         srcJar.close()
         srcStub.close()
         dst.close()
-        runFile.setExecutable(true, false)
+        shFile.setExecutable(true, false)
     }
 }
 

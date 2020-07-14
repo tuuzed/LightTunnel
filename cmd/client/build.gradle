@@ -1,4 +1,5 @@
-apply plugin: 'org.jetbrains.kotlin.jvm'
+apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "org.jetbrains.kotlin.jvm"
 
 group = "${rootProject.group}.cmd"
 version = rootProject.version
