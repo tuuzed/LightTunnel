@@ -1,6 +1,6 @@
 package lighttunnel.server.util
 
-import lighttunnel.server.openapi.util.Statistics
+import lighttunnel.openapi.util.Statistics
 import java.util.*
 
 internal class StatisticsDefaultImpl : Statistics {

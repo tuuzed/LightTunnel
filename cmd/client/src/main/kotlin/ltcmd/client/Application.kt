@@ -3,19 +3,19 @@ package ltcmd.client
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
-import lighttunnel.base.openapi.BuildConfig
-import lighttunnel.base.openapi.RemoteConnection
-import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.base.util.SslContextUtil
-import lighttunnel.client.openapi.TunnelClient
-import lighttunnel.client.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
-import lighttunnel.client.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
-import lighttunnel.client.openapi.conn.TunnelConnection
-import lighttunnel.client.openapi.listener.OnRemoteConnectionListener
-import lighttunnel.client.openapi.listener.OnTunnelConnectionListener
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.cmd.asInt
+import lighttunnel.openapi.BuildConfig
+import lighttunnel.openapi.RemoteConnection
+import lighttunnel.openapi.TunnelClient
+import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
+import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
+import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.conn.TunnelConnection
+import lighttunnel.openapi.listener.OnRemoteConnectionListener
+import lighttunnel.openapi.listener.OnTunnelConnectionListener
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.log4j.Level
@@ -148,9 +148,9 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                     .map { Pair(it.key.substring("pxy_header_add_".length), it.value.toString()) }.toTypedArray()
             )
             return TunnelRequest.forHttp(
+                https = https,
                 localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1",
                 localPort = tunnel["local_port"].asInt() ?: 80,
-                https = https,
                 name = tunnel.name,
                 authToken = basic["auth_token"],
                 host = tunnel["host"] ?: return null,

@@ -7,10 +7,10 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.logger.loggerDelegate
-import lighttunnel.base.openapi.RemoteConnection
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.LongUtil
+import lighttunnel.openapi.RemoteConnection
 import lighttunnel.server.util.AK_SESSION_ID
 import java.net.InetSocketAddress
 

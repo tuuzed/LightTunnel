@@ -1,7 +1,7 @@
 package lighttunnel.server
 
-import lighttunnel.base.openapi.TunnelRequest
-import lighttunnel.server.openapi.TunnelRequestInterceptor
+import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.TunnelRequestInterceptor
 
 internal class TunnelRequestInterceptorEmptyImpl : TunnelRequestInterceptor {
 

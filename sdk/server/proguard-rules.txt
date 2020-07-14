@@ -1,1 +1,1 @@
--keep class **.openapi.**{*;}
+-keep class lighttunnel.openapi.**{*;}

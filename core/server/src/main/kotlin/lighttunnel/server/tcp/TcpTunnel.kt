@@ -6,8 +6,8 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import lighttunnel.base.openapi.ProtoException
 import lighttunnel.base.util.PortUtil
+import lighttunnel.openapi.ProtoException
 import lighttunnel.server.util.SessionChannels
 
 internal class TcpTunnel(

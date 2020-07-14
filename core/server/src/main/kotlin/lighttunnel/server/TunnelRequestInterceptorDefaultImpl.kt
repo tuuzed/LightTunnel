@@ -1,9 +1,9 @@
 package lighttunnel.server
 
-import lighttunnel.base.openapi.ProtoException
-import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.base.util.PortUtil
-import lighttunnel.server.openapi.TunnelRequestInterceptor
+import lighttunnel.openapi.ProtoException
+import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.TunnelRequestInterceptor
 
 internal class TunnelRequestInterceptorDefaultImpl(
     /** 预置Token */

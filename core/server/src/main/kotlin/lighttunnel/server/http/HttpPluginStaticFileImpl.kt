@@ -4,7 +4,7 @@ import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
 import lighttunnel.base.util.HttpUtil
-import lighttunnel.server.openapi.http.HttpPlugin
+import lighttunnel.openapi.http.HttpPlugin
 import java.io.File
 import java.net.URLDecoder
 

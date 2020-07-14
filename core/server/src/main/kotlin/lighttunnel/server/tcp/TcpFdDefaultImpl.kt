@@ -3,7 +3,7 @@
 package lighttunnel.server.tcp
 
 import io.netty.channel.Channel
-import lighttunnel.server.openapi.tcp.TcpFd
+import lighttunnel.openapi.tcp.TcpFd
 import lighttunnel.server.util.SessionChannels
 
 internal class TcpFdDefaultImpl(

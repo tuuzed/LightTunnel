@@ -1,7 +1,7 @@
 package lighttunnel.server.http
 
 import io.netty.channel.Channel
-import lighttunnel.server.openapi.http.HttpFd
+import lighttunnel.openapi.http.HttpFd
 import lighttunnel.server.util.SessionChannels
 
 internal class HttpFdDefaultImpl(

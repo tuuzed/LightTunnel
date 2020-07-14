@@ -2,9 +2,9 @@ package lighttunnel.server.http
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.base.util.HttpUtil
-import lighttunnel.server.openapi.http.HttpRequestInterceptor
+import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.http.HttpRequestInterceptor
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.charset.StandardCharsets

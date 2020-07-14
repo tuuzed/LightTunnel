@@ -3,7 +3,7 @@
 package lighttunnel.server.http
 
 import lighttunnel.base.logger.loggerDelegate
-import lighttunnel.base.openapi.ProtoException
+import lighttunnel.openapi.ProtoException
 import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
 import org.json.JSONArray

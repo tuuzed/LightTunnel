@@ -5,11 +5,11 @@ import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.logger.loggerDelegate
-import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
-import lighttunnel.client.openapi.conn.TunnelConnection
 import lighttunnel.client.util.AK_TUNNEL_CONNECTION
+import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.conn.TunnelConnection
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class DefaultTunnelConnection(
