@@ -1,20 +1,14 @@
-package lighttunnel.server
+package lighttunnel.server.openapi
 
 import lighttunnel.logger.LoggerFactory
-import lighttunnel.server.http.HttpPlugin
+import lighttunnel.server.openapi.args.*
+import lighttunnel.server.openapi.http.HttpPlugin
 import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
 
 class TunnelServerTest {
-
-
-    @Test
-    fun start() {
-        tunnelServer.start()
-        Thread.currentThread().join()
-    }
 
     private lateinit var tunnelServer: TunnelServer
 
@@ -28,21 +22,21 @@ class TunnelServerTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        val tunnelDaemonArgs = TunnelServer.TunnelDaemonArgs(
+        val tunnelDaemonArgs = TunnelDaemonArgs(
             bindPort = 5080
         )
-        val sslTunnelDaemonArgs = TunnelServer.SslTunnelDaemonArgs(
+        val sslTunnelDaemonArgs = SslTunnelDaemonArgs(
             bindPort = 5443,
             sslContext = SslContextUtil.forBuiltinServer()
         )
-        val httpTunnelArgs = TunnelServer.HttpTunnelArgs(
+        val httpTunnelArgs = HttpTunnelArgs(
             bindPort = 8080,
             httpPlugin = HttpPlugin.staticFileImpl(
                 paths = listOf("C:\\", "D:\\"),
                 hosts = listOf("tunnel.lo")
             )
         )
-        val httpsTunnelArgs = TunnelServer.HttpsTunnelArgs(
+        val httpsTunnelArgs = HttpsTunnelArgs(
             bindPort = 8443,
             httpPlugin = HttpPlugin.staticFileImpl(
                 paths = listOf("C:\\", "D:\\"),
@@ -50,7 +44,7 @@ class TunnelServerTest {
             ),
             sslContext = SslContextUtil.forBuiltinServer()
         )
-        val httpServerArgs = TunnelServer.HttpRpcServerArgs(
+        val httpServerArgs = HttpRpcServerArgs(
             bindPort = 5081
         )
         tunnelServer = TunnelServer(
@@ -60,6 +54,12 @@ class TunnelServerTest {
             httpsTunnelArgs = httpsTunnelArgs,
             httpRpcServerArgs = httpServerArgs
         )
+    }
+
+    @Test
+    fun start() {
+        tunnelServer.start()
+        Thread.currentThread().join()
     }
 
 

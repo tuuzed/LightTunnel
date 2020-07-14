@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package lighttunnel.client
 
 import io.netty.bootstrap.Bootstrap
@@ -12,12 +10,19 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.conn.TunnelConnection
+import lighttunnel.client.conn.DefaultTunnelConnection
 import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient
+import lighttunnel.client.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
+import lighttunnel.client.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
+import lighttunnel.client.openapi.listener.OnRemoteConnectionListener
+import lighttunnel.client.openapi.listener.OnTunnelConnectionListener
 import lighttunnel.http.server.HttpServer
 import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.*
+import lighttunnel.proto.HeartbeatHandler
+import lighttunnel.proto.ProtoMessageDecoder
+import lighttunnel.proto.ProtoMessageEncoder
+import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.BuildConfig
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
@@ -25,33 +30,28 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.experimental.and
-import kotlin.experimental.or
 
-class TunnelClient(
-    workerThreads: Int = -1,
-    private val retryConnectPolicy: Byte = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-    private val httpRpcBindAddr: String? = null,
-    private val httpRpcBindPort: Int? = null,
-    private val onTunnelConnectionListener: OnTunnelConnectionListener? = null,
-    private val onRemoteConnectionListener: OnRemoteConnectionListener? = null
+internal class TunnelClientDaemon(
+    workerThreads: Int,
+    private val retryConnectPolicy: Byte,
+    private val httpRpcBindAddr: String?,
+    private val httpRpcBindPort: Int?,
+    private val onTunnelConnectionListener: OnTunnelConnectionListener?,
+    private val onRemoteConnectionListener: OnRemoteConnectionListener?
 ) {
 
-    companion object {
-        const val RETRY_CONNECT_POLICY_LOSE = 0x01.toByte()  // 0000_0001
-        const val RETRY_CONNECT_POLICY_ERROR = 0x02.toByte() // 0000_0010
-    }
-
     private val logger by loggerDelegate()
+
+    private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
     private val bootstrap = Bootstrap()
-    private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val localTcpClient: LocalTcpClient
-    private val tunnelConnectionRegistry = TunnelConnectionRegistry()
     private val lock = ReentrantLock()
     private var httpRpcServer: HttpServer? = null
-
-    private val openFailureCallback = { conn: TunnelConnection -> tryReconnect(conn, false) }
+    private val openFailureCallback = { conn: DefaultTunnelConnection -> tryReconnect(conn, false) }
     private val onChannelStateListener = OnChannelStateListenerImpl()
+
+    val tunnelConnectionRegistry = TunnelConnectionRegistry()
 
     init {
         localTcpClient = LocalTcpClient(workerGroup)
@@ -68,12 +68,12 @@ class TunnelClient(
         serverPort: Int,
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
-    ): TunnelConnection {
+    ): DefaultTunnelConnection {
         tryStartHttpRpcServer()
-        val conn = TunnelConnection.newInstance(
+        val conn = DefaultTunnelConnection(
             serverAddr = serverAddr,
             serverPort = serverPort,
-            tunnelRequest = tunnelRequest,
+            originalTunnelRequest = tunnelRequest,
             sslContext = sslContext
         )
         conn.open(
@@ -85,12 +85,10 @@ class TunnelClient(
         return conn
     }
 
-    fun close(conn: TunnelConnection) {
+    fun close(conn: DefaultTunnelConnection) {
         conn.close()
         tunnelConnectionRegistry.unregister(conn)
     }
-
-    fun getTunnelConnectionList() = tunnelConnectionRegistry.conns
 
     fun depose() = lock.withLock {
         tunnelConnectionRegistry.depose()
@@ -101,7 +99,7 @@ class TunnelClient(
         Unit
     }
 
-    private fun tryReconnect(conn: TunnelConnection, error: Boolean) {
+    private fun tryReconnect(conn: DefaultTunnelConnection, error: Boolean) {
         when {
             // 主动关闭
             conn.isActiveClosed -> close(conn)
@@ -187,7 +185,7 @@ class TunnelClient(
                 .addLast("heartbeat", HeartbeatHandler())
                 .addLast("decoder", ProtoMessageDecoder())
                 .addLast("encoder", ProtoMessageEncoder())
-                .addLast("handler", TunnelClientChannelHandler(
+                .addLast("handler", TunnelClientDaemonChannelHandler(
                     localTcpClient = localTcpClient,
                     onChannelStateListener = onChannelStateListener,
                     onRemoteConnectListener = onRemoteConnectionListener
@@ -195,12 +193,12 @@ class TunnelClient(
         }
     }
 
-    private inner class OnChannelStateListenerImpl : TunnelClientChannelHandler.OnChannelStateListener {
+    private inner class OnChannelStateListenerImpl : TunnelClientDaemonChannelHandler.OnChannelStateListener {
 
         override fun onChannelInactive(
             ctx: ChannelHandlerContext,
-            conn: TunnelConnection?,
-            extra: TunnelClientChannelHandler.ChannelInactiveExtra?
+            conn: DefaultTunnelConnection?,
+            extra: TunnelClientDaemonChannelHandler.ChannelInactiveExtra?
         ) {
             super.onChannelInactive(ctx, conn, extra)
             if (conn != null) {
@@ -212,23 +210,11 @@ class TunnelClient(
             }
         }
 
-        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnection?) {
             super.onChannelConnected(ctx, conn)
             if (conn != null) {
                 onTunnelConnectionListener?.onTunnelConnected(conn)
             }
         }
     }
-
-    interface OnTunnelConnectionListener {
-        fun onTunnelConnecting(conn: TunnelConnection, retryConnect: Boolean) {}
-        fun onTunnelConnected(conn: TunnelConnection) {}
-        fun onTunnelDisconnect(conn: TunnelConnection, cause: Throwable?) {}
-    }
-
-    interface OnRemoteConnectionListener {
-        fun onRemoteConnected(conn: RemoteConnection) {}
-        fun onRemoteDisconnect(conn: RemoteConnection) {}
-    }
-
 }

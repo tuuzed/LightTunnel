@@ -1,4 +1,4 @@
-package lighttunnel.server
+package lighttunnel.server.openapi
 
 import lighttunnel.proto.ProtoException
 import lighttunnel.proto.TunnelRequest
@@ -7,10 +7,15 @@ import lighttunnel.util.PortUtil
 interface TunnelRequestInterceptor {
 
     @Throws(ProtoException::class)
-    fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest = tunnelRequest
+    fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest
 
     companion object {
-        val emptyImpl: TunnelRequestInterceptor by lazy { object : TunnelRequestInterceptor {} }
+        val emptyImpl: TunnelRequestInterceptor by lazy {
+            object : TunnelRequestInterceptor {
+                override fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest = tunnelRequest
+            }
+        }
+
         fun defaultImpl(authToken: String? = null, allowPorts: String? = null): TunnelRequestInterceptor = DefaultImpl(authToken, allowPorts)
     }
 

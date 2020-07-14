@@ -1,4 +1,4 @@
-package lighttunnel.client
+package lighttunnel.client.openapi
 
 import lighttunnel.logger.LoggerFactory
 import lighttunnel.proto.TunnelRequest
@@ -7,6 +7,21 @@ import org.junit.Before
 import org.junit.Test
 
 class TunnelClientTest {
+
+    private lateinit var tunnelClient: TunnelClient
+
+    @Before
+    fun setUp() {
+        LoggerFactory.configConsole(Level.OFF, names = *arrayOf(
+            "io.netty",
+            "org.ini4j",
+            "org.slf4j",
+            "org.json",
+            "org.apache.commons.cli"
+        ))
+        LoggerFactory.configConsole(level = Level.ALL)
+        tunnelClient = TunnelClient(httpRpcBindPort = 5081)
+    }
 
     @Test
     fun connect() {
@@ -34,19 +49,5 @@ class TunnelClientTest {
         Thread.currentThread().join()
     }
 
-    private lateinit var tunnelClient: TunnelClient
-
-    @Before
-    fun setUp() {
-        LoggerFactory.configConsole(Level.OFF, names = *arrayOf(
-            "io.netty",
-            "org.ini4j",
-            "org.slf4j",
-            "org.json",
-            "org.apache.commons.cli"
-        ))
-        LoggerFactory.configConsole(level = Level.ALL)
-        tunnelClient = TunnelClient(httpRpcBindPort = 5081)
-    }
 
 }

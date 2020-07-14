@@ -12,6 +12,8 @@ import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoException
+import lighttunnel.server.openapi.http.HttpPlugin
+import lighttunnel.server.openapi.http.HttpRequestInterceptor
 import lighttunnel.server.util.SessionChannels
 
 
@@ -48,8 +50,8 @@ internal class HttpTunnel(
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
                         .addLast("handler", HttpTunnelChannelHandler(
                             registry = registry,
-                            interceptor = interceptor,
-                            httpPlugin = httpPlugin
+                            httpPlugin = httpPlugin,
+                            interceptor = interceptor
                         ))
                 }
             })
@@ -79,7 +81,7 @@ internal class HttpTunnel(
     }
 
     @Throws(Exception::class)
-    fun startTunnel(host: String, sessionChannels: SessionChannels): HttpFd {
+    fun startTunnel(host: String, sessionChannels: SessionChannels): DefaultHttpFd {
         requireNotRegistered(host)
         return registry.register(isHttps, host, sessionChannels)
     }

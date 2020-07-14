@@ -10,6 +10,8 @@ import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.RemoteConnection
+import lighttunnel.server.openapi.http.HttpPlugin
+import lighttunnel.server.openapi.http.HttpRequestInterceptor
 import lighttunnel.server.util.AK_HTTP_HOST
 import lighttunnel.server.util.AK_SESSION_ID
 import lighttunnel.util.HttpUtil
@@ -17,8 +19,8 @@ import lighttunnel.util.LongUtil
 
 internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
-    private val interceptor: HttpRequestInterceptor,
-    private val httpPlugin: HttpPlugin? = null
+    private val httpPlugin: HttpPlugin? = null,
+    private val interceptor: HttpRequestInterceptor
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
     private val logger by loggerDelegate()
 
@@ -58,25 +60,30 @@ internal class HttpTunnelChannelHandler(
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
+    @Throws(Exception::class)
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: FullHttpRequest?) {
         logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
+        // 插件处理
         val httpPluginResponse = httpPlugin?.doHandle(msg)
         if (httpPluginResponse != null) {
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpPluginResponse)).addListener(ChannelFutureListener.CLOSE)
         }
+        // 获取Http请求中的域名
         val httpHost = HttpUtil.getHostWithoutPort(msg)
         if (httpHost == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
+        // 是否注册过隧道
         ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
         val httpFd = registry.getHttpFd(httpHost)
         if (httpFd == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
         }
+        // 拦截器
         val httpInterceptorResponse = interceptor.handleHttpRequest(ctx, httpFd.tunnelRequest, msg)
         if (httpInterceptorResponse != null) {
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpInterceptorResponse))

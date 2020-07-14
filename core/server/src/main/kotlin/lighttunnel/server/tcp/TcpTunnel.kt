@@ -42,14 +42,14 @@ internal class TcpTunnel(
     fun stopTunnel(port: Int) = registry.unregister(port)
 
     @Throws(Exception::class)
-    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels): TcpFd {
+    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels): DefaultTcpFd {
         requireNotRegistered(port)
         val bindChannelFuture = if (addr == null) {
             serverBootstrap.bind(port)
         } else {
             serverBootstrap.bind(addr, port)
         }
-        val fd = TcpFd.newInstance(addr, port, sessionChannels) { bindChannelFuture.channel().close() }
+        val fd = DefaultTcpFd(addr, port, sessionChannels) { bindChannelFuture.channel().close() }
         registry.register(port, sessionChannels, fd)
         return fd
     }

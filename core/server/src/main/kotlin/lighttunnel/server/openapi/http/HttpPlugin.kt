@@ -1,4 +1,4 @@
-package lighttunnel.server.http
+package lighttunnel.server.openapi.http
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
@@ -9,12 +9,10 @@ import java.net.URLDecoder
 
 interface HttpPlugin {
 
-    fun doHandle(request: FullHttpRequest): FullHttpResponse? = null
+    fun doHandle(request: FullHttpRequest): FullHttpResponse?
 
     companion object {
-        fun staticFileImpl(paths: List<String>, hosts: List<String>): HttpPlugin {
-            return StaticFileImpl(paths, hosts)
-        }
+        fun staticFileImpl(paths: List<String>, hosts: List<String>): HttpPlugin = StaticFileImpl(paths, hosts)
     }
 
     private class StaticFileImpl(

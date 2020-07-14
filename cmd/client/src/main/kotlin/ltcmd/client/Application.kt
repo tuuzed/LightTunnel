@@ -1,10 +1,12 @@
 package ltcmd.client
 
 import io.netty.handler.ssl.SslContext
-import lighttunnel.client.TunnelClient
-import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
-import lighttunnel.client.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
-import lighttunnel.client.conn.TunnelConnection
+import lighttunnel.client.openapi.TunnelClient
+import lighttunnel.client.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
+import lighttunnel.client.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
+import lighttunnel.client.openapi.conn.TunnelConnection
+import lighttunnel.client.openapi.listener.OnRemoteConnectionListener
+import lighttunnel.client.openapi.listener.OnTunnelConnectionListener
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.cmd.asInt
@@ -23,7 +25,7 @@ import org.ini4j.Profile
 import java.io.File
 import kotlin.experimental.or
 
-class Application : AbstractApplication(), TunnelClient.OnTunnelConnectionListener, TunnelClient.OnRemoteConnectionListener {
+class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteConnectionListener {
 
     override val options: Options
         get() = Options().apply {

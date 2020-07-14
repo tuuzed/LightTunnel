@@ -79,7 +79,7 @@ internal class TcpTunnelChannelHandler(
         tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
-    private val ChannelHandlerContext?.tcpFd: TcpFd?
+    private val ChannelHandlerContext?.tcpFd: DefaultTcpFd?
         get() {
             this ?: return null
             val sa = this.channel().localAddress()

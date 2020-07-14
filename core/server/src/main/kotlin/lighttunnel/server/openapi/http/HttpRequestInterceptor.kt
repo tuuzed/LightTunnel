@@ -1,4 +1,4 @@
-package lighttunnel.server.http
+package lighttunnel.server.openapi.http
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
@@ -11,7 +11,7 @@ import java.util.*
 
 interface HttpRequestInterceptor {
 
-    fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? = null
+    fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse?
 
     companion object {
         val defaultImpl: HttpRequestInterceptor by lazy { DefaultImpl() }

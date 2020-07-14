@@ -21,7 +21,7 @@ internal class SessionChannels(
     private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
 
-    val statistics = Statistics.newInstance()
+    val statistics = DefaultStatistics()
     val cachedChannelCount: Int get() = lock.read { cachedSessionIdChannels.count() }
 
     fun putChannel(channel: Channel): Long {

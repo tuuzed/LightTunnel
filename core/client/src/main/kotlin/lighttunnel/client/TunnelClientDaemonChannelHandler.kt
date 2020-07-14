@@ -5,8 +5,9 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.client.conn.TunnelConnection
+import lighttunnel.client.conn.DefaultTunnelConnection
 import lighttunnel.client.local.LocalTcpClient
+import lighttunnel.client.openapi.listener.OnRemoteConnectionListener
 import lighttunnel.client.util.*
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.ProtoMessage
@@ -16,10 +17,10 @@ import lighttunnel.proto.TunnelRequest
 import lighttunnel.util.LongUtil
 import java.nio.charset.StandardCharsets
 
-internal class TunnelClientChannelHandler(
+internal class TunnelClientDaemonChannelHandler(
     private val localTcpClient: LocalTcpClient,
     private val onChannelStateListener: OnChannelStateListener,
-    private val onRemoteConnectListener: TunnelClient.OnRemoteConnectionListener?
+    private val onRemoteConnectListener: OnRemoteConnectionListener?
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
 
     private val logger by loggerDelegate()
@@ -184,8 +185,8 @@ internal class TunnelClientChannelHandler(
     }
 
     interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnection?, extra: ChannelInactiveExtra?) {}
-        fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnection?) {}
+        fun onChannelInactive(ctx: ChannelHandlerContext, conn: DefaultTunnelConnection?, extra: ChannelInactiveExtra?) {}
+        fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnection?) {}
     }
 
     class ChannelInactiveExtra(val forceOff: Boolean, val cause: Throwable?)

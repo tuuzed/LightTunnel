@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
@@ -11,34 +9,38 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.*
-import io.netty.handler.ssl.SslContext
 import lighttunnel.http.server.HttpServer
 import lighttunnel.logger.loggerDelegate
 import lighttunnel.proto.HeartbeatHandler
 import lighttunnel.proto.ProtoMessageDecoder
 import lighttunnel.proto.ProtoMessageEncoder
-import lighttunnel.server.http.*
-import lighttunnel.server.tcp.TcpFd
+import lighttunnel.server.http.DefaultHttpFd
+import lighttunnel.server.http.HttpRegistry
+import lighttunnel.server.http.HttpTunnel
+import lighttunnel.server.openapi.TunnelRequestInterceptor
+import lighttunnel.server.openapi.args.*
+import lighttunnel.server.openapi.listener.OnHttpTunnelStateListener
+import lighttunnel.server.openapi.listener.OnTcpTunnelStateListener
+import lighttunnel.server.tcp.DefaultTcpFd
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.traffic.TrafficHandler
 import lighttunnel.util.BuildConfig
 import lighttunnel.util.IncIds
-import lighttunnel.util.SslContextUtil
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class TunnelServer(
-    bossThreads: Int = -1,
-    workerThreads: Int = -1,
-    private val tunnelDaemonArgs: TunnelDaemonArgs = TunnelDaemonArgs(),
-    private val sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
-    httpTunnelArgs: HttpTunnelArgs? = null,
-    httpsTunnelArgs: HttpsTunnelArgs? = null,
-    httpRpcServerArgs: HttpRpcServerArgs? = null,
-    private val onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
-    private val onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
+internal class TunnelServerDaemon(
+    bossThreads: Int,
+    workerThreads: Int,
+    private val tunnelDaemonArgs: TunnelDaemonArgs,
+    private val sslTunnelDaemonArgs: SslTunnelDaemonArgs?,
+    httpTunnelArgs: HttpTunnelArgs?,
+    httpsTunnelArgs: HttpsTunnelArgs?,
+    httpRpcServerArgs: HttpRpcServerArgs?,
+    private val onTcpTunnelStateListener: OnTcpTunnelStateListener?,
+    private val onHttpTunnelStateListener: OnHttpTunnelStateListener?
 ) {
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
@@ -47,15 +49,13 @@ class TunnelServer(
     private val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
     private val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
 
-    private val tcpRegistry = TcpRegistry()
+    val tcpRegistry: TcpRegistry = TcpRegistry()
+    val httpRegistry: HttpRegistry = HttpRegistry()
+    val httpsRegistry: HttpRegistry = HttpRegistry()
+
     private val tcpTunnel: TcpTunnel = getTcpTunnel(tcpRegistry)
-
-    private val httpRegistry = HttpRegistry()
     private val httpTunnel: HttpTunnel? = httpTunnelArgs?.let { getHttpTunnel(httpRegistry, it) }
-
-    private val httpsRegistry = HttpRegistry()
     private val httpsTunnel: HttpTunnel? = httpsTunnelArgs?.let { getHttpsTunnel(httpsRegistry, it) }
-
     private val httpRpcServer: HttpServer? = httpRpcServerArgs?.let { getHttpRpcServer(it) }
 
     @Throws(Exception::class)
@@ -75,13 +75,6 @@ class TunnelServer(
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }
-
-    fun getTcpFdList() = tcpRegistry.tcpFds()
-    fun getHttpFdList() = httpRegistry.httpFds()
-    fun getHttpsFdList() = httpsRegistry.httpFds()
-    fun forceOff(fd: TcpFd) = tcpRegistry.forceOff(fd.port)
-    fun forceOff(fd: HttpFd) = (if (fd.isHttps) httpsRegistry else httpRegistry).forceOff(fd.host)
-
 
     private fun startTunnelDaemon(args: TunnelDaemonArgs) {
         val serverBootstrap = ServerBootstrap()
@@ -220,79 +213,38 @@ class TunnelServer(
         }
     }
 
-    class TunnelDaemonArgs(
-        val bindAddr: String? = null,
-        val bindPort: Int = 5080,
-        val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl
-    )
-
-    class SslTunnelDaemonArgs(
-        val bindAddr: String? = null,
-        val bindPort: Int? = null,
-        val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl,
-        val sslContext: SslContext = SslContextUtil.forBuiltinServer()
-    )
-
-    class HttpTunnelArgs(
-        val bindAddr: String? = null,
-        val bindPort: Int? = null,
-        val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,
-        val httpPlugin: HttpPlugin? = null
-    )
-
-    class HttpsTunnelArgs(
-        val bindAddr: String? = null,
-        val bindPort: Int? = null,
-        val httpRequestInterceptor: HttpRequestInterceptor = HttpRequestInterceptor.defaultImpl,
-        val httpPlugin: HttpPlugin? = null,
-        val sslContext: SslContext = SslContextUtil.forBuiltinServer()
-    )
-
-    class HttpRpcServerArgs(
-        val bindAddr: String? = null,
-        val bindPort: Int? = null
-    )
-
-    private inner class InnerTunnelServerChannelHandler(tunnelRequestInterceptor: TunnelRequestInterceptor) : TunnelServerChannelHandler(
+    private inner class InnerTunnelServerChannelHandler(
+        tunnelRequestInterceptor: TunnelRequestInterceptor
+    ) : TunnelServerDaemonChannelHandler(
         tunnelRequestInterceptor = tunnelRequestInterceptor,
         tunnelIds = tunnelIds,
         tcpTunnel = tcpTunnel,
         httpTunnel = httpTunnel,
         httpsTunnel = httpsTunnel
     ) {
-        override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?) {
             if (tcpFd != null) {
                 onTcpTunnelStateListener?.onTcpTunnelConnected(tcpFd)
             }
         }
 
-        override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
+        override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?) {
             if (tcpFd != null) {
                 onTcpTunnelStateListener?.onTcpTunnelDisconnect(tcpFd)
             }
         }
 
-        override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?) {
             if (httpFd != null) {
                 onHttpTunnelStateListener?.onHttpTunnelConnected(httpFd)
             }
         }
 
-        override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
+        override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?) {
             if (httpFd != null) {
                 onHttpTunnelStateListener?.onHttpTunnelDisconnect(httpFd)
             }
         }
-    }
-
-    interface OnTcpTunnelStateListener {
-        fun onTcpTunnelConnected(fd: TcpFd) {}
-        fun onTcpTunnelDisconnect(fd: TcpFd) {}
-    }
-
-    interface OnHttpTunnelStateListener {
-        fun onHttpTunnelConnected(fd: HttpFd) {}
-        fun onHttpTunnelDisconnect(fd: HttpFd) {}
     }
 
 

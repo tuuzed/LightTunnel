@@ -9,16 +9,17 @@ import lighttunnel.proto.ProtoException
 import lighttunnel.proto.ProtoMessage
 import lighttunnel.proto.ProtoMessageType
 import lighttunnel.proto.TunnelRequest
-import lighttunnel.server.http.HttpFd
+import lighttunnel.server.http.DefaultHttpFd
 import lighttunnel.server.http.HttpTunnel
-import lighttunnel.server.tcp.TcpFd
+import lighttunnel.server.openapi.TunnelRequestInterceptor
+import lighttunnel.server.tcp.DefaultTcpFd
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.util.AK_SESSION_CHANNELS
 import lighttunnel.server.util.SessionChannels
 import lighttunnel.util.IncIds
 import lighttunnel.util.LongUtil
 
-internal abstract class TunnelServerChannelHandler(
+internal abstract class TunnelServerDaemonChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
     private val tunnelIds: IncIds,
     private val tcpTunnel: TcpTunnel? = null,
@@ -28,6 +29,7 @@ internal abstract class TunnelServerChannelHandler(
 
     private val logger by loggerDelegate()
 
+    @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
         if (ctx == null) {
@@ -48,11 +50,13 @@ internal abstract class TunnelServerChannelHandler(
         super.channelInactive(ctx)
     }
 
+    @Throws(Exception::class)
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
         ctx?.apply { channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE) }
     }
 
+    @Throws(Exception::class)
     override fun channelRead0(ctx: ChannelHandlerContext?, msg: ProtoMessage?) {
         logger.trace("channelRead0: {}", ctx)
         ctx ?: return
@@ -159,9 +163,9 @@ internal abstract class TunnelServerChannelHandler(
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
     }
 
-    abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?)
-    abstract fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?)
-    abstract fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?)
-    abstract fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?)
+    abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?)
+    abstract fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?)
+    abstract fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?)
+    abstract fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?)
 
 }

@@ -16,22 +16,22 @@ import kotlin.concurrent.write
 internal class HttpRegistry {
     private val logger by loggerDelegate()
 
-    private val hostHttpFds = hashMapOf<String, HttpFd>()
+    private val hostHttpFds = hashMapOf<String, DefaultHttpFd>()
     private val lock = ReentrantReadWriteLock()
     private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     @Throws(ProtoException::class)
-    fun register(isHttps: Boolean, host: String, sessionChannels: SessionChannels): HttpFd {
+    fun register(isHttps: Boolean, host: String, sessionChannels: SessionChannels): DefaultHttpFd {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
-        return HttpFd.newInstance(isHttps, host, sessionChannels).also { fd ->
+        return DefaultHttpFd(isHttps, host, sessionChannels).also { fd ->
             lock.write { hostHttpFds[host] = fd }
             logger.debug("Start Tunnel: {}, Options: {}", fd.tunnelRequest, fd.tunnelRequest.optionsString)
         }
     }
 
-    fun unregister(host: String?): HttpFd? = lock.write {
+    fun unregister(host: String?): DefaultHttpFd? = lock.write {
         unsafeUnregister(host)
         hostHttpFds.remove(host)
     }
@@ -43,7 +43,7 @@ internal class HttpRegistry {
 
     fun isRegistered(host: String): Boolean = lock.read { hostHttpFds.contains(host) }
 
-    fun getHttpFd(host: String): HttpFd? = lock.read { hostHttpFds[host] }
+    fun getHttpFd(host: String): DefaultHttpFd? = lock.read { hostHttpFds[host] }
 
     fun httpFds() = lock.read { hostHttpFds.values.toList() }
 
