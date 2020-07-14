@@ -1,6 +1,6 @@
 package lighttunnel.client.openapi.conn
 
-import lighttunnel.proto.TunnelRequest
+import lighttunnel.base.openapi.TunnelRequest
 
 interface TunnelConnection {
     val serverAddr: String

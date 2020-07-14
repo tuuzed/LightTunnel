@@ -4,20 +4,20 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoException
-import lighttunnel.proto.ProtoMessage
-import lighttunnel.proto.ProtoMessageType
-import lighttunnel.proto.TunnelRequest
-import lighttunnel.server.http.DefaultHttpFd
+import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.openapi.ProtoException
+import lighttunnel.base.openapi.TunnelRequest
+import lighttunnel.base.proto.ProtoMessage
+import lighttunnel.base.proto.ProtoMessageType
+import lighttunnel.base.util.IncIds
+import lighttunnel.base.util.LongUtil
+import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.http.HttpTunnel
 import lighttunnel.server.openapi.TunnelRequestInterceptor
-import lighttunnel.server.tcp.DefaultTcpFd
+import lighttunnel.server.tcp.TcpFdDefaultImpl
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.util.AK_SESSION_CHANNELS
 import lighttunnel.server.util.SessionChannels
-import lighttunnel.util.IncIds
-import lighttunnel.util.LongUtil
 
 internal abstract class TunnelServerDaemonChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor,
@@ -163,9 +163,9 @@ internal abstract class TunnelServerDaemonChannelHandler(
         ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
     }
 
-    abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?)
-    abstract fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?)
-    abstract fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?)
-    abstract fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?)
+    abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
+    abstract fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?)
+    abstract fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
+    abstract fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?)
 
 }

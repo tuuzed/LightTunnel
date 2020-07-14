@@ -4,9 +4,9 @@ package lighttunnel.client.util
 
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
+import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.client.TunnelClientDaemonChannelHandler
 import lighttunnel.client.conn.DefaultTunnelConnection
-import lighttunnel.proto.TunnelRequest
 
 internal val AK_TUNNEL_ID: AttributeKey<Long?> = AttributeKey.newInstance("\$lighttunnel.client.TunnelId")
 

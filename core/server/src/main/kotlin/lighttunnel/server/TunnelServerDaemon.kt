@@ -9,24 +9,24 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.*
-import lighttunnel.http.server.HttpServer
-import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.HeartbeatHandler
-import lighttunnel.proto.ProtoMessageDecoder
-import lighttunnel.proto.ProtoMessageEncoder
-import lighttunnel.server.http.DefaultHttpFd
+import lighttunnel.base.http.server.HttpServer
+import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.openapi.BuildConfig
+import lighttunnel.base.proto.HeartbeatHandler
+import lighttunnel.base.proto.ProtoMessageDecoder
+import lighttunnel.base.proto.ProtoMessageEncoder
+import lighttunnel.base.util.IncIds
+import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.http.HttpTunnel
 import lighttunnel.server.openapi.TunnelRequestInterceptor
 import lighttunnel.server.openapi.args.*
 import lighttunnel.server.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.server.openapi.listener.OnTcpTunnelStateListener
-import lighttunnel.server.tcp.DefaultTcpFd
+import lighttunnel.server.tcp.TcpFdDefaultImpl
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.traffic.TrafficHandler
-import lighttunnel.util.BuildConfig
-import lighttunnel.util.IncIds
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -222,25 +222,25 @@ internal class TunnelServerDaemon(
         httpTunnel = httpTunnel,
         httpsTunnel = httpsTunnel
     ) {
-        override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?) {
             if (tcpFd != null) {
                 onTcpTunnelStateListener?.onTcpTunnelConnected(tcpFd)
             }
         }
 
-        override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: DefaultTcpFd?) {
+        override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?) {
             if (tcpFd != null) {
                 onTcpTunnelStateListener?.onTcpTunnelDisconnect(tcpFd)
             }
         }
 
-        override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?) {
             if (httpFd != null) {
                 onHttpTunnelStateListener?.onHttpTunnelConnected(httpFd)
             }
         }
 
-        override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: DefaultHttpFd?) {
+        override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?) {
             if (httpFd != null) {
                 onHttpTunnelStateListener?.onHttpTunnelDisconnect(httpFd)
             }

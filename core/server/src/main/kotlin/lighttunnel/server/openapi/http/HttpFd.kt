@@ -1,6 +1,6 @@
 package lighttunnel.server.openapi.http
 
-import lighttunnel.proto.TunnelRequest
+import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.server.openapi.util.Statistics
 
 interface HttpFd {

@@ -1,5 +1,5 @@
 ### Netty
--keepclasseswithmembers class io.netty.** { *; }
+-keepnames class io.netty.** { *; }
 -dontwarn io.netty.**
 
 ### slf4j & log4j

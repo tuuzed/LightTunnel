@@ -14,3 +14,5 @@ dependencies {
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
 apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
 apply from: rootProject.file("./gradle/publish.gradle").absolutePath
+apply from: rootProject.file("./gradle/sdk.gradle").absolutePath
+

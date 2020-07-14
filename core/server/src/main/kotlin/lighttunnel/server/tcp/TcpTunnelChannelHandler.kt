@@ -6,12 +6,12 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessage
-import lighttunnel.proto.ProtoMessageType
-import lighttunnel.proto.RemoteConnection
+import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.openapi.RemoteConnection
+import lighttunnel.base.proto.ProtoMessage
+import lighttunnel.base.proto.ProtoMessageType
+import lighttunnel.base.util.LongUtil
 import lighttunnel.server.util.AK_SESSION_ID
-import lighttunnel.util.LongUtil
 import java.net.InetSocketAddress
 
 internal class TcpTunnelChannelHandler(
@@ -79,7 +79,7 @@ internal class TcpTunnelChannelHandler(
         tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
-    private val ChannelHandlerContext?.tcpFd: DefaultTcpFd?
+    private val ChannelHandlerContext?.tcpFd: TcpFdDefaultImpl?
         get() {
             this ?: return null
             val sa = this.channel().localAddress()

@@ -3,13 +3,13 @@
 package lighttunnel.server.openapi
 
 import lighttunnel.server.TunnelServerDaemon
-import lighttunnel.server.http.DefaultHttpFd
+import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.openapi.args.*
 import lighttunnel.server.openapi.http.HttpFd
 import lighttunnel.server.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.server.openapi.listener.OnTcpTunnelStateListener
 import lighttunnel.server.openapi.tcp.TcpFd
-import lighttunnel.server.tcp.DefaultTcpFd
+import lighttunnel.server.tcp.TcpFdDefaultImpl
 
 class TunnelServer(
     bossThreads: Int = -1,
@@ -42,8 +42,8 @@ class TunnelServer(
     fun getTcpFdList(): List<TcpFd> = daemon.tcpRegistry.tcpFds()
     fun getHttpFdList(): List<HttpFd> = daemon.httpRegistry.httpFds()
     fun getHttpsFdList(): List<HttpFd> = daemon.httpsRegistry.httpFds()
-    fun forceOff(fd: TcpFd): TcpFd? = daemon.tcpRegistry.forceOff((fd as DefaultTcpFd).port)
-    fun forceOff(fd: HttpFd): HttpFd? = (if (fd.isHttps) daemon.httpsRegistry else daemon.httpRegistry).forceOff((fd as DefaultHttpFd).host)
+    fun forceOff(fd: TcpFd): TcpFd? = daemon.tcpRegistry.forceOff((fd as TcpFdDefaultImpl).port)
+    fun forceOff(fd: HttpFd): HttpFd? = (if (fd.isHttps) daemon.httpsRegistry else daemon.httpRegistry).forceOff((fd as HttpFdDefaultImpl).host)
 
 
 }

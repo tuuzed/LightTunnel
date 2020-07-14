@@ -1,7 +1,7 @@
 package lighttunnel.client.openapi
 
-import lighttunnel.logger.LoggerFactory
-import lighttunnel.proto.TunnelRequest
+import lighttunnel.base.logger.LoggerFactory
+import lighttunnel.base.openapi.TunnelRequest
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test

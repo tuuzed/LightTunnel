@@ -1,0 +1,44 @@
+buildscript {
+    repositories {
+        def proguard_home = System.getenv("PROGUARD_HOME")
+        if (proguard_home == null) {
+            flatDir dirs: rootProject.file("./proguard/lib")
+        } else {
+            flatDir dirs: "${System.getenv("PROGUARD_HOME")}/lib"
+        }
+    }
+    dependencies {
+        classpath ':proguard:'
+    }
+}
+
+jar {
+    exclude 'META-INF/**/**'
+    exclude 'META-INF/**'
+    exclude 'OSGI-OPT/'
+    exclude 'LICENSE'
+    exclude 'kotlin/*.kotlin_module'
+    exclude 'kotlin/*.kotlin_metadata'
+    exclude 'kotlin/*.kotlin_builtins'
+    exclude 'kotlin/**/*.kotlin_module'
+    exclude 'kotlin/**/*.kotlin_metadata'
+    exclude 'kotlin/**/*.kotlin_builtins'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes 'LightTunnel-VersionCode': String.valueOf(GitVC.VERSION_CODE)
+        attributes 'LightTunnel-VersionName': String.valueOf(GitVC.VERSION_NAME)
+        attributes 'LightTunnel-LastCommitSHA': String.valueOf(GitVC.LAST_COMMIT_SHA)
+        attributes 'LightTunnel-LastCommitDate': String.valueOf(GitVC.LAST_COMMIT_DATE)
+        attributes 'LightTunnel-BuildDate': String.valueOf(new Date())
+    }
+}
+
+task distSdk(group: "package", type: proguard.gradle.ProGuardTask, dependsOn: jar) {
+    List<File> proguardRules = new ArrayList<>()
+    proguardRules.add(rootProject.file("./gradle/proguardrules/basic.txt"))
+    proguardRules.add(rootProject.file("./gradle/proguardrules/third-party.txt"))
+    proguardRules.add(project.file("proguard-rules.txt"))
+    configuration proguardRules
+    injars "${project.buildDir}/libs/${project.name}-${project.version}.jar"
+    outjars rootProject.file("dists/${project.group}-${project.name}-${project.version}.jar")
+}

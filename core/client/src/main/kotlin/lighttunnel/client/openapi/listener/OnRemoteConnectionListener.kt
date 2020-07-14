@@ -1,6 +1,6 @@
 package lighttunnel.client.openapi.listener
 
-import lighttunnel.proto.RemoteConnection
+import lighttunnel.base.openapi.RemoteConnection
 
 interface OnRemoteConnectionListener {
     fun onRemoteConnected(conn: RemoteConnection) {}

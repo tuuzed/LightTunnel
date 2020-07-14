@@ -6,9 +6,9 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import lighttunnel.proto.ProtoException
+import lighttunnel.base.openapi.ProtoException
+import lighttunnel.base.util.PortUtil
 import lighttunnel.server.util.SessionChannels
-import lighttunnel.util.PortUtil
 
 internal class TcpTunnel(
     bossGroup: NioEventLoopGroup,
@@ -42,14 +42,14 @@ internal class TcpTunnel(
     fun stopTunnel(port: Int) = registry.unregister(port)
 
     @Throws(Exception::class)
-    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels): DefaultTcpFd {
+    fun startTunnel(addr: String?, port: Int, sessionChannels: SessionChannels): TcpFdDefaultImpl {
         requireNotRegistered(port)
         val bindChannelFuture = if (addr == null) {
             serverBootstrap.bind(port)
         } else {
             serverBootstrap.bind(addr, port)
         }
-        val fd = DefaultTcpFd(addr, port, sessionChannels) { bindChannelFuture.channel().close() }
+        val fd = TcpFdDefaultImpl(addr, port, sessionChannels) { bindChannelFuture.channel().close() }
         registry.register(port, sessionChannels, fd)
         return fd
     }

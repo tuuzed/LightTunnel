@@ -2,8 +2,8 @@
 
 package lighttunnel.server.tcp
 
-import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoException
+import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.openapi.ProtoException
 import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
 import org.json.JSONArray
@@ -16,12 +16,12 @@ import kotlin.concurrent.write
 internal class TcpRegistry {
     private val logger by loggerDelegate()
 
-    private val portTcpFds = hashMapOf<Int, DefaultTcpFd>()
+    private val portTcpFds = hashMapOf<Int, TcpFdDefaultImpl>()
     private val lock = ReentrantReadWriteLock()
     private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     @Throws(ProtoException::class)
-    fun register(port: Int, sessionChannels: SessionChannels, fd: DefaultTcpFd) {
+    fun register(port: Int, sessionChannels: SessionChannels, fd: TcpFdDefaultImpl) {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
@@ -29,7 +29,7 @@ internal class TcpRegistry {
         logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
     }
 
-    fun unregister(port: Int): DefaultTcpFd? = lock.write {
+    fun unregister(port: Int): TcpFdDefaultImpl? = lock.write {
         unsafeUnregister(port)
         portTcpFds.remove(port)?.apply { close() }
     }
@@ -41,7 +41,7 @@ internal class TcpRegistry {
 
     fun isRegistered(port: Int): Boolean = lock.read { portTcpFds.contains(port) }
 
-    fun getTcpFd(port: Int): DefaultTcpFd? = lock.read { portTcpFds[port] }
+    fun getTcpFd(port: Int): TcpFdDefaultImpl? = lock.read { portTcpFds[port] }
 
     fun tcpFds() = lock.read { portTcpFds.values.toList() }
 

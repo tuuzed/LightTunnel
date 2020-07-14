@@ -3,14 +3,23 @@
 package lighttunnel.client.openapi
 
 import io.netty.handler.ssl.SslContext
+import lighttunnel.base.openapi.TunnelRequest
 import lighttunnel.client.TunnelClientDaemon
 import lighttunnel.client.conn.DefaultTunnelConnection
 import lighttunnel.client.openapi.conn.TunnelConnection
 import lighttunnel.client.openapi.listener.OnRemoteConnectionListener
 import lighttunnel.client.openapi.listener.OnTunnelConnectionListener
-import lighttunnel.proto.TunnelRequest
 import kotlin.experimental.or
 
+/**
+ *
+ * @param workerThreads
+ * @param retryConnectPolicy
+ * @param httpRpcBindAddr
+ * @param httpRpcBindPort
+ * @param onTunnelConnectionListener
+ * @param onRemoteConnectionListener
+ */
 class TunnelClient(
     workerThreads: Int = -1,
     private val retryConnectPolicy: Byte = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,

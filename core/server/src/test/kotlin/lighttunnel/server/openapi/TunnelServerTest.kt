@@ -1,9 +1,9 @@
 package lighttunnel.server.openapi
 
-import lighttunnel.logger.LoggerFactory
+import lighttunnel.base.logger.LoggerFactory
+import lighttunnel.base.util.SslContextUtil
 import lighttunnel.server.openapi.args.*
 import lighttunnel.server.openapi.http.HttpPlugin
-import lighttunnel.util.SslContextUtil
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test

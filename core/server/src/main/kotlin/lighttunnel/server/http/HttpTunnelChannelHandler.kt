@@ -6,16 +6,16 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.FullHttpRequest
-import lighttunnel.logger.loggerDelegate
-import lighttunnel.proto.ProtoMessage
-import lighttunnel.proto.ProtoMessageType
-import lighttunnel.proto.RemoteConnection
+import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.openapi.RemoteConnection
+import lighttunnel.base.proto.ProtoMessage
+import lighttunnel.base.proto.ProtoMessageType
+import lighttunnel.base.util.HttpUtil
+import lighttunnel.base.util.LongUtil
 import lighttunnel.server.openapi.http.HttpPlugin
 import lighttunnel.server.openapi.http.HttpRequestInterceptor
 import lighttunnel.server.util.AK_HTTP_HOST
 import lighttunnel.server.util.AK_SESSION_ID
-import lighttunnel.util.HttpUtil
-import lighttunnel.util.LongUtil
 
 internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
