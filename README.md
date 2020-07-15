@@ -15,7 +15,7 @@
 - 服务器端文件
 ```
  lts.exe       - 服务器端windows可执行文件
- lts.sh        - 服务器端*nix可执行文件
+ lts           - 服务器端*nix可执行文件
  lts.jar       - 服务器端jvm可执行文件
  lts.ini       - 服务器端最小配置文件   
  lts_full.ini  - 服务器端完整配置文件   
@@ -24,7 +24,7 @@
 - 客户端文件
 ``` 
  ltc.exe       - 客户端windows可执行文件
- ltc.sh        - 客户端*nix可执行文件
+ ltc           - 客户端*nix可执行文件
  ltc.jar       - 客户端jvm可执行文件
  ltc.ini       - 客户端最小配置文件
  ltc_full.ini  - 客户端完整配置文件   
@@ -51,12 +51,12 @@
 
   - 服务器端
   ```shell script
-  ./lts.sh -c lts.ini
+  ./lts -c lts.ini
   ```
   
   - 客户端
   ```shell script
-  ./ltc.sh -c ltc.ini
+  ./ltc -c ltc.ini
   ```
 
 - jvm
@@ -68,7 +68,7 @@
   
   - 客户端
   ```shell script
-  java -jar ltc.sh -c ltc.ini
+  java -jar ltc.jar -c ltc.ini
   ```
   
 ## 0x03 配置文件

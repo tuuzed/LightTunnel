@@ -40,7 +40,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s%n", BuildConfig.VERSION_NAME)
+            System.out.printf("%s(%d)%n", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "lts.ini"

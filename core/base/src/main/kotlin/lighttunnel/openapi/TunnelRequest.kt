@@ -68,9 +68,9 @@ class TunnelRequest private constructor(
         ): TunnelRequest {
             extras.forEach { require(!it.first.startsWith("\$")) { "`\$`打头的key为系统保留的key" } }
             val finalExtras = JSONObject()
+            finalExtras.put(REMOTE_PORT, remotePort)
             name?.also { finalExtras.put(NAME, it) }
             authToken?.also { finalExtras.put(AUTH_TOKEN, it) }
-            finalExtras.put(REMOTE_PORT, remotePort)
             extras.forEach { finalExtras.put(it.first, it.second) }
             finalExtras.put(VERSION, BuildConfig.VERSION)
             return TunnelRequest(type = Type.TCP, localAddr = localAddr, localPort = localPort, extras = finalExtras)
@@ -93,9 +93,9 @@ class TunnelRequest private constructor(
         ): TunnelRequest {
             extras.forEach { require(!it.first.startsWith("\$")) { "`\$`打头的key为系统保留的key" } }
             val finalExtras = JSONObject()
+            finalExtras.put(HOST, host)
             name?.also { finalExtras.put(NAME, it) }
             authToken?.also { finalExtras.put(AUTH_TOKEN, it) }
-            finalExtras.put(HOST, host)
             if (enableBasicAuth) {
                 finalExtras.put(ENABLE_BASIC_AUTH, "true")
                 finalExtras.put(BASIC_AUTH_REALM, basicAuthRealm)
@@ -122,6 +122,7 @@ class TunnelRequest private constructor(
     // common
     val name get() = extras.getOrDefault<String?>(NAME, null)
     val authToken get() = extras.getOrDefault<String?>(AUTH_TOKEN, null)
+    val version get() = extras.getOrDefault<String?>(VERSION, null)
 
     // tcp
     val remotePort get() = (extras.getOrDefault<Int?>(REMOTE_PORT, null) ?: error("remotePort == null"))
