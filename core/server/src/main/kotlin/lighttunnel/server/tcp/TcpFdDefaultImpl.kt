@@ -7,8 +7,6 @@ import lighttunnel.openapi.tcp.TcpFd
 import lighttunnel.server.util.SessionChannels
 
 internal class TcpFdDefaultImpl(
-    val addr: String?,
-    val port: Int,
     val sessionChannels: SessionChannels,
     private val closeFuture: () -> Unit
 ) : TcpFd {
@@ -18,7 +16,7 @@ internal class TcpFdDefaultImpl(
     override val statistics get() = sessionChannels.statistics
 
     val tunnelId get() = sessionChannels.tunnelId
-
+    val port get() = tunnelRequest.remotePort
     val tunnelChannel get() = sessionChannels.tunnelChannel
 
     fun close() {

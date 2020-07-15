@@ -1,4 +1,4 @@
-package lighttunnel.base.http.server
+package lighttunnel.cmd.http.server
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
@@ -8,7 +8,7 @@ import io.netty.handler.codec.http.HttpVersion
 import org.junit.Before
 import org.junit.Test
 
-class WebServerTest {
+class HttpServerTest {
     private lateinit var server: HttpServer
 
     @Before

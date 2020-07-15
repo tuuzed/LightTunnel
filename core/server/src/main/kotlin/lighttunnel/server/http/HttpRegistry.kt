@@ -20,9 +20,9 @@ internal class HttpRegistry {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
-        return HttpFdDefaultImpl(isHttps, host, sessionChannels).also { fd ->
+        return HttpFdDefaultImpl(isHttps, sessionChannels).also { fd ->
             lock.write { hostHttpFds[host] = fd }
-            logger.debug("Start Tunnel: {}, Options: {}", fd.tunnelRequest, fd.tunnelRequest.optionsString)
+            logger.debug("Start Tunnel: {}, Options: {}", fd.tunnelRequest, fd.tunnelRequest.extrasString)
         }
     }
 

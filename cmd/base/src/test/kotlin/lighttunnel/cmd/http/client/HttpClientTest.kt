@@ -1,4 +1,4 @@
-package lighttunnel.base.http.client
+package lighttunnel.cmd.http.client
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.nio.NioEventLoopGroup
@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.HttpMethod
 import org.junit.Before
 import org.junit.Test
 
-class WebClientTest {
+class HttpClientTest {
 
     lateinit var client: HttpClient
 

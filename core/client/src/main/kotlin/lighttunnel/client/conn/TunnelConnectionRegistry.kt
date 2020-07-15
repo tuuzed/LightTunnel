@@ -8,22 +8,22 @@ import kotlin.concurrent.write
 
 internal class TunnelConnectionRegistry {
 
-    private val cached = arrayListOf<DefaultTunnelConnection>()
+    private val cached = arrayListOf<DefaultTunnelConnectionImpl>()
     private val lock = ReentrantReadWriteLock()
 
-    fun register(conn: DefaultTunnelConnection) = lock.write { cached.add(conn) }
+    fun register(conn: DefaultTunnelConnectionImpl) = lock.write { cached.add(conn) }
 
-    fun unregister(conn: DefaultTunnelConnection) = lock.write { cached.remove(conn) }
+    fun unregister(conn: DefaultTunnelConnectionImpl) = lock.write { cached.remove(conn) }
 
     fun depose() = lock.write {
         cached.forEach { it.close() }
         cached.clear()
     }
 
-    val conns: List<DefaultTunnelConnection> get() = cached
+    val tunnelConnectionList: List<DefaultTunnelConnectionImpl> get() = lock.read { cached }
 
     fun toJson() = lock.read {
-        JSONArray(conns.map {
+        JSONArray(tunnelConnectionList.map {
             JSONObject().apply {
                 put("name", it.tunnelRequest.name)
                 put("conn", it.toString())

@@ -1,4 +1,4 @@
-package lighttunnel.base.http.server
+package lighttunnel.cmd.http.server
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelFuture

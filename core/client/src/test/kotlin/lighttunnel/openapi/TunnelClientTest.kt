@@ -19,7 +19,7 @@ class TunnelClientTest {
             "org.apache.commons.cli"
         ))
         LoggerFactory.configConsole(level = Level.ALL)
-        tunnelClient = TunnelClient(httpRpcBindPort = 5081)
+        tunnelClient = TunnelClient()
     }
 
     @Test

@@ -2,7 +2,10 @@
 
 package lighttunnel.openapi
 
-import lighttunnel.openapi.args.*
+import lighttunnel.openapi.args.HttpTunnelArgs
+import lighttunnel.openapi.args.HttpsTunnelArgs
+import lighttunnel.openapi.args.SslTunnelDaemonArgs
+import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.openapi.listener.OnTcpTunnelStateListener
@@ -18,7 +21,6 @@ class TunnelServer(
     sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
     httpTunnelArgs: HttpTunnelArgs? = null,
     httpsTunnelArgs: HttpsTunnelArgs? = null,
-    httpRpcServerArgs: HttpRpcServerArgs? = null,
     onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
     onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
 ) {
@@ -30,7 +32,6 @@ class TunnelServer(
             sslTunnelDaemonArgs = sslTunnelDaemonArgs,
             httpTunnelArgs = httpTunnelArgs,
             httpsTunnelArgs = httpsTunnelArgs,
-            httpRpcServerArgs = httpRpcServerArgs,
             onTcpTunnelStateListener = onTcpTunnelStateListener,
             onHttpTunnelStateListener = onHttpTunnelStateListener
         )

@@ -1,11 +1,12 @@
 package lighttunnel.base.proto
 
 import lighttunnel.base.util.LongUtil
+import lighttunnel.base.util.emptyBytes
 
 class ProtoMessage(
     val type: ProtoMessageType,
-    val head: ByteArray = ProtoConsts.emptyBytes,
-    val data: ByteArray = ProtoConsts.emptyBytes
+    val head: ByteArray = emptyBytes,
+    val data: ByteArray = emptyBytes
 ) {
 
     val tunnelId by lazy { LongUtil.fromBytes(head, 0) }

@@ -1,30 +1,25 @@
 package lighttunnel.client
 
 import io.netty.bootstrap.Bootstrap
-import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.http.server.HttpServer
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
-import lighttunnel.client.conn.DefaultTunnelConnection
+import lighttunnel.client.conn.DefaultTunnelConnectionImpl
 import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient
-import lighttunnel.openapi.BuildConfig
 import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
 import lighttunnel.openapi.TunnelRequest
 import lighttunnel.openapi.listener.OnRemoteConnectionListener
 import lighttunnel.openapi.listener.OnTunnelConnectionListener
-import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -34,8 +29,6 @@ import kotlin.experimental.and
 internal class TunnelClientDaemon(
     workerThreads: Int,
     private val retryConnectPolicy: Byte,
-    private val httpRpcBindAddr: String?,
-    private val httpRpcBindPort: Int?,
     private val onTunnelConnectionListener: OnTunnelConnectionListener?,
     private val onRemoteConnectionListener: OnRemoteConnectionListener?
 ) {
@@ -47,8 +40,7 @@ internal class TunnelClientDaemon(
     private val bootstrap = Bootstrap()
     private val localTcpClient: LocalTcpClient
     private val lock = ReentrantLock()
-    private var httpRpcServer: HttpServer? = null
-    private val openFailureCallback = { conn: DefaultTunnelConnection -> tryReconnect(conn, false) }
+    private val openFailureCallback = { conn: DefaultTunnelConnectionImpl -> tryReconnect(conn, false) }
     private val onChannelStateListener = OnChannelStateListenerImpl()
 
     val tunnelConnectionRegistry = TunnelConnectionRegistry()
@@ -68,9 +60,8 @@ internal class TunnelClientDaemon(
         serverPort: Int,
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
-    ): DefaultTunnelConnection {
-        tryStartHttpRpcServer()
-        val conn = DefaultTunnelConnection(
+    ): DefaultTunnelConnectionImpl {
+        val conn = DefaultTunnelConnectionImpl(
             serverAddr = serverAddr,
             serverPort = serverPort,
             originalTunnelRequest = tunnelRequest,
@@ -85,7 +76,7 @@ internal class TunnelClientDaemon(
         return conn
     }
 
-    fun close(conn: DefaultTunnelConnection) {
+    fun close(conn: DefaultTunnelConnectionImpl) {
         conn.close()
         tunnelConnectionRegistry.unregister(conn)
     }
@@ -94,12 +85,11 @@ internal class TunnelClientDaemon(
         tunnelConnectionRegistry.depose()
         cachedSslBootstraps.clear()
         localTcpClient.depose()
-        httpRpcServer?.depose()
         workerGroup.shutdownGracefully()
         Unit
     }
 
-    private fun tryReconnect(conn: DefaultTunnelConnection, error: Boolean) {
+    private fun tryReconnect(conn: DefaultTunnelConnectionImpl, error: Boolean) {
         when {
             // 主动关闭
             conn.isActiveClosed -> close(conn)
@@ -119,56 +109,6 @@ internal class TunnelClientDaemon(
         }
     }
 
-    private fun tryStartHttpRpcServer() = lock.withLock {
-        if (httpRpcServer == null && httpRpcBindPort != null) {
-            getHttpRpcServer(httpRpcBindPort).also {
-                httpRpcServer = it
-            }.start()
-        }
-    }
-
-    private fun getHttpRpcServer(httpRpcBindPort: Int): HttpServer {
-        return HttpServer(
-            bossGroup = workerGroup,
-            workerGroup = workerGroup,
-            bindAddr = httpRpcBindAddr,
-            bindPort = httpRpcBindPort
-        ) {
-            route("/api/version") {
-                val content = JSONObject().apply {
-                    put("name", "ltc")
-                    put("versionName", BuildConfig.VERSION_NAME)
-                    put("versionCode", BuildConfig.VERSION_CODE)
-                    put("buildDate", BuildConfig.BUILD_DATA)
-                    put("commitSha", BuildConfig.LAST_COMMIT_SHA)
-                    put("commitDate", BuildConfig.LAST_COMMIT_DATE)
-                }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
-                DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.OK,
-                    content
-                ).apply {
-                    headers()
-                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-                }
-            }
-            route("/api/snapshot") {
-                val content = tunnelConnectionRegistry.toJson().let {
-                    Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
-                }
-                DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.OK,
-                    content
-                ).also {
-                    it.headers()
-                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-                }
-            }
-        }
-    }
 
     private val SslContext.bootstrap: Bootstrap
         get() = cachedSslBootstraps[this] ?: Bootstrap()
@@ -202,7 +142,7 @@ internal class TunnelClientDaemon(
 
         override fun onChannelInactive(
             ctx: ChannelHandlerContext,
-            conn: DefaultTunnelConnection?,
+            conn: DefaultTunnelConnectionImpl?,
             extra: TunnelClientDaemonChannelHandler.ChannelInactiveExtra?
         ) {
             super.onChannelInactive(ctx, conn, extra)
@@ -215,7 +155,7 @@ internal class TunnelClientDaemon(
             }
         }
 
-        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnection?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnectionImpl?) {
             super.onChannelConnected(ctx, conn)
             if (conn != null) {
                 onTunnelConnectionListener?.onTunnelConnected(conn)

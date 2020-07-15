@@ -10,8 +10,8 @@ class ProtoMessageEncoder : MessageToByteEncoder<ProtoMessage>() {
     override fun encode(ctx: ChannelHandlerContext?, msg: ProtoMessage?, out: ByteBuf?) {
         msg ?: return
         out ?: return
-        val totalLength = ProtoConsts.PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH +
-            ProtoConsts.PROTO_MESSAGE_TYPE_LENGTH +
+        val totalLength = PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH +
+            PROTO_MESSAGE_TYPE_LENGTH +
             msg.head.size +
             msg.data.size
         out.writeInt(totalLength)

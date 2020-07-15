@@ -4,7 +4,7 @@ package lighttunnel.openapi
 
 import io.netty.handler.ssl.SslContext
 import lighttunnel.client.TunnelClientDaemon
-import lighttunnel.client.conn.DefaultTunnelConnection
+import lighttunnel.client.conn.DefaultTunnelConnectionImpl
 import lighttunnel.openapi.conn.TunnelConnection
 import lighttunnel.openapi.listener.OnRemoteConnectionListener
 import lighttunnel.openapi.listener.OnTunnelConnectionListener
@@ -13,8 +13,6 @@ import kotlin.experimental.or
 class TunnelClient(
     workerThreads: Int = -1,
     private val retryConnectPolicy: Byte = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-    private val httpRpcBindAddr: String? = null,
-    private val httpRpcBindPort: Int? = null,
     private val onTunnelConnectionListener: OnTunnelConnectionListener? = null,
     private val onRemoteConnectionListener: OnRemoteConnectionListener? = null
 ) {
@@ -28,8 +26,6 @@ class TunnelClient(
         TunnelClientDaemon(
             workerThreads = workerThreads,
             retryConnectPolicy = retryConnectPolicy,
-            httpRpcBindAddr = httpRpcBindAddr,
-            httpRpcBindPort = httpRpcBindPort,
             onTunnelConnectionListener = onTunnelConnectionListener,
             onRemoteConnectionListener = onRemoteConnectionListener
         )
@@ -42,9 +38,9 @@ class TunnelClient(
         sslContext: SslContext? = null
     ): TunnelConnection = daemon.connect(serverAddr, serverPort, tunnelRequest, sslContext)
 
-    fun close(conn: TunnelConnection) = daemon.close((conn as DefaultTunnelConnection))
+    fun close(conn: TunnelConnection) = daemon.close((conn as DefaultTunnelConnectionImpl))
 
-    fun getTunnelConnectionList(): List<TunnelConnection> = daemon.tunnelConnectionRegistry.conns
+    fun getTunnelConnectionList(): List<TunnelConnection> = daemon.tunnelConnectionRegistry.tunnelConnectionList
 
     fun depose() = daemon.depose()
 

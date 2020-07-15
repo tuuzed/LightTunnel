@@ -21,7 +21,7 @@ internal class TcpRegistry {
             throw ProtoException("port($port) already used")
         }
         lock.write { portTcpFds[port] = fd }
-        logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.optionsString)
+        logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.extrasString)
     }
 
     fun unregister(port: Int): TcpFdDefaultImpl? = lock.write {

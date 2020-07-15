@@ -1,4 +1,4 @@
-package lighttunnel.base.http.client
+package lighttunnel.cmd.http.client
 
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf

@@ -1,35 +1,31 @@
 package lighttunnel.server
 
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.*
-import lighttunnel.base.http.server.HttpServer
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
 import lighttunnel.base.util.IncIds
-import lighttunnel.openapi.BuildConfig
 import lighttunnel.openapi.TunnelRequestInterceptor
-import lighttunnel.openapi.args.*
+import lighttunnel.openapi.args.HttpTunnelArgs
+import lighttunnel.openapi.args.HttpsTunnelArgs
+import lighttunnel.openapi.args.SslTunnelDaemonArgs
+import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.openapi.listener.OnTcpTunnelStateListener
 import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.http.HttpTunnel
-import lighttunnel.server.http.toJson
 import lighttunnel.server.tcp.TcpFdDefaultImpl
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
-import lighttunnel.server.tcp.toJson
 import lighttunnel.server.traffic.TrafficHandler
-import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -40,7 +36,6 @@ internal class TunnelServerDaemon(
     private val sslTunnelDaemonArgs: SslTunnelDaemonArgs?,
     httpTunnelArgs: HttpTunnelArgs?,
     httpsTunnelArgs: HttpsTunnelArgs?,
-    httpRpcServerArgs: HttpRpcServerArgs?,
     private val onTcpTunnelStateListener: OnTcpTunnelStateListener?,
     private val onHttpTunnelStateListener: OnHttpTunnelStateListener?
 ) {
@@ -58,13 +53,11 @@ internal class TunnelServerDaemon(
     private val tcpTunnel: TcpTunnel = getTcpTunnel(tcpRegistry)
     private val httpTunnel: HttpTunnel? = httpTunnelArgs?.let { getHttpTunnel(httpRegistry, it) }
     private val httpsTunnel: HttpTunnel? = httpsTunnelArgs?.let { getHttpsTunnel(httpsRegistry, it) }
-    private val httpRpcServer: HttpServer? = httpRpcServerArgs?.let { getHttpRpcServer(it) }
 
     @Throws(Exception::class)
     fun start(): Unit = lock.withLock {
         httpTunnel?.start()
         httpsTunnel?.start()
-        httpRpcServer?.start()
         startTunnelDaemon(tunnelDaemonArgs)
         sslTunnelDaemonArgs?.also { startSslTunnelDaemon(it) }
     }
@@ -73,7 +66,6 @@ internal class TunnelServerDaemon(
         tcpRegistry.depose()
         httpRegistry.depose()
         httpsRegistry.depose()
-        httpRpcServer?.depose()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
     }
@@ -170,54 +162,6 @@ internal class TunnelServerDaemon(
             httpPlugin = args.httpPlugin,
             registry = registry
         )
-    }
-
-    private fun getHttpRpcServer(args: HttpRpcServerArgs): HttpServer? {
-        if (args.bindPort == null) {
-            return null
-        }
-        return HttpServer(
-            bossGroup = bossGroup,
-            workerGroup = workerGroup,
-            bindAddr = args.bindAddr,
-            bindPort = args.bindPort
-        ) {
-            route("/api/version") {
-                val content = JSONObject().apply {
-                    put("name", "lts")
-                    put("versionName", BuildConfig.VERSION_NAME)
-                    put("versionCode", BuildConfig.VERSION_CODE)
-                    put("buildDate", BuildConfig.BUILD_DATA)
-                    put("commitSha", BuildConfig.LAST_COMMIT_SHA)
-                    put("commitDate", BuildConfig.LAST_COMMIT_DATE)
-                }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
-                DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.OK,
-                    content
-                ).apply {
-                    headers()
-                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-                }
-            }
-            route("/api/snapshot") {
-                val content = JSONObject().apply {
-                    put("tcp", tcpRegistry.toJson())
-                    put("http", httpRegistry.toJson())
-                    put("https", httpsRegistry.toJson())
-                }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
-                DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.OK,
-                    content
-                ).apply {
-                    headers()
-                        .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-                }
-            }
-        }
     }
 
     private inner class InnerTunnelServerChannelHandler(

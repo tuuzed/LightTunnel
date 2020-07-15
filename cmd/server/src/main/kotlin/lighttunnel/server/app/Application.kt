@@ -1,16 +1,24 @@
 @file:Suppress("DuplicatedCode")
 
-package ltcmd.server
+package lighttunnel.server.app
 
+import io.netty.buffer.Unpooled
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.handler.codec.http.*
 import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.util.SslContextUtil
 import lighttunnel.cmd.AbstractApplication
-import lighttunnel.cmd.asInt
+import lighttunnel.cmd.http.server.HttpServer
+import lighttunnel.cmd.util.asInt
+import lighttunnel.cmd.util.format
 import lighttunnel.openapi.BuildConfig
 import lighttunnel.openapi.TunnelRequestInterceptor
 import lighttunnel.openapi.TunnelServer
-import lighttunnel.openapi.args.*
+import lighttunnel.openapi.args.HttpTunnelArgs
+import lighttunnel.openapi.args.HttpsTunnelArgs
+import lighttunnel.openapi.args.SslTunnelDaemonArgs
+import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.http.HttpPlugin
 import lighttunnel.openapi.http.HttpRequestInterceptor
@@ -24,6 +32,8 @@ import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
 import org.ini4j.Ini
 import org.ini4j.Profile
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 
 class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunnelStateListener {
@@ -49,6 +59,22 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
         val basic = ini["basic"] ?: return
         setupLogConf(basic)
         val tunnelServer = getTunnelServer(basic)
+        val httpRpcPort = basic["http_rpc_port"].asInt()
+        if (httpRpcPort != null) {
+            val bossThreads = basic["boss_threads"].asInt() ?: -1
+            val workerThreads = basic["worker_threads"].asInt() ?: -1
+            val bindAddr = basic["bind_addr"]
+            val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
+            val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
+            val httpRpcServer = getHttpRpcServer(
+                bossGroup = bossGroup,
+                workerGroup = workerGroup,
+                bindAddr = bindAddr,
+                bindPort = httpRpcPort,
+                tunnelServer = tunnelServer
+            )
+            httpRpcServer.start()
+        }
         tunnelServer.start()
     }
 
@@ -68,9 +94,62 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
         logger.info("onDisconnect: {}", fd)
     }
 
+
     private companion object {
 
         private val logger by loggerDelegate()
+
+        private fun getHttpRpcServer(
+            bossGroup: NioEventLoopGroup,
+            workerGroup: NioEventLoopGroup,
+            bindAddr: String?,
+            bindPort: Int,
+            tunnelServer: TunnelServer
+        ): HttpServer {
+            return HttpServer(
+                bossGroup = bossGroup,
+                workerGroup = workerGroup,
+                bindAddr = bindAddr,
+                bindPort = bindPort
+            ) {
+                route("/api/version") {
+                    val content = JSONObject().apply {
+                        put("name", "lts")
+                        put("versionName", BuildConfig.VERSION_NAME)
+                        put("versionCode", BuildConfig.VERSION_CODE)
+                        put("buildDate", BuildConfig.BUILD_DATA)
+                        put("commitSha", BuildConfig.LAST_COMMIT_SHA)
+                        put("commitDate", BuildConfig.LAST_COMMIT_DATE)
+                    }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+                    DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK,
+                        content
+                    ).apply {
+                        headers()
+                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                    }
+                }
+                route("/api/snapshot") {
+                    val content = JSONObject().apply {
+                        put("tcp", tunnelServer.getTcpFdList().tcpFdListToJson())
+                        put("http", tunnelServer.getHttpFdList().httpFdListToJson())
+                        put("https", tunnelServer.getHttpsFdList().httpFdListToJson())
+                    }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+                    DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK,
+                        content
+                    ).apply {
+                        headers()
+                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                    }
+                }
+            }
+        }
+
 
         private fun Application.getTunnelServer(basic: Profile.Section): TunnelServer {
             val tunnelRequestInterceptor = getTunnelRequestInterceptor(basic)
@@ -81,7 +160,6 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
                 sslTunnelDaemonArgs = getSslTunnelDaemonArgs(basic, tunnelRequestInterceptor),
                 httpTunnelArgs = getHttpTunnelArgs(basic, HttpRequestInterceptor.defaultImpl),
                 httpsTunnelArgs = getHttpsTunnelArgs(basic, HttpRequestInterceptor.defaultImpl),
-                httpRpcServerArgs = getHttpRpcServerArgs(basic),
                 onTcpTunnelStateListener = this,
                 onHttpTunnelStateListener = this
             )
@@ -167,10 +245,42 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             )
         }
 
-        private fun getHttpRpcServerArgs(web: Profile.Section): HttpRpcServerArgs {
-            return HttpRpcServerArgs(
-                bindAddr = web["bind_addr"],
-                bindPort = web["http_rpc_port"].asInt()
+
+        @Suppress("DuplicatedCode")
+        private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
+            return JSONArray(
+                map { fd ->
+                    JSONObject().apply {
+                        put("port", fd.tunnelRequest.remotePort)
+                        put("conns", fd.connectionCount)
+                        put("name", fd.tunnelRequest.name)
+                        put("localAddr", fd.tunnelRequest.localAddr)
+                        put("localPort", fd.tunnelRequest.localPort)
+                        put("inboundBytes", fd.statistics.inboundBytes)
+                        put("outboundBytes", fd.statistics.outboundBytes)
+                        put("createAt", fd.statistics.createAt.format())
+                        put("updateAt", fd.statistics.updateAt.format())
+                    }
+                }
+            )
+        }
+
+        @Suppress("DuplicatedCode")
+        private fun List<HttpFd>.httpFdListToJson(): JSONArray {
+            return JSONArray(
+                map { fd ->
+                    JSONObject().apply {
+                        put("host", fd.tunnelRequest.host)
+                        put("conns", fd.connectionCount)
+                        put("name", fd.tunnelRequest.name)
+                        put("localAddr", fd.tunnelRequest.localAddr)
+                        put("localPort", fd.tunnelRequest.localPort)
+                        put("inboundBytes", fd.statistics.inboundBytes)
+                        put("outboundBytes", fd.statistics.outboundBytes)
+                        put("createAt", fd.statistics.createAt.format())
+                        put("updateAt", fd.statistics.updateAt.format())
+                    }
+                }
             )
         }
 

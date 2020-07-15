@@ -191,7 +191,7 @@ class TunnelRequest private constructor(
         return toString("::")
     }
 
-    val optionsString get() = extras.toString()
+    val extrasString get() = extras.toString()
 
     fun toString(serverAddr: String): String {
         return when (type) {

@@ -1,4 +1,4 @@
-package lighttunnel.cmd
+package lighttunnel.cmd.util
 
 import org.junit.Test
 

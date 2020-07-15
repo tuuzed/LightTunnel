@@ -9,7 +9,7 @@ import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.LongUtil
-import lighttunnel.client.conn.DefaultTunnelConnection
+import lighttunnel.client.conn.DefaultTunnelConnectionImpl
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.*
 import lighttunnel.openapi.RemoteConnection
@@ -185,8 +185,8 @@ internal class TunnelClientDaemonChannelHandler(
     }
 
     interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, conn: DefaultTunnelConnection?, extra: ChannelInactiveExtra?) {}
-        fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnection?) {}
+        fun onChannelInactive(ctx: ChannelHandlerContext, conn: DefaultTunnelConnectionImpl?, extra: ChannelInactiveExtra?) {}
+        fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnectionImpl?) {}
     }
 
     class ChannelInactiveExtra(val forceOff: Boolean, val cause: Throwable?)

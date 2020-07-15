@@ -6,7 +6,6 @@ import lighttunnel.server.util.SessionChannels
 
 internal class HttpFdDefaultImpl(
     override val isHttps: Boolean,
-    val host: String,
     val sessionChannels: SessionChannels
 ) : HttpFd {
 
@@ -15,7 +14,7 @@ internal class HttpFdDefaultImpl(
     override val statistics get() = sessionChannels.statistics
 
     val tunnelId get() = sessionChannels.tunnelId
-
+    val host get() = tunnelRequest.host
     val tunnelChannel get() = sessionChannels.tunnelChannel
 
     fun close() = sessionChannels.depose()

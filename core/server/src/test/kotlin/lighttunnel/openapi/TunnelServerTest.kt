@@ -2,7 +2,10 @@ package lighttunnel.openapi
 
 import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.util.SslContextUtil
-import lighttunnel.openapi.args.*
+import lighttunnel.openapi.args.HttpTunnelArgs
+import lighttunnel.openapi.args.HttpsTunnelArgs
+import lighttunnel.openapi.args.SslTunnelDaemonArgs
+import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.http.HttpPlugin
 import org.apache.log4j.Level
 import org.junit.Before
@@ -44,15 +47,12 @@ class TunnelServerTest {
             ),
             sslContext = SslContextUtil.forBuiltinServer()
         )
-        val httpServerArgs = HttpRpcServerArgs(
-            bindPort = 5081
-        )
+
         tunnelServer = TunnelServer(
             tunnelDaemonArgs = tunnelDaemonArgs,
             sslTunnelDaemonArgs = sslTunnelDaemonArgs,
             httpTunnelArgs = httpTunnelArgs,
-            httpsTunnelArgs = httpsTunnelArgs,
-            httpRpcServerArgs = httpServerArgs
+            httpsTunnelArgs = httpsTunnelArgs
         )
     }
 

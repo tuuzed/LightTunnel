@@ -1,12 +1,16 @@
-package ltcmd.client
+package lighttunnel.client.app
 
+import io.netty.buffer.Unpooled
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.handler.codec.http.*
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.util.SslContextUtil
 import lighttunnel.cmd.AbstractApplication
-import lighttunnel.cmd.IpAddressUtil
-import lighttunnel.cmd.asInt
+import lighttunnel.cmd.http.server.HttpServer
+import lighttunnel.cmd.util.IpAddressUtil
+import lighttunnel.cmd.util.asInt
 import lighttunnel.openapi.BuildConfig
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.TunnelClient
@@ -23,6 +27,8 @@ import org.apache.log4j.Level
 import org.apache.log4j.helpers.OptionConverter
 import org.ini4j.Ini
 import org.ini4j.Profile
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import kotlin.experimental.or
 
@@ -50,6 +56,22 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
         //
         setupLogConf(basic)
         val tunnelClient = getTunnelClient(basic)
+        val httpRpcPort = basic["http_rpc_port"].asInt()
+        if (httpRpcPort != null) {
+            val workerThreads = basic["worker_threads"].asInt() ?: -1
+            val bossGroup = NioEventLoopGroup(1)
+            val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
+            val httpRpcServer = getHttpRpcServer(
+                bossGroup = bossGroup,
+                workerGroup = workerGroup,
+                bindAddr = null,
+                bindPort = httpRpcPort,
+                tunnelClient = tunnelClient
+            )
+            httpRpcServer.start()
+        }
+
+
         val serverAddr = basic["server_addr"] ?: "127.0.0.1"
         val serverPort = basic["server_port"].asInt() ?: 5080
         val sslContext = getSslContext(basic)
@@ -69,7 +91,6 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 }
             }
     }
-
 
     override fun onRemoteConnected(conn: RemoteConnection) {
         logger.info("onRemoteConnected: {}", conn)
@@ -94,6 +115,65 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
     private companion object {
         private val logger by loggerDelegate()
 
+        @Suppress("SameParameterValue")
+        private fun getHttpRpcServer(
+            bossGroup: NioEventLoopGroup,
+            workerGroup: NioEventLoopGroup,
+            bindAddr: String?,
+            bindPort: Int,
+            tunnelClient: TunnelClient
+        ): HttpServer {
+            return HttpServer(
+                bossGroup = bossGroup,
+                workerGroup = workerGroup,
+                bindAddr = bindAddr,
+                bindPort = bindPort
+            ) {
+                route("/api/version") {
+                    val content = JSONObject().apply {
+                        put("name", "ltc")
+                        put("versionName", BuildConfig.VERSION_NAME)
+                        put("versionCode", BuildConfig.VERSION_CODE)
+                        put("buildDate", BuildConfig.BUILD_DATA)
+                        put("commitSha", BuildConfig.LAST_COMMIT_SHA)
+                        put("commitDate", BuildConfig.LAST_COMMIT_DATE)
+                    }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+                    DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK,
+                        content
+                    ).apply {
+                        headers()
+                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                    }
+                }
+                route("/api/snapshot") {
+                    val content = tunnelClient.getTunnelConnectionList().tunnelConnectionListToJson().let {
+                        Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
+                    }
+                    DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK,
+                        content
+                    ).also {
+                        it.headers()
+                            .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                            .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+                    }
+                }
+            }
+        }
+
+        private fun List<TunnelConnection>.tunnelConnectionListToJson(): JSONArray {
+            return JSONArray(map {
+                JSONObject().apply {
+                    put("name", it.tunnelRequest.name)
+                    put("conn", it.toString())
+                }
+            })
+        }
+
         private fun getSslContext(basic: Profile.Section): SslContext {
             return try {
                 SslContextUtil.forClient(
@@ -110,7 +190,6 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             return TunnelClient(
                 workerThreads = basic["worker_threads"].asInt() ?: -1,
                 retryConnectPolicy = RETRY_CONNECT_POLICY_LOSE or RETRY_CONNECT_POLICY_ERROR,
-                httpRpcBindPort = basic["http_rpc_port"].asInt(),
                 onTunnelConnectionListener = this,
                 onRemoteConnectionListener = this
             )

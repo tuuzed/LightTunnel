@@ -49,7 +49,7 @@ internal class TcpTunnel(
         } else {
             serverBootstrap.bind(addr, port)
         }
-        val fd = TcpFdDefaultImpl(addr, port, sessionChannels) { bindChannelFuture.channel().close() }
+        val fd = TcpFdDefaultImpl(sessionChannels) { bindChannelFuture.channel().close() }
         registry.register(port, sessionChannels, fd)
         return fd
     }

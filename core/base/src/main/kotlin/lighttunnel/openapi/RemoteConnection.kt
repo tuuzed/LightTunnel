@@ -1,6 +1,6 @@
 package lighttunnel.openapi
 
-import lighttunnel.base.proto.ProtoConsts
+import lighttunnel.base.util.emptyBytes
 import lighttunnel.base.util.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
@@ -38,7 +38,7 @@ data class RemoteConnection constructor(
                 it.put("hostAddress", address.address.hostAddress)
             }.toString().toByteArray(charset = Charsets.UTF_8)
         } else {
-            ProtoConsts.emptyBytes
+            emptyBytes
         }
     }
 

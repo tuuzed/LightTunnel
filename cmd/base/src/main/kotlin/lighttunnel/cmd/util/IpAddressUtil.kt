@@ -1,4 +1,4 @@
-package lighttunnel.cmd
+package lighttunnel.cmd.util
 
 import java.net.Inet4Address
 import java.net.NetworkInterface

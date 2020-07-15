@@ -1,4 +1,4 @@
-package lighttunnel.cmd
+package lighttunnel.cmd.util
 
 fun String?.asInt(defVal: Int? = null): Int? {
     return try {
