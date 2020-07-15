@@ -21,45 +21,49 @@ internal class TcpTunnelChannelHandler(
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
         logger.trace("channelActive: {}", ctx)
-        if (ctx != null) {
-            val tcpFd = ctx.tcpFd
-            if (tcpFd != null) {
-                var sessionId = ctx.channel().attr(AK_SESSION_ID).get()
-                if (sessionId == null) {
-                    sessionId = tcpFd.putChannel(ctx.channel())
-                    ctx.channel().attr(AK_SESSION_ID).set(sessionId)
-                }
-                val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
-                tcpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
-                )
-            } else {
-                ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+        if (ctx == null) {
+            super.channelActive(ctx)
+            return
+        }
+        val tcpFd = ctx.tcpFd
+        if (tcpFd != null) {
+            var sessionId = ctx.channel().attr(AK_SESSION_ID).get()
+            if (sessionId == null) {
+                sessionId = tcpFd.putChannel(ctx.channel())
+                ctx.channel().attr(AK_SESSION_ID).set(sessionId)
             }
+            val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
+            tcpFd.tunnelChannel.writeAndFlush(
+                ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+            )
+        } else {
+            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         }
         super.channelActive(ctx)
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext?) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx != null) {
-            val tcpFd = ctx.tcpFd
-            if (tcpFd != null) {
-                val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
-                if (sessionId != null) {
-                    val sessionChannel = tcpFd.removeChannel(sessionId)
-                    // 解决 HTTP/1.x 数据传输问题
-                    sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
-                }
-                ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
-                    val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId ?: 0)
-                    tcpFd.tunnelChannel.writeAndFlush(
-                        ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
-                    )
-                }
-            }
-            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+        if (ctx == null) {
+            super.channelInactive(ctx)
+            return
         }
+        val tcpFd = ctx.tcpFd
+        if (tcpFd != null) {
+            val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
+            if (sessionId != null) {
+                val sessionChannel = tcpFd.removeChannel(sessionId)
+                // 解决 HTTP/1.x 数据传输问题
+                sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
+            }
+            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
+                val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId ?: 0)
+                tcpFd.tunnelChannel.writeAndFlush(
+                    ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+                )
+            }
+        }
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
         super.channelInactive(ctx)
     }
 

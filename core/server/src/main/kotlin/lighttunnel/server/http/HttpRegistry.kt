@@ -4,11 +4,7 @@ package lighttunnel.server.http
 
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.openapi.ProtoException
-import lighttunnel.server.util.EMPTY_JSON_ARRAY
 import lighttunnel.server.util.SessionChannels
-import org.json.JSONArray
-import org.json.JSONObject
-import java.text.SimpleDateFormat
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -18,7 +14,6 @@ internal class HttpRegistry {
 
     private val hostHttpFds = hashMapOf<String, HttpFdDefaultImpl>()
     private val lock = ReentrantReadWriteLock()
-    private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
     @Throws(ProtoException::class)
     fun register(isHttps: Boolean, host: String, sessionChannels: SessionChannels): HttpFdDefaultImpl {
@@ -45,31 +40,9 @@ internal class HttpRegistry {
 
     fun getHttpFd(host: String): HttpFdDefaultImpl? = lock.read { hostHttpFds[host] }
 
-    fun httpFds() = lock.read { hostHttpFds.values.toList() }
+    fun getHttpFdList() = lock.read { hostHttpFds.values.toList() }
 
     fun forceOff(host: String) = getHttpFd(host)?.apply { forceOff() }
-
-    fun toJson(): JSONArray = lock.read {
-        if (hostHttpFds.isEmpty()) {
-            EMPTY_JSON_ARRAY
-        } else {
-            JSONArray(
-                hostHttpFds.values.map { fd ->
-                    JSONObject().apply {
-                        put("host", fd.host)
-                        put("conns", fd.connectionCount)
-                        put("name", fd.tunnelRequest.name)
-                        put("localAddr", fd.tunnelRequest.localAddr)
-                        put("localPort", fd.tunnelRequest.localPort)
-                        put("inboundBytes", fd.statistics.inboundBytes)
-                        put("outboundBytes", fd.statistics.outboundBytes)
-                        put("createAt", sdf.format(fd.statistics.createAt))
-                        put("updateAt", sdf.format(fd.statistics.updateAt))
-                    }
-                }
-            )
-        }
-    }
 
     private fun unsafeUnregister(host: String?) {
         host ?: return

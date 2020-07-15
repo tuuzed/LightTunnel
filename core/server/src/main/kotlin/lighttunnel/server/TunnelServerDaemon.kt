@@ -23,9 +23,11 @@ import lighttunnel.openapi.listener.OnTcpTunnelStateListener
 import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.http.HttpTunnel
+import lighttunnel.server.http.toJson
 import lighttunnel.server.tcp.TcpFdDefaultImpl
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
+import lighttunnel.server.tcp.toJson
 import lighttunnel.server.traffic.TrafficHandler
 import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantLock
@@ -182,7 +184,12 @@ internal class TunnelServerDaemon(
         ) {
             route("/api/version") {
                 val content = JSONObject().apply {
-                    put("version", BuildConfig.VERSION_NAME)
+                    put("name", "lts")
+                    put("versionName", BuildConfig.VERSION_NAME)
+                    put("versionCode", BuildConfig.VERSION_CODE)
+                    put("buildDate", BuildConfig.BUILD_DATA)
+                    put("commitSha", BuildConfig.LAST_COMMIT_SHA)
+                    put("commitDate", BuildConfig.LAST_COMMIT_DATE)
                 }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,

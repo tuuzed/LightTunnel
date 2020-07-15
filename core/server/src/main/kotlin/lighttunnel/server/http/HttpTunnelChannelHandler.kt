@@ -5,7 +5,8 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.*
+import io.netty.util.CharsetUtil
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
@@ -77,12 +78,12 @@ internal class HttpTunnelChannelHandler(
             return
         }
         // 是否注册过隧道
-        ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
         val httpFd = registry.getHttpFd(httpHost)
         if (httpFd == null) {
-            ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(noRegisteredTunnelHttpResponse)).addListener(ChannelFutureListener.CLOSE)
             return
         }
+        ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
         // 拦截器
         val httpInterceptorResponse = interceptor.handleHttpRequest(ctx, httpFd.tunnelRequest, msg)
         if (httpInterceptorResponse != null) {
@@ -98,5 +99,19 @@ internal class HttpTunnelChannelHandler(
         val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg))
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
+
+    private val noRegisteredTunnelHttpResponse: HttpResponse
+        get() {
+            val content = Unpooled.copiedBuffer("There is no registered tunnel!", CharsetUtil.UTF_8)
+            return DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.FORBIDDEN,
+                content
+            ).also {
+                it.headers()
+                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
+                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+            }
+        }
 
 }

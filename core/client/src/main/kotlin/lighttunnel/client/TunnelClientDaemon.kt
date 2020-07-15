@@ -136,7 +136,12 @@ internal class TunnelClientDaemon(
         ) {
             route("/api/version") {
                 val content = JSONObject().apply {
-                    put("version", BuildConfig.VERSION_NAME)
+                    put("name", "ltc")
+                    put("versionName", BuildConfig.VERSION_NAME)
+                    put("versionCode", BuildConfig.VERSION_CODE)
+                    put("buildDate", BuildConfig.BUILD_DATA)
+                    put("commitSha", BuildConfig.LAST_COMMIT_SHA)
+                    put("commitDate", BuildConfig.LAST_COMMIT_DATE)
                 }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
