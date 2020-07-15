@@ -165,7 +165,7 @@ internal class TunnelServerDaemon(
     }
 
     private inner class InnerTunnelServerChannelHandler(
-        tunnelRequestInterceptor: TunnelRequestInterceptor
+        tunnelRequestInterceptor: TunnelRequestInterceptor?
     ) : TunnelServerDaemonChannelHandler(
         tunnelRequestInterceptor = tunnelRequestInterceptor,
         tunnelIds = tunnelIds,

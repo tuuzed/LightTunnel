@@ -9,13 +9,4 @@ interface HttpTunnelRequestInterceptor {
 
     fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse?
 
-    companion object {
-        @JvmStatic
-        val emptyImpl: HttpTunnelRequestInterceptor by lazy {
-            object : HttpTunnelRequestInterceptor {
-                override fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? = null
-            }
-        }
-    }
-
 }

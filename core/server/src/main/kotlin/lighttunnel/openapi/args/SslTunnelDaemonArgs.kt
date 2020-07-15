@@ -7,6 +7,6 @@ import lighttunnel.openapi.TunnelRequestInterceptor
 class SslTunnelDaemonArgs(
     val bindAddr: String? = null,
     val bindPort: Int? = null,
-    val tunnelRequestInterceptor: TunnelRequestInterceptor = TunnelRequestInterceptor.emptyImpl,
+    val tunnelRequestInterceptor: TunnelRequestInterceptor? = null,
     val sslContext: SslContext = SslContextUtil.forBuiltinServer()
 )

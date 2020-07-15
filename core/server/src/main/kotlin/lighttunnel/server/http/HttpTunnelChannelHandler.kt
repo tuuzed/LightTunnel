@@ -21,7 +21,7 @@ import lighttunnel.server.util.AK_SESSION_ID
 internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
     private val httpPlugin: HttpPlugin? = null,
-    private val interceptor: HttpTunnelRequestInterceptor
+    private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor? = null
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
     private val logger by loggerDelegate()
 
@@ -85,7 +85,7 @@ internal class HttpTunnelChannelHandler(
         }
         ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
         // 拦截器
-        val httpInterceptorResponse = interceptor.handleHttpRequest(ctx, httpFd.tunnelRequest, msg)
+        val httpInterceptorResponse = httpTunnelRequestInterceptor?.handleHttpRequest(ctx, httpFd.tunnelRequest, msg)
         if (httpInterceptorResponse != null) {
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpInterceptorResponse))
             return

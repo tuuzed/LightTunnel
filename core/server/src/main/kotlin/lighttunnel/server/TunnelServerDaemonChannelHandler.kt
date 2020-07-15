@@ -20,7 +20,7 @@ import lighttunnel.server.util.AK_SESSION_CHANNELS
 import lighttunnel.server.util.SessionChannels
 
 internal abstract class TunnelServerDaemonChannelHandler(
-    private val tunnelRequestInterceptor: TunnelRequestInterceptor,
+    private val tunnelRequestInterceptor: TunnelRequestInterceptor?,
     private val tunnelIds: IncIds,
     private val tcpTunnel: TcpTunnel? = null,
     private val httpTunnel: HttpTunnel? = null,
@@ -85,7 +85,8 @@ internal abstract class TunnelServerDaemonChannelHandler(
         logger.trace("doHandleRequestMessage# {}, {}", ctx, msg)
         try {
             val originalTunnelRequest = TunnelRequest.fromBytes(msg.head)
-            val finalTunnelRequest = tunnelRequestInterceptor.handleTunnelRequest(originalTunnelRequest)
+            val finalTunnelRequest = tunnelRequestInterceptor?.handleTunnelRequest(originalTunnelRequest)
+                ?: originalTunnelRequest
             logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
             when (finalTunnelRequest.type) {
                 TunnelRequest.Type.TCP -> {

@@ -2,6 +2,6 @@
 
 package ltcmd.server
 
-import lighttunnel.server.app.Application
+import lighttunnel.cmd.server.Application
 
 fun main(args: Array<String>) = Application().execute(args)

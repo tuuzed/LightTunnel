@@ -4,6 +4,12 @@ include ":core:base"
 include ":core:client"
 include ":core:server"
 
+
+include ":core-ext:base"
+include ":core-ext:client"
+include ":core-ext:server"
+
+
 include ":cmd:base"
 include ":cmd:client"
 include ":cmd:server"

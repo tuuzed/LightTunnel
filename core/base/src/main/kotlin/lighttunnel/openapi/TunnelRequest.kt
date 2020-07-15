@@ -4,11 +4,9 @@ package lighttunnel.openapi
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
-import lighttunnel.base.util.getOrDefault
 import lighttunnel.base.util.toStringMap
 import org.json.JSONObject
 import java.io.Serializable
-
 
 class TunnelRequest private constructor(
     val type: Type,
@@ -19,16 +17,10 @@ class TunnelRequest private constructor(
 
     companion object {
         private const val serialVersionUID = 1L
-        private val CHARSET = Charsets.UTF_8
 
         // 协议版本
-        private const val PROTO_VERSION = "\$proto_version"
-
-        // tcp
-        private const val REMOTE_PORT = "\$remote_port"
-
-        // http & https
-        private const val HOST = "\$host"
+        private const val PROTO_VERSION: Int = 1
+        private val CHARSET = Charsets.UTF_8
 
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): TunnelRequest {
@@ -39,10 +31,27 @@ class TunnelRequest private constructor(
                 val localAddrBytes = ByteArray(buffer.readInt())
                 buffer.readBytes(localAddrBytes)
                 val localAddr = String(localAddrBytes, CHARSET)
+                var remotePort = 0
+                var host = ""
+                when (type) {
+                    Type.TCP -> {
+                        remotePort = buffer.readInt()
+                    }
+                    Type.HTTP, Type.HTTPS -> {
+                        val hostBytes = ByteArray(buffer.readInt())
+                        buffer.readBytes(hostBytes)
+                        host = String(hostBytes, CHARSET)
+                    }
+                    else -> error("type error")
+                }
+                // extras
                 val extrasBytes = ByteArray(buffer.readInt())
                 buffer.readBytes(extrasBytes)
                 val extras = JSONObject(String(extrasBytes, CHARSET))
-                return TunnelRequest(type, localAddr, localPort, extras)
+                return TunnelRequest(type, localAddr, localPort, extras).also {
+                    it.remotePort = remotePort
+                    it.host = host
+                }
             } catch (e: Exception) {
                 throw ProtoException("解析失败，数据异常", e)
             } finally {
@@ -57,10 +66,7 @@ class TunnelRequest private constructor(
             vararg extras: Pair<String, String>,
             extFunc: (TunnelRequest.() -> Unit)? = null
         ): TunnelRequest {
-            extras.forEach { require(!it.first.startsWith("\$")) { "`\$`打头的key为系统保留的key" } }
             val finalExtras = JSONObject()
-            finalExtras.put(PROTO_VERSION, 1)
-            finalExtras.put(REMOTE_PORT, remotePort)
             extras.forEach { finalExtras.put(it.first, it.second) }
             return TunnelRequest(
                 type = Type.TCP,
@@ -68,6 +74,7 @@ class TunnelRequest private constructor(
                 localPort = localPort,
                 extras = finalExtras
             ).also {
+                it.remotePort = remotePort
                 extFunc?.invoke(it)
             }
         }
@@ -80,10 +87,7 @@ class TunnelRequest private constructor(
             vararg extras: Pair<String, String>,
             extFunc: (TunnelRequest.() -> Unit)? = null
         ): TunnelRequest {
-            extras.forEach { require(!it.first.startsWith("\$")) { "`\$`打头的key为系统保留的key" } }
             val finalExtras = JSONObject()
-            finalExtras.put(PROTO_VERSION, 1)
-            finalExtras.put(HOST, host)
             extras.forEach { finalExtras.put(it.first, it.second) }
             return TunnelRequest(
                 type = if (https) Type.HTTPS else Type.HTTP,
@@ -91,19 +95,22 @@ class TunnelRequest private constructor(
                 localPort = localPort,
                 extras = finalExtras
             ).also {
+                it.host = host
                 extFunc?.invoke(it)
             }
         }
     }
 
     // tcp
-    val protoVersion get() = (extras.getOrDefault<Int?>(PROTO_VERSION, null) ?: error("protoVersion == null"))
+    val protoVersion get() = PROTO_VERSION
 
     // tcp
-    val remotePort get() = (extras.getOrDefault<Int?>(REMOTE_PORT, null) ?: error("remotePort == null"))
+    var remotePort: Int = 0
+        private set
 
     // http & https
-    val host get() = extras.getOrDefault<String?>(HOST, null) ?: error("host == null")
+    var host: String = ""
+        private set
 
     // extras
     fun <T> getExtra(key: String): T? {
@@ -128,13 +135,40 @@ class TunnelRequest private constructor(
         extras.remove(key)
     }
 
-    fun toBytes() = toBytesInternal()
+    fun toBytes(): ByteArray {
+        val buffer = Unpooled.buffer()
+        try {
+            // proto version
+            buffer.writeByte(PROTO_VERSION)
+            buffer.writeByte(type.code.toInt())
+            buffer.writeInt(localPort)
+            localAddr.toByteArray(CHARSET).also {
+                buffer.writeInt(it.size)
+                buffer.writeBytes(it)
+            }
+            when (type) {
+                Type.TCP -> buffer.writeInt(remotePort)
+                Type.HTTP, Type.HTTPS -> host.toByteArray(CHARSET).also {
+                    buffer.writeInt(it.size)
+                    buffer.writeBytes(it)
+                }
+                else -> error("type error")
+            }
+            extras.toString().toByteArray(CHARSET).also {
+                buffer.writeInt(it.size)
+                buffer.writeBytes(it)
+            }
+            return ByteBufUtil.getBytes(buffer)
+        } finally {
+            buffer.release()
+        }
+    }
 
     fun copyTcp(
         localAddr: String = this.localAddr,
         localPort: Int = this.localPort,
         remotePort: Int = this.remotePort,
-        vararg extras: Pair<String, String> = withoutSystemExtras().map { it.key to it.value }.toTypedArray(),
+        vararg extras: Pair<String, String> = this.extras.toStringMap().map { it.key to it.value }.toTypedArray(),
         extFunc: (TunnelRequest.() -> Unit)? = null
     ) = forTcp(
         localAddr = localAddr,
@@ -150,7 +184,7 @@ class TunnelRequest private constructor(
         localAddr: String = this.localAddr,
         localPort: Int = this.localPort,
         host: String = this.host,
-        vararg extras: Pair<String, String> = withoutSystemExtras().map { it.key to it.value }.toTypedArray(),
+        vararg extras: Pair<String, String> = this.extras.toStringMap().map { it.key to it.value }.toTypedArray(),
         extFunc: (TunnelRequest.() -> Unit)? = null
     ) = forHttp(
         https = https,
@@ -176,27 +210,6 @@ class TunnelRequest private constructor(
             else -> ""
         }
     }
-
-    private fun toBytesInternal(): ByteArray {
-        val buffer = Unpooled.buffer()
-        try {
-            buffer.writeByte(type.code.toInt())
-            buffer.writeInt(localPort)
-            localAddr.toByteArray(CHARSET).also {
-                buffer.writeInt(it.size)
-                buffer.writeBytes(it)
-            }
-            extras.toString().toByteArray(CHARSET).also {
-                buffer.writeInt(it.size)
-                buffer.writeBytes(it)
-            }
-            return ByteBufUtil.getBytes(buffer)
-        } finally {
-            buffer.release()
-        }
-    }
-
-    private fun withoutSystemExtras() = extras.toStringMap().filterNot { it.key.startsWith("\$") }
 
     enum class Type(val code: Byte) {
         UNKNOWN(0x00.toByte()),

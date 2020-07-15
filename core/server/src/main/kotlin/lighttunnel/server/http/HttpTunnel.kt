@@ -26,7 +26,7 @@ internal class HttpTunnel(
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 1024 * 1024 * 8,
     private val httpPlugin: HttpPlugin? = null,
-    private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor
+    private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor? = null
 ) {
     private val logger by loggerDelegate()
     private val serverBootstrap = ServerBootstrap()
@@ -51,7 +51,7 @@ internal class HttpTunnel(
                         .addLast("handler", HttpTunnelChannelHandler(
                             registry = registry,
                             httpPlugin = httpPlugin,
-                            interceptor = httpTunnelRequestInterceptor
+                            httpTunnelRequestInterceptor = httpTunnelRequestInterceptor
                         ))
                 }
             })
