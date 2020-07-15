@@ -1,10 +1,8 @@
-@file:JvmName("-JsonObjectKt")
-
 package lighttunnel.base.util
 
 import org.json.JSONObject
 
-internal fun JSONObject?.toStringMap(): Map<String, String> {
+fun JSONObject?.toStringMap(): Map<String, String> {
     this ?: return emptyMap()
     val map = mutableMapOf<String, String>()
     this.keys().forEach {
@@ -16,8 +14,7 @@ internal fun JSONObject?.toStringMap(): Map<String, String> {
     return map
 }
 
-
-internal inline fun <reified T> JSONObject.getOrDefault(key: String, def: T): T {
+inline fun <reified T> JSONObject.getOrDefault(key: String, def: T): T {
     if (this.has(key)) {
         val value = this.get(key)
         if (value is T) {

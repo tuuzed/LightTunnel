@@ -14,14 +14,14 @@ import lighttunnel.base.util.HttpUtil
 import lighttunnel.base.util.LongUtil
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.http.HttpPlugin
-import lighttunnel.openapi.http.HttpRequestInterceptor
+import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import lighttunnel.server.util.AK_HTTP_HOST
 import lighttunnel.server.util.AK_SESSION_ID
 
 internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
     private val httpPlugin: HttpPlugin? = null,
-    private val interceptor: HttpRequestInterceptor
+    private val interceptor: HttpTunnelRequestInterceptor
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
     private val logger by loggerDelegate()
 

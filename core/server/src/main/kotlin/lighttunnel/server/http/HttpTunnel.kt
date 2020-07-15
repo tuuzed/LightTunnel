@@ -13,7 +13,7 @@ import io.netty.handler.ssl.SslHandler
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.openapi.ProtoException
 import lighttunnel.openapi.http.HttpPlugin
-import lighttunnel.openapi.http.HttpRequestInterceptor
+import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import lighttunnel.server.util.SessionChannels
 
 
@@ -26,7 +26,7 @@ internal class HttpTunnel(
     private val sslContext: SslContext? = null,
     private val maxContentLength: Int = 1024 * 1024 * 8,
     private val httpPlugin: HttpPlugin? = null,
-    private val interceptor: HttpRequestInterceptor
+    private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor
 ) {
     private val logger by loggerDelegate()
     private val serverBootstrap = ServerBootstrap()
@@ -51,7 +51,7 @@ internal class HttpTunnel(
                         .addLast("handler", HttpTunnelChannelHandler(
                             registry = registry,
                             httpPlugin = httpPlugin,
-                            interceptor = interceptor
+                            interceptor = httpTunnelRequestInterceptor
                         ))
                 }
             })

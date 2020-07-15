@@ -8,6 +8,7 @@ import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.util.SslContextUtil
 import lighttunnel.cmd.AbstractApplication
+import lighttunnel.cmd.ext.*
 import lighttunnel.cmd.http.server.HttpServer
 import lighttunnel.cmd.util.IpAddressUtil
 import lighttunnel.cmd.util.asInt
@@ -209,10 +210,12 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             return TunnelRequest.forTcp(
                 localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1",
                 localPort = tunnel["local_port"].asInt() ?: 80,
-                remotePort = tunnel["remote_port"].asInt() ?: 0,
-                name = tunnel.name,
+                remotePort = tunnel["remote_port"].asInt() ?: 0
+            ) {
+                name = tunnel.name
+                version = BuildConfig.VERSION_NAME
                 authToken = basic["auth_token"]
-            )
+            }
         }
 
         private fun getHttpOrHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
@@ -230,16 +233,18 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 https = https,
                 localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1",
                 localPort = tunnel["local_port"].asInt() ?: 80,
-                name = tunnel.name,
-                authToken = basic["auth_token"],
-                host = tunnel["host"] ?: return null,
-                pxySetHeaders = proxySetHeaders,
-                pxyAddHeaders = proxyAddHeaders,
-                enableBasicAuth = tunnel["auth_enable"]?.toUpperCase() == "TRUE",
-                basicAuthRealm = tunnel["auth_realm"] ?: ".",
-                basicAuthUsername = tunnel["auth_username"] ?: "guest",
+                host = tunnel["host"] ?: return null
+            ) {
+                name = tunnel.name
+                version = BuildConfig.VERSION_NAME
+                authToken = basic["auth_token"]
+                pxySetHeaders = proxySetHeaders
+                pxyAddHeaders = proxyAddHeaders
+                enableBasicAuth = tunnel["auth_enable"]?.toUpperCase() == "TRUE"
+                basicAuthRealm = tunnel["auth_realm"] ?: "."
+                basicAuthUsername = tunnel["auth_username"] ?: "guest"
                 basicAuthPassword = tunnel["auth_password"] ?: "guest"
-            )
+            }
         }
 
         private fun setupLogConf(basic: Profile.Section) {

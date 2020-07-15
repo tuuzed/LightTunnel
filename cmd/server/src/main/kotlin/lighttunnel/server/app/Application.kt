@@ -9,6 +9,7 @@ import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.util.SslContextUtil
 import lighttunnel.cmd.AbstractApplication
+import lighttunnel.cmd.ext.name
 import lighttunnel.cmd.http.server.HttpServer
 import lighttunnel.cmd.util.asInt
 import lighttunnel.cmd.util.format
@@ -21,10 +22,13 @@ import lighttunnel.openapi.args.SslTunnelDaemonArgs
 import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.http.HttpPlugin
-import lighttunnel.openapi.http.HttpRequestInterceptor
+import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.openapi.listener.OnTcpTunnelStateListener
 import lighttunnel.openapi.tcp.TcpFd
+import lighttunnel.server.app.impls.HttpPluginStaticFileImpl
+import lighttunnel.server.app.impls.HttpTunnelRequestInterceptorDefaultImpl
+import lighttunnel.server.app.impls.TunnelRequestInterceptorDefaultImpl
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.cli.ParseException
@@ -153,13 +157,14 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
 
         private fun Application.getTunnelServer(basic: Profile.Section): TunnelServer {
             val tunnelRequestInterceptor = getTunnelRequestInterceptor(basic)
+            val httpTunnelRequestInterceptor = HttpTunnelRequestInterceptorDefaultImpl()
             return TunnelServer(
                 bossThreads = basic["boss_threads"].asInt() ?: -1,
                 workerThreads = basic["worker_threads"].asInt() ?: -1,
                 tunnelDaemonArgs = getTunnelDaemonArgs(basic, tunnelRequestInterceptor),
                 sslTunnelDaemonArgs = getSslTunnelDaemonArgs(basic, tunnelRequestInterceptor),
-                httpTunnelArgs = getHttpTunnelArgs(basic, HttpRequestInterceptor.defaultImpl),
-                httpsTunnelArgs = getHttpsTunnelArgs(basic, HttpRequestInterceptor.defaultImpl),
+                httpTunnelArgs = getHttpTunnelArgs(basic, httpTunnelRequestInterceptor),
+                httpsTunnelArgs = getHttpsTunnelArgs(basic, httpTunnelRequestInterceptor),
                 onTcpTunnelStateListener = this,
                 onHttpTunnelStateListener = this
             )
@@ -169,7 +174,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             val authToken = basic["auth_token"]
             val allowPorts = basic["allow_ports"]
             return if (authToken != null || allowPorts != null) {
-                TunnelRequestInterceptor.defaultImpl(authToken, allowPorts)
+                TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
             } else {
                 TunnelRequestInterceptor.emptyImpl
             }
@@ -200,12 +205,12 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             )
         }
 
-        private fun getHttpTunnelArgs(http: Profile.Section, httpRequestInterceptor: HttpRequestInterceptor): HttpTunnelArgs {
+        private fun getHttpTunnelArgs(http: Profile.Section, httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor): HttpTunnelArgs {
             val pluginSfPaths = http["plugin_sf_paths"]?.split(',')
             val pluginSfHosts = http["plugin_sf_hosts"]?.split(',')
-            var sfHttpPlugin: HttpPlugin? = null
+            var httpPlugin: HttpPlugin? = null
             if (!pluginSfPaths.isNullOrEmpty() && !pluginSfHosts.isNullOrEmpty()) {
-                sfHttpPlugin = HttpPlugin.staticFileImpl(
+                httpPlugin = HttpPluginStaticFileImpl(
                     paths = pluginSfPaths,
                     hosts = pluginSfHosts
                 )
@@ -213,17 +218,17 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             return HttpTunnelArgs(
                 bindAddr = http["bind_addr"],
                 bindPort = http["http_port"].asInt(),
-                httpRequestInterceptor = httpRequestInterceptor,
-                httpPlugin = sfHttpPlugin
+                httpTunnelRequestInterceptor = httpTunnelRequestInterceptor,
+                httpPlugin = httpPlugin
             )
         }
 
-        private fun getHttpsTunnelArgs(https: Profile.Section, httpRequestInterceptor: HttpRequestInterceptor): HttpsTunnelArgs {
+        private fun getHttpsTunnelArgs(https: Profile.Section, httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor): HttpsTunnelArgs {
             val pluginSfPaths = https["plugin_sf_paths"]?.split(',')
             val pluginSfHosts = https["plugin_sf_hosts"]?.split(',')
-            var sfHttpPlugin: HttpPlugin? = null
+            var httpPlugin: HttpPlugin? = null
             if (!pluginSfPaths.isNullOrEmpty() && !pluginSfHosts.isNullOrEmpty()) {
-                sfHttpPlugin = HttpPlugin.staticFileImpl(
+                httpPlugin = HttpPluginStaticFileImpl(
                     paths = pluginSfPaths,
                     hosts = pluginSfHosts
                 )
@@ -231,8 +236,8 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             return HttpsTunnelArgs(
                 bindAddr = https["bind_addr"],
                 bindPort = https["https_port"].asInt(),
-                httpRequestInterceptor = httpRequestInterceptor,
-                httpPlugin = sfHttpPlugin,
+                httpTunnelRequestInterceptor = httpTunnelRequestInterceptor,
+                httpPlugin = httpPlugin,
                 sslContext = try {
                     val jks = https["https_jks"] ?: "lts.jks"
                     val storePassword = https["https_key_password"] ?: "ltspass"

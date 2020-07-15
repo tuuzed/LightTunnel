@@ -1,6 +1,7 @@
-package lighttunnel.server
+package lighttunnel.server.app.impls
 
 import lighttunnel.base.util.PortUtil
+import lighttunnel.cmd.ext.authToken
 import lighttunnel.openapi.ProtoException
 import lighttunnel.openapi.TunnelRequest
 import lighttunnel.openapi.TunnelRequestInterceptor

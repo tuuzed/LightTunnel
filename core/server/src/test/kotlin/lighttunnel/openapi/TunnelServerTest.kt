@@ -6,7 +6,6 @@ import lighttunnel.openapi.args.HttpTunnelArgs
 import lighttunnel.openapi.args.HttpsTunnelArgs
 import lighttunnel.openapi.args.SslTunnelDaemonArgs
 import lighttunnel.openapi.args.TunnelDaemonArgs
-import lighttunnel.openapi.http.HttpPlugin
 import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
@@ -33,21 +32,12 @@ class TunnelServerTest {
             sslContext = SslContextUtil.forBuiltinServer()
         )
         val httpTunnelArgs = HttpTunnelArgs(
-            bindPort = 8080,
-            httpPlugin = HttpPlugin.staticFileImpl(
-                paths = listOf("C:\\", "D:\\"),
-                hosts = listOf("tunnel.lo")
-            )
+            bindPort = 8080
         )
         val httpsTunnelArgs = HttpsTunnelArgs(
             bindPort = 8443,
-            httpPlugin = HttpPlugin.staticFileImpl(
-                paths = listOf("C:\\", "D:\\"),
-                hosts = listOf("tunnel.lo")
-            ),
             sslContext = SslContextUtil.forBuiltinServer()
         )
-
         tunnelServer = TunnelServer(
             tunnelDaemonArgs = tunnelDaemonArgs,
             sslTunnelDaemonArgs = sslTunnelDaemonArgs,

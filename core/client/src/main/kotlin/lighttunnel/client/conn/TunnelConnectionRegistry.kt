@@ -1,7 +1,5 @@
 package lighttunnel.client.conn
 
-import org.json.JSONArray
-import org.json.JSONObject
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -21,15 +19,6 @@ internal class TunnelConnectionRegistry {
     }
 
     val tunnelConnectionList: List<DefaultTunnelConnectionImpl> get() = lock.read { cached }
-
-    fun toJson() = lock.read {
-        JSONArray(tunnelConnectionList.map {
-            JSONObject().apply {
-                put("name", it.tunnelRequest.name)
-                put("conn", it.toString())
-            }
-        })
-    }
 
 
 }
