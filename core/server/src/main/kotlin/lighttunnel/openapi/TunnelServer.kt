@@ -9,6 +9,7 @@ import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.openapi.listener.OnTcpTunnelStateListener
+import lighttunnel.openapi.listener.OnTrafficListener
 import lighttunnel.openapi.tcp.TcpFd
 import lighttunnel.server.TunnelServerDaemon
 import lighttunnel.server.http.HttpFdDefaultImpl
@@ -22,7 +23,8 @@ class TunnelServer(
     httpTunnelArgs: HttpTunnelArgs? = null,
     httpsTunnelArgs: HttpsTunnelArgs? = null,
     onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
-    onHttpTunnelStateListener: OnHttpTunnelStateListener? = null
+    onHttpTunnelStateListener: OnHttpTunnelStateListener? = null,
+    onTrafficListener: OnTrafficListener? = null
 ) {
     private val daemon by lazy {
         TunnelServerDaemon(
@@ -33,7 +35,8 @@ class TunnelServer(
             httpTunnelArgs = httpTunnelArgs,
             httpsTunnelArgs = httpsTunnelArgs,
             onTcpTunnelStateListener = onTcpTunnelStateListener,
-            onHttpTunnelStateListener = onHttpTunnelStateListener
+            onHttpTunnelStateListener = onHttpTunnelStateListener,
+            onTrafficListener = onTrafficListener
         )
     }
 
