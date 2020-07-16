@@ -1,6 +1,6 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
 
-group = "${rootProject.group}.core-ext"
+group = "${rootProject.group}.ext"
 version = rootProject.version
 
 sourceCompatibility = rootProject.jvm_version
