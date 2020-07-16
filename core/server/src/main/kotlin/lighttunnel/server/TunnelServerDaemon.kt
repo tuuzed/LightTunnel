@@ -19,6 +19,7 @@ import lighttunnel.openapi.args.SslTunnelDaemonArgs
 import lighttunnel.openapi.args.TunnelDaemonArgs
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.openapi.listener.OnTcpTunnelStateListener
+import lighttunnel.openapi.listener.OnTrafficListener
 import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.http.HttpTunnel
@@ -37,7 +38,8 @@ internal class TunnelServerDaemon(
     httpTunnelArgs: HttpTunnelArgs?,
     httpsTunnelArgs: HttpsTunnelArgs?,
     private val onTcpTunnelStateListener: OnTcpTunnelStateListener?,
-    private val onHttpTunnelStateListener: OnHttpTunnelStateListener?
+    private val onHttpTunnelStateListener: OnHttpTunnelStateListener?,
+    private val onTrafficListener: OnTrafficListener?
 ) {
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
@@ -80,7 +82,7 @@ internal class TunnelServerDaemon(
                 override fun initChannel(ch: SocketChannel?) {
                     ch ?: return
                     ch.pipeline()
-                        .addLast("traffic", TrafficHandler())
+                        .addLast("traffic", TrafficHandler(onTrafficListener))
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
@@ -106,7 +108,7 @@ internal class TunnelServerDaemon(
                     ch ?: return
                     ch.pipeline()
                         .addFirst("ssl", args.sslContext.newHandler(ch.alloc()))
-                        .addLast("traffic", TrafficHandler())
+                        .addLast("traffic", TrafficHandler(onTrafficListener))
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())

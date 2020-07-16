@@ -2,26 +2,24 @@ package lighttunnel.server.util
 
 import lighttunnel.openapi.util.Statistics
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 internal class StatisticsDefaultImpl : Statistics {
+    private val inboundBytesAtomic = AtomicLong(0)
+    private val outboundBytesAtomic = AtomicLong(0)
+
     override val createAt: Date = Date()
     override val updateAt: Date = Date()
-
-    @Volatile
-    override var inboundBytes = 0L
-        private set
-
-    @Volatile
-    override var outboundBytes = 0L
-        private set
+    override val inboundBytes get() = inboundBytesAtomic.get()
+    override val outboundBytes get() = outboundBytesAtomic.get()
 
     fun incInboundBytes(bytes: Int) {
-        inboundBytes += bytes
+        inboundBytesAtomic.addAndGet(bytes.toLong())
         updateAt.time = System.currentTimeMillis()
     }
 
     fun incOutboundBytes(bytes: Int) {
-        outboundBytes += bytes
+        outboundBytesAtomic.addAndGet(bytes.toLong())
         updateAt.time = System.currentTimeMillis()
     }
 
