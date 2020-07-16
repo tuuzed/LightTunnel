@@ -7,6 +7,6 @@ import lighttunnel.openapi.TunnelRequest
 
 interface HttpTunnelRequestInterceptor {
 
-    fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse?
+    fun intercept(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse?
 
 }

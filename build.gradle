@@ -31,5 +31,5 @@ buildscript {
 apply plugin: "gitvc-gradle-plugin"
 
 group "lighttunnel"
-version GitVC.VERSION_NAME
+version GitVC.VERSION_NAME + ".EXP"
 

@@ -6,11 +6,14 @@ import io.netty.handler.codec.http.*
 import lighttunnel.openapi.BuildConfig
 import lighttunnel.openapi.TunnelServer
 import lighttunnel.openapi.ext.httpserver.HttpServer
-import lighttunnel.openapi.ext.util.format
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.tcp.TcpFd
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.concurrent.getOrSet
 
 fun TunnelServer.newHttpRpcServer(
     bossGroup: NioEventLoopGroup,
@@ -63,18 +66,24 @@ fun TunnelServer.newHttpRpcServer(
     }
 }
 
+private val t = ThreadLocal<MutableMap<String, DateFormat>>()
+
+private fun getDateFormat(pattern: String) = t.getOrSet { hashMapOf() }[pattern]
+    ?: SimpleDateFormat(pattern, Locale.getDefault()).also { t.get()[pattern] = it }
+
+private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? = this?.let { getDateFormat(pattern).format(this) }
 
 @Suppress("DuplicatedCode")
 private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
     return JSONArray(
         map { fd ->
             JSONObject().apply {
-                put("port", fd.tunnelRequest.remotePort)
-                put("conns", fd.connectionCount)
-                put("name", fd.tunnelRequest.name)
                 put("localAddr", fd.tunnelRequest.localAddr)
                 put("localPort", fd.tunnelRequest.localPort)
-                put("extras", fd.tunnelRequest.getExtras("ext.AUTH_TOKEN"))
+                put("remotePort", fd.tunnelRequest.remotePort)
+                put("extras", fd.tunnelRequest.extras)
+                //
+                put("conns", fd.connectionCount)
                 put("inboundBytes", fd.statistics.inboundBytes)
                 put("outboundBytes", fd.statistics.outboundBytes)
                 put("createAt", fd.statistics.createAt.format())
@@ -89,12 +98,12 @@ private fun List<HttpFd>.httpFdListToJson(): JSONArray {
     return JSONArray(
         map { fd ->
             JSONObject().apply {
-                put("host", fd.tunnelRequest.host)
-                put("conns", fd.connectionCount)
-                put("name", fd.tunnelRequest.name)
                 put("localAddr", fd.tunnelRequest.localAddr)
                 put("localPort", fd.tunnelRequest.localPort)
-                put("extras", fd.tunnelRequest.getExtras())
+                put("host", fd.tunnelRequest.host)
+                put("extras", fd.tunnelRequest.extras)
+                //
+                put("conns", fd.connectionCount)
                 put("inboundBytes", fd.statistics.inboundBytes)
                 put("outboundBytes", fd.statistics.outboundBytes)
                 put("createAt", fd.statistics.createAt.format())

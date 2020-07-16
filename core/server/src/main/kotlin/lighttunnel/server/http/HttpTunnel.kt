@@ -10,7 +10,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.ProtoException
 import lighttunnel.openapi.http.HttpPlugin
 import lighttunnel.openapi.http.HttpTunnelRequestInterceptor

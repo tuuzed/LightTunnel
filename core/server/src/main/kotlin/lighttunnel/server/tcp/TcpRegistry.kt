@@ -2,7 +2,7 @@
 
 package lighttunnel.server.tcp
 
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.ProtoException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -20,7 +20,7 @@ internal class TcpRegistry {
             throw ProtoException("port($port) already used")
         }
         lock.write { portTcpFds[port] = fd }
-        logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.getExtras())
+        logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.extras)
     }
 
     fun unregister(port: Int): TcpFdDefaultImpl? = lock.write {

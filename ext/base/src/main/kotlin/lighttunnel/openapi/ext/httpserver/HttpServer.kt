@@ -11,7 +11,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 
 
 class HttpServer(

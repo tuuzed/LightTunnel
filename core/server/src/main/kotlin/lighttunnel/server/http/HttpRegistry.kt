@@ -2,7 +2,7 @@
 
 package lighttunnel.server.http
 
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.ProtoException
 import lighttunnel.server.util.SessionChannels
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -22,7 +22,7 @@ internal class HttpRegistry {
         }
         return HttpFdDefaultImpl(isHttps, sessionChannels).also { fd ->
             lock.write { hostHttpFds[host] = fd }
-            logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.getExtras())
+            logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.extras)
         }
     }
 

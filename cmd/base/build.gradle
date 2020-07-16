@@ -11,8 +11,9 @@ dependencies {
     compile "org.ini4j:ini4j:0.5.4"
     // 命令参数解析
     compile "commons-cli:commons-cli:1.4"
+    // 日志
+    compile "org.slf4j:slf4j-log4j12:1.7.25"
     // base
-    compile project(":core:base")
     compile project(":ext:base")
     // 单元测试
     testCompile "junit:junit:4.12"

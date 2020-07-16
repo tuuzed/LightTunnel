@@ -3,7 +3,7 @@ package lighttunnel.base.proto
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 import java.util.concurrent.TimeUnit
 
 /**

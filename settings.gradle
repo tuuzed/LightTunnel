@@ -15,8 +15,3 @@ include ":cmd:base"
 include ":cmd:client"
 include ":cmd:server"
 
-// 二次开发包模块
-include ":sdk:all"
-include ":sdk:client"
-include ":sdk:server"
-

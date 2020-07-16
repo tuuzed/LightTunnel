@@ -2,8 +2,7 @@ package lighttunnel.cmd.client
 
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.logger.LoggerFactory
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.asInt
 import lighttunnel.cmd.localIpV4

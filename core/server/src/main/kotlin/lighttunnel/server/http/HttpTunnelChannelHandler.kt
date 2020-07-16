@@ -7,11 +7,11 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
-import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.HttpUtil
 import lighttunnel.base.util.LongUtil
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.http.HttpPlugin
 import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
@@ -85,7 +85,7 @@ internal class HttpTunnelChannelHandler(
         }
         ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
         // 拦截器
-        val httpInterceptorResponse = httpTunnelRequestInterceptor?.handleHttpRequest(ctx, httpFd.tunnelRequest, msg)
+        val httpInterceptorResponse = httpTunnelRequestInterceptor?.intercept(ctx, httpFd.tunnelRequest, msg)
         if (httpInterceptorResponse != null) {
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpInterceptorResponse))
             return

@@ -1,11 +1,9 @@
 package lighttunnel.openapi
 
-import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.openapi.args.HttpTunnelArgs
 import lighttunnel.openapi.args.HttpsTunnelArgs
 import lighttunnel.openapi.args.SslTunnelDaemonArgs
 import lighttunnel.openapi.args.TunnelDaemonArgs
-import org.apache.log4j.Level
 import org.junit.Before
 import org.junit.Test
 
@@ -15,14 +13,6 @@ class TunnelServerTest {
 
     @Before
     fun setUp() {
-        LoggerFactory.configConsole(Level.OFF, names = *arrayOf(
-            "io.netty",
-            "org.ini4j",
-            "org.slf4j",
-            "org.json",
-            "org.apache.commons.cli"
-        ))
-        LoggerFactory.configConsole(level = Level.ALL)
         val tunnelDaemonArgs = TunnelDaemonArgs(
             bindPort = 5080
         )

@@ -1,7 +1,8 @@
 package lighttunnel.openapi.ext
 
-import lighttunnel.base.util.toStringMap
 import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.getOrDefault
+import lighttunnel.openapi.getOrNull
 import org.json.JSONObject
 
 private const val NAME = "ext.NAME"
@@ -15,41 +16,51 @@ private const val PXY_SET_HEADERS = "ext.PXY_SET_HEADERS"
 private const val PXY_ADD_HEADERS = "ext.PXY_ADD_HEADERS"
 
 var TunnelRequest.name: String?
-    get() = getExtra(NAME)
-    set(value) = if (value == null) removeExtra(NAME) else setExtra(NAME, value)
+    get() = extras.getOrNull(NAME)
+    set(value) = run { if (value == null) extras.remove(NAME) else extras.put(NAME, value) }
 
 var TunnelRequest.version: String?
-    get() = getExtra(VERSION)
-    set(value) = if (value == null) removeExtra(VERSION) else setExtra(VERSION, value)
+    get() = extras.getOrNull(VERSION)
+    set(value) = run { if (value == null) extras.remove(VERSION) else extras.put(VERSION, value) }
 
 var TunnelRequest.authToken: String?
-    get() = getExtra(AUTH_TOKEN)
-    set(value) = if (value == null) removeExtra(AUTH_TOKEN) else setExtra(AUTH_TOKEN, value)
+    get() = extras.getOrNull(AUTH_TOKEN)
+    set(value) = run { if (value == null) extras.remove(AUTH_TOKEN) else extras.put(AUTH_TOKEN, value) }
 
 var TunnelRequest.enableBasicAuth: Boolean
-    get() = getExtra<Boolean?>(ENABLE_BASIC_AUTH) == true
-    set(value) = if (!value) removeExtra(ENABLE_BASIC_AUTH) else setExtra(ENABLE_BASIC_AUTH, value)
+    get() = extras.getOrNull<Boolean>(ENABLE_BASIC_AUTH) == true
+    set(value) = run { if (!value) extras.remove(ENABLE_BASIC_AUTH) else extras.put(ENABLE_BASIC_AUTH, value) }
 
 var TunnelRequest.basicAuthRealm: String?
-    get() = getExtra(BASIC_AUTH_REALM)
-    set(value) = if (value == null) removeExtra(BASIC_AUTH_REALM) else setExtra(BASIC_AUTH_REALM, value)
+    get() = extras.getOrNull(BASIC_AUTH_REALM)
+    set(value) = run { if (value == null) extras.remove(BASIC_AUTH_REALM) else extras.put(BASIC_AUTH_REALM, value) }
 
 var TunnelRequest.basicAuthUsername: String?
-    get() = getExtra(BASIC_AUTH_USERNAME)
-    set(value) = if (value == null) removeExtra(BASIC_AUTH_USERNAME) else setExtra(BASIC_AUTH_USERNAME, value)
+    get() = extras.getOrNull(BASIC_AUTH_USERNAME)
+    set(value) = run { if (value == null) extras.remove(BASIC_AUTH_USERNAME) else extras.put(BASIC_AUTH_USERNAME, value) }
 
 
 var TunnelRequest.basicAuthPassword: String?
-    get() = getExtra(BASIC_AUTH_PASSWORD)
-    set(value) = if (value == null) removeExtra(BASIC_AUTH_PASSWORD) else setExtra(BASIC_AUTH_PASSWORD, value)
+    get() = extras.getOrNull(BASIC_AUTH_PASSWORD)
+    set(value) = run { if (value == null) extras.remove(BASIC_AUTH_PASSWORD) else extras.put(BASIC_AUTH_PASSWORD, value) }
 
 
 var TunnelRequest.pxySetHeaders: Map<String, String>
-    get() = getExtra<JSONObject>(PXY_SET_HEADERS).toStringMap()
-    set(value) = if (value.isEmpty()) removeExtra(PXY_SET_HEADERS) else setExtra(PXY_SET_HEADERS, JSONObject(value))
+    get() = extras.getOrNull<JSONObject>(PXY_SET_HEADERS).toStringMap()
+    set(value) = run { if (value.isEmpty()) extras.remove(PXY_SET_HEADERS) else extras.put(PXY_SET_HEADERS, value) }
 
 var TunnelRequest.pxyAddHeaders: Map<String, String>
-    get() = getExtra<JSONObject>(PXY_ADD_HEADERS).toStringMap()
-    set(value) = if (value.isEmpty()) removeExtra(PXY_ADD_HEADERS) else setExtra(PXY_ADD_HEADERS, JSONObject(value))
+    get() = extras.getOrNull<JSONObject>(PXY_ADD_HEADERS).toStringMap()
+    set(value) = run { if (value.isEmpty()) extras.remove(PXY_ADD_HEADERS) else extras.put(PXY_ADD_HEADERS, value) }
 
+private fun JSONObject?.toStringMap(): Map<String, String> {
+    this ?: return emptyMap()
+    val map = mutableMapOf<String, String>()
+    keys().forEach { key ->
+        getOrDefault<String?>(key, null)?.also { value ->
+            map[key] = value
+        }
+    }
+    return map
+}
 

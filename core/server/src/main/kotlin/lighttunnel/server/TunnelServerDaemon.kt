@@ -7,11 +7,11 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
 import lighttunnel.base.util.IncIds
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.TunnelRequestInterceptor
 import lighttunnel.openapi.args.HttpTunnelArgs
 import lighttunnel.openapi.args.HttpsTunnelArgs

@@ -8,10 +8,10 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.client.conn.DefaultTunnelConnectionImpl
 import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient

@@ -4,14 +4,15 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.IncIds
 import lighttunnel.base.util.LongUtil
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.ProtoException
 import lighttunnel.openapi.TunnelRequest
 import lighttunnel.openapi.TunnelRequestInterceptor
+import lighttunnel.openapi.TunnelType
 import lighttunnel.server.http.HttpFdDefaultImpl
 import lighttunnel.server.http.HttpTunnel
 import lighttunnel.server.tcp.TcpFdDefaultImpl
@@ -37,10 +38,10 @@ internal abstract class TunnelServerDaemonChannelHandler(
             return
         }
         ctx.channel().attr(AK_SESSION_CHANNELS).get()?.also { sc ->
-            when (sc.tunnelRequest.type) {
-                TunnelRequest.Type.TCP -> onChannelInactive(ctx, tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort))
-                TunnelRequest.Type.HTTP -> onChannelInactive(ctx, httpTunnel?.stopTunnel(sc.tunnelRequest.host))
-                TunnelRequest.Type.HTTPS -> onChannelInactive(ctx, httpsTunnel?.stopTunnel(sc.tunnelRequest.host))
+            when (sc.tunnelRequest.tunnelType) {
+                TunnelType.TCP -> onChannelInactive(ctx, tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort))
+                TunnelType.HTTP -> onChannelInactive(ctx, httpTunnel?.stopTunnel(sc.tunnelRequest.host))
+                TunnelType.HTTPS -> onChannelInactive(ctx, httpsTunnel?.stopTunnel(sc.tunnelRequest.host))
                 else -> {
                     // Nothing
                 }
@@ -85,19 +86,19 @@ internal abstract class TunnelServerDaemonChannelHandler(
         logger.trace("doHandleRequestMessage# {}, {}", ctx, msg)
         try {
             val originalTunnelRequest = TunnelRequest.fromBytes(msg.head)
-            val finalTunnelRequest = tunnelRequestInterceptor?.handleTunnelRequest(originalTunnelRequest)
+            val finalTunnelRequest = tunnelRequestInterceptor?.intercept(originalTunnelRequest)
                 ?: originalTunnelRequest
             logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
-            when (finalTunnelRequest.type) {
-                TunnelRequest.Type.TCP -> {
+            when (finalTunnelRequest.tunnelType) {
+                TunnelType.TCP -> {
                     val tcpTunnel = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
                     tcpTunnel.handleTcpRequestMessage(ctx, finalTunnelRequest)
                 }
-                TunnelRequest.Type.HTTP -> {
+                TunnelType.HTTP -> {
                     val httpTunnel = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
                     httpTunnel.handleHttpRequestMessage(ctx, finalTunnelRequest)
                 }
-                TunnelRequest.Type.HTTPS -> {
+                TunnelType.HTTPS -> {
                     val httpsTunnel = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
                     httpsTunnel.handleHttpRequestMessage(ctx, finalTunnelRequest)
                 }

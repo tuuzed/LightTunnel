@@ -5,15 +5,16 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.LongUtil
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.client.conn.DefaultTunnelConnectionImpl
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.util.*
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.TunnelRequest
+import lighttunnel.openapi.TunnelType
 import lighttunnel.openapi.listener.OnRemoteConnectionListener
 import java.nio.charset.StandardCharsets
 
@@ -108,8 +109,8 @@ internal class TunnelClientDaemonChannelHandler(
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AK_SESSION_ID).set(msg.sessionId)
         val tunnelRequest = ctx.channel().attr(AK_TUNNEL_REQUEST).get()
-        when (tunnelRequest?.type) {
-            TunnelRequest.Type.TCP, TunnelRequest.Type.HTTP, TunnelRequest.Type.HTTPS -> {
+        when (tunnelRequest?.tunnelType) {
+            TunnelType.TCP, TunnelType.HTTP, TunnelType.HTTPS -> {
                 localTcpClient.acquireLocalChannel(
                     tunnelRequest.localAddr, tunnelRequest.localPort,
                     msg.tunnelId, msg.sessionId,

@@ -7,7 +7,6 @@ sourceCompatibility = rootProject.jvm_version
 
 dependencies {
     compile project(":cmd:base")
-    compile project(":core:server")
     compile project(":ext:server")
     // 单元测试
     testCompile "junit:junit:4.12"

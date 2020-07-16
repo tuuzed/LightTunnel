@@ -17,7 +17,7 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
         private const val MAGIC_VALUE_REMOTE_ADDR = "\$remote_addr"
     }
 
-    override fun handleHttpRequest(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? {
+    override fun intercept(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? {
         val localAddress = ctx.channel().localAddress()
         val remoteAddress = ctx.channel().remoteAddress()
         handleRewriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)

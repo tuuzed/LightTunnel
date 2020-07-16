@@ -64,7 +64,7 @@ private fun List<TunnelConnection>.tunnelConnectionListToJson(): JSONArray {
         JSONObject().apply {
             put("name", it.tunnelRequest.name)
             put("request", it.toString())
-            put("extras", it.tunnelRequest.getExtras())
+            put("extras", it.tunnelRequest.extras)
         }
     })
 }

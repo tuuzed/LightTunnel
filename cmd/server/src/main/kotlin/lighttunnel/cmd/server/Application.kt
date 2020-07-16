@@ -3,8 +3,7 @@
 package lighttunnel.cmd.server
 
 import io.netty.channel.nio.NioEventLoopGroup
-import lighttunnel.base.logger.LoggerFactory
-import lighttunnel.base.logger.loggerDelegate
+import lighttunnel.base.util.loggerDelegate
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.asInt
 import lighttunnel.openapi.BuildConfig
@@ -15,10 +14,7 @@ import lighttunnel.openapi.args.HttpTunnelArgs
 import lighttunnel.openapi.args.HttpsTunnelArgs
 import lighttunnel.openapi.args.SslTunnelDaemonArgs
 import lighttunnel.openapi.args.TunnelDaemonArgs
-import lighttunnel.openapi.ext.HttpPluginStaticFileImpl
-import lighttunnel.openapi.ext.HttpTunnelRequestInterceptorDefaultImpl
-import lighttunnel.openapi.ext.TunnelRequestInterceptorDefaultImpl
-import lighttunnel.openapi.ext.newHttpRpcServer
+import lighttunnel.openapi.ext.*
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.http.HttpPlugin
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
@@ -110,14 +106,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             )
         }
 
-        private fun getTunnelRequestInterceptor(basic: Profile.Section): TunnelRequestInterceptor? {
+        private fun getTunnelRequestInterceptor(basic: Profile.Section): TunnelRequestInterceptor {
             val authToken = basic["auth_token"]
             val allowPorts = basic["allow_ports"]
-            return if (authToken.isNullOrEmpty() || allowPorts.isNullOrEmpty()) {
-                TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
-            } else {
-                null
-            }
+            return TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
         }
 
         private fun getTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): TunnelDaemonArgs {
