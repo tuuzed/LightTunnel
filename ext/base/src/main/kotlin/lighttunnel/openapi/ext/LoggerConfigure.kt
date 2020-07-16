@@ -22,7 +22,7 @@ import org.apache.log4j.*
  %-20c  "-"号表示左对齐。
  %.30c  指定输出category的名称，最大的长度是30，如果category的名称长度大于30的话，就会将左边多出的字符截掉，但小于30的话也不会补空格。
  */
-class LoggerFactory private constructor(
+class LoggerConfigure private constructor(
     private val level: Level = Level.INFO,
     conversionPattern: String = defaultConsolePattern,
     // console
@@ -44,19 +44,12 @@ class LoggerFactory private constructor(
         private const val defaultFilePattern = "%-d{yyyy-MM-dd HH:mm:ss} [ %t:%r ] - [ %p ] %m%n"
 
         @JvmStatic
-        fun getLogger(name: String) = org.slf4j.LoggerFactory.getLogger(name)!!
-
-        @JvmStatic
-        fun getLogger(clazz: Class<*>) = org.slf4j.LoggerFactory.getLogger(clazz)!!
-
-
-        @JvmStatic
         fun configConsole(
             level: Level = Level.INFO,
             conversionPattern: String = defaultConsolePattern,
             systemErr: Boolean = true,
             vararg names: String
-        ) = LoggerFactory(
+        ) = LoggerConfigure(
             level = level,
             conversionPattern = conversionPattern,
             console = true,
@@ -73,7 +66,7 @@ class LoggerFactory private constructor(
             maxBackupIndex: Int = 2,
             append: Boolean = true,
             vararg names: String
-        ) = LoggerFactory(
+        ) = LoggerConfigure(
             level = level,
             conversionPattern = conversionPattern,
             console = false,

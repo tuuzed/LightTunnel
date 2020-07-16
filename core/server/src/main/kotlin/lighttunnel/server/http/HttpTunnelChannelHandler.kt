@@ -80,7 +80,8 @@ internal class HttpTunnelChannelHandler(
         // 是否注册过隧道
         val httpFd = registry.getHttpFd(httpHost)
         if (httpFd == null) {
-            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(noRegisteredTunnelHttpResponse)).addListener(ChannelFutureListener.CLOSE)
+            val notRegisteredTunnelHttpResponse = notRegisteredTunnelHttpResponse(httpHost)
+            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(notRegisteredTunnelHttpResponse)).addListener(ChannelFutureListener.CLOSE)
             return
         }
         ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
@@ -100,18 +101,17 @@ internal class HttpTunnelChannelHandler(
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
-    private val noRegisteredTunnelHttpResponse: HttpResponse
-        get() {
-            val content = Unpooled.copiedBuffer("There is no registered tunnel!", CharsetUtil.UTF_8)
-            return DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.FORBIDDEN,
-                content
-            ).also {
-                it.headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
-                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-            }
+    private fun notRegisteredTunnelHttpResponse(httpHost: String): HttpResponse {
+        val content = Unpooled.copiedBuffer("隧道（$httpHost）没有注册！", CharsetUtil.UTF_8)
+        return DefaultFullHttpResponse(
+            HttpVersion.HTTP_1_1,
+            HttpResponseStatus.FORBIDDEN,
+            content
+        ).also {
+            it.headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
+                .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
         }
+    }
 
 }

@@ -73,7 +73,7 @@ task dists(group: "package", type: Copy, dependsOn: [_mixinProguardJar, createEx
     doLast {
         def jarFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.jar")
         def stubFile = rootProject.file("gradle/stub.sh")
-        def shFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}")
+        def shFile = rootProject.file("dists/${project.version}/${project.AppName ?: project.name}.sh")
         if (!jarFile.exists()) {
             return
         }

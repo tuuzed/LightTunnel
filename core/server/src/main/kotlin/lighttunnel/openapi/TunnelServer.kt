@@ -37,9 +37,16 @@ class TunnelServer(
         )
     }
 
+    val isSupportSsl = sslTunnelDaemonArgs != null
+    val isSupportHttp = httpTunnelArgs != null
+    val isSupportHttps = httpsTunnelArgs != null
+
     @Throws(Exception::class)
     fun start(): Unit = daemon.start()
     fun depose(): Unit = daemon.depose()
+    fun getTcpFd(port: Int): TcpFd? = daemon.tcpRegistry.getTcpFd(port)
+    fun getHttpFd(host: String): HttpFd? = daemon.httpRegistry.getHttpFd(host)
+    fun getHttpsFd(host: String): HttpFd? = daemon.httpsRegistry.getHttpFd(host)
     fun getTcpFdList(): List<TcpFd> = daemon.tcpRegistry.getTcpFdList()
     fun getHttpFdList(): List<HttpFd> = daemon.httpRegistry.getHttpFdList()
     fun getHttpsFdList(): List<HttpFd> = daemon.httpsRegistry.getHttpFdList()

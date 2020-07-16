@@ -1,7 +1,6 @@
 package lighttunnel.openapi.ext
 
 import lighttunnel.openapi.TunnelRequest
-import lighttunnel.openapi.getOrDefault
 import lighttunnel.openapi.getOrNull
 import org.json.JSONObject
 
@@ -56,11 +55,7 @@ var TunnelRequest.pxyAddHeaders: Map<String, String>
 private fun JSONObject?.toStringMap(): Map<String, String> {
     this ?: return emptyMap()
     val map = mutableMapOf<String, String>()
-    keys().forEach { key ->
-        getOrDefault<String?>(key, null)?.also { value ->
-            map[key] = value
-        }
-    }
+    keys().forEach { key -> getOrNull<String>(key)?.also { value -> map[key] = value } }
     return map
 }
 

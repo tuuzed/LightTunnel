@@ -189,16 +189,16 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             val logFile = basic["log_file"]
             val logCount = basic["log_count"].asInt() ?: 3
             val logSize = basic["log_size"] ?: "1MB"
-            LoggerFactory.configConsole(Level.OFF, names = *arrayOf(
+            LoggerConfigure.configConsole(Level.OFF, names = *arrayOf(
                 "io.netty",
                 "org.ini4j",
                 "org.slf4j",
                 "org.json",
                 "org.apache.commons.cli"
             ))
-            LoggerFactory.configConsole(level = logLevel, conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n")
+            LoggerConfigure.configConsole(level = logLevel, conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n")
             if (logFile != null) {
-                LoggerFactory.configFile(
+                LoggerConfigure.configFile(
                     level = logLevel,
                     file = logFile,
                     maxBackupIndex = logCount,
