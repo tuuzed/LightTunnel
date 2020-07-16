@@ -14,7 +14,7 @@ class TunnelRequestInterceptorDefaultImpl(
 
     @Throws(ProtoException::class)
     override fun handleTunnelRequest(tunnelRequest: TunnelRequest): TunnelRequest {
-        if (authToken != null && authToken != tunnelRequest.authToken) {
+        if (!authToken.isNullOrEmpty() && authToken != tunnelRequest.authToken) {
             throw ProtoException("request($tunnelRequest), Bad Auth Token(${tunnelRequest.authToken})")
         }
         return when (tunnelRequest.type) {

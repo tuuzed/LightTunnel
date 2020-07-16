@@ -7,7 +7,7 @@ import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 
 class HttpsTunnelArgs(
     val bindAddr: String? = null,
-    val bindPort: Int? = null,
+    val bindPort: Int = 443,
     val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor? = null,
     val httpPlugin: HttpPlugin? = null,
     val sslContext: SslContext = SslContextUtil.forBuiltinServer()

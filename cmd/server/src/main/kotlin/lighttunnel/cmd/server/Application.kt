@@ -21,7 +21,6 @@ import lighttunnel.openapi.ext.TunnelRequestInterceptorDefaultImpl
 import lighttunnel.openapi.ext.newHttpRpcServer
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.http.HttpPlugin
-import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import lighttunnel.openapi.listener.OnHttpTunnelStateListener
 import lighttunnel.openapi.listener.OnTcpTunnelStateListener
 import lighttunnel.openapi.tcp.TcpFd
@@ -95,17 +94,17 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
     private companion object {
 
         private val logger by loggerDelegate()
+        private val httpTunnelRequestInterceptor by lazy { HttpTunnelRequestInterceptorDefaultImpl() }
 
         private fun Application.getTunnelServer(basic: Profile.Section): TunnelServer {
             val tunnelRequestInterceptor = getTunnelRequestInterceptor(basic)
-            val httpTunnelRequestInterceptor = HttpTunnelRequestInterceptorDefaultImpl()
             return TunnelServer(
                 bossThreads = basic["boss_threads"].asInt() ?: -1,
                 workerThreads = basic["worker_threads"].asInt() ?: -1,
                 tunnelDaemonArgs = getTunnelDaemonArgs(basic, tunnelRequestInterceptor),
                 sslTunnelDaemonArgs = getSslTunnelDaemonArgs(basic, tunnelRequestInterceptor),
-                httpTunnelArgs = getHttpTunnelArgs(basic, httpTunnelRequestInterceptor),
-                httpsTunnelArgs = getHttpsTunnelArgs(basic, httpTunnelRequestInterceptor),
+                httpTunnelArgs = getHttpTunnelArgs(basic),
+                httpsTunnelArgs = getHttpsTunnelArgs(basic),
                 onTcpTunnelStateListener = this,
                 onHttpTunnelStateListener = this
             )
@@ -114,7 +113,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
         private fun getTunnelRequestInterceptor(basic: Profile.Section): TunnelRequestInterceptor? {
             val authToken = basic["auth_token"]
             val allowPorts = basic["allow_ports"]
-            return if (authToken != null || allowPorts != null) {
+            return if (authToken.isNullOrEmpty() || allowPorts.isNullOrEmpty()) {
                 TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
             } else {
                 null
@@ -146,7 +145,8 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             )
         }
 
-        private fun getHttpTunnelArgs(http: Profile.Section, httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor?): HttpTunnelArgs {
+        private fun getHttpTunnelArgs(http: Profile.Section): HttpTunnelArgs? {
+            val bindPort = http["http_port"].asInt() ?: return null
             val pluginSfPaths = http["plugin_sf_paths"]?.split(',')
             val pluginSfHosts = http["plugin_sf_hosts"]?.split(',')
             var httpPlugin: HttpPlugin? = null
@@ -158,13 +158,14 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             }
             return HttpTunnelArgs(
                 bindAddr = http["bind_addr"],
-                bindPort = http["http_port"].asInt(),
+                bindPort = bindPort,
                 httpTunnelRequestInterceptor = httpTunnelRequestInterceptor,
                 httpPlugin = httpPlugin
             )
         }
 
-        private fun getHttpsTunnelArgs(https: Profile.Section, httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor?): HttpsTunnelArgs {
+        private fun getHttpsTunnelArgs(https: Profile.Section): HttpsTunnelArgs? {
+            val bindPort = https["https_port"].asInt() ?: return null
             val pluginSfPaths = https["plugin_sf_paths"]?.split(',')
             val pluginSfHosts = https["plugin_sf_hosts"]?.split(',')
             var httpPlugin: HttpPlugin? = null
@@ -176,7 +177,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             }
             return HttpsTunnelArgs(
                 bindAddr = https["bind_addr"],
-                bindPort = https["https_port"].asInt(),
+                bindPort = bindPort,
                 httpTunnelRequestInterceptor = httpTunnelRequestInterceptor,
                 httpPlugin = httpPlugin,
                 sslContext = try {

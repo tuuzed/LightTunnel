@@ -96,9 +96,6 @@ internal class TunnelServerDaemon(
     }
 
     private fun startSslTunnelDaemon(args: SslTunnelDaemonArgs) {
-        if (args.bindPort == null) {
-            return
-        }
         val serverBootstrap = ServerBootstrap()
         serverBootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel::class.java)
@@ -132,10 +129,7 @@ internal class TunnelServerDaemon(
         )
     }
 
-    private fun getHttpTunnel(registry: HttpRegistry, args: HttpTunnelArgs): HttpTunnel? {
-        if (args.bindPort == null) {
-            return null
-        }
+    private fun getHttpTunnel(registry: HttpRegistry, args: HttpTunnelArgs): HttpTunnel {
         return HttpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
@@ -148,10 +142,7 @@ internal class TunnelServerDaemon(
         )
     }
 
-    private fun getHttpsTunnel(registry: HttpRegistry, args: HttpsTunnelArgs): HttpTunnel? {
-        if (args.bindPort == null) {
-            return null
-        }
+    private fun getHttpsTunnel(registry: HttpRegistry, args: HttpsTunnelArgs): HttpTunnel {
         return HttpTunnel(
             bossGroup = bossGroup,
             workerGroup = workerGroup,
