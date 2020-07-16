@@ -4,19 +4,14 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
-import lighttunnel.base.util.SslContextUtil
 import lighttunnel.cmd.AbstractApplication
-import lighttunnel.cmd.IpAddressUtil
 import lighttunnel.cmd.asInt
-import lighttunnel.openapi.BuildConfig
-import lighttunnel.openapi.RemoteConnection
-import lighttunnel.openapi.TunnelClient
+import lighttunnel.cmd.localIpV4
+import lighttunnel.openapi.*
 import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
-import lighttunnel.openapi.TunnelRequest
 import lighttunnel.openapi.conn.TunnelConnection
 import lighttunnel.openapi.ext.*
-import lighttunnel.openapi.ext.client.newHttpRpcServer
 import lighttunnel.openapi.listener.OnRemoteConnectionListener
 import lighttunnel.openapi.listener.OnTunnelConnectionListener
 import org.apache.commons.cli.CommandLine
@@ -58,16 +53,14 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             val workerThreads = basic["worker_threads"].asInt() ?: -1
             val bossGroup = NioEventLoopGroup(1)
             val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
-            val httpRpcServer = newHttpRpcServer(
+            val httpRpcServer = tunnelClient.newHttpRpcServer(
                 bossGroup = bossGroup,
                 workerGroup = workerGroup,
                 bindAddr = null,
-                bindPort = httpRpcPort,
-                tunnelClient = tunnelClient
+                bindPort = httpRpcPort
             )
             httpRpcServer.start()
         }
-
 
         val serverAddr = basic["server_addr"] ?: "127.0.0.1"
         val serverPort = basic["server_port"].asInt() ?: 5080
@@ -145,7 +138,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
 
         private fun getTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
             return TunnelRequest.forTcp(
-                localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1",
+                localAddr = tunnel["local_addr"] ?: localIpV4 ?: "127.0.0.1",
                 localPort = tunnel["local_port"].asInt() ?: 80,
                 remotePort = tunnel["remote_port"].asInt() ?: 0
             ) {
@@ -168,7 +161,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             )
             return TunnelRequest.forHttp(
                 https = https,
-                localAddr = tunnel["local_addr"] ?: IpAddressUtil.localIpV4 ?: "127.0.0.1",
+                localAddr = tunnel["local_addr"] ?: localIpV4 ?: "127.0.0.1",
                 localPort = tunnel["local_port"].asInt() ?: 80,
                 host = tunnel["host"] ?: return null
             ) {

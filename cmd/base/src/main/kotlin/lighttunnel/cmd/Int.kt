@@ -1,9 +1,11 @@
+@file:JvmName("-IntKt")
+
 package lighttunnel.cmd
 
-fun String?.asInt(defVal: Int? = null): Int? {
+fun String?.asInt(defValue: Int? = null): Int? {
     return try {
         this?.toInt()
     } catch (e: NumberFormatException) {
-        return defVal
+        return defValue
     }
 }

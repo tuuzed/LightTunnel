@@ -1,7 +1,7 @@
 package lighttunnel.openapi.args
 
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.util.SslContextUtil
+import lighttunnel.openapi.SslContextUtil
 import lighttunnel.openapi.TunnelRequestInterceptor
 
 class SslTunnelDaemonArgs(

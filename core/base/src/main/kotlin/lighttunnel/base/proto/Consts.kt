@@ -2,7 +2,8 @@
 
 package lighttunnel.base.proto
 
-internal const val PROTO_VERSION = "0."
+// 协议版本
+internal const val PROTO_VERSION: Byte = 1
 
 /** 消息帧域长度 */
 internal const val PROTO_MESSAGE_LENGTH_FIELD_LENGTH = 4

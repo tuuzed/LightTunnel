@@ -4,7 +4,6 @@ package lighttunnel.server.tcp
 
 import lighttunnel.base.logger.loggerDelegate
 import lighttunnel.openapi.ProtoException
-import lighttunnel.server.util.SessionChannels
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -16,12 +15,12 @@ internal class TcpRegistry {
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
-    fun register(port: Int, sessionChannels: SessionChannels, fd: TcpFdDefaultImpl) {
+    fun register(port: Int, fd: TcpFdDefaultImpl) {
         if (isRegistered(port)) {
             throw ProtoException("port($port) already used")
         }
         lock.write { portTcpFds[port] = fd }
-        logger.debug("Start Tunnel: {}, Options: {}", sessionChannels.tunnelRequest, sessionChannels.tunnelRequest.extrasString)
+        logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.getExtras())
     }
 
     fun unregister(port: Int): TcpFdDefaultImpl? = lock.write {

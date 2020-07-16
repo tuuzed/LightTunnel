@@ -22,7 +22,7 @@ internal class HttpRegistry {
         }
         return HttpFdDefaultImpl(isHttps, sessionChannels).also { fd ->
             lock.write { hostHttpFds[host] = fd }
-            logger.debug("Start Tunnel: {}, Options: {}", fd.tunnelRequest, fd.tunnelRequest.extrasString)
+            logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.getExtras())
         }
     }
 

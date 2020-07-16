@@ -3,9 +3,6 @@
 package lighttunnel.server.util
 
 import io.netty.util.AttributeKey
-import org.json.JSONArray
-
-internal val EMPTY_JSON_ARRAY = JSONArray(emptyList<Any>())
 
 internal val AK_SESSION_ID: AttributeKey<Long?> = AttributeKey.newInstance("\$lighttunnel.server.SessionId")
 

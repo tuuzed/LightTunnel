@@ -5,20 +5,20 @@ package lighttunnel.cmd.server
 import io.netty.channel.nio.NioEventLoopGroup
 import lighttunnel.base.logger.LoggerFactory
 import lighttunnel.base.logger.loggerDelegate
-import lighttunnel.base.util.SslContextUtil
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.asInt
 import lighttunnel.openapi.BuildConfig
+import lighttunnel.openapi.SslContextUtil
 import lighttunnel.openapi.TunnelRequestInterceptor
 import lighttunnel.openapi.TunnelServer
 import lighttunnel.openapi.args.HttpTunnelArgs
 import lighttunnel.openapi.args.HttpsTunnelArgs
 import lighttunnel.openapi.args.SslTunnelDaemonArgs
 import lighttunnel.openapi.args.TunnelDaemonArgs
-import lighttunnel.openapi.ext.server.HttpPluginStaticFileImpl
-import lighttunnel.openapi.ext.server.HttpTunnelRequestInterceptorDefaultImpl
-import lighttunnel.openapi.ext.server.TunnelRequestInterceptorDefaultImpl
-import lighttunnel.openapi.ext.server.newHttpRpcServer
+import lighttunnel.openapi.ext.HttpPluginStaticFileImpl
+import lighttunnel.openapi.ext.HttpTunnelRequestInterceptorDefaultImpl
+import lighttunnel.openapi.ext.TunnelRequestInterceptorDefaultImpl
+import lighttunnel.openapi.ext.newHttpRpcServer
 import lighttunnel.openapi.http.HttpFd
 import lighttunnel.openapi.http.HttpPlugin
 import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
@@ -64,12 +64,11 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             val bindAddr = basic["bind_addr"]
             val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
             val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
-            val httpRpcServer = newHttpRpcServer(
+            val httpRpcServer = tunnelServer.newHttpRpcServer(
                 bossGroup = bossGroup,
                 workerGroup = workerGroup,
                 bindAddr = bindAddr,
-                bindPort = httpRpcPort,
-                tunnelServer = tunnelServer
+                bindPort = httpRpcPort
             )
             httpRpcServer.start()
         }

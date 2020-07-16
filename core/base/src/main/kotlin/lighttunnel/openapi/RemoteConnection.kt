@@ -7,7 +7,8 @@ import java.io.Serializable
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
-data class RemoteConnection constructor(
+@Suppress("MemberVisibilityCanBePrivate")
+class RemoteConnection constructor(
     val address: SocketAddress
 ) : Serializable {
 
@@ -15,6 +16,7 @@ data class RemoteConnection constructor(
 
         private const val serialVersionUID = 1L
 
+        @JvmStatic
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): RemoteConnection {
             val address = try {
@@ -42,8 +44,6 @@ data class RemoteConnection constructor(
         }
     }
 
-    override fun toString(): String {
-        return address.toString()
-    }
+    override fun toString(): String = address.toString()
 
 }

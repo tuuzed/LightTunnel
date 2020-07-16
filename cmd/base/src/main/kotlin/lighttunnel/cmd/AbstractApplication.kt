@@ -19,10 +19,8 @@ abstract class AbstractApplication {
 
     abstract val options: Options
 
-
     @Throws(ParseException::class)
     abstract fun run(commandLine: CommandLine)
-
 
     private fun printUsage() {
         val maxSpaceCount = options.options.map { it.opt.length + it.longOpt.length }.max() ?: 0

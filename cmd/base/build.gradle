@@ -13,7 +13,7 @@ dependencies {
     compile "commons-cli:commons-cli:1.4"
     // base
     compile project(":core:base")
-    compile project(":core-ext:base")
+    compile project(":ext:base")
     // 单元测试
     testCompile "junit:junit:4.12"
 }

@@ -1,19 +1,21 @@
 rootProject.name = "LightTunnel"
 
+// 核心模块
 include ":core:base"
 include ":core:client"
 include ":core:server"
 
+// 扩展模块
+include ":ext:base"
+include ":ext:client"
+include ":ext:server"
 
-include ":core-ext:base"
-include ":core-ext:client"
-include ":core-ext:server"
-
-
+// 命令行模块
 include ":cmd:base"
 include ":cmd:client"
 include ":cmd:server"
 
+// 二次开发包模块
 include ":sdk:all"
 include ":sdk:client"
 include ":sdk:server"

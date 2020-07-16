@@ -4,6 +4,7 @@ package lighttunnel.openapi
 
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
+import lighttunnel.base.proto.PROTO_VERSION
 import lighttunnel.base.util.toStringMap
 import org.json.JSONObject
 import java.io.Serializable
@@ -15,22 +16,25 @@ class TunnelRequest private constructor(
     private val extras: JSONObject
 ) : Serializable {
 
-    companion object {
+    companion object Factory {
         private const val serialVersionUID = 1L
-
-        // 协议版本
-        private const val PROTO_VERSION: Int = 1
         private val CHARSET = Charsets.UTF_8
 
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): TunnelRequest {
             val buffer = Unpooled.wrappedBuffer(bytes)
             try {
+                // proto version
+                val protoVersion = buffer.readByte()
+                // type
                 val type = Type.codeOf(buffer.readByte())
+                // localPort
                 val localPort = buffer.readInt()
+                // localAddr
                 val localAddrBytes = ByteArray(buffer.readInt())
                 buffer.readBytes(localAddrBytes)
                 val localAddr = String(localAddrBytes, CHARSET)
+                // remotePort or host
                 var remotePort = 0
                 var host = ""
                 when (type) {
@@ -49,6 +53,7 @@ class TunnelRequest private constructor(
                 buffer.readBytes(extrasBytes)
                 val extras = JSONObject(String(extrasBytes, CHARSET))
                 return TunnelRequest(type, localAddr, localPort, extras).also {
+                    it.protoVersion = protoVersion
                     it.remotePort = remotePort
                     it.host = host
                 }
@@ -101,8 +106,9 @@ class TunnelRequest private constructor(
         }
     }
 
-    // tcp
-    val protoVersion get() = PROTO_VERSION
+    // common
+    var protoVersion = PROTO_VERSION
+        private set
 
     // tcp
     var remotePort: Int = 0
@@ -139,13 +145,17 @@ class TunnelRequest private constructor(
         val buffer = Unpooled.buffer()
         try {
             // proto version
-            buffer.writeByte(PROTO_VERSION)
+            buffer.writeByte(PROTO_VERSION.toInt())
+            // type
             buffer.writeByte(type.code.toInt())
+            // localPort
             buffer.writeInt(localPort)
+            // localAddr
             localAddr.toByteArray(CHARSET).also {
                 buffer.writeInt(it.size)
                 buffer.writeBytes(it)
             }
+            // remotePort or host
             when (type) {
                 Type.TCP -> buffer.writeInt(remotePort)
                 Type.HTTP, Type.HTTPS -> host.toByteArray(CHARSET).also {
@@ -154,6 +164,7 @@ class TunnelRequest private constructor(
                 }
                 else -> error("type error")
             }
+            // extra
             extras.toString().toByteArray(CHARSET).also {
                 buffer.writeInt(it.size)
                 buffer.writeBytes(it)
@@ -162,6 +173,10 @@ class TunnelRequest private constructor(
         } finally {
             buffer.release()
         }
+    }
+
+    fun getExtras(vararg excludeKeys: String): Map<String, Any?> = extras.toMap().also {
+        excludeKeys.forEach { key -> it.remove(key) }
     }
 
     fun copyTcp(
@@ -196,12 +211,7 @@ class TunnelRequest private constructor(
         extFunc?.invoke(it)
     }
 
-    override fun toString(): String {
-        return toString("::")
-    }
-
-    val extrasString get() = extras.toString()
-
+    override fun toString(): String = toString("::")
     fun toString(serverAddr: String): String {
         return when (type) {
             Type.TCP -> "tcp://$localAddr:$localPort<-tcp://$serverAddr:$remotePort"

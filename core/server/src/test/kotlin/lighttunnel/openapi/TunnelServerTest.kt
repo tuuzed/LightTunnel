@@ -1,7 +1,6 @@
 package lighttunnel.openapi
 
 import lighttunnel.base.logger.LoggerFactory
-import lighttunnel.base.util.SslContextUtil
 import lighttunnel.openapi.args.HttpTunnelArgs
 import lighttunnel.openapi.args.HttpsTunnelArgs
 import lighttunnel.openapi.args.SslTunnelDaemonArgs
