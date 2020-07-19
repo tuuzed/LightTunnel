@@ -50,6 +50,8 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
         val httpRpcPort = basic["http_rpc_port"].asInt()
         if (httpRpcPort != null) {
             val workerThreads = basic["worker_threads"].asInt() ?: -1
+            val httpRpcUsername = basic["http_rpc_username"]
+            val httpRpcPassword = basic["http_rpc_password"]
             val bossGroup = NioEventLoopGroup(1)
             val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
             val httpRpcServer = tunnelClient.newHttpRpcServer(
@@ -57,7 +59,13 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 workerGroup = workerGroup,
                 bindAddr = null,
                 bindPort = httpRpcPort
-            )
+            ) { username, password ->
+                if (httpRpcUsername != null && httpRpcPassword != null) {
+                    httpRpcUsername == username && httpRpcPassword == password
+                } else {
+                    true
+                }
+            }
             httpRpcServer.start()
         }
 
@@ -169,11 +177,11 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 authToken = basic["auth_token"]
                 pxySetHeaders = proxySetHeaders
                 pxyAddHeaders = proxyAddHeaders
-                enableBasicAuth = tunnel["auth_enable"]?.toUpperCase() == "TRUE"
+                enableBasicAuth = tunnel["auth_username"] != null && tunnel["auth_password"] != null
                 if (enableBasicAuth) {
                     basicAuthRealm = tunnel["auth_realm"] ?: "."
-                    basicAuthUsername = tunnel["auth_username"] ?: "guest"
-                    basicAuthPassword = tunnel["auth_password"] ?: "guest"
+                    basicAuthUsername = tunnel["auth_username"]
+                    basicAuthPassword = tunnel["auth_password"]
                 }
             }
         }

@@ -89,7 +89,7 @@
     # TCP隧道允许使用的端口
     allow_ports = 10000,10001,10002-50000
     
-    # ssl
+    # tunnel by ssl
     # ssl绑定端口号，为空时不启用http服务
     ssl_bind_port = 5443
     # ssl jks证书文件，加载失败时会默认使用程序内建的证书
@@ -97,11 +97,11 @@
     ssl_key_password = ltspass
     ssl_store_password = ltspass
     
-    # http
+    # tunnel by http
     # http服务绑定端口，为空时不启用http服务
     http_port = 8080
     
-    # https
+    # tunnel by https
     # https服务绑定端口，为空时不启用https服务
     https_port = 8443
     # https jks证书文件，加载失败时会默认使用程序内建的证书
@@ -117,6 +117,9 @@
     
     # Http Rpc绑定端口，为空时不启用Http Rpc
     http_rpc_port = 5081
+    # Http Rpc登录用户，没有配置时不需要登录
+    http_rpc_username = guest
+    http_rpc_password = guest
     
     # 日志
     # 日志等级由低到高 ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
@@ -151,6 +154,9 @@
     
     # Http Rpc绑定端口，为空时不启用Http Rpc
     http_rpc_port = 5082
+    # Http Rpc登录用户，没有配置时不需要登录
+    http_rpc_username = guest
+    http_rpc_password = guest
     
     # 日志
     # 日志等级由低到高 ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
@@ -199,9 +205,7 @@
     pxy_header_set_X-Real-IP = $remote_addr
     # 代理请求头新增
     pxy_header_add_X-User-Agent = LightTunnel
-    # 是否启用登录验证
-    auth_enable = true
-    # 登录验证信息
+    # 登录验证信息，没有配置时不需要登录
     auth_realm = .
     auth_username = guest
     auth_password = guest
@@ -221,9 +225,7 @@
     pxy_header_set_X-Real-IP = $remote_addr
     # 代理请求头新增
     pxy_header_add_X-User-Agent = LightTunnel
-    # 是否启用登录验证
-    auth_enable = true
-    # 登录验证信息
+    # 登录验证信息，没有配置时不需要登录
     auth_realm = .
     auth_username = guest
     auth_password = guest

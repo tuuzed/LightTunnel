@@ -8,7 +8,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class RouterMappings internal constructor() {
 
-    private val mapping = ConcurrentHashMap<String, (request: FullHttpRequest) -> FullHttpResponse>()
+    private val handlers = ConcurrentHashMap<Regex, (request: FullHttpRequest) -> FullHttpResponse>()
+    private val interceptors = ConcurrentHashMap<Regex, (request: FullHttpRequest) -> FullHttpResponse?>()
 
     @Suppress("PrivatePropertyName")
     private val NOT_FOUND_ROUTE_CALLBACK: (request: FullHttpRequest) -> FullHttpResponse = {
@@ -24,16 +25,28 @@ class RouterMappings internal constructor() {
         }
     }
 
-    fun route(path: String, handler: (request: FullHttpRequest) -> FullHttpResponse) {
-        mapping[path] = handler
+    fun intercept(path: Regex, interceptor: (request: FullHttpRequest) -> FullHttpResponse?) {
+        interceptors[path] = interceptor
+    }
+
+    fun route(path: Regex, handler: (request: FullHttpRequest) -> FullHttpResponse) {
+        handlers[path] = handler
     }
 
     @Throws(IOException::class)
     internal fun doHandle(request: FullHttpRequest): FullHttpResponse {
-        val callback = mapping.getOrDefault(
-            request.uri(), null)
-            ?: return NOT_FOUND_ROUTE_CALLBACK(request)
-        return callback(request)
+        val path = request.uri()
+        val response = interceptors.keys()
+            .toList()
+            .firstOrNull { it.matches(path) }
+            .let { interceptors[it] }
+            ?.invoke(request)
+        if (response != null) {
+            return response
+        }
+        val handler = handlers.keys().toList().firstOrNull { it.matches(path) }.let { handlers[it] }
+            ?: NOT_FOUND_ROUTE_CALLBACK
+        return handler(request)
     }
 
 }

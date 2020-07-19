@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package lighttunnel.openapi.ext
 
 import io.netty.channel.ChannelHandlerContext
@@ -29,18 +31,12 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
         val account = HttpUtil.getBasicAuthorization(httpRequest)
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
-        if (account == null || username != account[0] || password != account[1]) {
-            val httpResponse = DefaultFullHttpResponse(
-                httpRequest.protocolVersion(),
-                HttpResponseStatus.UNAUTHORIZED
-            )
+        if (account?.size != 2 || username != account[0] || password != account[1]) {
+            val httpResponse = DefaultFullHttpResponse(httpRequest.protocolVersion(), HttpResponseStatus.UNAUTHORIZED)
             val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
-            httpResponse.headers().add(
-                HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\""
-            )
-            httpResponse.headers().add(HttpHeaderNames.CONNECTION, "keep-alive")
-            httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, "bytes")
-
+            httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\"")
+            httpResponse.headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
+            httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
             httpResponse.headers().add(HttpHeaderNames.DATE, Date().toString())
             httpResponse.headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
             httpResponse.content().writeBytes(content)

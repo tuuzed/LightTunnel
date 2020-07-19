@@ -57,6 +57,8 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             val bossThreads = basic["boss_threads"].asInt() ?: -1
             val workerThreads = basic["worker_threads"].asInt() ?: -1
             val bindAddr = basic["bind_addr"]
+            val httpRpcUsername = basic["http_rpc_username"]
+            val httpRpcPassword = basic["http_rpc_password"]
             val bossGroup = if (bossThreads >= 0) NioEventLoopGroup(bossThreads) else NioEventLoopGroup()
             val workerGroup = if (workerThreads >= 0) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
             val httpRpcServer = tunnelServer.newHttpRpcServer(
@@ -64,7 +66,13 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
                 workerGroup = workerGroup,
                 bindAddr = bindAddr,
                 bindPort = httpRpcPort
-            )
+            ) { username, password ->
+                if (httpRpcUsername != null && httpRpcPassword != null) {
+                    httpRpcUsername == username && httpRpcPassword == password
+                } else {
+                    true
+                }
+            }
             httpRpcServer.start()
         }
         tunnelServer.start()
