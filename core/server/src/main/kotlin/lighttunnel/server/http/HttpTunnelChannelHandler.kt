@@ -109,7 +109,7 @@ internal class HttpTunnelChannelHandler(
             content
         ).also {
             it.headers()
-                .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
+                .set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
                 .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
         }
     }

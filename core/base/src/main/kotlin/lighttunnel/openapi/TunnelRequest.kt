@@ -113,7 +113,7 @@ class TunnelRequest private constructor(
         localPort: Int = this.localPort,
         remotePort: Int = this.remotePort,
         extFunc: (TunnelRequest.() -> Unit)? = null
-    ) = TunnelRequest(this.tunnelType, this.data).apply {
+    ) = TunnelRequest(TunnelType.TCP, this.data).apply {
         this.localAddr = localAddr
         this.localPort = localPort
         this.remotePort = remotePort
@@ -121,11 +121,12 @@ class TunnelRequest private constructor(
     }
 
     fun copyHttp(
+        https: Boolean = this.tunnelType == TunnelType.HTTPS,
         localAddr: String = this.localAddr,
         localPort: Int = this.localPort,
         host: String = this.host,
         extFunc: (TunnelRequest.() -> Unit)? = null
-    ) = TunnelRequest(this.tunnelType, this.data).apply {
+    ) = TunnelRequest(if (https) TunnelType.HTTPS else TunnelType.HTTP, this.data).apply {
         this.localAddr = localAddr
         this.localPort = localPort
         this.host = host
