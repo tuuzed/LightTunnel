@@ -64,9 +64,9 @@ internal class HttpTunnel(
             serverBootstrap.bind(bindAddr, bindPort).get()
         }
         logger.info(
-            "Serving {} on {} port {}",
+            "Serving tunnel by {} on {} port {}",
             if (isHttps) "https" else "http",
-            bindAddr ?: "any address",
+            bindAddr ?: "::",
             bindPort
         )
     }

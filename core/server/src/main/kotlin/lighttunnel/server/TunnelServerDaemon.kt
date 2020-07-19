@@ -120,7 +120,7 @@ internal class TunnelServerDaemon(
         } else {
             serverBootstrap.bind(args.bindAddr, args.bindPort).get()
         }
-        logger.info("Serving tunnel with ssl on {} port {}", args.bindAddr ?: "::", args.bindPort)
+        logger.info("Serving tunnel by ssl on {} port {}", args.bindAddr ?: "::", args.bindPort)
     }
 
     private fun getTcpTunnel(registry: TcpRegistry): TcpTunnel {

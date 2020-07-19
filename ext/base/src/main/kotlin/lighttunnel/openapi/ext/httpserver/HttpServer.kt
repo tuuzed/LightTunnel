@@ -58,7 +58,7 @@ class HttpServer(
         logger.info(
             "Serving {} on {} port {}",
             if (isHttps) "https" else "http",
-            bindAddr ?: "any address",
+            bindAddr ?: "::",
             bindPort
         )
     }
