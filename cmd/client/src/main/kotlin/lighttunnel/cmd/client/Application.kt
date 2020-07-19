@@ -170,9 +170,11 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 pxySetHeaders = proxySetHeaders
                 pxyAddHeaders = proxyAddHeaders
                 enableBasicAuth = tunnel["auth_enable"]?.toUpperCase() == "TRUE"
-                basicAuthRealm = tunnel["auth_realm"] ?: "."
-                basicAuthUsername = tunnel["auth_username"] ?: "guest"
-                basicAuthPassword = tunnel["auth_password"] ?: "guest"
+                if (enableBasicAuth) {
+                    basicAuthRealm = tunnel["auth_realm"] ?: "."
+                    basicAuthUsername = tunnel["auth_username"] ?: "guest"
+                    basicAuthPassword = tunnel["auth_password"] ?: "guest"
+                }
             }
         }
 
