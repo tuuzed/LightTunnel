@@ -3,9 +3,8 @@
 支持TCP、HTTP、HTTPS穿透。
 
 [![Java CI](https://github.com/tuuzed/LightTunnel/workflows/Java%20CI/badge.svg)](https://github.com/tuuzed/LightTunnel.git)
-[![LastVersion](https://img.shields.io/badge/LightTunnel-v0.9.0.EXP-blue.svg)](https://github.com/tuuzed/LightTunnel.git)
 [![Thanks](https://img.shields.io/badge/Thanks-jetbrains.com-green.svg)](https://jetbrains.com)
-[![Download](https://img.shields.io/badge/Download-v0.9.0.EXP.tar.gz-orange.svg)](https://github.com/tuuzed/LightTunnel/releases/download/v0.9.0.EXP/LightTunnel-v0.9.0.EXP.tar.gz)
+[![Download](https://img.shields.io/badge/Download-LatestVersion-orange.svg)](https://github.com/tuuzed/LightTunnel/releases/latest)
 
 
 ## 0x01 文件说明
