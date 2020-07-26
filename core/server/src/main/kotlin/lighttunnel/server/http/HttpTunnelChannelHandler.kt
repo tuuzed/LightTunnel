@@ -80,7 +80,7 @@ internal class HttpTunnelChannelHandler(
         // 是否注册过隧道
         val httpFd = registry.getHttpFd(httpHost)
         if (httpFd == null) {
-            val notRegisteredTunnelHttpResponse = notRegisteredTunnelHttpResponse(httpHost)
+            val notRegisteredTunnelHttpResponse = newNotRegisteredTunnelHttpResponse(httpHost)
             ctx.channel().writeAndFlush(HttpUtil.toByteBuf(notRegisteredTunnelHttpResponse)).addListener(ChannelFutureListener.CLOSE)
             return
         }
@@ -101,7 +101,7 @@ internal class HttpTunnelChannelHandler(
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
     }
 
-    private fun notRegisteredTunnelHttpResponse(httpHost: String): HttpResponse {
+    private fun newNotRegisteredTunnelHttpResponse(httpHost: String): HttpResponse {
         val content = Unpooled.copiedBuffer("隧道（$httpHost）没有注册！", CharsetUtil.UTF_8)
         return DefaultFullHttpResponse(
             HttpVersion.HTTP_1_1,
