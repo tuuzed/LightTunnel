@@ -7,8 +7,6 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.proto.ProtoMessageType
-import lighttunnel.base.util.LongUtil
 import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.server.util.AK_SESSION_ID
@@ -32,9 +30,8 @@ internal class TcpTunnelChannelHandler(
                 sessionId = tcpFd.putChannel(ctx.channel())
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
             }
-            val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
             tcpFd.tunnelChannel.writeAndFlush(
-                ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+                ProtoMessage.REMOTE_CONNECTED(tcpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
             )
         } else {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -57,9 +54,12 @@ internal class TcpTunnelChannelHandler(
                 sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
-                val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId ?: 0)
                 tcpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+                    ProtoMessage.REMOTE_DISCONNECT(
+                        tcpFd.tunnelId,
+                        sessionId ?: 0,
+                        RemoteConnection(ctx.channel().remoteAddress())
+                    )
                 )
             }
         }
@@ -78,9 +78,8 @@ internal class TcpTunnelChannelHandler(
         msg ?: return
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get() ?: return
         val tcpFd = ctx.tcpFd ?: return
-        val head = LongUtil.toBytes(tcpFd.tunnelId, sessionId)
         val data = ByteBufUtil.getBytes(msg)
-        tcpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
+        tcpFd.tunnelChannel.writeAndFlush(ProtoMessage.TRANSFER(tcpFd.tunnelId, sessionId, data))
     }
 
     private val ChannelHandlerContext?.tcpFd: TcpFdDefaultImpl?

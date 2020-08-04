@@ -128,10 +128,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             )
         }
 
-        private fun getSslTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): SslTunnelDaemonArgs {
+        private fun getSslTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): SslTunnelDaemonArgs? {
             return SslTunnelDaemonArgs(
                 bindAddr = basic["bind_addr"],
-                bindPort = basic["ssl_bind_port"].asInt() ?: 5443,
+                bindPort = basic["ssl_bind_port"].asInt() ?: return null,
                 tunnelRequestInterceptor = tunnelRequestInterceptor,
                 sslContext = try {
                     val jks = basic["ssl_jks"] ?: "lts.jks"

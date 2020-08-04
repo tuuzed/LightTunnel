@@ -17,14 +17,14 @@ object LongUtil {
     }
 
     fun fromBytes(bytes: ByteArray, offset: Int = 0): Long {
-        return bytes[offset].toLong() and 0xff shl 56 or (
-            bytes[offset + 1].toLong() and 0xff shl 48) or (
-            bytes[offset + 2].toLong() and 0xff shl 40) or (
-            bytes[offset + 3].toLong() and 0xff shl 32) or (
-            bytes[offset + 4].toLong() and 0xff shl 24) or (
-            bytes[offset + 5].toLong() and 0xff shl 16) or (
-            bytes[offset + 6].toLong() and 0xff shl 8) or (
-            bytes[offset + 7].toLong() and 0xff)
+        return (bytes[offset + 0].toLong() and 0xff shl (7 * 8)) or
+            (bytes[offset + 1].toLong() and 0xff shl (6 * 8)) or
+            (bytes[offset + 2].toLong() and 0xff shl (5 * 8)) or
+            (bytes[offset + 3].toLong() and 0xff shl (4 * 8)) or
+            (bytes[offset + 4].toLong() and 0xff shl (3 * 8)) or
+            (bytes[offset + 5].toLong() and 0xff shl (2 * 8)) or
+            (bytes[offset + 6].toLong() and 0xff shl (1 * 8)) or
+            (bytes[offset + 7].toLong() and 0xff shl (0 * 8))
     }
 
 }

@@ -22,25 +22,25 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
     @Throws(Exception::class)
     override fun decode(ctx: ChannelHandlerContext?, `in`: ByteBuf?): Any? {
         @Suppress("NAME_SHADOWING")
-        val `in` = super.decode(ctx, `in`)
-        if (`in` is ByteBuf) {
-            if (`in`.readableBytes() < MIN_BYTES) return null
-            val totalLength = `in`.readInt()
-            if (`in`.readableBytes() < totalLength) return null
+        val rst = super.decode(ctx, `in`)
+        if (rst is ByteBuf) {
+            if (rst.readableBytes() < MIN_BYTES) return null
+            val totalLength = rst.readInt()
+            if (rst.readableBytes() < totalLength) return null
             // 开始解码数据
-            val type = ProtoMessageType.codeOf(`in`.readByte())
-            val headLength = `in`.readInt()
+            val type = ProtoMessage.Type.codeOf(rst.readByte())
+            val headLength = rst.readInt()
             val head = ByteArray(headLength)
-            `in`.readBytes(head)
+            rst.readBytes(head)
             val dataLength = totalLength -
                 PROTO_MESSAGE_TYPE_LENGTH -
                 PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH -
                 headLength
             val data = ByteArray(dataLength)
-            `in`.readBytes(data)
+            rst.readBytes(data)
             return ProtoMessage(type, head, data)
         } else {
-            return `in`
+            return rst
         }
     }
 

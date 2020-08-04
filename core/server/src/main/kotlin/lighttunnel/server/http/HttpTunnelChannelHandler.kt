@@ -8,9 +8,8 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
 import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.HttpUtil
-import lighttunnel.base.util.LongUtil
+import lighttunnel.base.util.emptyBytes
 import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.http.HttpPlugin
@@ -42,12 +41,9 @@ internal class HttpTunnelChannelHandler(
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
         if (httpHost != null && sessionId != null) {
             val httpFd = registry.getHttpFd(httpHost)
-            if (httpFd != null) {
-                val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
-                httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage(ProtoMessageType.REMOTE_DISCONNECT, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
-                )
-            }
+            httpFd?.tunnelChannel?.writeAndFlush(
+                ProtoMessage.REMOTE_DISCONNECT(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
+            )
             ctx.channel().attr(AK_HTTP_HOST).set(null)
             ctx.channel().attr(AK_SESSION_ID).set(null)
         }
@@ -93,12 +89,11 @@ internal class HttpTunnelChannelHandler(
         }
         val sessionId = httpFd.putChannel(ctx.channel())
         ctx.channel().attr(AK_SESSION_ID).set(sessionId)
-        val head = LongUtil.toBytes(httpFd.tunnelId, sessionId)
         httpFd.tunnelChannel.writeAndFlush(
-            ProtoMessage(ProtoMessageType.REMOTE_CONNECTED, head, RemoteConnection(ctx.channel().remoteAddress()).toBytes())
+            ProtoMessage.REMOTE_CONNECTED(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
         )
-        val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg))
-        httpFd.tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.TRANSFER, head, data))
+        val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg)) ?: emptyBytes
+        httpFd.tunnelChannel.writeAndFlush(ProtoMessage.TRANSFER(httpFd.tunnelId, sessionId, data))
     }
 
     private fun newNotRegisteredTunnelHttpResponse(httpHost: String): HttpResponse {
