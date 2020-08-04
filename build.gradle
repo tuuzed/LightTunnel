@@ -15,7 +15,7 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.tuuzed.gradle.plugin:gitvc:0.2.2"
+        classpath "com.tuuzed.gradle.plugin:gitvc:0.2.3"
         classpath "edu.sc.seis.launch4j:launch4j:2.4.6"
         classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.8"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
