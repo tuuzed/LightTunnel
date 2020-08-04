@@ -9,3 +9,7 @@ internal val AK_SESSION_ID: AttributeKey<Long?> = AttributeKey.newInstance("\$li
 internal val AK_SESSION_CHANNELS: AttributeKey<SessionChannels?> = AttributeKey.newInstance("\$lighttunnel.server.SessionChannels")
 
 internal val AK_HTTP_HOST: AttributeKey<String?> = AttributeKey.newInstance("\$lighttunnel.server.HttpHost")
+
+internal val AK_IS_PLUGIN_HANDLE: AttributeKey<Boolean?> = AttributeKey.newInstance("\$lighttunnel.server.isPluginHandle")
+
+internal val AK_IS_INTERCEPTOR_HANDLE: AttributeKey<Boolean?> = AttributeKey.newInstance("\$lighttunnel.server.isInterceptorHandle")

@@ -6,7 +6,6 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpRequestDecoder
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
@@ -24,7 +23,6 @@ internal class HttpTunnel(
     private val bindAddr: String?,
     private val bindPort: Int,
     private val sslContext: SslContext? = null,
-    private val maxContentLength: Int = 1024 * 1024 * 8,
     private val httpPlugin: HttpPlugin? = null,
     private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor? = null
 ) {
@@ -47,7 +45,6 @@ internal class HttpTunnel(
                     }
                     ch.pipeline()
                         .addLast("decoder", HttpRequestDecoder())
-                        .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
                         .addLast("handler", HttpTunnelChannelHandler(
                             registry = registry,
                             httpPlugin = httpPlugin,
