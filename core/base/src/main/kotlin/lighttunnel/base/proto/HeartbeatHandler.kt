@@ -24,7 +24,7 @@ class HeartbeatHandler(
         logger.trace("channelIdle: {}, {}", ctx, evt)
         if (ctx != null) {
             when (evt) {
-                IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.PING))
+                IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> ctx.channel().writeAndFlush(ProtoMessage.PING())
                 IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT -> ctx.channel().close()
             }
         }

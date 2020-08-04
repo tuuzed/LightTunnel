@@ -4,7 +4,6 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.IncIds
 import lighttunnel.openapi.TunnelRequest
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -35,7 +34,7 @@ internal class SessionChannels(
     fun removeChannel(sessionId: Long): Channel? = lock.write { cachedSessionIdChannels.remove(sessionId) }
 
     fun forceOff() {
-        tunnelChannel.writeAndFlush(ProtoMessage(ProtoMessageType.FORCE_OFF))
+        tunnelChannel.writeAndFlush(ProtoMessage.FORCE_OFF())
     }
 
     fun depose() = lock.write {

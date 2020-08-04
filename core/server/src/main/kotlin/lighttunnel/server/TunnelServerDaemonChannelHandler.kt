@@ -5,9 +5,7 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.util.IncIds
-import lighttunnel.base.util.LongUtil
 import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.ProtoException
 import lighttunnel.openapi.TunnelRequest
@@ -54,7 +52,8 @@ internal abstract class TunnelServerDaemonChannelHandler(
     @Throws(Exception::class)
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
-        ctx?.apply { channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE) }
+        ctx ?: return
+        ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
     @Throws(Exception::class)
@@ -63,12 +62,12 @@ internal abstract class TunnelServerDaemonChannelHandler(
         ctx ?: return
         msg ?: return
         when (msg.type) {
-            ProtoMessageType.PING -> doHandlePingMessage(ctx, msg)
-            ProtoMessageType.REQUEST -> doHandleRequestMessage(ctx, msg)
-            ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg)
-            ProtoMessageType.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
-            ProtoMessageType.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
-            ProtoMessageType.FORCE_OFF_REPLY -> doHandleForcedOfflineReplyMessage(ctx, msg)
+            ProtoMessage.Type.PING -> doHandlePingMessage(ctx, msg)
+            ProtoMessage.Type.REQUEST -> doHandleRequestMessage(ctx, msg)
+            ProtoMessage.Type.TRANSFER -> doHandleTransferMessage(ctx, msg)
+            ProtoMessage.Type.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
+            ProtoMessage.Type.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
+            ProtoMessage.Type.FORCE_OFF_REPLY -> doHandleForceOffReplyMessage(ctx, msg)
             else -> {
                 // Nothing
             }
@@ -78,14 +77,14 @@ internal abstract class TunnelServerDaemonChannelHandler(
     @Throws(Exception::class)
     private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandlePingMessage# {}, {}", ctx, msg)
-        ctx.writeAndFlush(ProtoMessage(ProtoMessageType.PONG))
+        ctx.writeAndFlush(ProtoMessage.PONG())
     }
 
     @Throws(Exception::class)
     private fun doHandleRequestMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleRequestMessage# {}, {}", ctx, msg)
         try {
-            val originalTunnelRequest = TunnelRequest.fromBytes(msg.head)
+            val originalTunnelRequest = TunnelRequest.fromBytes(msg.data)
             val finalTunnelRequest = tunnelRequestInterceptor?.intercept(originalTunnelRequest)
                 ?: originalTunnelRequest
             logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
@@ -106,7 +105,7 @@ internal abstract class TunnelServerDaemonChannelHandler(
             }
         } catch (e: Exception) {
             ctx.channel().writeAndFlush(
-                ProtoMessage(ProtoMessageType.RESPONSE_ERR, e.message.toString().toByteArray())
+                ProtoMessage.RESPONSE_ERR(e)
             ).addListener(ChannelFutureListener.CLOSE)
         }
     }
@@ -136,8 +135,8 @@ internal abstract class TunnelServerDaemonChannelHandler(
 
 
     @Throws(Exception::class)
-    private fun doHandleForcedOfflineReplyMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
-        logger.trace("doHandleForcedOfflineReplyMessage# {}, {}", ctx, msg)
+    private fun doHandleForceOffReplyMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+        logger.trace("doHandleForceOffReplyMessage# {}, {}", ctx, msg)
         ctx.channel()?.close()
     }
 
@@ -148,9 +147,7 @@ internal abstract class TunnelServerDaemonChannelHandler(
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
         onChannelConnected(ctx, startTunnel(null, tunnelRequest.remotePort, sessionChannels))
-        val head = LongUtil.toBytes(tunnelId, 0L)
-        val data = tunnelRequest.toBytes()
-        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
+        ctx.channel().writeAndFlush(ProtoMessage.RESPONSE_OK(tunnelId, tunnelRequest))
     }
 
     @Throws(Exception::class)
@@ -160,9 +157,7 @@ internal abstract class TunnelServerDaemonChannelHandler(
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
         onChannelConnected(ctx, startTunnel(tunnelRequest.host, sessionChannels))
-        val head = LongUtil.toBytes(tunnelId, 0L)
-        val data = tunnelRequest.toBytes()
-        ctx.channel().writeAndFlush(ProtoMessage(ProtoMessageType.RESPONSE_OK, head, data))
+        ctx.channel().writeAndFlush(ProtoMessage.RESPONSE_OK(tunnelId, tunnelRequest))
     }
 
     abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
