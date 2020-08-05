@@ -122,6 +122,7 @@ internal class HttpTunnelChannelHandler(
                 // 拦截器处理
                 val isInterceptorHandle = ctx.channel().attr(AK_IS_INTERCEPTOR_HANDLE).get()
                 if (isInterceptorHandle == true) {
+                    httpTunnelRequestInterceptor?.doHttpContent(ctx, msg, httpFd.tunnelRequest)
                     return
                 }
                 val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
