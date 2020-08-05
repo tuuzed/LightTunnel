@@ -35,18 +35,10 @@ class RouterMappings internal constructor() {
 
     @Throws(IOException::class)
     internal fun doHandle(request: FullHttpRequest): FullHttpResponse {
-        val path = request.uri()
-        val response = interceptors.keys()
-            .toList()
-            .firstOrNull { it.matches(path) }
-            .let { interceptors[it] }
-            ?.invoke(request)
-        if (response != null) {
-            return response
-        }
-        val handler = handlers.keys().toList().firstOrNull { it.matches(path) }.let { handlers[it] }
-            ?: NOT_FOUND_ROUTE_CALLBACK
-        return handler(request)
+        val path = request.uri().split("?").first()
+        return interceptors.entries.firstOrNull { it.key.matches(path) }?.value?.invoke(request)
+            ?: handlers.entries.firstOrNull { it.key.matches(path) }?.value?.invoke(request)
+            ?: NOT_FOUND_ROUTE_CALLBACK.invoke(request)
     }
 
 }

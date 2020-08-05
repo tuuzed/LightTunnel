@@ -6,7 +6,6 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.ssl.SslContext
@@ -43,7 +42,7 @@ class HttpServer(
                     ch.pipeline()
                         .addLast("codec", HttpServerCodec())
                         .addLast("httpAggregator", HttpObjectAggregator(maxContentLength))
-                        .addLast("handler", HttpServerChannelHandler(this@HttpServer))
+                        .addLast("handler", HttpServerChannelHandler { routerMappings.doHandle(it) })
                 }
             })
         routerMappings.routing()
@@ -62,8 +61,6 @@ class HttpServer(
             bindPort
         )
     }
-
-    internal fun doDispatch(request: FullHttpRequest) = routerMappings.doHandle(request)
 
     fun depose() {
         bindChannelFuture?.channel()?.close()

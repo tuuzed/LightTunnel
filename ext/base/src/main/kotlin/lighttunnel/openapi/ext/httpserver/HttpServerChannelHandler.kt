@@ -7,7 +7,7 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 
 internal class HttpServerChannelHandler(
-    private val owner: HttpServer
+    private val dispatcher: (request: FullHttpRequest) -> FullHttpResponse
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
 
     override fun channelReadComplete(ctx: ChannelHandlerContext) {
@@ -22,7 +22,7 @@ internal class HttpServerChannelHandler(
                 HttpResponseStatus.CONTINUE)
             )
         }
-        val response = owner.doDispatch(request)
+        val response = dispatcher(request)
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
     }
 
