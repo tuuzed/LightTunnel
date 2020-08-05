@@ -19,7 +19,8 @@ class HttpServerTest {
             bindAddr = "0.0.0.0",
             bindPort = 80
         ) {
-            route("^/.*".toRegex()) {
+            intercept("^/.*".toRegex()) { null }
+            route("^/hello".toRegex()) {
                 DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
