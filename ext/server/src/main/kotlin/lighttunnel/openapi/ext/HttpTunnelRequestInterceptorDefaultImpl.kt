@@ -44,7 +44,7 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
                 headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
             })
             ctx.write(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
-            ctx.writeAndFlush(DefaultLastHttpContent())
+            ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
             return true
         }
         return false

@@ -6,7 +6,6 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.*
-import io.netty.util.CharsetUtil
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.util.HttpUtil
 import lighttunnel.base.util.emptyBytes
@@ -114,11 +113,7 @@ internal class HttpTunnelChannelHandler(
                     return
                 }
                 // 是否注册过隧道
-                val httpFd = registry.getHttpFd(httpHost)
-                if (httpFd == null) {
-                    writeNotRegisteredTunnelHttpResponse(ctx, httpHost)
-                    return
-                }
+                val httpFd = registry.getHttpFd(httpHost) ?: return
                 // 拦截器处理
                 val isInterceptorHandle = ctx.channel().attr(AK_IS_INTERCEPTOR_HANDLE).get()
                 if (isInterceptorHandle == true) {
@@ -139,15 +134,14 @@ internal class HttpTunnelChannelHandler(
         }
     }
 
-
     private fun writeNotRegisteredTunnelHttpResponse(ctx: ChannelHandlerContext, httpHost: String) {
-        val content = Unpooled.copiedBuffer("隧道（$httpHost）没有注册！", CharsetUtil.UTF_8)
+        val content = "隧道（$httpHost）没有注册！".toByteArray()
         ctx.write(DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FORBIDDEN).apply {
             headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
-            headers().set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+            headers().set(HttpHeaderNames.CONTENT_LENGTH, content.size)
         })
         ctx.write(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
-        ctx.writeAndFlush(DefaultLastHttpContent()).addListener(ChannelFutureListener.CLOSE)
+        ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE)
     }
 
 }

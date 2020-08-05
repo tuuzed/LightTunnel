@@ -42,7 +42,7 @@ class HttpPluginStaticFileImpl(
                     length = it.read(buf)
                 }
             }
-            ctx.writeAndFlush(DefaultLastHttpContent())
+            ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
         }
         return true
     }
