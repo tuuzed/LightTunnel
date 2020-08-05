@@ -30,13 +30,18 @@ class HttpPluginStaticFileImpl(
             ctx.write(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
             ctx.writeAndFlush(DefaultLastHttpContent())
         } else {
-            val content = file.readBytes()
             ctx.write(DefaultHttpResponse(httpRequest.protocolVersion(), HttpResponseStatus.OK).apply {
                 headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
-                headers().set(HttpHeaderNames.CONTENT_LENGTH, file.length())
-                HttpHeaderValues.CHUNKED
+                headers().set(HttpHeaderNames.CONTENT_LENGTH, file.inputStream().use { it.available() })
             })
-            ctx.write(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
+            file.inputStream().use {
+                val buf = ByteArray(4096)
+                var length = it.read(buf)
+                while (length != -1) {
+                    ctx.write(DefaultHttpContent(Unpooled.copiedBuffer(buf, 0, length)))
+                    length = it.read(buf)
+                }
+            }
             ctx.writeAndFlush(DefaultLastHttpContent())
         }
         return true
