@@ -29,7 +29,7 @@ fun TunnelClient.newHttpRpcServer(
         intercept("^/.*".toRegex()) {
             val auth = authProvider ?: return@intercept null
             val account = it.basicAuthorization
-            val next = if (account?.size == 2) auth(account[0], account[1]) else false
+            val next = if (account != null) auth(account.first, account.second) else false
             if (next) {
                 null
             } else {

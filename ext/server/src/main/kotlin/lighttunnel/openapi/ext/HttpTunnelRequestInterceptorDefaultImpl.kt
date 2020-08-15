@@ -31,7 +31,7 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
         val account = httpRequest.basicAuthorization
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
-        if (account?.size != 2 || username != account[0] || password != account[1]) {
+        if (account == null || username != account.first || password != account.second) {
             val httpResponse = DefaultFullHttpResponse(httpRequest.protocolVersion(), HttpResponseStatus.UNAUTHORIZED)
             val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
             httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\"")
