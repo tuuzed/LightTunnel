@@ -7,8 +7,9 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.*
 import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.util.HttpUtil
-import lighttunnel.base.util.emptyBytes
+import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.util.byteBuf
+import lighttunnel.base.util.hostExcludePort
 import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.http.HttpPlugin
@@ -73,7 +74,7 @@ internal class HttpTunnelChannelHandler(
                     return
                 }
                 // 获取Http请求中的域名
-                val httpHost = HttpUtil.getHostWithoutPort(msg)
+                val httpHost = msg.hostExcludePort
                 if (httpHost == null) {
                     ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
                     return
@@ -96,7 +97,7 @@ internal class HttpTunnelChannelHandler(
                 httpFd.tunnelChannel.writeAndFlush(
                     ProtoMessage.REMOTE_CONNECTED(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
                 )
-                val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg)) ?: emptyBytes
+                val data = ByteBufUtil.getBytes(msg.byteBuf) ?: emptyBytes
                 httpFd.tunnelChannel.writeAndFlush(ProtoMessage.TRANSFER(httpFd.tunnelId, sessionId, data))
             }
             is HttpContent -> {

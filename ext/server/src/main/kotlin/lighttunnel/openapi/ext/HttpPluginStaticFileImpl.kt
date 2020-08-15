@@ -4,7 +4,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
-import lighttunnel.base.util.HttpUtil
+import lighttunnel.base.util.hostExcludePort
 import lighttunnel.openapi.http.HttpPlugin
 import java.io.File
 import java.net.URLDecoder
@@ -15,7 +15,7 @@ class HttpPluginStaticFileImpl(
 ) : HttpPlugin {
 
     override fun doHttpRequest(ctx: ChannelHandlerContext, httpRequest: HttpRequest): Boolean {
-        val host = HttpUtil.getHostWithoutPort(httpRequest)
+        val host = httpRequest.hostExcludePort
         if (host == null || !hosts.contains(host)) {
             return false
         }

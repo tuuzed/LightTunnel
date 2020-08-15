@@ -21,9 +21,9 @@ import lighttunnel.server.util.SessionChannels
 internal abstract class TunnelServerDaemonChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor?,
     private val tunnelIds: IncIds,
-    private val tcpTunnel: TcpTunnel? = null,
-    private val httpTunnel: HttpTunnel? = null,
-    private val httpsTunnel: HttpTunnel? = null
+    private val tcpTunnel: TcpTunnel?,
+    private val httpTunnel: HttpTunnel?,
+    private val httpsTunnel: HttpTunnel?
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
 
     private val logger by loggerDelegate()
