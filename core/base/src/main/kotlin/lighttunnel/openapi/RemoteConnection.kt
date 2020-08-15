@@ -1,6 +1,6 @@
 package lighttunnel.openapi
 
-import lighttunnel.base.util.emptyBytes
+import lighttunnel.base.proto.emptyBytes
 import org.json.JSONObject
 import java.io.Serializable
 import java.net.InetSocketAddress

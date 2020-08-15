@@ -3,7 +3,7 @@ package lighttunnel.openapi.ext
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
-import lighttunnel.base.util.HttpUtil
+import lighttunnel.base.util.basicAuthorization
 import lighttunnel.openapi.BuildConfig
 import lighttunnel.openapi.TunnelClient
 import lighttunnel.openapi.conn.TunnelConnection
@@ -28,7 +28,7 @@ fun TunnelClient.newHttpRpcServer(
     ) {
         intercept("^/.*".toRegex()) {
             val auth = authProvider ?: return@intercept null
-            val account = HttpUtil.getBasicAuthorization(it)
+            val account = it.basicAuthorization
             val next = if (account?.size == 2) auth(account[0], account[1]) else false
             if (next) {
                 null

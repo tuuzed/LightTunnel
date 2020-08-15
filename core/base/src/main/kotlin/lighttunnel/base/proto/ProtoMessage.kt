@@ -1,11 +1,14 @@
 package lighttunnel.base.proto
 
 import lighttunnel.base.util.LongUtil
-import lighttunnel.base.util.emptyBytes
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.TunnelRequest
 
-class ProtoMessage internal constructor(val type: Type, val head: ByteArray, val data: ByteArray) {
+class ProtoMessage private constructor(
+    val type: Type,
+    val head: ByteArray,
+    val data: ByteArray
+) {
 
     @Suppress("FunctionName")
     companion object {
@@ -26,6 +29,8 @@ class ProtoMessage internal constructor(val type: Type, val head: ByteArray, val
         fun LOCAL_DISCONNECT(tunnelId: Long, sessionId: Long) = ProtoMessage(Type.LOCAL_DISCONNECT, LongUtil.toBytes(tunnelId, sessionId), emptyBytes)
         fun FORCE_OFF() = FORCE_OFF
         fun FORCE_OFF_REPLY() = FORCE_OFF_REPLY
+
+        internal fun newInstance(type: Type, head: ByteArray, data: ByteArray) = ProtoMessage(type, head, data)
     }
 
     val tunnelId by lazy { LongUtil.fromBytes(head, 0) }

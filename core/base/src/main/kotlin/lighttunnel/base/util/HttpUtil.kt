@@ -6,12 +6,16 @@ import io.netty.handler.codec.base64.Base64
 import io.netty.handler.codec.http.*
 import java.nio.charset.StandardCharsets
 
+val HttpRequest.hostExcludePort get() = HttpUtil.getHostExcludePort(this)
+val HttpRequest.basicAuthorization get() = HttpUtil.getBasicAuthorization(this)
+val HttpRequest.byteBuf get() = HttpUtil.toByteBuf(this)
+val HttpResponse.byteBuf get() = HttpUtil.toByteBuf(this)
 
-object HttpUtil {
+private object HttpUtil {
     private const val CRLF = "\r\n"
     private val CHARSET = StandardCharsets.UTF_8
 
-    fun getHostWithoutPort(request: HttpRequest): String? {
+    fun getHostExcludePort(request: HttpRequest): String? {
         val host = request.headers().get(HttpHeaderNames.HOST) ?: return null
         return host.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
     }
@@ -76,4 +80,5 @@ object HttpUtil {
             Unpooled.wrappedBuffer(raw.toString().toByteArray(CHARSET))
         }
     }
+
 }

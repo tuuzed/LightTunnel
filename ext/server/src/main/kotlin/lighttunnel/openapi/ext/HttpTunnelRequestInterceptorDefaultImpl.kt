@@ -4,7 +4,7 @@ package lighttunnel.openapi.ext
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import lighttunnel.base.util.HttpUtil
+import lighttunnel.base.util.basicAuthorization
 import lighttunnel.openapi.TunnelRequest
 import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import java.net.InetSocketAddress
@@ -28,7 +28,7 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
     }
 
     private fun handleHttpBasicAuth(tunnelRequest: TunnelRequest, httpRequest: FullHttpRequest): FullHttpResponse? {
-        val account = HttpUtil.getBasicAuthorization(httpRequest)
+        val account = httpRequest.basicAuthorization
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
         if (account?.size != 2 || username != account[0] || password != account[1]) {

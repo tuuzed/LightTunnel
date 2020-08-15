@@ -138,6 +138,7 @@ internal class TunnelServerDaemon(
             bindAddr = args.bindAddr,
             bindPort = args.bindPort,
             sslContext = null,
+            maxContentLength = args.maxContentLength,
             httpTunnelRequestInterceptor = args.httpTunnelRequestInterceptor,
             httpPlugin = args.httpPlugin,
             registry = registry
@@ -151,6 +152,7 @@ internal class TunnelServerDaemon(
             bindAddr = args.bindAddr,
             bindPort = args.bindPort,
             sslContext = args.sslContext,
+            maxContentLength = args.maxContentLength,
             httpTunnelRequestInterceptor = args.httpTunnelRequestInterceptor,
             httpPlugin = args.httpPlugin,
             registry = registry

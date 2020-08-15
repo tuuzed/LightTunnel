@@ -3,7 +3,7 @@ package lighttunnel.openapi.ext
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
-import lighttunnel.base.util.HttpUtil
+import lighttunnel.base.util.hostExcludePort
 import lighttunnel.openapi.http.HttpPlugin
 import java.io.File
 import java.net.URLDecoder
@@ -13,7 +13,7 @@ class HttpPluginStaticFileImpl(
     private val hosts: List<String>
 ) : HttpPlugin {
     override fun doHandle(request: FullHttpRequest): FullHttpResponse? {
-        val host = HttpUtil.getHostWithoutPort(request)
+        val host = request.hostExcludePort
         if (host == null || !hosts.contains(host)) {
             return null
         }

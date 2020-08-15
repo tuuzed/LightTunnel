@@ -8,8 +8,9 @@ import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
 import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.util.HttpUtil
-import lighttunnel.base.util.emptyBytes
+import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.util.byteBuf
+import lighttunnel.base.util.hostExcludePort
 import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.RemoteConnection
 import lighttunnel.openapi.http.HttpPlugin
@@ -19,8 +20,8 @@ import lighttunnel.server.util.AK_SESSION_ID
 
 internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
-    private val httpPlugin: HttpPlugin? = null,
-    private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor? = null
+    private val httpPlugin: HttpPlugin?,
+    private val httpTunnelRequestInterceptor: HttpTunnelRequestInterceptor?
 ) : SimpleChannelInboundHandler<FullHttpRequest>() {
     private val logger by loggerDelegate()
 
@@ -65,10 +66,11 @@ internal class HttpTunnelChannelHandler(
         // 插件处理
         val httpPluginResponse = httpPlugin?.doHandle(msg)
         if (httpPluginResponse != null) {
-            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpPluginResponse)).addListener(ChannelFutureListener.CLOSE)
+            ctx.channel().writeAndFlush(httpPluginResponse.byteBuf).addListener(ChannelFutureListener.CLOSE)
+            return
         }
         // 获取Http请求中的域名
-        val httpHost = HttpUtil.getHostWithoutPort(msg)
+        val httpHost = msg.hostExcludePort
         if (httpHost == null) {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
             return
@@ -77,14 +79,14 @@ internal class HttpTunnelChannelHandler(
         val httpFd = registry.getHttpFd(httpHost)
         if (httpFd == null) {
             val notRegisteredTunnelHttpResponse = newNotRegisteredTunnelHttpResponse(httpHost)
-            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(notRegisteredTunnelHttpResponse)).addListener(ChannelFutureListener.CLOSE)
+            ctx.channel().writeAndFlush(notRegisteredTunnelHttpResponse.byteBuf).addListener(ChannelFutureListener.CLOSE)
             return
         }
         ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
         // 拦截器
         val httpInterceptorResponse = httpTunnelRequestInterceptor?.intercept(ctx, httpFd.tunnelRequest, msg)
         if (httpInterceptorResponse != null) {
-            ctx.channel().writeAndFlush(HttpUtil.toByteBuf(httpInterceptorResponse))
+            ctx.channel().writeAndFlush(httpInterceptorResponse.byteBuf)
             return
         }
         val sessionId = httpFd.putChannel(ctx.channel())
@@ -92,7 +94,7 @@ internal class HttpTunnelChannelHandler(
         httpFd.tunnelChannel.writeAndFlush(
             ProtoMessage.REMOTE_CONNECTED(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
         )
-        val data = ByteBufUtil.getBytes(HttpUtil.toByteBuf(msg)) ?: emptyBytes
+        val data = ByteBufUtil.getBytes(msg.byteBuf) ?: emptyBytes
         httpFd.tunnelChannel.writeAndFlush(ProtoMessage.TRANSFER(httpFd.tunnelId, sessionId, data))
     }
 

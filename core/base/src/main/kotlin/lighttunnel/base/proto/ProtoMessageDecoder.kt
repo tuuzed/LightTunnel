@@ -12,11 +12,11 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
     0,
     true
 ) {
+
     companion object {
-        private const val MIN_BYTES =
-            PROTO_MESSAGE_LENGTH_FIELD_LENGTH +
-                PROTO_MESSAGE_TYPE_LENGTH +
-                PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH
+        private const val MIN_BYTES = PROTO_MESSAGE_LENGTH_FIELD_LENGTH +
+            PROTO_MESSAGE_TYPE_LENGTH +
+            PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH
     }
 
     @Throws(Exception::class)
@@ -38,7 +38,7 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
                 headLength
             val data = ByteArray(dataLength)
             rst.readBytes(data)
-            return ProtoMessage(type, head, data)
+            return ProtoMessage.newInstance(type, head, data)
         } else {
             return rst
         }
