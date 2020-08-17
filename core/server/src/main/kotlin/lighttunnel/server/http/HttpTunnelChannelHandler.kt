@@ -76,13 +76,13 @@ internal class HttpTunnelChannelHandler(
                 // 获取Http请求中的域名
                 val httpHost = msg.hostExcludePort
                 if (httpHost == null) {
-                    ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+                    writeSimpleHttpResponse(chain, status = HttpResponseStatus.BAD_REQUEST)
                     return
                 }
                 // 是否注册过隧道
                 val httpFd = registry.getHttpFd(httpHost)
                 if (httpFd == null) {
-                    writeNotRegisteredTunnelHttpResponse(chain, httpHost)
+                    writeSimpleHttpResponse(chain, status = HttpResponseStatus.FORBIDDEN, content = "Tunnel（$httpHost）Not Registered!")
                     return
                 }
                 ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
@@ -137,13 +137,19 @@ internal class HttpTunnelChannelHandler(
         }
     }
 
-    private fun writeNotRegisteredTunnelHttpResponse(chain: HttpChain, httpHost: String) {
-        val content = "Tunnel（$httpHost）Not Registered!".toByteArray()
-        chain.writeHttpResponse(DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FORBIDDEN).apply {
-            headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
-            headers().set(HttpHeaderNames.CONTENT_LENGTH, content.size)
-        })
-        chain.writeHttpContent(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
+    private fun writeSimpleHttpResponse(
+        chain: HttpChain,
+        status: HttpResponseStatus = HttpResponseStatus.OK,
+        content: String = status.toString()
+    ) {
+        val contentByteBuf = Unpooled.copiedBuffer(content, Charsets.UTF_8)
+        chain.writeHttpResponse(
+            DefaultHttpResponse(HttpVersion.HTTP_1_1, status).apply {
+                headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
+                headers().set(HttpHeaderNames.CONTENT_LENGTH, contentByteBuf.readableBytes())
+            }
+        )
+        chain.writeHttpContent(DefaultHttpContent(contentByteBuf))
         chain.writeHttpContent(LastHttpContent.EMPTY_LAST_CONTENT, flush = true, listener = ChannelFutureListener.CLOSE)
     }
 
