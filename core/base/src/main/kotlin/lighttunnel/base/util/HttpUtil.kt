@@ -80,3 +80,5 @@ val HttpResponse.byteBuf: ByteBuf
             Unpooled.wrappedBuffer(raw.toString().toByteArray(CHARSET))
         }
     }
+
+val HttpContent.byteBuf: ByteBuf get() = this.content() ?: Unpooled.EMPTY_BUFFER
