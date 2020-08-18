@@ -8,10 +8,10 @@ import java.io.IOException
 interface HttpTunnelRequestInterceptor {
 
     @Throws(IOException::class)
-    fun doHttpRequest(chain: HttpChain, httpRequest: HttpRequest, tunnelRequest: TunnelRequest): Boolean
+    fun doHttpRequest(ctx: HttpContext, httpRequest: HttpRequest, tunnelRequest: TunnelRequest): Boolean
 
     @Throws(IOException::class)
-    fun doHttpContent(chain: HttpChain, httpContent: HttpContent, tunnelRequest: TunnelRequest)
+    fun doHttpContent(ctx: HttpContext, httpContent: HttpContent, tunnelRequest: TunnelRequest)
 
 
 }

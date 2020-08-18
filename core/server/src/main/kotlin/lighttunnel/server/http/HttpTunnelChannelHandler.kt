@@ -5,14 +5,15 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.HttpContent
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
 import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.emptyBytes
 import lighttunnel.base.util.byteBuf
 import lighttunnel.base.util.hostExcludePort
 import lighttunnel.base.util.loggerDelegate
 import lighttunnel.openapi.RemoteConnection
-import lighttunnel.openapi.http.HttpChain
 import lighttunnel.openapi.http.HttpPlugin
 import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import lighttunnel.server.util.*
@@ -63,30 +64,30 @@ internal class HttpTunnelChannelHandler(
         logger.trace("channelRead0: {}", ctx)
         ctx ?: return
         msg ?: return
-        val chain = ctx.channel().attr(AK_HTTP_CHAIN).get()
-            ?: HttpChainDefaultImpl(ctx).also { ctx.channel().attr(AK_HTTP_CHAIN).set(it) }
+        val httpContext = ctx.channel().attr(AK_HTTP_CONTEXT).get()
+            ?: HttpContextDefaultImpl(ctx).also { ctx.channel().attr(AK_HTTP_CONTEXT).set(it) }
         when (msg) {
             is HttpRequest -> {
                 // 插件处理
-                ctx.channel().attr(AK_IS_PLUGIN_HANDLE).set(httpPlugin?.doHttpRequest(chain, msg))
+                ctx.channel().attr(AK_IS_PLUGIN_HANDLE).set(httpPlugin?.doHttpRequest(httpContext, msg))
                 if (ctx.isPluginHandle) {
                     return
                 }
                 // 获取Http请求中的域名
                 val httpHost = msg.hostExcludePort
                 if (httpHost == null) {
-                    writeSimpleHttpResponse(chain, status = HttpResponseStatus.BAD_REQUEST)
+                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_REQUEST)
                     return
                 }
                 ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
                 // 是否注册过隧道
                 val httpFd = registry.getHttpFd(httpHost)
                 if (httpFd == null) {
-                    writeSimpleHttpResponse(chain, status = HttpResponseStatus.FORBIDDEN, content = "Tunnel（$httpHost）Not Registered!")
+                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.FORBIDDEN, text = "Tunnel($httpHost)Not Registered!")
                     return
                 }
                 // 拦截器处理
-                ctx.channel().attr(AK_IS_INTERCEPTOR_HANDLE).set(httpTunnelRequestInterceptor?.doHttpRequest(chain, msg, httpFd.tunnelRequest))
+                ctx.channel().attr(AK_IS_INTERCEPTOR_HANDLE).set(httpTunnelRequestInterceptor?.doHttpRequest(httpContext, msg, httpFd.tunnelRequest))
                 if (ctx.isInterceptorHandle) {
                     return
                 }
@@ -101,25 +102,25 @@ internal class HttpTunnelChannelHandler(
             is HttpContent -> {
                 // 插件处理
                 if (ctx.isPluginHandle) {
-                    httpPlugin?.doHttpContent(chain, msg)
+                    httpPlugin?.doHttpContent(httpContext, msg)
                     return
                 }
                 // 获取Http请求中的域名
                 val httpHost = ctx.channel().attr(AK_HTTP_HOST).get()
                 if (httpHost == null) {
-                    writeSimpleHttpResponse(chain, status = HttpResponseStatus.BAD_REQUEST)
+                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_REQUEST)
                     return
                 }
                 // 是否注册过隧道
                 val httpFd = registry.getHttpFd(httpHost) ?: return
                 // 拦截器处理
                 if (ctx.isInterceptorHandle) {
-                    httpTunnelRequestInterceptor?.doHttpContent(chain, msg, httpFd.tunnelRequest)
+                    httpTunnelRequestInterceptor?.doHttpContent(httpContext, msg, httpFd.tunnelRequest)
                     return
                 }
                 val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
                 if (sessionId == null) {
-                    ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_REQUEST)
                     return
                 }
                 httpFd.tunnelChannel.writeAndFlush(
@@ -136,20 +137,5 @@ internal class HttpTunnelChannelHandler(
     private val ChannelHandlerContext.isPluginHandle get() = this.channel().attr(AK_IS_PLUGIN_HANDLE).get() == true
     private val ChannelHandlerContext.isInterceptorHandle get() = this.channel().attr(AK_IS_INTERCEPTOR_HANDLE).get() == true
 
-    private fun writeSimpleHttpResponse(
-        chain: HttpChain,
-        status: HttpResponseStatus = HttpResponseStatus.OK,
-        content: String = status.toString()
-    ) {
-        val contentByteBuf = Unpooled.copiedBuffer(content, Charsets.UTF_8)
-        chain.writeHttpResponse(
-            DefaultHttpResponse(HttpVersion.HTTP_1_1, status).apply {
-                headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
-                headers().set(HttpHeaderNames.CONTENT_LENGTH, contentByteBuf.readableBytes())
-            }
-        )
-        chain.writeHttpContent(DefaultHttpContent(contentByteBuf))
-        chain.writeHttpContent(LastHttpContent.EMPTY_LAST_CONTENT, flush = true, listener = ChannelFutureListener.CLOSE)
-    }
 
 }

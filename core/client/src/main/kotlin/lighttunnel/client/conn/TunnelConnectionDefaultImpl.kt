@@ -11,7 +11,7 @@ import lighttunnel.openapi.TunnelRequest
 import lighttunnel.openapi.conn.TunnelConnection
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class DefaultTunnelConnectionImpl(
+internal class TunnelConnectionDefaultImpl(
     override val serverAddr: String,
     override val serverPort: Int,
     private val originalTunnelRequest: TunnelRequest,
@@ -29,7 +29,7 @@ internal class DefaultTunnelConnectionImpl(
 
     val isActiveClosed get() = activeClosedFlag.get()
 
-    fun open(bootstrap: Bootstrap, failure: (conn: DefaultTunnelConnectionImpl) -> Unit) {
+    fun open(bootstrap: Bootstrap, failure: (conn: TunnelConnectionDefaultImpl) -> Unit) {
         if (isActiveClosed) {
             logger.warn("This tunnel already closed.")
             return

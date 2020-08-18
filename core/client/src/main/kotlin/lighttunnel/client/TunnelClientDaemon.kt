@@ -12,7 +12,7 @@ import lighttunnel.base.proto.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
 import lighttunnel.base.util.loggerDelegate
-import lighttunnel.client.conn.DefaultTunnelConnectionImpl
+import lighttunnel.client.conn.TunnelConnectionDefaultImpl
 import lighttunnel.client.conn.TunnelConnectionRegistry
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
@@ -40,7 +40,7 @@ internal class TunnelClientDaemon(
     private val bootstrap = Bootstrap()
     private val localTcpClient: LocalTcpClient
     private val lock = ReentrantLock()
-    private val openFailureCallback = { conn: DefaultTunnelConnectionImpl -> tryReconnect(conn, false) }
+    private val openFailureCallback = { conn: TunnelConnectionDefaultImpl -> tryReconnect(conn, false) }
     private val onChannelStateListener = OnChannelStateListenerImpl()
 
     val tunnelConnectionRegistry = TunnelConnectionRegistry()
@@ -60,8 +60,8 @@ internal class TunnelClientDaemon(
         serverPort: Int,
         tunnelRequest: TunnelRequest,
         sslContext: SslContext? = null
-    ): DefaultTunnelConnectionImpl {
-        val conn = DefaultTunnelConnectionImpl(
+    ): TunnelConnectionDefaultImpl {
+        val conn = TunnelConnectionDefaultImpl(
             serverAddr = serverAddr,
             serverPort = serverPort,
             originalTunnelRequest = tunnelRequest,
@@ -76,7 +76,7 @@ internal class TunnelClientDaemon(
         return conn
     }
 
-    fun close(conn: DefaultTunnelConnectionImpl) {
+    fun close(conn: TunnelConnectionDefaultImpl) {
         conn.close()
         tunnelConnectionRegistry.unregister(conn)
     }
@@ -89,7 +89,7 @@ internal class TunnelClientDaemon(
         Unit
     }
 
-    private fun tryReconnect(conn: DefaultTunnelConnectionImpl, error: Boolean) {
+    private fun tryReconnect(conn: TunnelConnectionDefaultImpl, error: Boolean) {
         when {
             // 主动关闭
             conn.isActiveClosed -> close(conn)
@@ -142,7 +142,7 @@ internal class TunnelClientDaemon(
 
         override fun onChannelInactive(
             ctx: ChannelHandlerContext,
-            conn: DefaultTunnelConnectionImpl?,
+            conn: TunnelConnectionDefaultImpl?,
             extra: TunnelClientDaemonChannelHandler.ChannelInactiveExtra?
         ) {
             super.onChannelInactive(ctx, conn, extra)
@@ -155,7 +155,7 @@ internal class TunnelClientDaemon(
             }
         }
 
-        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: DefaultTunnelConnectionImpl?) {
+        override fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnectionDefaultImpl?) {
             super.onChannelConnected(ctx, conn)
             if (conn != null) {
                 onTunnelConnectionListener?.onTunnelConnected(conn)

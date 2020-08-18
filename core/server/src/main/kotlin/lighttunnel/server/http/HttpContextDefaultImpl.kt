@@ -1,20 +1,24 @@
 package lighttunnel.server.http
 
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.HttpContent
-import io.netty.handler.codec.http.HttpResponse
+import io.netty.handler.codec.http.*
+import io.netty.util.Attribute
+import io.netty.util.AttributeKey
 import lighttunnel.base.util.byteBuf
-import lighttunnel.openapi.http.HttpChain
+import lighttunnel.openapi.http.HttpContext
 import java.net.SocketAddress
 
-internal class HttpChainDefaultImpl(
+internal class HttpContextDefaultImpl(
     private val ctx: ChannelHandlerContext
-) : HttpChain {
+) : HttpContext {
 
     override val localAddress: SocketAddress? = ctx.channel().localAddress()
 
     override val remoteAddress: SocketAddress? = ctx.channel().remoteAddress()
+
+    override fun <T> attr(key: AttributeKey<T>): Attribute<T>? = ctx.channel().attr(key)
 
     override fun writeHttpResponse(response: HttpResponse, flush: Boolean, listener: ChannelFutureListener?) {
         val channelFuture = if (flush) {
@@ -36,6 +40,18 @@ internal class HttpChainDefaultImpl(
         if (listener != null) {
             channelFuture.addListener(listener)
         }
+    }
+
+    fun writeTextHttpResponse(status: HttpResponseStatus = HttpResponseStatus.OK, text: String = status.toString()) {
+        val content = Unpooled.copiedBuffer(text, Charsets.UTF_8) ?: Unpooled.EMPTY_BUFFER
+        writeHttpResponse(
+            DefaultHttpResponse(HttpVersion.HTTP_1_1, status).apply {
+                headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
+                headers().set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+            }
+        )
+        writeHttpContent(DefaultHttpContent(content))
+        writeHttpContent(LastHttpContent.EMPTY_LAST_CONTENT, flush = true, listener = ChannelFutureListener.CLOSE)
     }
 
 }

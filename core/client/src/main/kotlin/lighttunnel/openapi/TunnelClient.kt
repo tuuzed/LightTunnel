@@ -4,7 +4,7 @@ package lighttunnel.openapi
 
 import io.netty.handler.ssl.SslContext
 import lighttunnel.client.TunnelClientDaemon
-import lighttunnel.client.conn.DefaultTunnelConnectionImpl
+import lighttunnel.client.conn.TunnelConnectionDefaultImpl
 import lighttunnel.openapi.conn.TunnelConnection
 import lighttunnel.openapi.listener.OnRemoteConnectionListener
 import lighttunnel.openapi.listener.OnTunnelConnectionListener
@@ -38,7 +38,7 @@ class TunnelClient(
         sslContext: SslContext? = null
     ): TunnelConnection = daemon.connect(serverAddr, serverPort, tunnelRequest, sslContext)
 
-    fun close(conn: TunnelConnection) = daemon.close((conn as DefaultTunnelConnectionImpl))
+    fun close(conn: TunnelConnection) = daemon.close((conn as TunnelConnectionDefaultImpl))
 
     fun getTunnelConnectionList(): List<TunnelConnection> = daemon.tunnelConnectionRegistry.tunnelConnectionList
 

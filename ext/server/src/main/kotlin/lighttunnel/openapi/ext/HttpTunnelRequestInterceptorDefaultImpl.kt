@@ -4,7 +4,7 @@ import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import lighttunnel.base.util.basicAuthorization
 import lighttunnel.openapi.TunnelRequest
-import lighttunnel.openapi.http.HttpChain
+import lighttunnel.openapi.http.HttpContext
 import lighttunnel.openapi.http.HttpTunnelRequestInterceptor
 import java.net.InetSocketAddress
 import java.net.SocketAddress
@@ -18,17 +18,17 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
         private const val MAGIC_VALUE_REMOTE_ADDR = "\$remote_addr"
     }
 
-    override fun doHttpRequest(chain: HttpChain, httpRequest: HttpRequest, tunnelRequest: TunnelRequest): Boolean {
-        val localAddress = chain.localAddress ?: return false
-        val remoteAddress = chain.remoteAddress ?: return false
+    override fun doHttpRequest(ctx: HttpContext, httpRequest: HttpRequest, tunnelRequest: TunnelRequest): Boolean {
+        val localAddress = ctx.localAddress ?: return false
+        val remoteAddress = ctx.remoteAddress ?: return false
         handleRewriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)
         handleWriteHttpHeaders(localAddress, remoteAddress, tunnelRequest, httpRequest)
-        return tunnelRequest.enableBasicAuth && handleHttpBasicAuth(chain, tunnelRequest, httpRequest)
+        return tunnelRequest.enableBasicAuth && handleHttpBasicAuth(ctx, tunnelRequest, httpRequest)
     }
 
-    override fun doHttpContent(chain: HttpChain, httpContent: HttpContent, tunnelRequest: TunnelRequest) {}
+    override fun doHttpContent(ctx: HttpContext, httpContent: HttpContent, tunnelRequest: TunnelRequest) {}
 
-    private fun handleHttpBasicAuth(chain: HttpChain, tunnelRequest: TunnelRequest, httpRequest: HttpRequest): Boolean {
+    private fun handleHttpBasicAuth(chain: HttpContext, tunnelRequest: TunnelRequest, httpRequest: HttpRequest): Boolean {
         val account = httpRequest.basicAuthorization
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
