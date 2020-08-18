@@ -10,6 +10,7 @@ interface HttpPlugin {
     fun doHttpRequest(ctx: HttpContext, httpRequest: HttpRequest): Boolean
 
     @Throws(IOException::class)
-    fun doHttpContent(ctx: HttpContext, httpContent: HttpContent)
+    fun doHttpContent(ctx: HttpContext, httpContent: HttpContent) {
+    }
 
 }

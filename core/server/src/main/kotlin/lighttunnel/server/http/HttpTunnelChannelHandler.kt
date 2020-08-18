@@ -120,7 +120,7 @@ internal class HttpTunnelChannelHandler(
                 }
                 val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
                 if (sessionId == null) {
-                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_REQUEST)
+                    ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
                     return
                 }
                 httpFd.tunnelChannel.writeAndFlush(

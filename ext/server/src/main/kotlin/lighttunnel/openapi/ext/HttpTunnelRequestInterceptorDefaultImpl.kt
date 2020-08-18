@@ -26,15 +26,13 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
         return tunnelRequest.enableBasicAuth && handleHttpBasicAuth(ctx, tunnelRequest, httpRequest)
     }
 
-    override fun doHttpContent(ctx: HttpContext, httpContent: HttpContent, tunnelRequest: TunnelRequest) {}
-
     private fun handleHttpBasicAuth(chain: HttpContext, tunnelRequest: TunnelRequest, httpRequest: HttpRequest): Boolean {
         val account = httpRequest.basicAuthorization
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword
         if (account == null || username != account.first || password != account.second) {
             val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
-            chain.writeHttpResponse(
+            chain.write(
                 DefaultHttpResponse(httpRequest.protocolVersion(), HttpResponseStatus.UNAUTHORIZED).apply {
                     headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=\"${tunnelRequest.basicAuthRealm}\"")
                     headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
@@ -43,8 +41,8 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
                     headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
                 }
             )
-            chain.writeHttpContent(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
-            chain.writeHttpContent(LastHttpContent.EMPTY_LAST_CONTENT, flush = true)
+            chain.write(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
+            chain.write(LastHttpContent.EMPTY_LAST_CONTENT, flush = true)
             return true
         }
         return false

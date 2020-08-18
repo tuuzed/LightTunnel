@@ -20,7 +20,7 @@ internal class HttpContextDefaultImpl(
 
     override fun <T> attr(key: AttributeKey<T>): Attribute<T>? = ctx.channel().attr(key)
 
-    override fun writeHttpResponse(response: HttpResponse, flush: Boolean, listener: ChannelFutureListener?) {
+    override fun write(response: HttpResponse, flush: Boolean, listener: ChannelFutureListener?) {
         val channelFuture = if (flush) {
             ctx.write(response.byteBuf)
         } else {
@@ -31,7 +31,7 @@ internal class HttpContextDefaultImpl(
         }
     }
 
-    override fun writeHttpContent(response: HttpContent, flush: Boolean, listener: ChannelFutureListener?) {
+    override fun write(response: HttpContent, flush: Boolean, listener: ChannelFutureListener?) {
         val channelFuture = if (flush) {
             ctx.write(response.byteBuf)
         } else {
@@ -44,14 +44,14 @@ internal class HttpContextDefaultImpl(
 
     fun writeTextHttpResponse(status: HttpResponseStatus = HttpResponseStatus.OK, text: String = status.toString()) {
         val content = Unpooled.copiedBuffer(text, Charsets.UTF_8) ?: Unpooled.EMPTY_BUFFER
-        writeHttpResponse(
+        write(
             DefaultHttpResponse(HttpVersion.HTTP_1_1, status).apply {
                 headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8")
                 headers().set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
             }
         )
-        writeHttpContent(DefaultHttpContent(content))
-        writeHttpContent(LastHttpContent.EMPTY_LAST_CONTENT, flush = true, listener = ChannelFutureListener.CLOSE)
+        write(DefaultHttpContent(content))
+        write(LastHttpContent.EMPTY_LAST_CONTENT, flush = true, listener = ChannelFutureListener.CLOSE)
     }
 
 }

@@ -11,7 +11,7 @@ interface HttpTunnelRequestInterceptor {
     fun doHttpRequest(ctx: HttpContext, httpRequest: HttpRequest, tunnelRequest: TunnelRequest): Boolean
 
     @Throws(IOException::class)
-    fun doHttpContent(ctx: HttpContext, httpContent: HttpContent, tunnelRequest: TunnelRequest)
-
+    fun doHttpContent(ctx: HttpContext, httpContent: HttpContent, tunnelRequest: TunnelRequest) {
+    }
 
 }

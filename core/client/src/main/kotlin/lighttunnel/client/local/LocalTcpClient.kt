@@ -44,7 +44,7 @@ internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {
     ) {
         val checkCachedLocalChannel: (() -> Boolean) = {
             val cachedLocalChannel = getCachedChannel(tunnelId, sessionId)
-            if (cachedLocalChannel != null && cachedLocalChannel.isActive) {
+            if (cachedLocalChannel?.isActive == true) {
                 callback?.onArrived(cachedLocalChannel)
                 true
             } else {
@@ -73,9 +73,7 @@ internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {
         })
     }
 
-    fun removeLocalChannel(tunnelId: Long, sessionId: Long): Channel? {
-        return removeCachedChannel(tunnelId, sessionId)
-    }
+    fun removeLocalChannel(tunnelId: Long, sessionId: Long): Channel? = removeCachedChannel(tunnelId, sessionId)
 
     fun depose() = lock.write {
         cachedChannels.values.forEach {
