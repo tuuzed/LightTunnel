@@ -29,7 +29,7 @@ class HttpPluginStaticFileImpl(
                 headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
                 headers().set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
             })
-            ctx.write(DefaultHttpContent(Unpooled.wrappedBuffer(content)))
+            ctx.write(DefaultHttpContent(content))
             ctx.write(LastHttpContent.EMPTY_LAST_CONTENT, flush = true, listener = ChannelFutureListener.CLOSE)
         } else {
             ctx.write(DefaultHttpResponse(httpRequest.protocolVersion(), HttpResponseStatus.OK).apply {
@@ -40,7 +40,8 @@ class HttpPluginStaticFileImpl(
                 val buf = ByteArray(bufferSize)
                 var length = it.read(buf)
                 while (length != -1) {
-                    ctx.write(DefaultHttpContent(Unpooled.copiedBuffer(buf, 0, length)))
+                    val content = Unpooled.copiedBuffer(buf, 0, length) ?: Unpooled.EMPTY_BUFFER
+                    ctx.write(DefaultHttpContent(content))
                     length = it.read(buf)
                 }
             }

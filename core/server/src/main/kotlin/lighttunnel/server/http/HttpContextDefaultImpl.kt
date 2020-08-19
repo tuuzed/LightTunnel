@@ -31,11 +31,11 @@ internal class HttpContextDefaultImpl(
         }
     }
 
-    override fun write(response: HttpContent, flush: Boolean, listener: ChannelFutureListener?) {
+    override fun write(content: HttpContent, flush: Boolean, listener: ChannelFutureListener?) {
         val channelFuture = if (flush) {
-            ctx.write(response.byteBuf)
+            ctx.write(content.byteBuf)
         } else {
-            ctx.writeAndFlush(response.byteBuf)
+            ctx.writeAndFlush(content.byteBuf)
         }
         if (listener != null) {
             channelFuture.addListener(listener)

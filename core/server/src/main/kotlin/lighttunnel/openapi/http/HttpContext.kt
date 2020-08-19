@@ -12,5 +12,5 @@ interface HttpContext {
     val remoteAddress: SocketAddress?
     fun <T> attr(key: AttributeKey<T>): Attribute<T>?
     fun write(response: HttpResponse, flush: Boolean = false, listener: ChannelFutureListener? = null)
-    fun write(response: HttpContent, flush: Boolean = false, listener: ChannelFutureListener? = null)
+    fun write(content: HttpContent, flush: Boolean = false, listener: ChannelFutureListener? = null)
 }
