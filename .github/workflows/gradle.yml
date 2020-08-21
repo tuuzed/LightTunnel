@@ -1,6 +1,9 @@
-name: Java CI
+name: LightTunnel CI
 
-on: [push]
+on:
+  push:
+    branches: [ master, beta ]
+
 
 jobs:
   build:
@@ -15,3 +18,5 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
+          ./gradlew clean dists
+          ./gradlew clean bintrayUpload
