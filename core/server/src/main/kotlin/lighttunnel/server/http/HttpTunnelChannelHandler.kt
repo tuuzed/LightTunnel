@@ -76,7 +76,7 @@ internal class HttpTunnelChannelHandler(
                 // 获取Http请求中的域名
                 val httpHost = msg.hostExcludePort
                 if (httpHost == null) {
-                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_REQUEST)
+                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_GATEWAY)
                     return
                 }
                 ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
@@ -108,7 +108,7 @@ internal class HttpTunnelChannelHandler(
                 // 获取Http请求中的域名
                 val httpHost = ctx.channel().attr(AK_HTTP_HOST).get()
                 if (httpHost == null) {
-                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_REQUEST)
+                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.BAD_GATEWAY)
                     return
                 }
                 // 是否注册过隧道
