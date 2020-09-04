@@ -22,6 +22,7 @@ class TunnelServer(
     sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
     httpTunnelArgs: HttpTunnelArgs? = null,
     httpsTunnelArgs: HttpsTunnelArgs? = null,
+    isHttpAndHttpsShareRegistry: Boolean = false,
     onTcpTunnelStateListener: OnTcpTunnelStateListener? = null,
     onHttpTunnelStateListener: OnHttpTunnelStateListener? = null,
     onTrafficListener: OnTrafficListener? = null
@@ -34,6 +35,7 @@ class TunnelServer(
             sslTunnelDaemonArgs = sslTunnelDaemonArgs,
             httpTunnelArgs = httpTunnelArgs,
             httpsTunnelArgs = httpsTunnelArgs,
+            isHttpAndHttpsShareRegistry = isHttpAndHttpsShareRegistry,
             onTcpTunnelStateListener = onTcpTunnelStateListener,
             onHttpTunnelStateListener = onHttpTunnelStateListener,
             onTrafficListener = onTrafficListener

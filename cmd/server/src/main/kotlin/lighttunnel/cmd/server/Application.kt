@@ -109,6 +109,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
                 sslTunnelDaemonArgs = getSslTunnelDaemonArgs(basic, tunnelRequestInterceptor),
                 httpTunnelArgs = getHttpTunnelArgs(basic),
                 httpsTunnelArgs = getHttpsTunnelArgs(basic),
+                isHttpAndHttpsShareRegistry = "true".equals(basic["http_https_share_registry"], true),
                 onTcpTunnelStateListener = this,
                 onHttpTunnelStateListener = this
             )

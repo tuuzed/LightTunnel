@@ -39,7 +39,9 @@ internal class TunnelServerDaemon(
     httpsTunnelArgs: HttpsTunnelArgs?,
     private val onTcpTunnelStateListener: OnTcpTunnelStateListener?,
     private val onHttpTunnelStateListener: OnHttpTunnelStateListener?,
-    private val onTrafficListener: OnTrafficListener?
+    private val onTrafficListener: OnTrafficListener?,
+    // Http和Https共享Registry
+    isHttpAndHttpsShareRegistry: Boolean = false
 ) {
     private val logger by loggerDelegate()
     private val lock = ReentrantLock()
@@ -50,7 +52,7 @@ internal class TunnelServerDaemon(
 
     val tcpRegistry: TcpRegistry = TcpRegistry()
     val httpRegistry: HttpRegistry = HttpRegistry()
-    val httpsRegistry: HttpRegistry = HttpRegistry()
+    val httpsRegistry: HttpRegistry = if (isHttpAndHttpsShareRegistry) httpRegistry else HttpRegistry()
 
     private val tcpTunnel: TcpTunnel = getTcpTunnel(tcpRegistry)
     private val httpTunnel: HttpTunnel? = httpTunnelArgs?.let { getHttpTunnel(httpRegistry, it) }
