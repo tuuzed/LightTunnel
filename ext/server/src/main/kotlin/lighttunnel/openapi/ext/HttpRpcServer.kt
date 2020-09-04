@@ -117,14 +117,14 @@ private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
 }
 
 @Suppress("DuplicatedCode")
-private fun List<HttpFd>.httpFdListToJson(httpPort: Int?): JSONArray {
+private fun List<HttpFd>.httpFdListToJson(port: Int?): JSONArray {
     return JSONArray(
         map { fd ->
             JSONObject().apply {
                 put("localAddr", fd.tunnelRequest.localAddr)
                 put("localPort", fd.tunnelRequest.localPort)
                 put("host", fd.tunnelRequest.host)
-                put("httpPort", httpPort)
+                put("port", port)
                 put("extras", fd.tunnelRequest.extras)
                 //
                 put("conns", fd.connectionCount)
