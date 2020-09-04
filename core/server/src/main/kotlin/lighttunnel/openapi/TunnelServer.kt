@@ -46,6 +46,9 @@ class TunnelServer(
     val isSupportHttp = httpTunnelArgs != null
     val isSupportHttps = httpsTunnelArgs != null
 
+    val httpPort = httpTunnelArgs?.bindPort
+    val httpsPort = httpsTunnelArgs?.bindPort
+
     @Throws(Exception::class)
     fun start(): Unit = daemon.start()
     fun depose(): Unit = daemon.depose()
