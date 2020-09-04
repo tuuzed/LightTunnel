@@ -73,8 +73,8 @@ fun TunnelServer.newHttpRpcServer(
         route("^/api/snapshot".toRegex()) {
             val content = JSONObject().apply {
                 put("tcp", getTcpFdList().tcpFdListToJson())
-                put("http", getHttpFdList().httpFdListToJson())
-                put("https", getHttpsFdList().httpFdListToJson())
+                put("http", getHttpFdList().httpFdListToJson(httpPort))
+                put("https", getHttpsFdList().httpFdListToJson(httpsPort))
             }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
             DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
@@ -117,13 +117,14 @@ private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
 }
 
 @Suppress("DuplicatedCode")
-private fun List<HttpFd>.httpFdListToJson(): JSONArray {
+private fun List<HttpFd>.httpFdListToJson(httpPort: Int?): JSONArray {
     return JSONArray(
         map { fd ->
             JSONObject().apply {
                 put("localAddr", fd.tunnelRequest.localAddr)
                 put("localPort", fd.tunnelRequest.localPort)
                 put("host", fd.tunnelRequest.host)
+                put("httpPort", httpPort)
                 put("extras", fd.tunnelRequest.extras)
                 //
                 put("conns", fd.connectionCount)
