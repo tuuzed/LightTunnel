@@ -74,17 +74,17 @@
 
   ```ini
     [basic]
-    # 绑定IP地址
-    bind_addr = 0.0.0.0
-    # 绑定端口号
-    bind_port = 5080
     # 线程数，值为-1时不限制线程数量
     boss_threads = -1
     worker_threads = -1
     
+    # 绑定IP地址
+    bind_addr = 0.0.0.0
+    # 绑定端口号
+    bind_port = 5080
+    
     # 验证Token
     auth_token = tk123456
-    
     # TCP隧道允许使用的端口
     allow_ports = 10000,10001,10002-50000
     
@@ -95,6 +95,9 @@
     ssl_jks = lts.jks
     ssl_key_password = ltspass
     ssl_store_password = ltspass
+    
+    # Http和Https共用Registry
+    http_https_share_registry = true
     
     # tunnel by http
     # http服务绑定端口，为空时不启用http服务
@@ -134,100 +137,100 @@
 - 客户端完整配置参考
 
   ```ini
-    [basic]
-    # 服务器地址
-    server_addr = 127.0.0.1
-    # 服务器端口
-    server_port = 5080
-    
-    # 线程数，值为-1时不限制线程数量
-    worker_threads = -1
-    
-    # 验证Token需要与服务器一致
-    auth_token = tk123456
-    
-    # ssl jks证书文件，当隧道列表中有使用了ssl时生效，加载失败时会默认使用程序内建的证书
-    ssl_server_port = 5443
-    ssl_jks = ltc.jks
-    ssl_store_password = ltcpass
-    
-    # Http Rpc绑定端口，为空时不启用Http Rpc
-    http_rpc_port = 5082
-    # Http Rpc登录用户，没有配置时不需要登录
-    http_rpc_username = guest
-    http_rpc_password = guest
-    
-    # 日志
-    # 日志等级由低到高 ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
-    log_level = INFO
-    # 日志文件,为空时不保存日志文件
-    log_file = ./logs/lts.log
-    # 保持的日志文件数量
-    log_count = 3
-    # 单个日志文件大小，支持KB、MB、GB单位
-    log_size = 1MB
-    
-    
-    # 隧道列表
-    # 命名空间相同的隧道会被覆盖掉
-    [tcp]
-    # 隧道类型，支持tcp,http,https
-    type = tcp
-    # 是否使用ssl连接，true|false
-    ssl = true
-    # 本地地址
-    local_addr = 192.168.1.1
-    # 本地端口
-    local_port = 80
-    # 隧道服务器端口，端口号设置成0时，为随机端口
-    remote_port = 10080
-    
-    [tcp-random]
-    type = tcp
-    ssl = true
-    local_addr = 192.168.1.1
-    local_port = 80
-    remote_port = 0
-    
-    [http]
-    # 隧道类型，支持tcp,http,https
-    type = http
-    # 是否使用ssl连接，true|false
-    ssl = true
-    # 本地地址
-    local_addr = 192.168.1.1
-    # 本地端口
-    local_port = 80
-    # 自定义域名，需要域名DNS设置指向服务器地址
-    host = t1.tunnel.lo
-    # 代理请求头设置，其中$remote_addr为魔法变量，最终会替换成用户的真实IP
-    pxy_header_set_X-Real-IP = $remote_addr
-    # 代理请求头新增
-    pxy_header_add_X-User-Agent = LightTunnel
-    # 登录验证信息，没有配置时不需要登录
-    auth_realm = .
-    auth_username = guest
-    auth_password = guest
-    
-    [https]
-    # 隧道类型，支持tcp,http,https
-    type = https
-    # 是否使用ssl连接，true|false
-    ssl = true
-    # 本地地址
-    local_addr = 192.168.1.1
-    # 本地端口
-    local_port = 80
-    # 自定义域名，需要域名DNS设置指向服务器地址
-    host = t1.tunnel.lo
-    # 代理请求头设置，其中$remote_addr为魔法变量，最终会替换成用户的真实IP
-    pxy_header_set_X-Real-IP = $remote_addr
-    # 代理请求头新增
-    pxy_header_add_X-User-Agent = LightTunnel
-    # 登录验证信息，没有配置时不需要登录
-    auth_realm = .
-    auth_username = guest
-    auth_password = guest
+     [basic]
+     # 线程数，值为-1时不限制线程数量
+     worker_threads = -1
+     
+     # 服务器地址
+     server_addr = 127.0.0.1
+     # 服务器端口
+     server_port = 5080
+     
+     # 验证Token需要与服务器一致
+     auth_token = tk123456
+     
+     # ssl jks证书文件，当隧道列表中有使用了ssl时生效，加载失败时会默认使用程序内建的证书
+     ssl_server_port = 5443
+     ssl_jks = ltc.jks
+     ssl_store_password = ltcpass
+     
+     # Http Rpc绑定端口，为空时不启用Http Rpc
+     http_rpc_port = 5082
+     # Http Rpc登录用户，没有配置时不需要登录
+     http_rpc_username = guest
+     http_rpc_password = guest
+     
+     # 日志
+     # 日志等级由低到高 ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF
+     log_level = INFO
+     # 日志文件,为空时不保存日志文件
+     log_file = ./logs/lts.log
+     # 保持的日志文件数量
+     log_count = 3
+     # 单个日志文件大小，支持KB、MB、GB单位
+     log_size = 1MB
+     
+     
+     # 隧道列表
+     # 命名空间相同的隧道会被覆盖掉
+     [tcp]
+     # 隧道类型，支持tcp,http,https
+     type = tcp
+     # 是否使用ssl连接，true|false
+     ssl = true
+     # 本地地址
+     local_addr = 192.168.1.1
+     # 本地端口
+     local_port = 80
+     # 隧道服务器端口，端口号设置成0时，为随机端口
+     remote_port = 10080
+     
+     [tcp-random]
+     type = tcp
+     ssl = true
+     local_addr = 192.168.1.1
+     local_port = 80
+     remote_port = 0
+     
+     [http]
+     # 隧道类型，支持tcp,http,https
+     type = http
+     # 是否使用ssl连接，true|false
+     ssl = true
+     # 本地地址
+     local_addr = 192.168.1.1
+     # 本地端口
+     local_port = 80
+     # 自定义域名，需要域名DNS设置指向服务器地址
+     host = t1.tunnel.lo
+     # 代理请求头设置，其中$remote_addr为魔法变量，最终会替换成用户的真实IP
+     pxy_header_set_X-Real-IP = $remote_addr
+     # 代理请求头新增
+     pxy_header_add_X-User-Agent = LightTunnel
+     # 登录验证信息，没有配置时不需要登录
+     auth_realm = .
+     auth_username = guest
+     auth_password = guest
+     
+     [https]
+     # 隧道类型，支持tcp,http,https
+     type = https
+     # 是否使用ssl连接，true|false
+     ssl = true
+     # 本地地址
+     local_addr = 192.168.1.1
+     # 本地端口
+     local_port = 80
+     # 自定义域名，需要域名DNS设置指向服务器地址
+     host = t1.tunnel.lo
+     # 代理请求头设置，其中$remote_addr为魔法变量，最终会替换成用户的真实IP
+     pxy_header_set_X-Real-IP = $remote_addr
+     # 代理请求头新增
+     pxy_header_add_X-User-Agent = LightTunnel
+     # 登录验证信息，没有配置时不需要登录
+     auth_realm = .
+     auth_username = guest
+     auth_password = guest
   ```
 
 ## 0x04 自定义SSL证书生成
