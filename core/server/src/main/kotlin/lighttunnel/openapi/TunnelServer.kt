@@ -18,7 +18,7 @@ import lighttunnel.server.tcp.TcpFdDefaultImpl
 class TunnelServer(
     bossThreads: Int = -1,
     workerThreads: Int = -1,
-    tunnelDaemonArgs: TunnelDaemonArgs = TunnelDaemonArgs(),
+    tunnelDaemonArgs: TunnelDaemonArgs? = null,
     sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
     httpTunnelArgs: HttpTunnelArgs? = null,
     httpsTunnelArgs: HttpsTunnelArgs? = null,
