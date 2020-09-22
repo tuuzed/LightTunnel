@@ -58,7 +58,6 @@ internal class HttpTunnelChannelHandler(
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
-    @Suppress("DuplicatedCode")
     @Throws(Exception::class)
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
         logger.trace("channelRead0: {}", ctx)
@@ -136,6 +135,5 @@ internal class HttpTunnelChannelHandler(
 
     private val ChannelHandlerContext.isPluginHandle get() = this.channel().attr(AK_IS_PLUGIN_HANDLE).get() == true
     private val ChannelHandlerContext.isInterceptorHandle get() = this.channel().attr(AK_IS_INTERCEPTOR_HANDLE).get() == true
-
 
 }

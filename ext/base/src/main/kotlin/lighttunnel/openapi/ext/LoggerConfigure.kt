@@ -54,7 +54,7 @@ class LoggerConfigure private constructor(
             conversionPattern = conversionPattern,
             console = true,
             target = if (systemErr) SYSTEM_ERR else SYSTEM_OUT,
-            names = *names
+            names = names
         ).apply()
 
         @JvmStatic
@@ -74,7 +74,7 @@ class LoggerConfigure private constructor(
             maxFileSize = maxFileSize,
             maxBackupIndex = maxBackupIndex,
             append = append,
-            names = *names
+            names = names
         ).apply()
     }
 

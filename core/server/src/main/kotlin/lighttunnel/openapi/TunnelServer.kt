@@ -18,7 +18,7 @@ import lighttunnel.server.tcp.TcpFdDefaultImpl
 class TunnelServer(
     bossThreads: Int = -1,
     workerThreads: Int = -1,
-    tunnelDaemonArgs: TunnelDaemonArgs = TunnelDaemonArgs(),
+    tunnelDaemonArgs: TunnelDaemonArgs? = null,
     sslTunnelDaemonArgs: SslTunnelDaemonArgs? = null,
     httpTunnelArgs: HttpTunnelArgs? = null,
     httpsTunnelArgs: HttpsTunnelArgs? = null,
@@ -45,6 +45,9 @@ class TunnelServer(
     val isSupportSsl = sslTunnelDaemonArgs != null
     val isSupportHttp = httpTunnelArgs != null
     val isSupportHttps = httpsTunnelArgs != null
+
+    val httpPort = httpTunnelArgs?.bindPort
+    val httpsPort = httpsTunnelArgs?.bindPort
 
     @Throws(Exception::class)
     fun start(): Unit = daemon.start()

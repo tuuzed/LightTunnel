@@ -191,7 +191,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             val logFile = basic["log_file"]
             val logCount = basic["log_count"].asInt() ?: 3
             val logSize = basic["log_size"] ?: "1MB"
-            LoggerConfigure.configConsole(Level.OFF, names = *arrayOf(
+            LoggerConfigure.configConsole(Level.OFF, names = arrayOf(
                 "io.netty",
                 "org.ini4j",
                 "org.slf4j",

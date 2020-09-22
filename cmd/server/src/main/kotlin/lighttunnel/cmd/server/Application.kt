@@ -121,10 +121,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             return TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
         }
 
-        private fun getTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): TunnelDaemonArgs {
+        private fun getTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): TunnelDaemonArgs? {
             return TunnelDaemonArgs(
                 bindAddr = basic["bind_addr"],
-                bindPort = basic["bind_port"].asInt() ?: 5080,
+                bindPort = basic["bind_port"].asInt() ?: return null,
                 tunnelRequestInterceptor = tunnelRequestInterceptor
             )
         }
@@ -198,7 +198,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             val logFile = basic["log_file"]
             val logCount = basic["log_count"].asInt() ?: 3
             val logSize = basic["log_size"] ?: "1MB"
-            LoggerConfigure.configConsole(Level.OFF, names = *arrayOf(
+            LoggerConfigure.configConsole(Level.OFF, names = arrayOf(
                 "io.netty",
                 "org.ini4j",
                 "org.slf4j",
