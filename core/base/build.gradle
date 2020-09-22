@@ -9,7 +9,7 @@ dependencies {
     // Kotlin
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     // Netty
-    compile "io.netty:netty-all:4.1.51.Final"
+    compile "io.netty:netty-all:4.1.52.Final"
     // Logger
     compile "org.slf4j:slf4j-api:1.7.25"
     // Json
