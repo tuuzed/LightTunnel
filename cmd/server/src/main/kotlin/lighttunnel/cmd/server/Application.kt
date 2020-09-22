@@ -121,10 +121,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             return TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
         }
 
-        private fun getTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): TunnelDaemonArgs {
+        private fun getTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): TunnelDaemonArgs? {
             return TunnelDaemonArgs(
                 bindAddr = basic["bind_addr"],
-                bindPort = basic["bind_port"].asInt() ?: 5080,
+                bindPort = basic["bind_port"].asInt() ?: return null,
                 tunnelRequestInterceptor = tunnelRequestInterceptor
             )
         }

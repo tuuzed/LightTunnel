@@ -33,7 +33,7 @@ import kotlin.concurrent.withLock
 internal class TunnelServerDaemon(
     bossThreads: Int,
     workerThreads: Int,
-    private val tunnelDaemonArgs: TunnelDaemonArgs,
+    private val tunnelDaemonArgs: TunnelDaemonArgs?,
     private val sslTunnelDaemonArgs: SslTunnelDaemonArgs?,
     httpTunnelArgs: HttpTunnelArgs?,
     httpsTunnelArgs: HttpsTunnelArgs?,
@@ -62,7 +62,7 @@ internal class TunnelServerDaemon(
     fun start(): Unit = lock.withLock {
         httpTunnel?.start()
         httpsTunnel?.start()
-        startTunnelDaemon(tunnelDaemonArgs)
+        tunnelDaemonArgs?.let { startTunnelDaemon(it) }
         sslTunnelDaemonArgs?.also { startSslTunnelDaemon(it) }
     }
 

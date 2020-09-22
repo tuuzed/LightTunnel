@@ -23,7 +23,7 @@ abstract class AbstractApplication {
     abstract fun run(commandLine: CommandLine)
 
     private fun printUsage() {
-        val maxSpaceCount = options.options.map { it.opt.length + it.longOpt.length }.max() ?: 0
+        val maxSpaceCount = options.options.map { it.opt.length + it.longOpt.length }.maxOrNull() ?: 0
         println()
         System.out.printf("命令参数：%n")
         options.options.forEach {
