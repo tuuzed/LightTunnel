@@ -3,23 +3,23 @@
 package lighttunnel.cmd.server
 
 import io.netty.channel.nio.NioEventLoopGroup
-import lighttunnel.base.util.loggerDelegate
+import lighttunnel.SslContextUtil
+import lighttunnel.TunnelRequestInterceptor
+import lighttunnel.TunnelServer
+import lighttunnel.VersionConfig
+import lighttunnel.args.HttpTunnelArgs
+import lighttunnel.args.HttpsTunnelArgs
+import lighttunnel.args.SslTunnelDaemonArgs
+import lighttunnel.args.TunnelDaemonArgs
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.asInt
-import lighttunnel.openapi.BuildConfig
-import lighttunnel.openapi.SslContextUtil
-import lighttunnel.openapi.TunnelRequestInterceptor
-import lighttunnel.openapi.TunnelServer
-import lighttunnel.openapi.args.HttpTunnelArgs
-import lighttunnel.openapi.args.HttpsTunnelArgs
-import lighttunnel.openapi.args.SslTunnelDaemonArgs
-import lighttunnel.openapi.args.TunnelDaemonArgs
-import lighttunnel.openapi.ext.*
-import lighttunnel.openapi.http.HttpFd
-import lighttunnel.openapi.http.HttpPlugin
-import lighttunnel.openapi.listener.OnHttpTunnelStateListener
-import lighttunnel.openapi.listener.OnTcpTunnelStateListener
-import lighttunnel.openapi.tcp.TcpFd
+import lighttunnel.ext.*
+import lighttunnel.http.HttpFd
+import lighttunnel.http.HttpPlugin
+import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.listener.OnHttpTunnelStateListener
+import lighttunnel.listener.OnTcpTunnelStateListener
+import lighttunnel.tcp.TcpFd
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.cli.ParseException
@@ -43,7 +43,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s(%d)%n", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+            System.out.printf("%s(%d)%n", VersionConfig.VERSION_NAME, VersionConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "lts.ini"

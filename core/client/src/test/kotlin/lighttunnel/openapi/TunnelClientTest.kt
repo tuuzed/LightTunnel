@@ -1,5 +1,7 @@
 package lighttunnel.openapi
 
+import lighttunnel.TunnelClient
+import lighttunnel.TunnelRequest
 import org.junit.Before
 import org.junit.Test
 

@@ -2,17 +2,17 @@ package lighttunnel.cmd.client
 
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.util.loggerDelegate
+import lighttunnel.*
+import lighttunnel.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
+import lighttunnel.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
 import lighttunnel.cmd.AbstractApplication
 import lighttunnel.cmd.asInt
 import lighttunnel.cmd.localIpV4
-import lighttunnel.openapi.*
-import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
-import lighttunnel.openapi.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
-import lighttunnel.openapi.conn.TunnelConnection
-import lighttunnel.openapi.ext.*
-import lighttunnel.openapi.listener.OnRemoteConnectionListener
-import lighttunnel.openapi.listener.OnTunnelConnectionListener
+import lighttunnel.conn.TunnelConnection
+import lighttunnel.ext.*
+import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.listener.OnRemoteConnectionListener
+import lighttunnel.listener.OnTunnelConnectionListener
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.cli.ParseException
@@ -37,7 +37,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s(%d)%n", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+            System.out.printf("%s(%d)%n", VersionConfig.VERSION_NAME, VersionConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "ltc.ini"
@@ -150,7 +150,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 remotePort = tunnel["remote_port"].asInt() ?: 0
             ) {
                 name = tunnel.name
-                version = BuildConfig.VERSION_NAME
+                version = VersionConfig.VERSION_NAME
                 authToken = basic["auth_token"]
             }
         }
@@ -173,7 +173,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 host = tunnel["host"] ?: return null
             ) {
                 name = tunnel.name
-                version = BuildConfig.VERSION_NAME
+                version = VersionConfig.VERSION_NAME
                 authToken = basic["auth_token"]
                 pxySetHeaders = proxySetHeaders
                 pxyAddHeaders = proxyAddHeaders
