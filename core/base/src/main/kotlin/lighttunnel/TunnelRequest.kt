@@ -30,7 +30,7 @@ class TunnelRequest private constructor(
                 // protoVersion
                 val protoVersion = buffer.readByte()
                 // tunnelType
-                val tunnelType = TunnelType.codeOf(buffer.readByte())
+                val tunnelType = TunnelType.ofCode(buffer.readByte())
                 // data
                 val dataBytes = ByteArray(buffer.readInt())
                 buffer.readBytes(dataBytes)
