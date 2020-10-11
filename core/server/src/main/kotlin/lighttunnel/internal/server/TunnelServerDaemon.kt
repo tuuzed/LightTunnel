@@ -158,8 +158,7 @@ internal class TunnelServerDaemon(
             registry = registry
         )
     }
-
-
+    
     private fun newTunnelServerChannelHandler(
         tunnelRequestInterceptor: TunnelRequestInterceptor?
     ) = TunnelServerDaemonChannelHandler(

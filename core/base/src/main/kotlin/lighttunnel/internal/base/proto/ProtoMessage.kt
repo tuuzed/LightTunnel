@@ -120,7 +120,7 @@ class ProtoMessage private constructor(
         ;
 
         companion object {
-            fun codeOf(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
+            fun ofCode(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
         }
 
     }
