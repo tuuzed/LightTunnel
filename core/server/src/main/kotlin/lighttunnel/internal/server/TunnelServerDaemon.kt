@@ -88,7 +88,7 @@ internal class TunnelServerDaemon(
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
-                        .addLast("handler", InnerTunnelServerChannelHandler(args.tunnelRequestInterceptor))
+                        .addLast("handler", newTunnelServerChannelHandler(args.tunnelRequestInterceptor))
                 }
             })
         if (args.bindAddr == null) {
@@ -114,7 +114,7 @@ internal class TunnelServerDaemon(
                         .addLast("heartbeat", HeartbeatHandler())
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
-                        .addLast("handler", InnerTunnelServerChannelHandler(args.tunnelRequestInterceptor))
+                        .addLast("handler", newTunnelServerChannelHandler(args.tunnelRequestInterceptor))
                 }
             })
         if (args.bindAddr == null) {
@@ -159,39 +159,40 @@ internal class TunnelServerDaemon(
         )
     }
 
-    private inner class InnerTunnelServerChannelHandler(
+
+    private fun newTunnelServerChannelHandler(
         tunnelRequestInterceptor: TunnelRequestInterceptor?
-    ) : TunnelServerDaemonChannelHandler(
+    ) = TunnelServerDaemonChannelHandler(
         tunnelRequestInterceptor = tunnelRequestInterceptor,
         tunnelIds = tunnelIds,
         tcpTunnel = tcpTunnel,
         httpTunnel = httpTunnel,
-        httpsTunnel = httpsTunnel
-    ) {
-        override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?) {
-            if (tcpFd != null) {
-                onTcpTunnelStateListener?.onTcpTunnelConnected(tcpFd)
+        httpsTunnel = httpsTunnel,
+        callback = object : TunnelServerDaemonChannelHandler.Callback {
+            override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?) {
+                if (tcpFd != null) {
+                    onTcpTunnelStateListener?.onTcpTunnelConnected(tcpFd)
+                }
+            }
+
+            override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?) {
+                if (tcpFd != null) {
+                    onTcpTunnelStateListener?.onTcpTunnelDisconnect(tcpFd)
+                }
+            }
+
+            override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?) {
+                if (httpFd != null) {
+                    onHttpTunnelStateListener?.onHttpTunnelConnected(httpFd)
+                }
+            }
+
+            override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?) {
+                if (httpFd != null) {
+                    onHttpTunnelStateListener?.onHttpTunnelDisconnect(httpFd)
+                }
             }
         }
-
-        override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?) {
-            if (tcpFd != null) {
-                onTcpTunnelStateListener?.onTcpTunnelDisconnect(tcpFd)
-            }
-        }
-
-        override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?) {
-            if (httpFd != null) {
-                onHttpTunnelStateListener?.onHttpTunnelConnected(httpFd)
-            }
-        }
-
-        override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?) {
-            if (httpFd != null) {
-                onHttpTunnelStateListener?.onHttpTunnelDisconnect(httpFd)
-            }
-        }
-    }
-
+    )
 
 }

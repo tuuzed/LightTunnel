@@ -18,12 +18,13 @@ import lighttunnel.internal.server.tcp.TcpTunnel
 import lighttunnel.internal.server.util.AK_SESSION_CHANNELS
 import lighttunnel.internal.server.util.SessionChannels
 
-internal abstract class TunnelServerDaemonChannelHandler(
+internal class TunnelServerDaemonChannelHandler(
     private val tunnelRequestInterceptor: TunnelRequestInterceptor?,
     private val tunnelIds: IncIds,
     private val tcpTunnel: TcpTunnel?,
     private val httpTunnel: HttpTunnel?,
-    private val httpsTunnel: HttpTunnel?
+    private val httpsTunnel: HttpTunnel?,
+    private val callback: Callback
 ) : SimpleChannelInboundHandler<ProtoMessage>() {
 
     private val logger by loggerDelegate()
@@ -37,9 +38,9 @@ internal abstract class TunnelServerDaemonChannelHandler(
         }
         ctx.channel().attr(AK_SESSION_CHANNELS).get()?.also { sc ->
             when (sc.tunnelRequest.tunnelType) {
-                TunnelType.TCP -> onChannelInactive(ctx, tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort))
-                TunnelType.HTTP -> onChannelInactive(ctx, httpTunnel?.stopTunnel(sc.tunnelRequest.host))
-                TunnelType.HTTPS -> onChannelInactive(ctx, httpsTunnel?.stopTunnel(sc.tunnelRequest.host))
+                TunnelType.TCP -> callback.onChannelInactive(ctx, tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort))
+                TunnelType.HTTP -> callback.onChannelInactive(ctx, httpTunnel?.stopTunnel(sc.tunnelRequest.host))
+                TunnelType.HTTPS -> callback.onChannelInactive(ctx, httpsTunnel?.stopTunnel(sc.tunnelRequest.host))
                 else -> {
                     // Nothing
                 }
@@ -133,7 +134,6 @@ internal abstract class TunnelServerDaemonChannelHandler(
         sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
     }
 
-
     @Throws(Exception::class)
     private fun doHandleForceOffReplyMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
         logger.trace("doHandleForceOffReplyMessage# {}, {}", ctx, msg)
@@ -146,7 +146,7 @@ internal abstract class TunnelServerDaemonChannelHandler(
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
-        onChannelConnected(ctx, startTunnel(null, tunnelRequest.remotePort, sessionChannels))
+        callback.onChannelConnected(ctx, startTunnel(null, tunnelRequest.remotePort, sessionChannels))
         ctx.channel().writeAndFlush(ProtoMessage.RESPONSE_OK(tunnelId, tunnelRequest))
     }
 
@@ -156,13 +156,15 @@ internal abstract class TunnelServerDaemonChannelHandler(
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
-        onChannelConnected(ctx, startTunnel(tunnelRequest.host, sessionChannels))
+        callback.onChannelConnected(ctx, startTunnel(tunnelRequest.host, sessionChannels))
         ctx.channel().writeAndFlush(ProtoMessage.RESPONSE_OK(tunnelId, tunnelRequest))
     }
 
-    abstract fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
-    abstract fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?)
-    abstract fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
-    abstract fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?)
+    interface Callback {
+        fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
+        fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?)
+        fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdDefaultImpl?)
+        fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdDefaultImpl?)
+    }
 
 }
