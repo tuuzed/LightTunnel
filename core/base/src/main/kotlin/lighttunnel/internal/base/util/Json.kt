@@ -1,4 +1,4 @@
-@file:JvmName("-JsonObjectKt")
+@file:JvmName("-JsonKt")
 
 package lighttunnel.internal.base.util
 

@@ -14,7 +14,7 @@ object PortUtil {
      * @return 判断结果
      */
     fun hasInPortRange(portRange: String, port: Int): Boolean {
-        if (port < 0 || port > 65535) {
+        if (port !in 0..65535) {
             return false
         }
         val rules = portRange.split(",".toRegex()).dropLastWhile { it.isEmpty() }
@@ -65,11 +65,14 @@ object PortUtil {
 
     @Synchronized
     fun isAvailablePort(port: Int): Boolean {
+        var serverSocket: ServerSocket? = null
         return try {
-            ServerSocket(port).close()
+            serverSocket = ServerSocket(port)
             true
         } catch (e: IOException) {
             false
+        } finally {
+            serverSocket?.close()
         }
     }
 }
