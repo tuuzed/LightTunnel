@@ -2,9 +2,9 @@ package lighttunnel.internal.base.proto
 
 import lighttunnel.RemoteConnection
 import lighttunnel.TunnelRequest
-import lighttunnel.internal.base.util.LongUtil
+import lighttunnel.internal.base.proto.message.*
 
-class ProtoMessage private constructor(
+abstract class ProtoMessage internal constructor(
     val type: Type,
     val head: ByteArray,
     val data: ByteArray
@@ -12,29 +12,44 @@ class ProtoMessage private constructor(
 
     @Suppress("FunctionName")
     companion object {
-        private val PING = ProtoMessage(Type.PING, emptyBytes, emptyBytes)
-        private val PONG = ProtoMessage(Type.PONG, emptyBytes, emptyBytes)
-        private val FORCE_OFF = ProtoMessage(Type.FORCE_OFF, emptyBytes, emptyBytes)
-        private val FORCE_OFF_REPLY = ProtoMessage(Type.FORCE_OFF_REPLY, emptyBytes, emptyBytes)
+        private val UNKNOWN = UnknownMessage()
+        private val PING = PingMessage()
+        private val PONG = PongMessage()
+        private val FORCE_OFF = ForceOffMessage()
+        private val FORCE_OFF_REPLY = ForceOffReplyMessage()
 
         fun PING() = PING
         fun PONG() = PONG
-        fun REQUEST(request: TunnelRequest) = ProtoMessage(Type.REQUEST, emptyBytes, request.toBytes())
-        fun RESPONSE_OK(tunnelId: Long, request: TunnelRequest) = ProtoMessage(Type.RESPONSE_OK, LongUtil.toBytes(tunnelId), request.toBytes())
-        fun RESPONSE_ERR(cause: Throwable) = ProtoMessage(Type.RESPONSE_ERR, emptyBytes, cause.message.toString().toByteArray())
-        fun TRANSFER(tunnelId: Long, sessionId: Long, data: ByteArray) = ProtoMessage(Type.TRANSFER, LongUtil.toBytes(tunnelId, sessionId), data)
-        fun REMOTE_CONNECTED(tunnelId: Long, sessionId: Long, conn: RemoteConnection) = ProtoMessage(Type.REMOTE_CONNECTED, LongUtil.toBytes(tunnelId, sessionId), conn.toBytes())
-        fun REMOTE_DISCONNECT(tunnelId: Long, sessionId: Long, conn: RemoteConnection) = ProtoMessage(Type.REMOTE_DISCONNECT, LongUtil.toBytes(tunnelId, sessionId), conn.toBytes())
-        fun LOCAL_CONNECTED(tunnelId: Long, sessionId: Long) = ProtoMessage(Type.LOCAL_CONNECTED, LongUtil.toBytes(tunnelId, sessionId), emptyBytes)
-        fun LOCAL_DISCONNECT(tunnelId: Long, sessionId: Long) = ProtoMessage(Type.LOCAL_DISCONNECT, LongUtil.toBytes(tunnelId, sessionId), emptyBytes)
+        fun REQUEST(request: TunnelRequest) = RequestMessage(request)
+        fun RESPONSE_OK(tunnelId: Long, request: TunnelRequest) = ResponseOkMessage(tunnelId, request)
+        fun RESPONSE_ERR(cause: Throwable) = ResponseErrMessage(cause)
+        fun TRANSFER(tunnelId: Long, sessionId: Long, data: ByteArray) = TransferMessage(tunnelId, sessionId, data)
+        fun REMOTE_CONNECTED(tunnelId: Long, sessionId: Long, conn: RemoteConnection) = RemoteConnectedMessage(tunnelId, sessionId, conn)
+        fun REMOTE_DISCONNECT(tunnelId: Long, sessionId: Long, conn: RemoteConnection) = RemoteDisconnectMessage(tunnelId, sessionId, conn)
+        fun LOCAL_CONNECTED(tunnelId: Long, sessionId: Long) = LocalConnectedMessage(tunnelId, sessionId)
+        fun LOCAL_DISCONNECT(tunnelId: Long, sessionId: Long) = LocalDisconnectMessage(tunnelId, sessionId)
         fun FORCE_OFF() = FORCE_OFF
         fun FORCE_OFF_REPLY() = FORCE_OFF_REPLY
 
-        internal fun newInstance(type: Type, head: ByteArray, data: ByteArray) = ProtoMessage(type, head, data)
-    }
+        internal fun newInstance(type: Type, head: ByteArray, data: ByteArray): ProtoMessage {
+            return when (type) {
+                Type.UNKNOWN -> UNKNOWN
+                Type.PING -> PING
+                Type.PONG -> PONG
+                Type.REQUEST -> RequestMessage(data)
+                Type.RESPONSE_OK -> ResponseOkMessage(head, data)
+                Type.RESPONSE_ERR -> ResponseErrMessage(data)
+                Type.TRANSFER -> TransferMessage(head, data)
+                Type.REMOTE_CONNECTED -> RemoteConnectedMessage(head, data)
+                Type.REMOTE_DISCONNECT -> RemoteDisconnectMessage(head, data)
+                Type.LOCAL_CONNECTED -> LocalConnectedMessage(head)
+                Type.LOCAL_DISCONNECT -> LocalDisconnectMessage(head)
+                Type.FORCE_OFF -> FORCE_OFF
+                Type.FORCE_OFF_REPLY -> FORCE_OFF_REPLY
+            }
+        }
 
-    val tunnelId by lazy { LongUtil.fromBytes(head, 0) }
-    val sessionId by lazy { LongUtil.fromBytes(head, 8) }
+    }
 
     override fun toString(): String {
         return "ProtoMessage(type=$type, head.length=${head.size}, data.length=${data.size})"
@@ -124,4 +139,5 @@ class ProtoMessage private constructor(
         }
 
     }
+
 }

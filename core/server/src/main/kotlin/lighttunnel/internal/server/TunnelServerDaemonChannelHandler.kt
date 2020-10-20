@@ -9,6 +9,7 @@ import lighttunnel.TunnelRequest
 import lighttunnel.TunnelRequestInterceptor
 import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.ProtoMessage
+import lighttunnel.internal.base.proto.message.*
 import lighttunnel.internal.base.util.IncIds
 import lighttunnel.internal.base.util.loggerDelegate
 import lighttunnel.internal.server.http.HttpFdDefaultImpl
@@ -63,12 +64,12 @@ internal class TunnelServerDaemonChannelHandler(
         ctx ?: return
         msg ?: return
         when (msg.type) {
-            ProtoMessage.Type.PING -> doHandlePingMessage(ctx, msg)
-            ProtoMessage.Type.REQUEST -> doHandleRequestMessage(ctx, msg)
-            ProtoMessage.Type.TRANSFER -> doHandleTransferMessage(ctx, msg)
-            ProtoMessage.Type.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg)
-            ProtoMessage.Type.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg)
-            ProtoMessage.Type.FORCE_OFF_REPLY -> doHandleForceOffReplyMessage(ctx, msg)
+            ProtoMessage.Type.PING -> doHandlePingMessage(ctx, msg as PingMessage)
+            ProtoMessage.Type.REQUEST -> doHandleRequestMessage(ctx, msg as RequestMessage)
+            ProtoMessage.Type.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMessage)
+            ProtoMessage.Type.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg as LocalConnectedMessage)
+            ProtoMessage.Type.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg as LocalDisconnectMessage)
+            ProtoMessage.Type.FORCE_OFF_REPLY -> doHandleForceOffReplyMessage(ctx, msg as ForceOffReplyMessage)
             else -> {
                 // Nothing
             }
@@ -76,16 +77,16 @@ internal class TunnelServerDaemonChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+    private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: PingMessage) {
         logger.trace("doHandlePingMessage# {}, {}", ctx, msg)
         ctx.writeAndFlush(ProtoMessage.PONG())
     }
 
     @Throws(Exception::class)
-    private fun doHandleRequestMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+    private fun doHandleRequestMessage(ctx: ChannelHandlerContext, msg: RequestMessage) {
         logger.trace("doHandleRequestMessage# {}, {}", ctx, msg)
         try {
-            val originalTunnelRequest = TunnelRequest.fromBytes(msg.data)
+            val originalTunnelRequest = msg.request
             val finalTunnelRequest = tunnelRequestInterceptor?.intercept(originalTunnelRequest)
                 ?: originalTunnelRequest
             logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
@@ -112,7 +113,7 @@ internal class TunnelServerDaemonChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+    private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: TransferMessage) {
         logger.trace("doHandleTransferMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
         val sessionChannel = sessionChannels.getChannel(msg.sessionId)
@@ -120,13 +121,13 @@ internal class TunnelServerDaemonChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun doHandleLocalConnectedMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+    private fun doHandleLocalConnectedMessage(ctx: ChannelHandlerContext, msg: LocalConnectedMessage) {
         logger.trace("doHandleLocalConnectedMessage# {}, {}", ctx, msg)
         // 无须处理
     }
 
     @Throws(Exception::class)
-    private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+    private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: LocalDisconnectMessage) {
         logger.trace("doHandleLocalDisconnectMessage# {}, {}", ctx, msg)
         val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
         val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
@@ -135,7 +136,7 @@ internal class TunnelServerDaemonChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun doHandleForceOffReplyMessage(ctx: ChannelHandlerContext, msg: ProtoMessage) {
+    private fun doHandleForceOffReplyMessage(ctx: ChannelHandlerContext, msg: ForceOffReplyMessage) {
         logger.trace("doHandleForceOffReplyMessage# {}, {}", ctx, msg)
         ctx.channel()?.close()
     }
