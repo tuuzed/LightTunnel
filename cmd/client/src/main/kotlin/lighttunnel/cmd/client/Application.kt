@@ -37,7 +37,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s(%d)%n", VersionConfig.VERSION_NAME, VersionConfig.VERSION_CODE)
+            System.out.printf("%s(%d)%n", LightTunnelConfig.VERSION_NAME, LightTunnelConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "ltc.ini"
@@ -150,7 +150,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 remotePort = tunnel["remote_port"].asInt() ?: 0
             ) {
                 name = tunnel.name
-                version = VersionConfig.VERSION_NAME
+                version = LightTunnelConfig.VERSION_NAME
                 authToken = basic["auth_token"]
             }
         }
@@ -173,7 +173,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 host = tunnel["host"] ?: return null
             ) {
                 name = tunnel.name
-                version = VersionConfig.VERSION_NAME
+                version = LightTunnelConfig.VERSION_NAME
                 authToken = basic["auth_token"]
                 pxySetHeaders = proxySetHeaders
                 pxyAddHeaders = proxyAddHeaders

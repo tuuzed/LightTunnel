@@ -36,8 +36,8 @@ class RemoteConnection constructor(
     fun toBytes(): ByteArray {
         return if (address is InetSocketAddress) {
             JSONObject().also {
-                it.put("port", address.port)
                 it.put("hostAddress", address.address.hostAddress)
+                it.put("port", address.port)
             }.toString().toByteArray(charset = Charsets.UTF_8)
         } else {
             emptyBytes

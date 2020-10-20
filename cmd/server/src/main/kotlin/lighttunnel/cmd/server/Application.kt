@@ -3,10 +3,10 @@
 package lighttunnel.cmd.server
 
 import io.netty.channel.nio.NioEventLoopGroup
+import lighttunnel.LightTunnelConfig
 import lighttunnel.SslContextUtil
 import lighttunnel.TunnelRequestInterceptor
 import lighttunnel.TunnelServer
-import lighttunnel.VersionConfig
 import lighttunnel.args.HttpTunnelArgs
 import lighttunnel.args.HttpsTunnelArgs
 import lighttunnel.args.SslTunnelDaemonArgs
@@ -43,7 +43,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s(%d)%n", VersionConfig.VERSION_NAME, VersionConfig.VERSION_CODE)
+            System.out.printf("%s(%d)%n", LightTunnelConfig.VERSION_NAME, LightTunnelConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "lts.ini"

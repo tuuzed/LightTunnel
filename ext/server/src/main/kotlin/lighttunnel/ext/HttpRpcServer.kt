@@ -5,8 +5,8 @@ package lighttunnel.ext
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
+import lighttunnel.LightTunnelConfig
 import lighttunnel.TunnelServer
-import lighttunnel.VersionConfig
 import lighttunnel.ext.httpserver.HttpServer
 import lighttunnel.http.HttpFd
 import lighttunnel.internal.base.util.basicAuthorization
@@ -53,12 +53,12 @@ fun TunnelServer.newHttpRpcServer(
         route("^/api/version".toRegex()) {
             val content = JSONObject().apply {
                 put("name", "lts")
-                put("protoVersion", VersionConfig.PROTO_VERSION)
-                put("versionName", VersionConfig.VERSION_NAME)
-                put("versionCode", VersionConfig.VERSION_CODE)
-                put("buildDate", VersionConfig.BUILD_DATA)
-                put("commitSha", VersionConfig.LAST_COMMIT_SHA)
-                put("commitDate", VersionConfig.LAST_COMMIT_DATE)
+                put("protoVersion", LightTunnelConfig.PROTO_VERSION)
+                put("versionName", LightTunnelConfig.VERSION_NAME)
+                put("versionCode", LightTunnelConfig.VERSION_CODE)
+                put("buildDate", LightTunnelConfig.BUILD_DATA)
+                put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
+                put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
             }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
             DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
