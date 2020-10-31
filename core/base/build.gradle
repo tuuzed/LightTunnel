@@ -23,6 +23,8 @@ apply plugin: "de.fuerstenau.buildconfig"
 
 static def s(Object o) { return o.toString() }
 
+static def base64(File file) { return new String(Base64.encoder.encode(file.readBytes()), "UTF-8") }
+
 buildConfig {
     appName = "LightTunnel"
     version = project.version
@@ -35,6 +37,14 @@ buildConfig {
     buildConfigField "String", "LAST_COMMIT_SHA", s(GitVC.LAST_COMMIT_SHA)
     buildConfigField "String", "LAST_COMMIT_DATE", s(GitVC.LAST_COMMIT_DATE)
     buildConfigField "String", "BUILD_DATA", s(BUILD_DATE)
+
+    buildConfigField "String", "SERVER_JKS_BASE64", s(base64(rootProject.file("resources/lts.jks")))
+    buildConfigField "String", "SERVER_JKS_STORE_PASSWORD", s("ltspass")
+    buildConfigField "String", "SERVER_JKS_KEY_PASSWORD", s("ltspass")
+
+    buildConfigField "String", "CLIENT_JKS_BASE64", s(base64(rootProject.file("resources/ltc.jks")))
+    buildConfigField "String", "CLIENT_JKS_STORE_PASSWORD", s("ltcpass")
+
 }
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
