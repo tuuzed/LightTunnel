@@ -40,7 +40,7 @@ internal class TunnelConnectionDefaultImpl(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    future.channel().writeAndFlush(ProtoMessage.REQUEST(originalTunnelRequest))
+                    future.channel().writeAndFlush(ProtoMessage.REQUEST(tunnelRequest))
                     future.channel().attr(AK_TUNNEL_CONNECTION).set(this)
                 } else {
                     failure(this)
