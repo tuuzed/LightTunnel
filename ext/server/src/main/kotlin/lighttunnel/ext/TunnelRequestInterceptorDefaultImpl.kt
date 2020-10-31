@@ -27,13 +27,7 @@ class TunnelRequestInterceptorDefaultImpl(
         return when (tunnelRequest.tunnelType) {
             TunnelType.TCP -> {
                 if (tunnelRequest.remotePort == 0) {
-                    val expectRemotePort = tunnelRequest.expectRemotePort
-                    val port = when {
-                        expectRemotePort == 0 -> PortUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
-                        PortUtil.hasInPortRange(allowPorts ?: "1024-65535", expectRemotePort)
-                            && PortUtil.isAvailablePort(expectRemotePort) -> expectRemotePort
-                        else -> PortUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
-                    }
+                    val port = PortUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
                     tunnelRequest.copyTcp(remotePort = port)
                 } else {
                     if (allowPorts != null && !PortUtil.hasInPortRange(allowPorts, tunnelRequest.remotePort)) {
