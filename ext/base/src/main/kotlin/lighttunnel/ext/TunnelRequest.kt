@@ -1,6 +1,7 @@
 package lighttunnel.ext
 
 import lighttunnel.TunnelRequest
+import lighttunnel.internal.base.util.getOrDefault
 import lighttunnel.internal.base.util.getOrNull
 import org.json.JSONObject
 
@@ -13,6 +14,7 @@ private const val BASIC_AUTH_USERNAME = "ext.BASIC_AUTH_USERNAME"
 private const val BASIC_AUTH_PASSWORD = "ext.BASIC_AUTH_PASSWORD"
 private const val PXY_SET_HEADERS = "ext.PXY_SET_HEADERS"
 private const val PXY_ADD_HEADERS = "ext.PXY_ADD_HEADERS"
+private const val EXPECT_REMOTE_PORT = "ext.EXPECT_REMOTE_PORT"
 
 var TunnelRequest.name: String?
     get() = extras.getOrNull(NAME)
@@ -38,11 +40,9 @@ var TunnelRequest.basicAuthUsername: String?
     get() = extras.getOrNull(BASIC_AUTH_USERNAME)
     set(value) = run { if (value == null) extras.remove(BASIC_AUTH_USERNAME) else extras.put(BASIC_AUTH_USERNAME, value) }
 
-
 var TunnelRequest.basicAuthPassword: String?
     get() = extras.getOrNull(BASIC_AUTH_PASSWORD)
     set(value) = run { if (value == null) extras.remove(BASIC_AUTH_PASSWORD) else extras.put(BASIC_AUTH_PASSWORD, value) }
-
 
 var TunnelRequest.pxySetHeaders: Map<String, String>
     get() = extras.getOrNull<JSONObject>(PXY_SET_HEADERS).toStringMap()
@@ -51,6 +51,10 @@ var TunnelRequest.pxySetHeaders: Map<String, String>
 var TunnelRequest.pxyAddHeaders: Map<String, String>
     get() = extras.getOrNull<JSONObject>(PXY_ADD_HEADERS).toStringMap()
     set(value) = run { if (value.isEmpty()) extras.remove(PXY_ADD_HEADERS) else extras.put(PXY_ADD_HEADERS, value) }
+
+var TunnelRequest.expectRemotePort: Int
+    get() = extras.getOrDefault(EXPECT_REMOTE_PORT, 0)
+    set(value) = run { extras.put(EXPECT_REMOTE_PORT, value) }
 
 private fun JSONObject?.toStringMap(): Map<String, String> {
     this ?: return emptyMap()
