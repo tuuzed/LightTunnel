@@ -111,7 +111,7 @@ private fun TunnelServer.toSnapshotTable() = table {
             paddingRight = 1
         }
         row(
-            "Name", "Type", "LocalAddr", "LocalPort", "RemotePort", "Host", "Conns",
+            "#", "Name", "Type", "LocalAddr", "LocalPort", "RemotePort", "Host", "Conns",
             "InboundBytes", "OutboundBytes", "CreateAt", "UpdateAt"
         )
     }
@@ -119,8 +119,10 @@ private fun TunnelServer.toSnapshotTable() = table {
         cellStyle {
             paddingRight = 1
         }
+        var index = 1
         for (fd in getTcpFdList()) {
             row(
+                index++,
                 fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
                 "TCP",
                 fd.tunnelRequest.localAddr,
@@ -136,6 +138,7 @@ private fun TunnelServer.toSnapshotTable() = table {
         }
         for (fd in getHttpFdList()) {
             row(
+                index++,
                 fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
                 "HTTP",
                 fd.tunnelRequest.localAddr,
@@ -151,6 +154,7 @@ private fun TunnelServer.toSnapshotTable() = table {
         }
         for (fd in getHttpsFdList()) {
             row(
+                index++,
                 fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
                 "HTTPS",
                 fd.tunnelRequest.localAddr,
