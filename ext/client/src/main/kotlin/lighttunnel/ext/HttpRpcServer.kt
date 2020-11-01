@@ -1,11 +1,11 @@
 package lighttunnel.ext
 
+import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
 import lighttunnel.LightTunnelConfig
 import lighttunnel.TunnelClient
-import lighttunnel.conn.TunnelConnection
 import lighttunnel.ext.httpserver.HttpServer
 import lighttunnel.internal.base.util.basicAuthorization
 import org.json.JSONArray
@@ -33,56 +33,42 @@ fun TunnelClient.newHttpRpcServer(
             if (next) {
                 null
             } else {
-                val httpResponse = DefaultFullHttpResponse(it.protocolVersion(), HttpResponseStatus.UNAUTHORIZED)
                 val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
-                httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=.")
-                httpResponse.headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
-                httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
-                httpResponse.headers().add(HttpHeaderNames.DATE, Date().toString())
-                httpResponse.headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
-                httpResponse.content().writeBytes(content)
-                httpResponse
+                DefaultFullHttpResponse(it.protocolVersion(), HttpResponseStatus.UNAUTHORIZED).apply {
+                    headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=.")
+                    headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
+                    headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
+                    headers().add(HttpHeaderNames.DATE, Date().toString())
+                    headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
+                    content().writeBytes(content)
+                }
             }
         }
         route("^/api/version".toRegex()) {
-            val content = JSONObject().apply {
-                put("name", "ltc")
-                put("protoVersion", LightTunnelConfig.PROTO_VERSION)
-                put("versionName", LightTunnelConfig.VERSION_NAME)
-                put("versionCode", LightTunnelConfig.VERSION_CODE)
-                put("buildDate", LightTunnelConfig.BUILD_DATA)
-                put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
-                put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
-            }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
-            DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK,
-                content
-            ).apply {
-                headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-            }
+            toVersionJson().let {
+                Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
+            }.newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
         }
         route("^/api/snapshot".toRegex()) {
-            val content = getTunnelConnectionList().tunnelConnectionListToJson().let {
+            toSnapshotJson().let {
                 Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
-            }
-            DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK,
-                content
-            ).also {
-                it.headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-            }
+            }.newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
         }
     }
 }
 
-private fun List<TunnelConnection>.tunnelConnectionListToJson(): JSONArray {
-    return JSONArray(map {
+private fun ByteBuf.newFullHttpResponse(contentType: CharSequence) = DefaultFullHttpResponse(
+    HttpVersion.HTTP_1_1,
+    HttpResponseStatus.OK,
+    this
+).apply {
+    headers()
+        .set(HttpHeaderNames.CONTENT_TYPE, contentType)
+        .set(HttpHeaderNames.CONTENT_LENGTH, this@newFullHttpResponse.readableBytes())
+}
+
+private fun TunnelClient.toSnapshotJson(): JSONArray {
+    return JSONArray(getTunnelConnectionList().map {
         JSONObject().apply {
             put("name", it.tunnelRequest.name)
             put("request", it.toString())
@@ -90,3 +76,14 @@ private fun List<TunnelConnection>.tunnelConnectionListToJson(): JSONArray {
         }
     })
 }
+
+private fun toVersionJson() = JSONObject().apply {
+    put("name", "lts")
+    put("protoVersion", LightTunnelConfig.PROTO_VERSION)
+    put("versionName", LightTunnelConfig.VERSION_NAME)
+    put("versionCode", LightTunnelConfig.VERSION_CODE)
+    put("buildDate", LightTunnelConfig.BUILD_DATA)
+    put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
+    put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
+}
+

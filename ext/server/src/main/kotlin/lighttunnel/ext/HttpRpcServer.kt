@@ -3,6 +3,7 @@
 package lighttunnel.ext
 
 import com.jakewharton.picnic.table
+import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
@@ -41,54 +42,44 @@ fun TunnelServer.newHttpRpcServer(
             if (next) {
                 null
             } else {
-                val httpResponse = DefaultFullHttpResponse(it.protocolVersion(), HttpResponseStatus.UNAUTHORIZED)
                 val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray(StandardCharsets.UTF_8)
-                httpResponse.headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=.")
-                httpResponse.headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
-                httpResponse.headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
-                httpResponse.headers().add(HttpHeaderNames.DATE, Date().toString())
-                httpResponse.headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
-                httpResponse.content().writeBytes(content)
-                httpResponse
+                DefaultFullHttpResponse(it.protocolVersion(), HttpResponseStatus.UNAUTHORIZED).apply {
+                    headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=.")
+                    headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
+                    headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
+                    headers().add(HttpHeaderNames.DATE, Date().toString())
+                    headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
+                    content().writeBytes(content)
+                }
             }
         }
         route("^/api/version".toRegex()) {
-            val content = toVersionJson().let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
-            DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK,
-                content
-            ).apply {
-                headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-            }
+            toVersionJson().let {
+                Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
+            }.newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
         }
         route("^/api/snapshot".toRegex()) {
-            val content = toSnapshotJson().let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
-            DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK,
-                content
-            ).apply {
-                headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-            }
+            toSnapshotJson().let {
+                Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
+            }.newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
         }
         route("^/view/snapshot".toRegex()) {
-            val content = toSnapshotTable().let { Unpooled.copiedBuffer(it.toString(), Charsets.UTF_8) }
-            DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK,
-                content
-            ).apply {
-                headers()
-                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
-            }
+            toSnapshotTable().let {
+                Unpooled.copiedBuffer(it.toString(), Charsets.UTF_8)
+            }.newFullHttpResponse(HttpHeaderValues.TEXT_PLAIN)
         }
     }
+}
+
+
+private fun ByteBuf.newFullHttpResponse(contentType: CharSequence) = DefaultFullHttpResponse(
+    HttpVersion.HTTP_1_1,
+    HttpResponseStatus.OK,
+    this
+).apply {
+    headers()
+        .set(HttpHeaderNames.CONTENT_TYPE, contentType)
+        .set(HttpHeaderNames.CONTENT_LENGTH, this@newFullHttpResponse.readableBytes())
 }
 
 private val t = ThreadLocal<MutableMap<String, DateFormat>>()
@@ -130,11 +121,7 @@ private fun TunnelServer.toSnapshotTable() = table {
         }
         for (fd in getTcpFdList()) {
             row(
-                try {
-                    fd.tunnelRequest.extras.getString("ext.NAME")
-                } catch (e: Exception) {
-                    null
-                }?.let { it.substring(0, min(it.length, 10)) } ?: "-",
+                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
                 "TCP",
                 fd.tunnelRequest.localAddr,
                 fd.tunnelRequest.localPort,
@@ -149,11 +136,7 @@ private fun TunnelServer.toSnapshotTable() = table {
         }
         for (fd in getHttpFdList()) {
             row(
-                try {
-                    fd.tunnelRequest.extras.getString("ext.NAME")
-                } catch (e: Exception) {
-                    null
-                }?.let { it.substring(0, min(it.length, 10)) } ?: "-",
+                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
                 "HTTP",
                 fd.tunnelRequest.localAddr,
                 fd.tunnelRequest.localPort,
@@ -168,11 +151,7 @@ private fun TunnelServer.toSnapshotTable() = table {
         }
         for (fd in getHttpsFdList()) {
             row(
-                try {
-                    fd.tunnelRequest.extras.getString("ext.NAME")
-                } catch (e: Exception) {
-                    null
-                }?.let { it.substring(0, min(it.length, 10)) } ?: "-",
+                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
                 "HTTPS",
                 fd.tunnelRequest.localAddr,
                 fd.tunnelRequest.localPort,
