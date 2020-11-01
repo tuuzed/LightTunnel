@@ -2,6 +2,7 @@
 
 package lighttunnel.ext
 
+import com.jakewharton.picnic.table
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
@@ -18,6 +19,7 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.getOrSet
+import kotlin.math.min
 
 fun TunnelServer.newHttpRpcServer(
     bossGroup: NioEventLoopGroup,
@@ -51,15 +53,7 @@ fun TunnelServer.newHttpRpcServer(
             }
         }
         route("^/api/version".toRegex()) {
-            val content = JSONObject().apply {
-                put("name", "lts")
-                put("protoVersion", LightTunnelConfig.PROTO_VERSION)
-                put("versionName", LightTunnelConfig.VERSION_NAME)
-                put("versionCode", LightTunnelConfig.VERSION_CODE)
-                put("buildDate", LightTunnelConfig.BUILD_DATA)
-                put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
-                put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
-            }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+            val content = toVersionJson().let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
             DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK,
@@ -71,11 +65,19 @@ fun TunnelServer.newHttpRpcServer(
             }
         }
         route("^/api/snapshot".toRegex()) {
-            val content = JSONObject().apply {
-                put("tcp", getTcpFdList().tcpFdListToJson())
-                put("http", getHttpFdList().httpFdListToJson(httpPort))
-                put("https", getHttpsFdList().httpFdListToJson(httpsPort))
-            }.let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+            val content = toSnapshotJson().let { Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8) }
+            DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                content
+            ).apply {
+                headers()
+                    .set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                    .set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
+            }
+        }
+        route("^/view/snapshot".toRegex()) {
+            val content = toSnapshotTable().let { Unpooled.copiedBuffer(it.toString(), Charsets.UTF_8) }
             DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1,
                 HttpResponseStatus.OK,
@@ -96,7 +98,97 @@ private fun getDateFormat(pattern: String) = t.getOrSet { hashMapOf() }[pattern]
 
 private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? = this?.let { getDateFormat(pattern).format(this) }
 
-@Suppress("DuplicatedCode")
+private fun toVersionJson() = JSONObject().apply {
+    put("name", "lts")
+    put("protoVersion", LightTunnelConfig.PROTO_VERSION)
+    put("versionName", LightTunnelConfig.VERSION_NAME)
+    put("versionCode", LightTunnelConfig.VERSION_CODE)
+    put("buildDate", LightTunnelConfig.BUILD_DATA)
+    put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
+    put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
+}
+
+private fun TunnelServer.toSnapshotJson() = JSONObject().apply {
+    put("tcp", getTcpFdList().tcpFdListToJson())
+    put("http", getHttpFdList().httpFdListToJson(httpPort))
+    put("https", getHttpsFdList().httpFdListToJson(httpsPort))
+}
+
+private fun TunnelServer.toSnapshotTable() = table {
+    header {
+        cellStyle {
+            paddingRight = 1
+        }
+        row(
+            "Name", "Type", "LocalAddr", "LocalPort", "RemotePort", "Host", "Conns",
+            "InboundBytes", "OutboundBytes", "CreateAt", "UpdateAt"
+        )
+    }
+    body {
+        cellStyle {
+            paddingRight = 1
+        }
+        for (fd in getTcpFdList()) {
+            row(
+                try {
+                    fd.tunnelRequest.extras.getString("ext.NAME")
+                } catch (e: Exception) {
+                    null
+                }?.let { it.substring(0, min(it.length, 10)) } ?: "-",
+                "TCP",
+                fd.tunnelRequest.localAddr,
+                fd.tunnelRequest.localPort,
+                fd.tunnelRequest.remotePort,
+                "-",
+                fd.connectionCount,
+                fd.statistics.inboundBytes,
+                fd.statistics.outboundBytes,
+                fd.statistics.createAt.format(),
+                fd.statistics.updateAt.format()
+            )
+        }
+        for (fd in getHttpFdList()) {
+            row(
+                try {
+                    fd.tunnelRequest.extras.getString("ext.NAME")
+                } catch (e: Exception) {
+                    null
+                }?.let { it.substring(0, min(it.length, 10)) } ?: "-",
+                "HTTP",
+                fd.tunnelRequest.localAddr,
+                fd.tunnelRequest.localPort,
+                "-",
+                fd.tunnelRequest.host + ":" + httpPort,
+                fd.connectionCount,
+                fd.statistics.inboundBytes,
+                fd.statistics.outboundBytes,
+                fd.statistics.createAt.format(),
+                fd.statistics.updateAt.format()
+            )
+        }
+        for (fd in getHttpsFdList()) {
+            row(
+                try {
+                    fd.tunnelRequest.extras.getString("ext.NAME")
+                } catch (e: Exception) {
+                    null
+                }?.let { it.substring(0, min(it.length, 10)) } ?: "-",
+                "HTTPS",
+                fd.tunnelRequest.localAddr,
+                fd.tunnelRequest.localPort,
+                "-",
+                fd.tunnelRequest.host + ":" + httpsPort,
+                fd.connectionCount,
+                fd.statistics.inboundBytes,
+                fd.statistics.outboundBytes,
+                fd.statistics.createAt.format(),
+                fd.statistics.updateAt.format()
+            )
+        }
+    }
+
+}
+
 private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
     return JSONArray(
         map { fd ->
@@ -116,7 +208,6 @@ private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
     )
 }
 
-@Suppress("DuplicatedCode")
 private fun List<HttpFd>.httpFdListToJson(port: Int?): JSONArray {
     return JSONArray(
         map { fd ->

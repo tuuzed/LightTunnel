@@ -8,6 +8,7 @@ sourceCompatibility = rootProject.jvm_version
 dependencies {
     compile project(":ext:base")
     compile project(":core:server")
+    compile "com.jakewharton.picnic:picnic:0.5.0"
     // 单元测试
     testCompile "junit:junit:4.12"
 }
