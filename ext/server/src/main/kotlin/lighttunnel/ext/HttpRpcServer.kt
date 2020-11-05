@@ -106,67 +106,67 @@ private fun TunnelServer.toSnapshotJson() = JSONObject().apply {
 }
 
 private fun TunnelServer.toSnapshotTable() = table {
+    cellStyle {
+        paddingLeft = 1
+    }
     header {
-        cellStyle {
-            paddingRight = 1
-        }
         row(
-            "#", "Name", "Type", "LocalAddr", "LocalPort", "RemotePort", "Host", "Conns",
-            "InboundBytes", "OutboundBytes", "CreateAt", "UpdateAt"
+            "#", "Name", "Type", "LocalNetwork", "RemotePort", "Host", "Conns", "In/Out", "CreateAt", "UpdateAt"
         )
     }
     body {
-        cellStyle {
-            paddingRight = 1
-        }
         var index = 1
         for (fd in getTcpFdList()) {
             row(
                 index++,
-                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
+                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 16)) } ?: "-",
                 "TCP",
-                fd.tunnelRequest.localAddr,
-                fd.tunnelRequest.localPort,
+                "${fd.tunnelRequest.localAddr}:${fd.tunnelRequest.localPort}",
                 fd.tunnelRequest.remotePort,
                 "-",
                 fd.connectionCount,
-                fd.statistics.inboundBytes,
-                fd.statistics.outboundBytes,
-                fd.statistics.createAt.format(),
-                fd.statistics.updateAt.format()
+                "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
+                fd.statistics.createAt.semanticText,
+                fd.statistics.updateAt.semanticText
             )
         }
         for (fd in getHttpFdList()) {
             row(
                 index++,
-                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
+                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 16)) } ?: "-",
                 "HTTP",
-                fd.tunnelRequest.localAddr,
-                fd.tunnelRequest.localPort,
+                "${fd.tunnelRequest.localAddr}:${fd.tunnelRequest.localPort}",
                 "-",
                 fd.tunnelRequest.host + ":" + httpPort,
                 fd.connectionCount,
-                fd.statistics.inboundBytes,
-                fd.statistics.outboundBytes,
-                fd.statistics.createAt.format(),
-                fd.statistics.updateAt.format()
+                "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
+                fd.statistics.createAt.semanticText,
+                fd.statistics.updateAt.semanticText
             )
         }
         for (fd in getHttpsFdList()) {
             row(
                 index++,
-                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 15)) } ?: "-",
+                fd.tunnelRequest.name?.let { it.substring(0, min(it.length, 16)) } ?: "-",
                 "HTTPS",
-                fd.tunnelRequest.localAddr,
-                fd.tunnelRequest.localPort,
+                "${fd.tunnelRequest.localAddr}:${fd.tunnelRequest.localPort}",
                 "-",
                 fd.tunnelRequest.host + ":" + httpsPort,
                 fd.connectionCount,
-                fd.statistics.inboundBytes,
-                fd.statistics.outboundBytes,
-                fd.statistics.createAt.format(),
-                fd.statistics.updateAt.format()
+                "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
+                fd.statistics.createAt.semanticText,
+                fd.statistics.updateAt.semanticText
             )
+        }
+    }
+    footer {
+        cellStyle {
+            paddingTop = 1
+        }
+        row {
+            cell("lts-V${LightTunnelConfig.VERSION_NAME}(${LightTunnelConfig.VERSION_CODE})") {
+                columnSpan = 10
+            }
         }
     }
 
@@ -210,3 +210,15 @@ private fun List<HttpFd>.httpFdListToJson(port: Int?): JSONArray {
         }
     )
 }
+
+private val Date.semanticText: String
+    get() {
+        val now = System.currentTimeMillis()
+        val time = time
+        val diff = (now - time) / 1000
+        return when {
+            diff >= 60 * 60 -> "${diff / 60 / 60} hour ago"
+            diff >= 60 -> "${diff / 60} minute ago"
+            else -> "just now"
+        }
+    }
