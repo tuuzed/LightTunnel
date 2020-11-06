@@ -1,8 +1,8 @@
-package lighttunnel.util
+package lighttunnel.traffic
 
 import java.util.*
 
-interface Statistics {
+interface TrafficStats {
     val createAt: Date
     val updateAt: Date
     val inboundBytes: Long

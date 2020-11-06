@@ -125,9 +125,9 @@ private fun TunnelServer.toSnapshotTable() = table {
                 fd.tunnelRequest.remotePort,
                 "-",
                 fd.connectionCount,
-                "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
-                fd.statistics.createAt.format(),
-                fd.statistics.updateAt.format()
+                "${fd.trafficStats.inboundBytes}/${fd.trafficStats.outboundBytes}",
+                fd.trafficStats.createAt.format(),
+                fd.trafficStats.updateAt.format()
             )
         }
         for (fd in getHttpFdList()) {
@@ -139,9 +139,9 @@ private fun TunnelServer.toSnapshotTable() = table {
                 "-",
                 fd.tunnelRequest.host + ":" + httpPort,
                 fd.connectionCount,
-                "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
-                fd.statistics.createAt.format(),
-                fd.statistics.updateAt.format()
+                "${fd.trafficStats.inboundBytes}/${fd.trafficStats.outboundBytes}",
+                fd.trafficStats.createAt.format(),
+                fd.trafficStats.updateAt.format()
             )
         }
         for (fd in getHttpsFdList()) {
@@ -153,9 +153,9 @@ private fun TunnelServer.toSnapshotTable() = table {
                 "-",
                 fd.tunnelRequest.host + ":" + httpsPort,
                 fd.connectionCount,
-                "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
-                fd.statistics.createAt.format(),
-                fd.statistics.updateAt.format()
+                "${fd.trafficStats.inboundBytes}/${fd.trafficStats.outboundBytes}",
+                fd.trafficStats.createAt.format(),
+                fd.trafficStats.updateAt.format()
             )
         }
     }
@@ -181,10 +181,10 @@ private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
                 put("extras", fd.tunnelRequest.extras)
                 //
                 put("conns", fd.connectionCount)
-                put("inboundBytes", fd.statistics.inboundBytes)
-                put("outboundBytes", fd.statistics.outboundBytes)
-                put("createAt", fd.statistics.createAt.format())
-                put("updateAt", fd.statistics.updateAt.format())
+                put("inboundBytes", fd.trafficStats.inboundBytes)
+                put("outboundBytes", fd.trafficStats.outboundBytes)
+                put("createAt", fd.trafficStats.createAt.format())
+                put("updateAt", fd.trafficStats.updateAt.format())
             }
         }
     )
@@ -201,10 +201,10 @@ private fun List<HttpFd>.httpFdListToJson(port: Int?): JSONArray {
                 put("extras", fd.tunnelRequest.extras)
                 //
                 put("conns", fd.connectionCount)
-                put("inboundBytes", fd.statistics.inboundBytes)
-                put("outboundBytes", fd.statistics.outboundBytes)
-                put("createAt", fd.statistics.createAt.format())
-                put("updateAt", fd.statistics.updateAt.format())
+                put("inboundBytes", fd.trafficStats.inboundBytes)
+                put("outboundBytes", fd.trafficStats.outboundBytes)
+                put("createAt", fd.trafficStats.createAt.format())
+                put("updateAt", fd.trafficStats.updateAt.format())
             }
         }
     )

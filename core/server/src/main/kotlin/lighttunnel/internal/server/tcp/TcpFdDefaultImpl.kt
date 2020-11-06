@@ -13,7 +13,7 @@ internal class TcpFdDefaultImpl(
 
     override val tunnelRequest get() = sessionChannels.tunnelRequest
     override val connectionCount get() = sessionChannels.cachedChannelCount
-    override val statistics get() = sessionChannels.statistics
+    override val trafficStats get() = sessionChannels.trafficStatsDefaultImpl
 
     val tunnelId get() = sessionChannels.tunnelId
     val port get() = tunnelRequest.remotePort

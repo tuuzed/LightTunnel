@@ -6,6 +6,7 @@ import io.netty.channel.ChannelFutureListener
 import lighttunnel.TunnelRequest
 import lighttunnel.internal.base.proto.ProtoMessage
 import lighttunnel.internal.base.util.IncIds
+import lighttunnel.internal.server.traffic.TrafficStatsDefaultImpl
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -20,7 +21,7 @@ internal class SessionChannels(
     private val cachedSessionIdChannels = hashMapOf<Long, Channel>()
     private val lock = ReentrantReadWriteLock()
 
-    val statistics = StatisticsDefaultImpl()
+    val trafficStats = TrafficStatsDefaultImpl()
     val cachedChannelCount: Int get() = lock.read { cachedSessionIdChannels.count() }
 
     fun putChannel(channel: Channel): Long {

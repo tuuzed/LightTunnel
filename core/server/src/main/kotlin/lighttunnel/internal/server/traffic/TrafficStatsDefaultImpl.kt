@@ -1,10 +1,10 @@
-package lighttunnel.internal.server.util
+package lighttunnel.internal.server.traffic
 
-import lighttunnel.util.Statistics
+import lighttunnel.traffic.TrafficStats
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
-internal class StatisticsDefaultImpl : Statistics {
+internal class TrafficStatsDefaultImpl : TrafficStats {
     private val inboundBytesAtomic = AtomicLong(0)
     private val outboundBytesAtomic = AtomicLong(0)
 

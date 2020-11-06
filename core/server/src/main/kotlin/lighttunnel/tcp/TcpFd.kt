@@ -1,10 +1,10 @@
 package lighttunnel.tcp
 
 import lighttunnel.TunnelRequest
-import lighttunnel.util.Statistics
+import lighttunnel.traffic.TrafficStats
 
 interface TcpFd {
     val tunnelRequest: TunnelRequest
     val connectionCount: Int
-    val statistics: Statistics
+    val trafficStats: TrafficStats
 }

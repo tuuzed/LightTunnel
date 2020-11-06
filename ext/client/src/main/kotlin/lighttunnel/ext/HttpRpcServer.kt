@@ -1,5 +1,6 @@
 package lighttunnel.ext
 
+import com.jakewharton.picnic.table
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
@@ -12,6 +13,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets
 import java.util.*
+import kotlin.math.min
 
 fun TunnelClient.newHttpRpcServer(
     bossGroup: NioEventLoopGroup,
@@ -54,6 +56,11 @@ fun TunnelClient.newHttpRpcServer(
                 Unpooled.copiedBuffer(it.toString(2), Charsets.UTF_8)
             }.newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
         }
+        route("^/view/snapshot".toRegex()) {
+            toSnapshotTable().let {
+                Unpooled.copiedBuffer(it.toString(), Charsets.UTF_8)
+            }.newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
+        }
     }
 }
 
@@ -78,12 +85,45 @@ private fun TunnelClient.toSnapshotJson(): JSONArray {
 }
 
 private fun toVersionJson() = JSONObject().apply {
-    put("name", "lts")
+    put("name", "ltc")
     put("protoVersion", LightTunnelConfig.PROTO_VERSION)
     put("versionName", LightTunnelConfig.VERSION_NAME)
     put("versionCode", LightTunnelConfig.VERSION_CODE)
     put("buildDate", LightTunnelConfig.BUILD_DATA)
     put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
     put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
+}
+
+
+private fun TunnelClient.toSnapshotTable() = table {
+    cellStyle {
+        paddingLeft = 1
+    }
+    header {
+        row(
+            "#", "Name", "Type", "Request", "Extras"
+        )
+    }
+    body {
+        var index = 1
+        for (conn in getTunnelConnectionList()) {
+            row(
+                index++,
+                conn.tunnelRequest.name?.let { it.substring(0, min(it.length, 16)) } ?: "-",
+                conn.toString(),
+                conn.tunnelRequest.extras
+            )
+        }
+    }
+    footer {
+        cellStyle {
+            paddingTop = 1
+        }
+        row {
+            cell("ltc-V${LightTunnelConfig.VERSION_NAME}(${LightTunnelConfig.VERSION_CODE})") {
+                columnSpan = 10
+            }
+        }
+    }
 }
 

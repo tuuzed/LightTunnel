@@ -1,11 +1,11 @@
 package lighttunnel.http
 
 import lighttunnel.TunnelRequest
-import lighttunnel.util.Statistics
+import lighttunnel.traffic.TrafficStats
 
 interface HttpFd {
     val tunnelRequest: TunnelRequest
     val connectionCount: Int
-    val statistics: Statistics
+    val trafficStats: TrafficStats
     val isHttps: Boolean
 }

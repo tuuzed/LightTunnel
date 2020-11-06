@@ -16,7 +16,7 @@ internal class TrafficHandler(
         if (msg is ByteBuf) {
             ctx.channel().attr(AK_SESSION_CHANNELS).get()?.apply {
                 val bytes = msg.readableBytes()
-                statistics.incInboundBytes(bytes)
+                trafficStats.incInboundBytes(bytes)
                 onTrafficListener?.onInbound(tunnelRequest, bytes)
             }
         }
@@ -28,7 +28,7 @@ internal class TrafficHandler(
         if (msg is ByteBuf) {
             ctx.channel().attr(AK_SESSION_CHANNELS).get()?.apply {
                 val bytes = msg.readableBytes()
-                statistics.incOutboundBytes(bytes)
+                trafficStats.incOutboundBytes(bytes)
                 onTrafficListener?.onOutbound(tunnelRequest, bytes)
             }
         }
