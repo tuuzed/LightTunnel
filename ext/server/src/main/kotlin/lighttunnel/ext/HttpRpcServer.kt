@@ -111,7 +111,7 @@ private fun TunnelServer.toSnapshotTable() = table {
     }
     header {
         row(
-            "#", "Name", "Type", "LocalNetwork", "RemotePort", "Host", "Conns", "In/Out", "CreateAt", "UpdateAt"
+            "#", "Name", "Type", "LocalNetwork", "RemotePort", "Host", "Conns", "Traffic In/Out", "CreateAt", "UpdateAt"
         )
     }
     body {
@@ -126,8 +126,8 @@ private fun TunnelServer.toSnapshotTable() = table {
                 "-",
                 fd.connectionCount,
                 "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
-                fd.statistics.createAt.semanticText,
-                fd.statistics.updateAt.semanticText
+                fd.statistics.createAt.format(),
+                fd.statistics.updateAt.format()
             )
         }
         for (fd in getHttpFdList()) {
@@ -140,8 +140,8 @@ private fun TunnelServer.toSnapshotTable() = table {
                 fd.tunnelRequest.host + ":" + httpPort,
                 fd.connectionCount,
                 "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
-                fd.statistics.createAt.semanticText,
-                fd.statistics.updateAt.semanticText
+                fd.statistics.createAt.format(),
+                fd.statistics.updateAt.format()
             )
         }
         for (fd in getHttpsFdList()) {
@@ -154,8 +154,8 @@ private fun TunnelServer.toSnapshotTable() = table {
                 fd.tunnelRequest.host + ":" + httpsPort,
                 fd.connectionCount,
                 "${fd.statistics.inboundBytes}/${fd.statistics.outboundBytes}",
-                fd.statistics.createAt.semanticText,
-                fd.statistics.updateAt.semanticText
+                fd.statistics.createAt.format(),
+                fd.statistics.updateAt.format()
             )
         }
     }
@@ -169,7 +169,6 @@ private fun TunnelServer.toSnapshotTable() = table {
             }
         }
     }
-
 }
 
 private fun List<TcpFd>.tcpFdListToJson(): JSONArray {
@@ -211,14 +210,3 @@ private fun List<HttpFd>.httpFdListToJson(port: Int?): JSONArray {
     )
 }
 
-private val Date.semanticText: String
-    get() {
-        val now = System.currentTimeMillis()
-        val time = time
-        val diff = (now - time) / 1000
-        return when {
-            diff >= 60 * 60 -> "${diff / 60 / 60} hour ago"
-            diff >= 60 -> "${diff / 60} minute ago"
-            else -> "just now"
-        }
-    }
