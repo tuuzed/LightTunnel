@@ -111,7 +111,7 @@ private fun TunnelServer.toSnapshotTable() = table {
     }
     header {
         row(
-            "#", "Name", "Type", "LocalNetwork", "RemotePort", "Host", "Conns", "Traffic In/Out", "CreateAt", "UpdateAt"
+            "#", "Name", "Type", "LocalNetwork", "RemotePort", "Host", "Conns", "Traffic-In/Out", "CreateAt", "UpdateAt"
         )
     }
     body {
