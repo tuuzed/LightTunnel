@@ -26,24 +26,24 @@ internal class HttpTunnelChannelHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelActive(ctx: ChannelHandlerContext?) {
+    override fun channelActive(ctx: ChannelHandlerContext) {
         logger.trace("channelActive: {}", ctx)
         super.channelActive(ctx)
     }
 
     @Throws(Exception::class)
-    override fun channelInactive(ctx: ChannelHandlerContext?) {
+    override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx == null) {
-            super.channelInactive(ctx)
-            return
-        }
         val httpHost = ctx.channel().attr(AK_HTTP_HOST).get()
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
         if (httpHost != null && sessionId != null) {
             val httpFd = registry.getHttpFd(httpHost)
             httpFd?.tunnelChannel?.writeAndFlush(
-                ProtoMessage.REMOTE_DISCONNECT(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
+                ProtoMessage.REMOTE_DISCONNECT(
+                    httpFd.tunnelId,
+                    sessionId,
+                    RemoteConnection(ctx.channel().remoteAddress())
+                )
             )
             ctx.channel().attr(AK_HTTP_HOST).set(null)
             ctx.channel().attr(AK_SESSION_ID).set(null)
@@ -82,18 +82,26 @@ internal class HttpTunnelChannelHandler(
                 // 是否注册过隧道
                 val httpFd = registry.getHttpFd(httpHost)
                 if (httpFd == null) {
-                    httpContext.writeTextHttpResponse(status = HttpResponseStatus.FORBIDDEN, text = "Tunnel($httpHost)Not Registered!")
+                    httpContext.writeTextHttpResponse(
+                        status = HttpResponseStatus.FORBIDDEN,
+                        text = "Tunnel($httpHost)Not Registered!"
+                    )
                     return
                 }
                 // 拦截器处理
-                ctx.channel().attr(AK_IS_INTERCEPTOR_HANDLE).set(httpTunnelRequestInterceptor?.doHttpRequest(httpContext, msg, httpFd.tunnelRequest))
+                ctx.channel().attr(AK_IS_INTERCEPTOR_HANDLE)
+                    .set(httpTunnelRequestInterceptor?.doHttpRequest(httpContext, msg, httpFd.tunnelRequest))
                 if (ctx.isInterceptorHandle) {
                     return
                 }
                 val sessionId = httpFd.putChannel(ctx.channel())
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage.REMOTE_CONNECTED(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
+                    ProtoMessage.REMOTE_CONNECTED(
+                        httpFd.tunnelId,
+                        sessionId,
+                        RemoteConnection(ctx.channel().remoteAddress())
+                    )
                 )
                 val data = ByteBufUtil.getBytes(msg.byteBuf) ?: emptyBytes
                 httpFd.tunnelChannel.writeAndFlush(ProtoMessage.TRANSFER(httpFd.tunnelId, sessionId, data))
@@ -123,7 +131,11 @@ internal class HttpTunnelChannelHandler(
                     return
                 }
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage.REMOTE_CONNECTED(httpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
+                    ProtoMessage.REMOTE_CONNECTED(
+                        httpFd.tunnelId,
+                        sessionId,
+                        RemoteConnection(ctx.channel().remoteAddress())
+                    )
                 )
                 val data = ByteBufUtil.getBytes(msg.content() ?: Unpooled.EMPTY_BUFFER) ?: emptyBytes
                 httpFd.tunnelChannel.writeAndFlush(
@@ -134,6 +146,7 @@ internal class HttpTunnelChannelHandler(
     }
 
     private val ChannelHandlerContext.isPluginHandle get() = this.channel().attr(AK_IS_PLUGIN_HANDLE).get() == true
-    private val ChannelHandlerContext.isInterceptorHandle get() = this.channel().attr(AK_IS_INTERCEPTOR_HANDLE).get() == true
+    private val ChannelHandlerContext.isInterceptorHandle
+        get() = this.channel().attr(AK_IS_INTERCEPTOR_HANDLE).get() == true
 
 }

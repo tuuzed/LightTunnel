@@ -19,9 +19,9 @@ internal class LocalTcpClientChannelHandler(
 
     private val logger by loggerDelegate()
 
-    override fun channelActive(ctx: ChannelHandlerContext?) {
+    @Throws(Exception::class)
+    override fun channelActive(ctx: ChannelHandlerContext) {
         super.channelActive(ctx)
-        ctx ?: return
         val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
         val nextChannel = ctx.channel().attr(AK_NEXT_CHANNEL).get()
@@ -31,17 +31,16 @@ internal class LocalTcpClientChannelHandler(
     }
 
     @Throws(Exception::class)
-    override fun channelInactive(ctx: ChannelHandlerContext?) {
+    override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx != null) {
-            val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
-            val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
-            if (tunnelId != null && sessionId != null) {
-                localTcpClient.removeLocalChannel(tunnelId, sessionId)
-                    ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                    ?.addListener(ChannelFutureListener.CLOSE)
-                ctx.channel().attr(AK_NEXT_CHANNEL).get()?.writeAndFlush(ProtoMessage.LOCAL_DISCONNECT(tunnelId, sessionId))
-            }
+        val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
+        val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
+        if (tunnelId != null && sessionId != null) {
+            localTcpClient.removeLocalChannel(tunnelId, sessionId)
+                ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
+                ?.addListener(ChannelFutureListener.CLOSE)
+            ctx.channel().attr(AK_NEXT_CHANNEL).get()
+                ?.writeAndFlush(ProtoMessage.LOCAL_DISCONNECT(tunnelId, sessionId))
         }
         super.channelInactive(ctx)
     }

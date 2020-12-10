@@ -26,12 +26,8 @@ internal class TunnelClientDaemonChannelHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelInactive(ctx: ChannelHandlerContext?) {
+    override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx == null) {
-            super.channelInactive(ctx)
-            return
-        }
         val tunnelId = ctx.channel().attr(AK_TUNNEL_ID).get()
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
         if (tunnelId != null && sessionId != null) {

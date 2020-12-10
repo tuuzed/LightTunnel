@@ -1,5 +1,3 @@
-@file:Suppress("DuplicatedCode")
-
 package lighttunnel.internal.server.tcp
 
 import lighttunnel.ProtoException

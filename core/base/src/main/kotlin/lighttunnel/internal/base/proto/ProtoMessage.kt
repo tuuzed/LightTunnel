@@ -2,6 +2,7 @@ package lighttunnel.internal.base.proto
 
 import lighttunnel.RemoteConnection
 import lighttunnel.TunnelRequest
+import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.message.*
 
 abstract class ProtoMessage internal constructor(
@@ -24,8 +25,12 @@ abstract class ProtoMessage internal constructor(
         fun RESPONSE_OK(tunnelId: Long, request: TunnelRequest) = ResponseOkMessage(tunnelId, request)
         fun RESPONSE_ERR(cause: Throwable) = ResponseErrMessage(cause)
         fun TRANSFER(tunnelId: Long, sessionId: Long, data: ByteArray) = TransferMessage(tunnelId, sessionId, data)
-        fun REMOTE_CONNECTED(tunnelId: Long, sessionId: Long, conn: RemoteConnection) = RemoteConnectedMessage(tunnelId, sessionId, conn)
-        fun REMOTE_DISCONNECT(tunnelId: Long, sessionId: Long, conn: RemoteConnection) = RemoteDisconnectMessage(tunnelId, sessionId, conn)
+        fun REMOTE_CONNECTED(tunnelId: Long, sessionId: Long, conn: RemoteConnection) =
+            RemoteConnectedMessage(tunnelId, sessionId, conn)
+
+        fun REMOTE_DISCONNECT(tunnelId: Long, sessionId: Long, conn: RemoteConnection) =
+            RemoteDisconnectMessage(tunnelId, sessionId, conn)
+
         fun LOCAL_CONNECTED(tunnelId: Long, sessionId: Long) = LocalConnectedMessage(tunnelId, sessionId)
         fun LOCAL_DISCONNECT(tunnelId: Long, sessionId: Long) = LocalDisconnectMessage(tunnelId, sessionId)
         fun FORCE_OFF() = FORCE_OFF
@@ -135,7 +140,10 @@ abstract class ProtoMessage internal constructor(
         ;
 
         companion object {
-            fun ofCode(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
+            private val mappings = TunnelType.values().map { it.code to it }.toMap()
+
+            @JvmStatic
+            fun codeOf(code: Byte) = mappings.getOrDefault(code, UNKNOWN)
         }
 
     }

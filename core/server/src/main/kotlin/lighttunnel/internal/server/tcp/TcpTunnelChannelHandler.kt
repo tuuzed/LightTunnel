@@ -17,12 +17,8 @@ internal class TcpTunnelChannelHandler(
 ) : SimpleChannelInboundHandler<ByteBuf>() {
     private val logger by loggerDelegate()
 
-    override fun channelActive(ctx: ChannelHandlerContext?) {
+    override fun channelActive(ctx: ChannelHandlerContext) {
         logger.trace("channelActive: {}", ctx)
-        if (ctx == null) {
-            super.channelActive(ctx)
-            return
-        }
         val tcpFd = ctx.tcpFd
         if (tcpFd != null) {
             var sessionId = ctx.channel().attr(AK_SESSION_ID).get()
@@ -31,7 +27,11 @@ internal class TcpTunnelChannelHandler(
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
             }
             tcpFd.tunnelChannel.writeAndFlush(
-                ProtoMessage.REMOTE_CONNECTED(tcpFd.tunnelId, sessionId, RemoteConnection(ctx.channel().remoteAddress()))
+                ProtoMessage.REMOTE_CONNECTED(
+                    tcpFd.tunnelId,
+                    sessionId,
+                    RemoteConnection(ctx.channel().remoteAddress())
+                )
             )
         } else {
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
@@ -39,12 +39,8 @@ internal class TcpTunnelChannelHandler(
         super.channelActive(ctx)
     }
 
-    override fun channelInactive(ctx: ChannelHandlerContext?) {
+    override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx == null) {
-            super.channelInactive(ctx)
-            return
-        }
         val tcpFd = ctx.tcpFd
         if (tcpFd != null) {
             val sessionId = ctx.channel().attr(AK_SESSION_ID).get()

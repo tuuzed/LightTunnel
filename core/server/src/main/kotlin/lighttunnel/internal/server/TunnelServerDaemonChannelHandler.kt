@@ -31,12 +31,8 @@ internal class TunnelServerDaemonChannelHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelInactive(ctx: ChannelHandlerContext?) {
+    override fun channelInactive(ctx: ChannelHandlerContext) {
         logger.trace("channelInactive: {}", ctx)
-        if (ctx == null) {
-            super.channelInactive(ctx)
-            return
-        }
         ctx.channel().attr(AK_SESSION_CHANNELS).get()?.also { sc ->
             when (sc.tunnelRequest.tunnelType) {
                 TunnelType.TCP -> callback.onChannelInactive(ctx, tcpTunnel?.stopTunnel(sc.tunnelRequest.remotePort))

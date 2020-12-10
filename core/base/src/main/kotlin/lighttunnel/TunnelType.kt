@@ -11,8 +11,10 @@ enum class TunnelType(val code: Byte) {
     HTTPS(0x31.toByte());
 
     companion object {
+        private val mappings = values().map { it.code to it }.toMap()
+
         @JvmStatic
-        fun ofCode(code: Byte) = values().firstOrNull { it.code == code } ?: UNKNOWN
+        fun codeOf(code: Byte) = mappings.getOrDefault(code, UNKNOWN)
     }
 
 }
