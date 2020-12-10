@@ -9,6 +9,7 @@ import lighttunnel.RemoteConnection
 import lighttunnel.TunnelRequest
 import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.ProtoMessage
+import lighttunnel.internal.base.proto.ProtoMessageType
 import lighttunnel.internal.base.proto.message.*
 import lighttunnel.internal.base.util.loggerDelegate
 import lighttunnel.internal.client.conn.TunnelConnectionDefaultImpl
@@ -52,13 +53,13 @@ internal class TunnelClientDaemonChannelHandler(
         ctx ?: return
         msg ?: return
         when (msg.type) {
-            ProtoMessage.Type.PING -> doHandlePingMessage(ctx, msg as PingMessage)
-            ProtoMessage.Type.RESPONSE_OK -> doHandleResponseOkMessage(ctx, msg as ResponseOkMessage)
-            ProtoMessage.Type.RESPONSE_ERR -> doHandleResponseErrMessage(ctx, msg as ResponseErrMessage)
-            ProtoMessage.Type.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMessage)
-            ProtoMessage.Type.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg as RemoteConnectedMessage)
-            ProtoMessage.Type.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg as RemoteDisconnectMessage)
-            ProtoMessage.Type.FORCE_OFF -> doHandleForceOffMessage(ctx, msg as ForceOffMessage)
+            ProtoMessageType.PING -> doHandlePingMessage(ctx, msg as PingMessage)
+            ProtoMessageType.RESPONSE_OK -> doHandleResponseOkMessage(ctx, msg as ResponseOkMessage)
+            ProtoMessageType.RESPONSE_ERR -> doHandleResponseErrMessage(ctx, msg as ResponseErrMessage)
+            ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMessage)
+            ProtoMessageType.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg as RemoteConnectedMessage)
+            ProtoMessageType.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg as RemoteDisconnectMessage)
+            ProtoMessageType.FORCE_OFF -> doHandleForceOffMessage(ctx, msg as ForceOffMessage)
             else -> {
                 // Nothing
             }
@@ -181,7 +182,13 @@ internal class TunnelClientDaemonChannelHandler(
     }
 
     interface OnChannelStateListener {
-        fun onChannelInactive(ctx: ChannelHandlerContext, conn: TunnelConnectionDefaultImpl?, extra: ChannelInactiveExtra?) {}
+        fun onChannelInactive(
+            ctx: ChannelHandlerContext,
+            conn: TunnelConnectionDefaultImpl?,
+            extra: ChannelInactiveExtra?
+        ) {
+        }
+
         fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnectionDefaultImpl?) {}
     }
 
