@@ -27,7 +27,7 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
                 val totalLength = rst.readInt()
                 if (rst.readableBytes() < totalLength) return null
                 // 开始解码数据
-                val type = ProtoMessage.Type.codeOf(rst.readByte())
+                val type = ProtoMessageType.codeOf(rst.readByte())
                 val headLength = rst.readInt()
                 val head = ByteArray(headLength)
                 rst.readBytes(head)

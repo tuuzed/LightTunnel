@@ -9,6 +9,7 @@ import lighttunnel.TunnelRequest
 import lighttunnel.TunnelRequestInterceptor
 import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.ProtoMessage
+import lighttunnel.internal.base.proto.ProtoMessageType
 import lighttunnel.internal.base.proto.message.*
 import lighttunnel.internal.base.util.IncIds
 import lighttunnel.internal.base.util.loggerDelegate
@@ -60,12 +61,12 @@ internal class TunnelServerDaemonChannelHandler(
         ctx ?: return
         msg ?: return
         when (msg.type) {
-            ProtoMessage.Type.PING -> doHandlePingMessage(ctx, msg as PingMessage)
-            ProtoMessage.Type.REQUEST -> doHandleRequestMessage(ctx, msg as RequestMessage)
-            ProtoMessage.Type.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMessage)
-            ProtoMessage.Type.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg as LocalConnectedMessage)
-            ProtoMessage.Type.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg as LocalDisconnectMessage)
-            ProtoMessage.Type.FORCE_OFF_REPLY -> doHandleForceOffReplyMessage(ctx, msg as ForceOffReplyMessage)
+            ProtoMessageType.PING -> doHandlePingMessage(ctx, msg as PingMessage)
+            ProtoMessageType.REQUEST -> doHandleRequestMessage(ctx, msg as RequestMessage)
+            ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMessage)
+            ProtoMessageType.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg as LocalConnectedMessage)
+            ProtoMessageType.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg as LocalDisconnectMessage)
+            ProtoMessageType.FORCE_OFF_REPLY -> doHandleForceOffReplyMessage(ctx, msg as ForceOffReplyMessage)
             else -> {
                 // Nothing
             }

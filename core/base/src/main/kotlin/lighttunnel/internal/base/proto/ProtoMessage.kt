@@ -2,11 +2,10 @@ package lighttunnel.internal.base.proto
 
 import lighttunnel.RemoteConnection
 import lighttunnel.TunnelRequest
-import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.message.*
 
 abstract class ProtoMessage internal constructor(
-    val type: Type,
+    val type: ProtoMessageType,
     val head: ByteArray,
     val data: ByteArray
 ) {
@@ -36,21 +35,21 @@ abstract class ProtoMessage internal constructor(
         fun FORCE_OFF() = FORCE_OFF
         fun FORCE_OFF_REPLY() = FORCE_OFF_REPLY
 
-        internal fun newInstance(type: Type, head: ByteArray, data: ByteArray): ProtoMessage {
+        internal fun newInstance(type: ProtoMessageType, head: ByteArray, data: ByteArray): ProtoMessage {
             return when (type) {
-                Type.UNKNOWN -> UNKNOWN
-                Type.PING -> PING
-                Type.PONG -> PONG
-                Type.REQUEST -> RequestMessage(data)
-                Type.RESPONSE_OK -> ResponseOkMessage(head, data)
-                Type.RESPONSE_ERR -> ResponseErrMessage(data)
-                Type.TRANSFER -> TransferMessage(head, data)
-                Type.REMOTE_CONNECTED -> RemoteConnectedMessage(head, data)
-                Type.REMOTE_DISCONNECT -> RemoteDisconnectMessage(head, data)
-                Type.LOCAL_CONNECTED -> LocalConnectedMessage(head)
-                Type.LOCAL_DISCONNECT -> LocalDisconnectMessage(head)
-                Type.FORCE_OFF -> FORCE_OFF
-                Type.FORCE_OFF_REPLY -> FORCE_OFF_REPLY
+                ProtoMessageType.UNKNOWN -> UNKNOWN
+                ProtoMessageType.PING -> PING
+                ProtoMessageType.PONG -> PONG
+                ProtoMessageType.REQUEST -> RequestMessage(data)
+                ProtoMessageType.RESPONSE_OK -> ResponseOkMessage(head, data)
+                ProtoMessageType.RESPONSE_ERR -> ResponseErrMessage(data)
+                ProtoMessageType.TRANSFER -> TransferMessage(head, data)
+                ProtoMessageType.REMOTE_CONNECTED -> RemoteConnectedMessage(head, data)
+                ProtoMessageType.REMOTE_DISCONNECT -> RemoteDisconnectMessage(head, data)
+                ProtoMessageType.LOCAL_CONNECTED -> LocalConnectedMessage(head)
+                ProtoMessageType.LOCAL_DISCONNECT -> LocalDisconnectMessage(head)
+                ProtoMessageType.FORCE_OFF -> FORCE_OFF
+                ProtoMessageType.FORCE_OFF_REPLY -> FORCE_OFF_REPLY
             }
         }
 
@@ -60,92 +59,5 @@ abstract class ProtoMessage internal constructor(
         return "ProtoMessage(type=$type, head.length=${head.size}, data.length=${data.size})"
     }
 
-    enum class Type(val code: Byte) {
-        /**
-         * 未知
-         */
-        UNKNOWN(0x00.toByte()),
-
-        /**
-         * 心跳消息 PING
-         * 消息流向：Client <-> Server
-         */
-        PING(0x01.toByte()),
-
-        /**
-         * 心跳消息 PONG
-         * 消息流向：Client <-> Server
-         */
-        PONG(0x02.toByte()),
-
-        /**
-         * 建立隧道请求
-         * 消息流向：Client -> Server
-         */
-        REQUEST(0x10.toByte()),
-
-        /**
-         * 建立隧道响应成功
-         * 消息流向：Client <- Server
-         */
-        RESPONSE_OK(0x20.toByte()),
-
-        /**
-         * 建立隧道响应失败
-         * 消息流向：Client <- Server
-         */
-        RESPONSE_ERR(0x21.toByte()),
-
-        /**
-         * 透传消息
-         * 消息流向：Client <-> Server
-         */
-        TRANSFER(0x30.toByte()),
-
-        /**
-         * 远程连接成功
-         * 消息流向：Client <- Server
-         */
-        REMOTE_CONNECTED(0x40.toByte()),
-
-        /**
-         * 远程断开连接
-         * 消息流向：Client <- Server
-         */
-        REMOTE_DISCONNECT(0x41.toByte()),
-
-        /**
-         * 本地连接成功
-         * 消息流向：Client -> Server
-         */
-        LOCAL_CONNECTED(0x42.toByte()),
-
-        /**
-         * 本地连接断开
-         * 消息流向：Client -> Server
-         */
-        LOCAL_DISCONNECT(0x43.toByte()),
-
-        /**
-         * 强制下线
-         * 消息流向：Server -> Client
-         */
-        FORCE_OFF(0x50.toByte()),
-
-        /**
-         * 强制下线回复
-         * 消息流向：Client -> Server
-         */
-        FORCE_OFF_REPLY(0x51.toByte())
-        ;
-
-        companion object {
-            private val mappings = TunnelType.values().map { it.code to it }.toMap()
-
-            @JvmStatic
-            fun codeOf(code: Byte) = mappings.getOrDefault(code, UNKNOWN)
-        }
-
-    }
 
 }

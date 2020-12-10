@@ -16,12 +16,12 @@ class TunnelRequest private constructor(
 
     companion object Factory {
         private const val serialVersionUID = 1L
-        private val CHARSET = Charsets.UTF_8
         private const val LOCAL_ADDR = "LOCAL_ADDR"
         private const val LOCAL_PORT = "LOCAL_PORT"
         private const val REMOTE_PORT = "REMOTE_PORT"
         private const val HOST = "HOST"
         private const val EXTRAS = "EXTRAS"
+        private val CHARSET = Charsets.UTF_8
 
         @Throws(ProtoException::class)
         fun fromBytes(bytes: ByteArray): TunnelRequest {
