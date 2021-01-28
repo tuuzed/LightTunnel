@@ -18,8 +18,11 @@ class TunnelClient(
 ) {
 
     companion object {
-        const val RETRY_CONNECT_POLICY_LOSE = 0x01.toByte()  // 0000_0001
-        const val RETRY_CONNECT_POLICY_ERROR = 0x02.toByte() // 0000_0010
+        /** 断线重连 */
+        const val RETRY_CONNECT_POLICY_LOSE = (1 shl 0).toByte()  // 0000_0001
+
+        /** 错误重连 */
+        const val RETRY_CONNECT_POLICY_ERROR = (1 shl 1).toByte() // 0000_0010
     }
 
     private val daemon by lazy {

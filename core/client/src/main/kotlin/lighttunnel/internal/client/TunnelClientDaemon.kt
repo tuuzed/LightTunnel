@@ -38,7 +38,7 @@ internal class TunnelClientDaemon(
     private val workerGroup = if ((workerThreads >= 0)) NioEventLoopGroup(workerThreads) else NioEventLoopGroup()
     private val cachedSslBootstraps = ConcurrentHashMap<SslContext, Bootstrap>()
     private val bootstrap = Bootstrap()
-    private val localTcpClient: LocalTcpClient
+    private val localTcpClient = LocalTcpClient(workerGroup)
     private val lock = ReentrantLock()
     private val openFailureCallback = { conn: TunnelConnectionDefaultImpl -> tryReconnect(conn, false) }
     private val onChannelStateListener = OnChannelStateListenerImpl()
@@ -46,7 +46,6 @@ internal class TunnelClientDaemon(
     val tunnelConnectionRegistry = TunnelConnectionRegistry()
 
     init {
-        localTcpClient = LocalTcpClient(workerGroup)
         bootstrap
             .group(workerGroup)
             .channel(NioSocketChannel::class.java)
@@ -119,7 +118,8 @@ internal class TunnelClientDaemon(
             .handler(InnerChannelInitializer(this))
             .also { cachedSslBootstraps[this] = it }
 
-    private inner class InnerChannelInitializer(private val sslContext: SslContext?) : ChannelInitializer<SocketChannel>() {
+    private inner class InnerChannelInitializer(private val sslContext: SslContext?) :
+        ChannelInitializer<SocketChannel>() {
         override fun initChannel(ch: SocketChannel?) {
             ch ?: return
             if (sslContext != null) {
@@ -130,11 +130,13 @@ internal class TunnelClientDaemon(
                 .addLast("heartbeat", HeartbeatHandler())
                 .addLast("decoder", ProtoMessageDecoder())
                 .addLast("encoder", ProtoMessageEncoder())
-                .addLast("handler", TunnelClientDaemonChannelHandler(
-                    localTcpClient = localTcpClient,
-                    onChannelStateListener = onChannelStateListener,
-                    onRemoteConnectListener = onRemoteConnectionListener
-                ))
+                .addLast(
+                    "handler", TunnelClientDaemonChannelHandler(
+                        localTcpClient = localTcpClient,
+                        onChannelStateListener = onChannelStateListener,
+                        onRemoteConnectListener = onRemoteConnectionListener
+                    )
+                )
         }
     }
 

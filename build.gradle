@@ -3,6 +3,7 @@ import java.text.SimpleDateFormat
 buildscript {
     ext.kotlin_version = "1.4.21"
     ext.jvm_version = "1.8"
+    ext.netty_version = "4.1.58.Final"
     ext.BUILD_DATE = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy ZZZ", Locale.ENGLISH).format(new Date())
     extensions.GitVCPlugin = [
             enableBranch: true,
@@ -10,7 +11,7 @@ buildscript {
     repositories {
         maven { url "https://maven.aliyun.com/repository/public" }
         maven { url "https://maven.aliyun.com/repository/google" }
-        maven { url "https://maven.aliyun.com/repository/jcenter"}
+        maven { url "https://maven.aliyun.com/repository/jcenter" }
         maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
         maven { url "https://plugins.gradle.org/m2/" }
         mavenCentral()
@@ -27,7 +28,7 @@ buildscript {
         repositories {
             maven { url "https://maven.aliyun.com/repository/public" }
             maven { url "https://maven.aliyun.com/repository/google" }
-            maven { url "https://maven.aliyun.com/repository/jcenter"}
+            maven { url "https://maven.aliyun.com/repository/jcenter" }
             mavenCentral()
             jcenter()
         }
