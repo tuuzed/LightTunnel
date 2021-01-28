@@ -1,7 +1,7 @@
 package lighttunnel
 
 import lighttunnel.internal.base.proto.emptyBytes
-import lighttunnel.internal.base.util.getOrDefault
+import lighttunnel.internal.base.utils.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
 import java.net.InetSocketAddress

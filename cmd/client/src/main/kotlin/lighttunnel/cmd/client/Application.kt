@@ -10,7 +10,7 @@ import lighttunnel.cmd.asInt
 import lighttunnel.cmd.localIpV4
 import lighttunnel.conn.TunnelConnection
 import lighttunnel.ext.*
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.listener.OnRemoteConnectionListener
 import lighttunnel.listener.OnTunnelConnectionListener
 import org.apache.commons.cli.CommandLine
@@ -37,7 +37,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s(%d)%n", LightTunnelConfig.VERSION_NAME, LightTunnelConfig.VERSION_CODE)
+            System.out.printf("%s(%d)%n", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "ltc.ini"
@@ -114,13 +114,13 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
 
         private fun getSslContext(basic: Profile.Section): SslContext {
             return try {
-                SslContextUtil.forClient(
+                SslContextUtils.forClient(
                     basic["ssl_jks"] ?: "ltc.jks",
                     basic["ssl_store_password"] ?: "ltcpass"
                 )
             } catch (e: Exception) {
                 logger.warn("tunnel ssl used builtin jks.")
-                SslContextUtil.forBuiltinClient()
+                SslContextUtils.forBuiltinClient()
             }
         }
 
@@ -150,12 +150,16 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 remotePort = tunnel["remote_port"].asInt() ?: 0
             ) {
                 name = tunnel.name
-                version = LightTunnelConfig.VERSION_NAME
+                version = BuildConfig.VERSION_NAME
                 authToken = basic["auth_token"]
             }
         }
 
-        private fun getHttpOrHttpsTunnelRequest(basic: Profile.Section, tunnel: Profile.Section, https: Boolean): TunnelRequest? {
+        private fun getHttpOrHttpsTunnelRequest(
+            basic: Profile.Section,
+            tunnel: Profile.Section,
+            https: Boolean
+        ): TunnelRequest? {
             val proxySetHeaders = mapOf(
                 *tunnel.entries
                     .filter { it.key.startsWith("pxy_header_set_") && it.value.isNotEmpty() }
@@ -173,7 +177,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
                 host = tunnel["host"] ?: return null
             ) {
                 name = tunnel.name
-                version = LightTunnelConfig.VERSION_NAME
+                version = BuildConfig.VERSION_NAME
                 authToken = basic["auth_token"]
                 pxySetHeaders = proxySetHeaders
                 pxyAddHeaders = proxyAddHeaders
@@ -191,14 +195,19 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             val logFile = basic["log_file"]
             val logCount = basic["log_count"].asInt() ?: 3
             val logSize = basic["log_size"] ?: "1MB"
-            LoggerConfigure.configConsole(Level.OFF, names = arrayOf(
-                "io.netty",
-                "org.ini4j",
-                "org.slf4j",
-                "org.json",
-                "org.apache.commons.cli"
-            ))
-            LoggerConfigure.configConsole(level = logLevel, conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n")
+            LoggerConfigure.configConsole(
+                Level.OFF, names = arrayOf(
+                    "io.netty",
+                    "org.ini4j",
+                    "org.slf4j",
+                    "org.json",
+                    "org.apache.commons.cli"
+                )
+            )
+            LoggerConfigure.configConsole(
+                level = logLevel,
+                conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n"
+            )
             if (logFile != null) {
                 LoggerConfigure.configFile(
                     level = logLevel,

@@ -11,8 +11,8 @@ import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.ProtoMessage
 import lighttunnel.internal.base.proto.ProtoMessageType
 import lighttunnel.internal.base.proto.message.*
-import lighttunnel.internal.base.util.IncIds
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.IncIds
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.server.http.HttpFdDefaultImpl
 import lighttunnel.internal.server.http.HttpTunnel
 import lighttunnel.internal.server.tcp.TcpFdDefaultImpl

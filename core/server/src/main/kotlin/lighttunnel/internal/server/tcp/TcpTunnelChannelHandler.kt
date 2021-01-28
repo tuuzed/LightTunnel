@@ -8,7 +8,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.RemoteConnection
 import lighttunnel.internal.base.proto.ProtoMessage
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.server.util.AK_SESSION_ID
 import java.net.InetSocketAddress
 

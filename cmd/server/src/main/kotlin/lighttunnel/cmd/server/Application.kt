@@ -3,8 +3,8 @@
 package lighttunnel.cmd.server
 
 import io.netty.channel.nio.NioEventLoopGroup
-import lighttunnel.LightTunnelConfig
-import lighttunnel.SslContextUtil
+import lighttunnel.BuildConfig
+import lighttunnel.SslContextUtils
 import lighttunnel.TunnelRequestInterceptor
 import lighttunnel.TunnelServer
 import lighttunnel.args.HttpTunnelArgs
@@ -16,7 +16,7 @@ import lighttunnel.cmd.asInt
 import lighttunnel.ext.*
 import lighttunnel.http.HttpFd
 import lighttunnel.http.HttpPlugin
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.listener.OnHttpTunnelStateListener
 import lighttunnel.listener.OnTcpTunnelStateListener
 import lighttunnel.tcp.TcpFd
@@ -43,7 +43,7 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             throw ParseException("printUsage")
         }
         if (commandLine.hasOption("v")) {
-            System.out.printf("%s(%d)%n", LightTunnelConfig.VERSION_NAME, LightTunnelConfig.VERSION_CODE)
+            System.out.printf("%s(%d)%n", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
             return
         }
         val configFilePath = commandLine.getOptionValue("c") ?: "lts.ini"
@@ -138,10 +138,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
                     val jks = basic["ssl_jks"] ?: "lts.jks"
                     val storePassword = basic["ssl_key_password"] ?: "ltspass"
                     val keyPassword = basic["ssl_store_password"] ?: "ltspass"
-                    SslContextUtil.forServer(jks, storePassword, keyPassword)
+                    SslContextUtils.forServer(jks, storePassword, keyPassword)
                 } catch (e: Exception) {
                     logger.warn("tunnel ssl used builtin jks.")
-                    SslContextUtil.forBuiltinServer()
+                    SslContextUtils.forBuiltinServer()
                 }
             )
         }
@@ -185,10 +185,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
                     val jks = https["https_jks"] ?: "lts.jks"
                     val storePassword = https["https_key_password"] ?: "ltspass"
                     val keyPassword = https["https_store_password"] ?: "ltspass"
-                    SslContextUtil.forServer(jks, storePassword, keyPassword)
+                    SslContextUtils.forServer(jks, storePassword, keyPassword)
                 } catch (e: Exception) {
                     logger.warn("tunnel ssl used builtin jks.")
-                    SslContextUtil.forBuiltinServer()
+                    SslContextUtils.forBuiltinServer()
                 }
             )
         }

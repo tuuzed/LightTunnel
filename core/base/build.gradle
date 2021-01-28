@@ -27,29 +27,25 @@ dependencies {
 
 apply plugin: "de.fuerstenau.buildconfig"
 
-static def s(Object o) { return o.toString() }
-
-static def base64(File file) { return new String(Base64.encoder.encode(file.readBytes()), "UTF-8") }
-
 buildConfig {
     appName = "LightTunnel"
     version = project.version
-    clsName = "BuildConfig"
-    packageName = "${rootProject.group}"
+    clsName = "_BuildConfig"
+    packageName = "${rootProject.group}.internal"
     charset = "UTF-8"
 
     buildConfigField "int", "VERSION_CODE", "${GitVC.VERSION_CODE}"
-    buildConfigField "String", "VERSION_NAME", s(project.version)
-    buildConfigField "String", "LAST_COMMIT_SHA", s(GitVC.LAST_COMMIT_SHA)
-    buildConfigField "String", "LAST_COMMIT_DATE", s(GitVC.LAST_COMMIT_DATE)
-    buildConfigField "String", "BUILD_DATA", s(BUILD_DATE)
+    buildConfigField "java.lang.String", "VERSION_NAME", string(project.version)
+    buildConfigField "java.lang.String", "LAST_COMMIT_SHA", string(GitVC.LAST_COMMIT_SHA)
+    buildConfigField "java.lang.String", "LAST_COMMIT_DATE", string(GitVC.LAST_COMMIT_DATE)
+    buildConfigField "java.lang.String", "BUILD_DATA", string(BUILD_DATE)
 
-    buildConfigField "String", "SERVER_JKS_BASE64", s(base64(rootProject.file("resources/lts.jks")))
-    buildConfigField "String", "SERVER_JKS_STORE_PASSWORD", s("ltspass")
-    buildConfigField "String", "SERVER_JKS_KEY_PASSWORD", s("ltspass")
+    buildConfigField "java.lang.String[]", "SERVER_JKS_BASE64", base64File(rootProject.file("resources/lts.jks"))
+    buildConfigField "java.lang.String", "SERVER_JKS_STORE_PASSWORD", string("ltspass")
+    buildConfigField "java.lang.String", "SERVER_JKS_KEY_PASSWORD", string("ltspass")
 
-    buildConfigField "String", "CLIENT_JKS_BASE64", s(base64(rootProject.file("resources/ltc.jks")))
-    buildConfigField "String", "CLIENT_JKS_STORE_PASSWORD", s("ltcpass")
+    buildConfigField "java.lang.String[]", "CLIENT_JKS_BASE64", base64File(rootProject.file("resources/ltc.jks"))
+    buildConfigField "java.lang.String", "CLIENT_JKS_STORE_PASSWORD", string("ltcpass")
 
 }
 

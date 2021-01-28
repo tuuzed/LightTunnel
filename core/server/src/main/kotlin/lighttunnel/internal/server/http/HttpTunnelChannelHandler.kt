@@ -13,9 +13,9 @@ import lighttunnel.http.HttpPlugin
 import lighttunnel.http.HttpTunnelRequestInterceptor
 import lighttunnel.internal.base.proto.ProtoMessage
 import lighttunnel.internal.base.proto.emptyBytes
-import lighttunnel.internal.base.util.byteBuf
-import lighttunnel.internal.base.util.hostExcludePort
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.byteBuf
+import lighttunnel.internal.base.utils.hostExcludePort
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.server.util.*
 
 internal class HttpTunnelChannelHandler(

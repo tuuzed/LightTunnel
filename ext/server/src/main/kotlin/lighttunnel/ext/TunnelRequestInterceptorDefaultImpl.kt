@@ -4,8 +4,8 @@ import lighttunnel.ProtoException
 import lighttunnel.TunnelRequest
 import lighttunnel.TunnelRequestInterceptor
 import lighttunnel.TunnelType
-import lighttunnel.internal.base.util.PortUtil
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.PortUtils
+import lighttunnel.internal.base.utils.loggerDelegate
 
 class TunnelRequestInterceptorDefaultImpl(
     /** 预置Token */
@@ -27,10 +27,10 @@ class TunnelRequestInterceptorDefaultImpl(
         return when (tunnelRequest.tunnelType) {
             TunnelType.TCP -> {
                 if (tunnelRequest.remotePort == 0) {
-                    val port = PortUtil.getAvailableTcpPort(allowPorts ?: "1024-65535")
+                    val port = PortUtils.getAvailableTcpPort(allowPorts ?: "1024-65535")
                     tunnelRequest.copyTcp(remotePort = port)
                 } else {
-                    if (allowPorts != null && !PortUtil.hasInPortRange(allowPorts, tunnelRequest.remotePort)) {
+                    if (allowPorts != null && !PortUtils.hasInPortRange(allowPorts, tunnelRequest.remotePort)) {
                         throw ProtoException("request($tunnelRequest), remotePort($tunnelRequest.remotePort) Not allowed to use.")
                     }
                     tunnelRequest

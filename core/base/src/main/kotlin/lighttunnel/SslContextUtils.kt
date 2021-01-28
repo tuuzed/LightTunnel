@@ -1,49 +1,39 @@
 package lighttunnel
 
-import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.Unpooled
-import io.netty.handler.codec.base64.Base64
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
+import lighttunnel.internal.base.utils.Base64Utils
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.security.KeyStore
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
 
-object SslContextUtil {
+object SslContextUtils {
 
     @JvmStatic
     @Throws(Exception::class)
     fun forBuiltinServer(): SslContext {
-        val bytes = ByteBufUtil.getBytes(
-            Base64.decode(
-                Unpooled.wrappedBuffer(LightTunnelConfig.SERVER_JKS_BASE64.toByteArray())
-            )
-        )
+        val bytes = Base64Utils.decode(BuildConfig.SERVER_JKS_BASE64)
         val keyStore = KeyStore.getInstance("JKS")
-        ByteArrayInputStream(bytes).use {
-            keyStore.load(it, LightTunnelConfig.SERVER_JKS_STORE_PASSWORD.toCharArray())
+        return ByteArrayInputStream(bytes).use {
+            keyStore.load(it, BuildConfig.SERVER_JKS_STORE_PASSWORD.toCharArray())
             val kmf = KeyManagerFactory.getInstance("SunX509")
-            kmf.init(keyStore, LightTunnelConfig.SERVER_JKS_KEY_PASSWORD.toCharArray())
-            return SslContextBuilder.forServer(kmf).build()
+            kmf.init(keyStore, BuildConfig.SERVER_JKS_KEY_PASSWORD.toCharArray())
+            SslContextBuilder.forServer(kmf).build()
         }
     }
 
     @JvmStatic
     @Throws(Exception::class)
     fun forBuiltinClient(): SslContext {
-        val bytes = ByteBufUtil.getBytes(
-            Base64.decode(
-                Unpooled.wrappedBuffer(LightTunnelConfig.CLIENT_JKS_BASE64.toByteArray())
-            )
-        )
+        val bytes = Base64Utils.decode(BuildConfig.CLIENT_JKS_BASE64)
         val keyStore = KeyStore.getInstance("JKS")
-        ByteArrayInputStream(bytes).use {
-            keyStore.load(it, LightTunnelConfig.CLIENT_JKS_STORE_PASSWORD.toCharArray())
+        return ByteArrayInputStream(bytes).use {
+            keyStore.load(it, BuildConfig.CLIENT_JKS_STORE_PASSWORD.toCharArray())
             val tmf = TrustManagerFactory.getInstance("SunX509")
             tmf.init(keyStore)
-            return SslContextBuilder.forClient().trustManager(tmf).build()
+            SslContextBuilder.forClient().trustManager(tmf).build()
         }
     }
 
@@ -51,11 +41,11 @@ object SslContextUtil {
     @Throws(Exception::class)
     fun forServer(jks: String, storePassword: String, keyPassword: String): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
-        FileInputStream(jks).use {
+        return FileInputStream(jks).use {
             keyStore.load(it, storePassword.toCharArray())
             val kmf = KeyManagerFactory.getInstance("SunX509")
             kmf.init(keyStore, keyPassword.toCharArray())
-            return SslContextBuilder.forServer(kmf).build()
+            SslContextBuilder.forServer(kmf).build()
         }
     }
 
@@ -63,11 +53,11 @@ object SslContextUtil {
     @Throws(Exception::class)
     fun forClient(jks: String, storePassword: String): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
-        FileInputStream(jks).use {
+        return FileInputStream(jks).use {
             keyStore.load(it, storePassword.toCharArray())
             val tmf = TrustManagerFactory.getInstance("SunX509")
             tmf.init(keyStore)
-            return SslContextBuilder.forClient().trustManager(tmf).build()
+            SslContextBuilder.forClient().trustManager(tmf).build()
         }
     }
 

@@ -12,7 +12,7 @@ import io.netty.handler.ssl.SslHandler
 import lighttunnel.ProtoException
 import lighttunnel.http.HttpPlugin
 import lighttunnel.http.HttpTunnelRequestInterceptor
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.server.util.SessionChannels
 
 

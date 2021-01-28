@@ -15,8 +15,8 @@ import lighttunnel.args.TunnelDaemonArgs
 import lighttunnel.internal.base.proto.HeartbeatHandler
 import lighttunnel.internal.base.proto.ProtoMessageDecoder
 import lighttunnel.internal.base.proto.ProtoMessageEncoder
-import lighttunnel.internal.base.util.IncIds
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.IncIds
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.server.http.HttpFdDefaultImpl
 import lighttunnel.internal.server.http.HttpRegistry
 import lighttunnel.internal.server.http.HttpTunnel
@@ -158,7 +158,7 @@ internal class TunnelServerDaemon(
             registry = registry
         )
     }
-    
+
     private fun newTunnelServerChannelHandler(
         tunnelRequestInterceptor: TunnelRequestInterceptor?
     ) = TunnelServerDaemonChannelHandler(

@@ -14,7 +14,7 @@ import lighttunnel.TunnelRequest
 import lighttunnel.internal.base.proto.HeartbeatHandler
 import lighttunnel.internal.base.proto.ProtoMessageDecoder
 import lighttunnel.internal.base.proto.ProtoMessageEncoder
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.client.conn.TunnelConnectionDefaultImpl
 import lighttunnel.internal.client.conn.TunnelConnectionRegistry
 import lighttunnel.internal.client.local.LocalTcpClient

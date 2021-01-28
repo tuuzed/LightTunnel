@@ -1,4 +1,5 @@
 import java.text.SimpleDateFormat
+import java.util.zip.GZIPOutputStream
 
 buildscript {
     ext.kotlin_version = "1.4.21"
@@ -42,4 +43,45 @@ apply plugin: "gitvc-gradle-plugin"
 
 group "lighttunnel"
 version GitVC.VERSION_NAME.toUpperCase()
+
+
+static String string(Object o) { return "\"" + o + "\"" }
+
+static String base64File(File file) {
+    return base64File(file, false)
+}
+// 将文件转成base64字符串数组
+static String base64File(File file, boolean zip) {
+    if (!file.exists()) {
+        return "new java.lang.String[]{}"
+    }
+    byte[] data = file.readBytes()
+    if (zip) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream()
+        GZIPOutputStream zipStream
+        zipStream = new GZIPOutputStream(buffer)
+        zipStream.write(data)
+        zipStream.close()
+        data = buffer.toByteArray()
+    }
+    final String text = new String(Base64.encoder.encode(data), "UTF-8")
+    final List<String> list = new ArrayList<>()
+    final chunkSize = 65534
+    StringBuilder tmp = new StringBuilder(chunkSize)
+    for (int i = 1; i <= text.length(); i++) {
+        tmp.append(text.charAt(i - 1))
+        if (i % chunkSize == 0) {
+            list.add(tmp.toString())
+            tmp = new StringBuilder(chunkSize)
+        }
+    }
+    if (tmp.length() != 0) {
+        list.add(tmp.toString())
+    }
+    StringBuilder sb = new StringBuilder(text.length())
+    sb.append("new java.lang.String[]{\n\"")
+    sb.append(list.join("\",\n\""))
+    sb.append("\"\n}")
+    return sb.toString()
+}
 

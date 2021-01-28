@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
 import lighttunnel.http.HttpContext
 import lighttunnel.http.HttpPlugin
-import lighttunnel.internal.base.util.hostExcludePort
+import lighttunnel.internal.base.utils.hostExcludePort
 import java.io.File
 import java.net.URLDecoder
 

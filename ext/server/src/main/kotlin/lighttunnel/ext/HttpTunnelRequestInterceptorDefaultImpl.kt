@@ -5,7 +5,7 @@ import io.netty.handler.codec.http.*
 import lighttunnel.TunnelRequest
 import lighttunnel.http.HttpContext
 import lighttunnel.http.HttpTunnelRequestInterceptor
-import lighttunnel.internal.base.util.basicAuthorization
+import lighttunnel.internal.base.utils.basicAuthorization
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.charset.StandardCharsets

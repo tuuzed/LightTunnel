@@ -1,6 +1,6 @@
-package lighttunnel.internal.base.util
+package lighttunnel.internal.base.utils
 
-object LongUtil {
+object LongUtils {
 
     fun toBytes(vararg value: Long): ByteArray {
         val bytes = ByteArray(value.size * Long.SIZE_BYTES)

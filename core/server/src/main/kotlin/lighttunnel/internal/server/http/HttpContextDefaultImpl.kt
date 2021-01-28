@@ -7,7 +7,7 @@ import io.netty.handler.codec.http.*
 import io.netty.util.Attribute
 import io.netty.util.AttributeKey
 import lighttunnel.http.HttpContext
-import lighttunnel.internal.base.util.byteBuf
+import lighttunnel.internal.base.utils.byteBuf
 import java.net.SocketAddress
 
 internal class HttpContextDefaultImpl(

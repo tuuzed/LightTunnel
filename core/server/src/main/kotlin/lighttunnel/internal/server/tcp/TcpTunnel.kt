@@ -7,7 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import lighttunnel.ProtoException
-import lighttunnel.internal.base.util.PortUtil
+import lighttunnel.internal.base.utils.PortUtils
 import lighttunnel.internal.server.util.SessionChannels
 
 internal class TcpTunnel(
@@ -34,7 +34,7 @@ internal class TcpTunnel(
 
     @Throws(Exception::class)
     fun requireNotRegistered(port: Int) {
-        if (registry.isRegistered(port) || !PortUtil.isAvailablePort(port)) {
+        if (registry.isRegistered(port) || !PortUtils.isAvailablePort(port)) {
             throw ProtoException("port($port) already used")
         }
     }

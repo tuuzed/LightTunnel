@@ -1,6 +1,6 @@
-@file:JvmName("-HttpUtilKt")
+@file:JvmName("-HttpUtilsKt")
 
-package lighttunnel.internal.base.util
+package lighttunnel.internal.base.utils
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled

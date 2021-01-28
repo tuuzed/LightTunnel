@@ -7,7 +7,7 @@ import io.netty.handler.ssl.SslContext
 import lighttunnel.TunnelRequest
 import lighttunnel.conn.TunnelConnection
 import lighttunnel.internal.base.proto.ProtoMessage
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.client.util.AK_TUNNEL_CONNECTION
 import java.util.concurrent.atomic.AtomicBoolean
 

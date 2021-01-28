@@ -3,7 +3,7 @@
 package lighttunnel.internal.server.http
 
 import lighttunnel.ProtoException
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.server.util.SessionChannels
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read

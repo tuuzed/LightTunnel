@@ -1,11 +1,11 @@
-package lighttunnel.internal.base.util
+package lighttunnel.internal.base.utils
 
 import java.io.IOException
 import java.net.ServerSocket
 import java.util.*
 
 
-object PortUtil {
+object PortUtils {
     /**
      * 判断端口是否在指定的端口规则内
      *

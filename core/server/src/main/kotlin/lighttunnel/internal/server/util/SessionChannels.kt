@@ -5,7 +5,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import lighttunnel.TunnelRequest
 import lighttunnel.internal.base.proto.ProtoMessage
-import lighttunnel.internal.base.util.IncIds
+import lighttunnel.internal.base.utils.IncIds
 import lighttunnel.internal.server.traffic.TrafficStatsDefaultImpl
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read

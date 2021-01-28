@@ -1,7 +1,7 @@
 package lighttunnel.internal.server.tcp
 
 import lighttunnel.ProtoException
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write

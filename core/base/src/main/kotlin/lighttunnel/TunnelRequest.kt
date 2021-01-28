@@ -5,7 +5,7 @@ package lighttunnel
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import lighttunnel.internal.base.proto.PROTO_VERSION
-import lighttunnel.internal.base.util.getOrDefault
+import lighttunnel.internal.base.utils.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
 

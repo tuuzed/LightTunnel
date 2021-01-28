@@ -11,7 +11,7 @@ import lighttunnel.TunnelType
 import lighttunnel.internal.base.proto.ProtoMessage
 import lighttunnel.internal.base.proto.ProtoMessageType
 import lighttunnel.internal.base.proto.message.*
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.client.conn.TunnelConnectionDefaultImpl
 import lighttunnel.internal.client.local.LocalTcpClient
 import lighttunnel.internal.client.util.*

@@ -8,7 +8,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.internal.base.proto.ProtoMessage
 import lighttunnel.internal.base.proto.emptyBytes
-import lighttunnel.internal.base.util.loggerDelegate
+import lighttunnel.internal.base.utils.loggerDelegate
 import lighttunnel.internal.client.util.AK_NEXT_CHANNEL
 import lighttunnel.internal.client.util.AK_SESSION_ID
 import lighttunnel.internal.client.util.AK_TUNNEL_ID

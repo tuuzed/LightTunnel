@@ -1,7 +1,7 @@
 package lighttunnel.ext
 
 import lighttunnel.TunnelRequest
-import lighttunnel.internal.base.util.getOrNull
+import lighttunnel.internal.base.utils.getOrNull
 import org.json.JSONObject
 
 private const val NAME = "ext.NAME"

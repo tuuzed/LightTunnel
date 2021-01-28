@@ -7,11 +7,11 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
-import lighttunnel.LightTunnelConfig
+import lighttunnel.BuildConfig
 import lighttunnel.TunnelServer
 import lighttunnel.ext.httpserver.HttpServer
 import lighttunnel.http.HttpFd
-import lighttunnel.internal.base.util.basicAuthorization
+import lighttunnel.internal.base.utils.basicAuthorization
 import lighttunnel.tcp.TcpFd
 import org.json.JSONArray
 import org.json.JSONObject
@@ -91,12 +91,12 @@ private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? = thi
 
 private fun toVersionJson() = JSONObject().apply {
     put("name", "lts")
-    put("protoVersion", LightTunnelConfig.PROTO_VERSION)
-    put("versionName", LightTunnelConfig.VERSION_NAME)
-    put("versionCode", LightTunnelConfig.VERSION_CODE)
-    put("buildDate", LightTunnelConfig.BUILD_DATA)
-    put("commitSha", LightTunnelConfig.LAST_COMMIT_SHA)
-    put("commitDate", LightTunnelConfig.LAST_COMMIT_DATE)
+    put("protoVersion", BuildConfig.PROTO_VERSION)
+    put("versionName", BuildConfig.VERSION_NAME)
+    put("versionCode", BuildConfig.VERSION_CODE)
+    put("buildDate", BuildConfig.BUILD_DATA)
+    put("commitSha", BuildConfig.LAST_COMMIT_SHA)
+    put("commitDate", BuildConfig.LAST_COMMIT_DATE)
 }
 
 private fun TunnelServer.toSnapshotJson() = JSONObject().apply {
@@ -164,7 +164,7 @@ private fun TunnelServer.toSnapshotTable() = table {
             paddingTop = 1
         }
         row {
-            cell("lts-V${LightTunnelConfig.VERSION_NAME}(${LightTunnelConfig.VERSION_CODE})") {
+            cell("lts-V${BuildConfig.VERSION_NAME}(${BuildConfig.VERSION_CODE})") {
                 columnSpan = 10
             }
         }

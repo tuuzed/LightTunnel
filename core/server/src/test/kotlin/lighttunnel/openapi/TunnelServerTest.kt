@@ -1,6 +1,6 @@
 package lighttunnel.openapi
 
-import lighttunnel.SslContextUtil
+import lighttunnel.SslContextUtils
 import lighttunnel.TunnelServer
 import lighttunnel.args.HttpTunnelArgs
 import lighttunnel.args.HttpsTunnelArgs
@@ -20,14 +20,14 @@ class TunnelServerTest {
         )
         val sslTunnelDaemonArgs = SslTunnelDaemonArgs(
             bindPort = 5443,
-            sslContext = SslContextUtil.forBuiltinServer()
+            sslContext = SslContextUtils.forBuiltinServer()
         )
         val httpTunnelArgs = HttpTunnelArgs(
             bindPort = 8080
         )
         val httpsTunnelArgs = HttpsTunnelArgs(
             bindPort = 8443,
-            sslContext = SslContextUtil.forBuiltinServer()
+            sslContext = SslContextUtils.forBuiltinServer()
         )
         tunnelServer = TunnelServer(
             tunnelDaemonArgs = tunnelDaemonArgs,
