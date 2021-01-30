@@ -25,14 +25,13 @@ object Base64FileUtils {
 
     @Throws(IOException::class)
     private fun unzip(bytes: ByteArray): ByteArray {
-        val out = ByteArrayOutputStream()
-        val `in` = ByteArrayInputStream(bytes)
-        val unzip = GZIPInputStream(`in`)
-        val buffer = ByteArray(256)
-        var n: Int
-        while (unzip.read(buffer).also { n = it } >= 0) {
-            out.write(buffer, 0, n)
+        val buffer = ByteArrayOutputStream()
+        val unzip = GZIPInputStream(ByteArrayInputStream(bytes))
+        val buf = ByteArray(256)
+        var len: Int
+        while (unzip.read(buf).also { len = it } >= 0) {
+            buffer.write(buf, 0, len)
         }
-        return out.toByteArray()
+        return buffer.toByteArray()
     }
 }

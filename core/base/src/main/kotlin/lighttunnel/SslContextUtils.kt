@@ -2,7 +2,6 @@ package lighttunnel
 
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
-import lighttunnel.internal.base.utils.Base64FileUtils
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.security.KeyStore
@@ -14,9 +13,8 @@ object SslContextUtils {
     @JvmStatic
     @Throws(Exception::class)
     fun forBuiltinServer(): SslContext {
-        val bytes = Base64FileUtils.decode(BuildConfig.SERVER_JKS_BASE64)
         val keyStore = KeyStore.getInstance("JKS")
-        return ByteArrayInputStream(bytes).use {
+        return ByteArrayInputStream(BuildConfig.SERVER_JKS_BYTES).use {
             keyStore.load(it, BuildConfig.SERVER_JKS_STORE_PASSWORD.toCharArray())
             val kmf = KeyManagerFactory.getInstance("SunX509")
             kmf.init(keyStore, BuildConfig.SERVER_JKS_KEY_PASSWORD.toCharArray())
@@ -27,9 +25,8 @@ object SslContextUtils {
     @JvmStatic
     @Throws(Exception::class)
     fun forBuiltinClient(): SslContext {
-        val bytes = Base64FileUtils.decode(BuildConfig.CLIENT_JKS_BASE64)
         val keyStore = KeyStore.getInstance("JKS")
-        return ByteArrayInputStream(bytes).use {
+        return ByteArrayInputStream(BuildConfig.CLIENT_JKS_BYTES).use {
             keyStore.load(it, BuildConfig.CLIENT_JKS_STORE_PASSWORD.toCharArray())
             val tmf = TrustManagerFactory.getInstance("SunX509")
             tmf.init(keyStore)
