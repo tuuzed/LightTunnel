@@ -1,4 +1,6 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
+apply plugin: "io.github.tuuzed.base64flie"
+apply plugin: "de.fuerstenau.buildconfig"
 
 group = "${rootProject.group}.core"
 version = rootProject.version
@@ -25,8 +27,6 @@ dependencies {
 }
 
 
-apply plugin: "de.fuerstenau.buildconfig"
-
 buildConfig {
     appName = "LightTunnel"
     version = project.version
@@ -40,11 +40,11 @@ buildConfig {
     buildConfigField "java.lang.String", "LAST_COMMIT_DATE", string(GitVC.LAST_COMMIT_DATE)
     buildConfigField "java.lang.String", "BUILD_DATA", string(BUILD_DATE)
 
-    buildConfigField "java.lang.String[]", "SERVER_JKS_BASE64", base64File(rootProject.file("resources/lts.jks"))
+    buildConfigField "java.lang.String[]", "SERVER_JKS_BASE64", Base64File.from(rootProject.file("resources/lts.jks"))
     buildConfigField "java.lang.String", "SERVER_JKS_STORE_PASSWORD", string("ltspass")
     buildConfigField "java.lang.String", "SERVER_JKS_KEY_PASSWORD", string("ltspass")
 
-    buildConfigField "java.lang.String[]", "CLIENT_JKS_BASE64", base64File(rootProject.file("resources/ltc.jks"))
+    buildConfigField "java.lang.String[]", "CLIENT_JKS_BASE64", Base64File.from(rootProject.file("resources/ltc.jks"))
     buildConfigField "java.lang.String", "CLIENT_JKS_STORE_PASSWORD", string("ltcpass")
 
 }

@@ -8,7 +8,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.zip.GZIPInputStream
 
-object Base64Utils {
+object Base64FileUtils {
 
     fun decode(base64: Array<String>, unzip: Boolean = false): ByteArray {
         val buf = Unpooled.wrappedBuffer(base64.joinToString("").toByteArray())
