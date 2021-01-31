@@ -4,7 +4,6 @@ buildscript {
     ext.kotlin_version = "1.4.21"
     ext.jvm_version = "1.8"
     ext.netty_version = "4.1.58.Final"
-    ext.BUILD_DATE = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy ZZZ", Locale.ENGLISH).format(new Date())
     extensions.GitVcConfig = [
         ENABLE_BRANCH: true,
     ]
@@ -25,7 +24,7 @@ buildscript {
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
         //
         classpath "io.github.tuuzed.base64flie:gradle-plugin:0.0.6"
-        classpath "io.github.tuuzed.gitvc:gradle-plugin:0.3.2"
+        classpath "io.github.tuuzed.gitvc:gradle-plugin:0.3.3"
     }
     allprojects {
         repositories {

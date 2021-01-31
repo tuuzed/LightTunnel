@@ -33,7 +33,7 @@ jar {
         attributes "LightTunnel-VersionName": String.valueOf(GitVc.VERSION_NAME)
         attributes "LightTunnel-LastCommitSHA": String.valueOf(GitVc.LAST_COMMIT_SHA)
         attributes "LightTunnel-LastCommitDate": String.valueOf(GitVc.LAST_COMMIT_DATE)
-        attributes "LightTunnel-BuildDate": String.valueOf(BUILD_DATE)
+        attributes "LightTunnel-BuildDate": String.valueOf(GitVc.BUILD_DATE)
     }
 }
 
