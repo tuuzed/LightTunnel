@@ -34,10 +34,10 @@ buildConfig {
     packageName = "${rootProject.group}.internal"
     charset = "UTF-8"
 
-    buildConfigField "int", "VERSION_CODE", "${GitVC.VERSION_CODE}"
+    buildConfigField "int", "VERSION_CODE", "${GitVc.VERSION_CODE}"
     buildConfigField "java.lang.String", "VERSION_NAME", string(project.version)
-    buildConfigField "java.lang.String", "LAST_COMMIT_SHA", string(GitVC.LAST_COMMIT_SHA)
-    buildConfigField "java.lang.String", "LAST_COMMIT_DATE", string(GitVC.LAST_COMMIT_DATE)
+    buildConfigField "java.lang.String", "LAST_COMMIT_SHA", string(GitVc.LAST_COMMIT_SHA)
+    buildConfigField "java.lang.String", "LAST_COMMIT_DATE", string(GitVc.LAST_COMMIT_DATE)
     buildConfigField "java.lang.String", "BUILD_DATA", string(BUILD_DATE)
 
     buildConfigField "java.lang.String[]", "SERVER_JKS_BASE64", Base64File.from(rootProject.file("resources/lts.jks"))

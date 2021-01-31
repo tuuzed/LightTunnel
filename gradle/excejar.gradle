@@ -29,11 +29,11 @@ jar {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest {
         attributes "Main-Class": project.MainClass
-        attributes "LightTunnel-VersionCode": String.valueOf(GitVC.VERSION_CODE)
-        attributes "LightTunnel-VersionName": String.valueOf(GitVC.VERSION_NAME)
-        attributes "LightTunnel-LastCommitSHA": String.valueOf(GitVC.LAST_COMMIT_SHA)
-        attributes "LightTunnel-LastCommitDate": String.valueOf(GitVC.LAST_COMMIT_DATE)
-        attributes "LightTunnel-BuildDate": String.valueOf(new Date())
+        attributes "LightTunnel-VersionCode": String.valueOf(GitVc.VERSION_CODE)
+        attributes "LightTunnel-VersionName": String.valueOf(GitVc.VERSION_NAME)
+        attributes "LightTunnel-LastCommitSHA": String.valueOf(GitVc.LAST_COMMIT_SHA)
+        attributes "LightTunnel-LastCommitDate": String.valueOf(GitVc.LAST_COMMIT_DATE)
+        attributes "LightTunnel-BuildDate": String.valueOf(BUILD_DATE)
     }
 }
 
