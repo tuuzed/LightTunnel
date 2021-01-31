@@ -1,5 +1,3 @@
-import java.text.SimpleDateFormat
-
 buildscript {
     ext.kotlin_version = "1.4.21"
     ext.jvm_version = "1.8"
@@ -24,7 +22,7 @@ buildscript {
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
         //
         classpath "io.github.tuuzed.base64flie:gradle-plugin:0.0.6"
-        classpath "io.github.tuuzed.gitvc:gradle-plugin:0.3.3"
+        classpath "io.github.tuuzed.gitvc:gradle-plugin:0.3.4"
     }
     allprojects {
         repositories {
