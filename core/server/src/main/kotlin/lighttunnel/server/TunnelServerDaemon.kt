@@ -7,7 +7,7 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import lighttunnel.base.proto.HeartbeatHandler
+import lighttunnel.base.heartbeat.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
 import lighttunnel.base.utils.IncIds
@@ -84,7 +84,7 @@ internal class TunnelServerDaemon(
                     ch ?: return
                     ch.pipeline()
                         .addLast("traffic", TrafficHandler(onTrafficListener))
-                        .addLast("heartbeat", HeartbeatHandler())
+                        .addLast("heartbeat", HeartbeatHandler(15, 0))
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
                         .addLast("handler", newTunnelServerChannelHandler(args.tunnelRequestInterceptor))
@@ -110,7 +110,7 @@ internal class TunnelServerDaemon(
                     ch.pipeline()
                         .addFirst("ssl", args.sslContext.newHandler(ch.alloc()))
                         .addLast("traffic", TrafficHandler(onTrafficListener))
-                        .addLast("heartbeat", HeartbeatHandler())
+                        .addLast("heartbeat", HeartbeatHandler(15, 0))
                         .addLast("decoder", ProtoMessageDecoder())
                         .addLast("encoder", ProtoMessageEncoder())
                         .addLast("handler", newTunnelServerChannelHandler(args.tunnelRequestInterceptor))

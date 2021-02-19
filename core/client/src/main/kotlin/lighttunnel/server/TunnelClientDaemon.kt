@@ -9,7 +9,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.TunnelRequest
-import lighttunnel.base.proto.HeartbeatHandler
+import lighttunnel.base.heartbeat.HeartbeatHandler
 import lighttunnel.base.proto.ProtoMessageDecoder
 import lighttunnel.base.proto.ProtoMessageEncoder
 import lighttunnel.base.utils.loggerDelegate
@@ -128,7 +128,7 @@ internal class TunnelClientDaemon(
                     .addFirst("ssl", sslContext.newHandler(ch.alloc()))
             }
             ch.pipeline()
-                .addLast("heartbeat", HeartbeatHandler())
+                .addLast("heartbeat", HeartbeatHandler(0, 30))
                 .addLast("decoder", ProtoMessageDecoder())
                 .addLast("encoder", ProtoMessageEncoder())
                 .addLast(

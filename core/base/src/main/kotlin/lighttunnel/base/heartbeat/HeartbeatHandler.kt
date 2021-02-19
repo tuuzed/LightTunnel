@@ -1,8 +1,9 @@
-package lighttunnel.base.proto
+package lighttunnel.base.heartbeat
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
+import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.utils.loggerDelegate
 import java.util.concurrent.TimeUnit
 
@@ -10,9 +11,9 @@ import java.util.concurrent.TimeUnit
  * 心跳处理器
  */
 class HeartbeatHandler(
+    readerIdleTime: Long,
+    writerIdleTime: Long,
     observeOutput: Boolean = false,
-    readerIdleTime: Long = 60 * 5L,
-    writerIdleTime: Long = 60 * 3L,
     allIdleTime: Long = 0L,
     unit: TimeUnit = TimeUnit.SECONDS
 ) : IdleStateHandler(observeOutput, readerIdleTime, writerIdleTime, allIdleTime, unit) {
