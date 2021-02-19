@@ -23,12 +23,7 @@ class HeartbeatHandler(
     @Throws(Exception::class)
     override fun channelIdle(ctx: ChannelHandlerContext?, evt: IdleStateEvent?) {
         logger.trace("channelIdle: {}, {}", ctx, evt)
-        if (ctx != null) {
-            when (evt) {
-                IdleStateEvent.FIRST_WRITER_IDLE_STATE_EVENT -> ctx.channel().writeAndFlush(ProtoMessage.PING())
-                IdleStateEvent.FIRST_READER_IDLE_STATE_EVENT -> ctx.channel().close()
-            }
-        }
+        ctx?.channel()?.writeAndFlush(ProtoMessage.PING())
         super.channelIdle(ctx, evt)
     }
 
