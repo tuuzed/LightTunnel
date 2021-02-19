@@ -128,7 +128,7 @@ internal class TunnelClientDaemon(
                     .addFirst("ssl", sslContext.newHandler(ch.alloc()))
             }
             ch.pipeline()
-                .addLast("heartbeat", HeartbeatHandler(0, 30))
+                .addLast("heartbeat", HeartbeatHandler(30, 0))
                 .addLast("decoder", ProtoMessageDecoder())
                 .addLast("encoder", ProtoMessageEncoder())
                 .addLast(
