@@ -17,6 +17,7 @@ import lighttunnel.server.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.server.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
 import lighttunnel.server.conn.TunnelConnRegistry
 import lighttunnel.server.conn.impl.TunnelConnImpl
+import lighttunnel.server.extra.ChannelInactiveExtra
 import lighttunnel.server.listener.OnRemoteConnectionListener
 import lighttunnel.server.listener.OnTunnelConnectionListener
 import lighttunnel.server.local.LocalTcpClient
@@ -145,14 +146,14 @@ internal class TunnelClientDaemon(
         override fun onChannelInactive(
             ctx: ChannelHandlerContext,
             conn: TunnelConnImpl?,
-            extra: TunnelClientDaemonChannelHandler.ChannelInactiveExtra?
+            extra: ChannelInactiveExtra?
         ) {
             super.onChannelInactive(ctx, conn, extra)
             if (conn != null) {
-                onTunnelConnectionListener?.onTunnelDisconnect(conn, extra.cause)
-                logger.trace("onChannelInactive: ", extra.cause)
-                if (extra.forceOff != true) {
-                    tryReconnect(conn, extra.cause != null)
+                onTunnelConnectionListener?.onTunnelDisconnect(conn, extra?.cause)
+                logger.trace("onChannelInactive: ", extra?.cause)
+                if (extra?.forceOff != true) {
+                    tryReconnect(conn, extra?.cause != null)
                 }
             }
         }
