@@ -6,7 +6,7 @@ buildscript {
         ENABLE_BRANCH: true,
     ]
     repositories {
-        maven { url 'https://dl.bintray.com/tuuzed/maven' }
+        maven { url 'https://jitpack.io' }
         maven { url "https://maven.aliyun.com/repository/public" }
         maven { url "https://maven.aliyun.com/repository/google" }
         maven { url "https://maven.aliyun.com/repository/jcenter" }
@@ -21,12 +21,11 @@ buildscript {
         classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.8"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
         //
-        classpath "io.github.tuuzed.base64flie:gradle-plugin:0.0.6"
-        classpath "io.github.tuuzed.gitvc:gradle-plugin:0.3.4"
+        classpath 'com.github.tuuzed:gitvc-gradle-plugin:1.1.0'
+        classpath 'com.github.tuuzed:base64file-gradle-plugin:1.0.0'
     }
     allprojects {
         repositories {
-            maven { url 'https://dl.bintray.com/tuuzed/maven' }
             maven { url "https://maven.aliyun.com/repository/public" }
             maven { url "https://maven.aliyun.com/repository/google" }
             maven { url "https://maven.aliyun.com/repository/jcenter" }
@@ -39,11 +38,11 @@ buildscript {
     }
 }
 
-apply plugin: "io.github.tuuzed.gitvc"
+apply plugin: "com.github.tuuzed.gitvc"
 
 group "lighttunnel"
 version GitVc.VERSION_NAME.toUpperCase()
 
-static String string(Object o) { return "\"" + o + "\"" }
+static def buildString(Object o) { return "\"" + o + "\"" }
 
 

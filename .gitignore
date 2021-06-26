@@ -4,6 +4,7 @@
 /distribution/
 /dists/
 /logs/
+local.properties
 
 HELP.md
 .gradle

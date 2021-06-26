@@ -8,7 +8,10 @@ uploadArchives {
     }
 }
 
-task distJars(group: "package", dependsOn: uploadArchives)
+task distJars(
+    group: "package",
+    dependsOn: uploadArchives
+)
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.kotlin.srcDirs
