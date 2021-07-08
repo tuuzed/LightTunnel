@@ -10,8 +10,8 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.TunnelRequest
 import lighttunnel.base.heartbeat.HeartbeatHandler
-import lighttunnel.base.proto.ProtoMessageDecoder
-import lighttunnel.base.proto.ProtoMessageEncoder
+import lighttunnel.base.proto.ProtoMsgDecoder
+import lighttunnel.base.proto.ProtoMsgEncoder
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.TunnelClient.Companion.RETRY_CONNECT_POLICY_ERROR
 import lighttunnel.server.TunnelClient.Companion.RETRY_CONNECT_POLICY_LOSE
@@ -129,8 +129,8 @@ internal class TunnelClientDaemon(
             }
             ch.pipeline()
                 .addLast("heartbeat", HeartbeatHandler(30, 0))
-                .addLast("decoder", ProtoMessageDecoder())
-                .addLast("encoder", ProtoMessageEncoder())
+                .addLast("decoder", ProtoMsgDecoder())
+                .addLast("encoder", ProtoMsgEncoder())
                 .addLast(
                     "handler", TunnelClientDaemonChannelHandler(
                         localTcpClient = localTcpClient,

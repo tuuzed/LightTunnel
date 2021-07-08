@@ -6,9 +6,9 @@ import lighttunnel.base.BuildConfig
 import lighttunnel.base.RemoteConnection
 import lighttunnel.base.TunnelRequest
 import lighttunnel.base.utils.SslContextUtils
+import lighttunnel.base.utils.asInt
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.cmd.AbstractApplication
-import lighttunnel.cmd.asInt
 import lighttunnel.cmd.localIpV4
 import lighttunnel.ext.base.*
 import lighttunnel.ext.client.newHttpRpcServer

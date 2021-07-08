@@ -8,9 +8,9 @@ import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.RemoteConnection
 import lighttunnel.base.TunnelRequest
 import lighttunnel.base.TunnelType
-import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.proto.ProtoMessageType
-import lighttunnel.base.proto.message.*
+import lighttunnel.base.proto.ProtoMsg
+import lighttunnel.base.proto.ProtoMsgType
+import lighttunnel.base.proto.msg.*
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.conn.impl.TunnelConnImpl
 import lighttunnel.server.extra.ChannelInactiveExtra
@@ -23,7 +23,7 @@ internal class TunnelClientDaemonChannelHandler(
     private val localTcpClient: LocalTcpClient,
     private val onChannelStateListener: OnChannelStateListener,
     private val onRemoteConnectListener: OnRemoteConnectionListener?
-) : SimpleChannelInboundHandler<ProtoMessage>() {
+) : SimpleChannelInboundHandler<ProtoMsg>() {
 
     private val logger by loggerDelegate()
 
@@ -42,25 +42,22 @@ internal class TunnelClientDaemonChannelHandler(
     }
 
     @Throws(Exception::class)
-    override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
-        ctx ?: return
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
     @Throws(Exception::class)
-    override fun channelRead0(ctx: ChannelHandlerContext?, msg: ProtoMessage?) {
+    override fun channelRead0(ctx: ChannelHandlerContext, msg: ProtoMsg) {
         logger.trace("channelRead0 : {}, {}", ctx, msg)
-        ctx ?: return
-        msg ?: return
         when (msg.type) {
-            ProtoMessageType.PING -> doHandlePingMessage(ctx, msg as PingMessage)
-            ProtoMessageType.RESPONSE_OK -> doHandleResponseOkMessage(ctx, msg as ResponseOkMessage)
-            ProtoMessageType.RESPONSE_ERR -> doHandleResponseErrMessage(ctx, msg as ResponseErrMessage)
-            ProtoMessageType.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMessage)
-            ProtoMessageType.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg as RemoteConnectedMessage)
-            ProtoMessageType.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg as RemoteDisconnectMessage)
-            ProtoMessageType.FORCE_OFF -> doHandleForceOffMessage(ctx, msg as ForceOffMessage)
+            ProtoMsgType.HEARTBEAT_PING -> doHandlePingMessage(ctx, msg as HeartbeatPingMsg)
+            ProtoMsgType.RESPONSE_OK -> doHandleResponseOkMessage(ctx, msg as ResponseOkMsg)
+            ProtoMsgType.RESPONSE_ERR -> doHandleResponseErrMessage(ctx, msg as ResponseErrMsg)
+            ProtoMsgType.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMsg)
+            ProtoMsgType.REMOTE_CONNECTED -> doHandleRemoteConnectedMessage(ctx, msg as RemoteConnectedMsg)
+            ProtoMsgType.REMOTE_DISCONNECT -> doHandleRemoteDisconnectMessage(ctx, msg as RemoteDisconnectMsg)
+            ProtoMsgType.FORCE_OFF -> doHandleForceOffMessage(ctx, msg as ForceOffMsg)
             else -> {
                 // Nothing
             }
@@ -69,14 +66,14 @@ internal class TunnelClientDaemonChannelHandler(
 
     /** Ping */
     @Throws(Exception::class)
-    private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: PingMessage) {
+    private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: HeartbeatPingMsg) {
         logger.trace("doHandlePingMessage : {}, {}", ctx, msg)
-        ctx.writeAndFlush(ProtoMessage.PONG())
+        ctx.writeAndFlush(ProtoMsg.HEARTBEAT_PONG())
     }
 
     /** 隧道建立成功 */
     @Throws(Exception::class)
-    private fun doHandleResponseOkMessage(ctx: ChannelHandlerContext, msg: ResponseOkMessage) {
+    private fun doHandleResponseOkMessage(ctx: ChannelHandlerContext, msg: ResponseOkMsg) {
         logger.trace("doHandleResponseOkMessage : {}, {}", ctx, msg)
         val tunnelRequest = TunnelRequest.fromBytes(msg.data)
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
@@ -90,7 +87,7 @@ internal class TunnelClientDaemonChannelHandler(
 
     /** 隧道建立失败 */
     @Throws(Exception::class)
-    private fun doHandleResponseErrMessage(ctx: ChannelHandlerContext, msg: ResponseErrMessage) {
+    private fun doHandleResponseErrMessage(ctx: ChannelHandlerContext, msg: ResponseErrMsg) {
         logger.trace("doHandleResponseErrMessage : {}, {}", ctx, msg)
         val errMsg = String(msg.data, StandardCharsets.UTF_8)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
@@ -102,7 +99,7 @@ internal class TunnelClientDaemonChannelHandler(
 
     /** 数据透传消息 */
     @Throws(Exception::class)
-    private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: TransferMessage) {
+    private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: TransferMsg) {
         logger.trace("doHandleTransferMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AK_SESSION_ID).set(msg.sessionId)
@@ -121,7 +118,7 @@ internal class TunnelClientDaemonChannelHandler(
 
                         override fun onUnableArrive(cause: Throwable) {
                             super.onUnableArrive(cause)
-                            ctx.writeAndFlush(ProtoMessage.LOCAL_DISCONNECT(msg.tunnelId, msg.sessionId))
+                            ctx.writeAndFlush(ProtoMsg.LOCAL_DISCONNECT(msg.tunnelId, msg.sessionId))
                         }
                     })
             }
@@ -133,7 +130,7 @@ internal class TunnelClientDaemonChannelHandler(
 
     /** 连接本地隧道消息 */
     @Throws(Exception::class)
-    private fun doHandleRemoteConnectedMessage(ctx: ChannelHandlerContext, msg: RemoteConnectedMessage) {
+    private fun doHandleRemoteConnectedMessage(ctx: ChannelHandlerContext, msg: RemoteConnectedMsg) {
         logger.trace("doHandleRemoteConnectedMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
         ctx.channel().attr(AK_SESSION_ID).set(msg.sessionId)
@@ -157,7 +154,7 @@ internal class TunnelClientDaemonChannelHandler(
 
     /** 用户隧道断开消息 */
     @Throws(Exception::class)
-    private fun doHandleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: RemoteDisconnectMessage) {
+    private fun doHandleRemoteDisconnectMessage(ctx: ChannelHandlerContext, msg: RemoteDisconnectMsg) {
         logger.trace("doHandleRemoteDisconnectMessage : {}, {}", ctx, msg)
         val conn = try {
             RemoteConnection.fromBytes(msg.data)
@@ -174,12 +171,12 @@ internal class TunnelClientDaemonChannelHandler(
 
     /** 强制下线消息 */
     @Throws(Exception::class)
-    private fun doHandleForceOffMessage(ctx: ChannelHandlerContext, msg: ForceOffMessage) {
+    private fun doHandleForceOffMessage(ctx: ChannelHandlerContext, msg: ForceOffMsg) {
         logger.trace("doHandleForceOffMessage : {}, {}", ctx, msg)
         ctx.channel().attr(AK_TUNNEL_ID).set(null)
         ctx.channel().attr(AK_TUNNEL_REQUEST).set(null)
         ctx.channel().attr(AK_CHANNEL_INACTIVE_EXTRA).set(ChannelInactiveExtra(true, Exception("ForceOff")))
-        ctx.channel().writeAndFlush(ProtoMessage.FORCE_OFF_REPLY()).addListener(ChannelFutureListener.CLOSE)
+        ctx.channel().writeAndFlush(ProtoMsg.FORCE_OFF_REPLY()).addListener(ChannelFutureListener.CLOSE)
     }
 
     interface OnChannelStateListener {
@@ -192,6 +189,5 @@ internal class TunnelClientDaemonChannelHandler(
 
         fun onChannelConnected(ctx: ChannelHandlerContext, conn: TunnelConnImpl?) {}
     }
-
 
 }

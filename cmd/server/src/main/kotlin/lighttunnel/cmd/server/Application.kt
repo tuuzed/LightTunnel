@@ -5,9 +5,9 @@ package lighttunnel.cmd.server
 import io.netty.channel.nio.NioEventLoopGroup
 import lighttunnel.base.BuildConfig
 import lighttunnel.base.utils.SslContextUtils
+import lighttunnel.base.utils.asInt
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.cmd.AbstractApplication
-import lighttunnel.cmd.asInt
 import lighttunnel.ext.base.LoggerConfigure
 import lighttunnel.ext.server.HttpPluginStaticFileImpl
 import lighttunnel.ext.server.HttpTunnelRequestInterceptorDefaultImpl
@@ -125,7 +125,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             return TunnelRequestInterceptorDefaultImpl(authToken, allowPorts)
         }
 
-        private fun getTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): TunnelDaemonArgs? {
+        private fun getTunnelDaemonArgs(
+            basic: Profile.Section,
+            tunnelRequestInterceptor: TunnelRequestInterceptor?
+        ): TunnelDaemonArgs? {
             return TunnelDaemonArgs(
                 bindAddr = basic["bind_addr"],
                 bindPort = basic["bind_port"].asInt() ?: return null,
@@ -133,7 +136,10 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             )
         }
 
-        private fun getSslTunnelDaemonArgs(basic: Profile.Section, tunnelRequestInterceptor: TunnelRequestInterceptor?): SslTunnelDaemonArgs? {
+        private fun getSslTunnelDaemonArgs(
+            basic: Profile.Section,
+            tunnelRequestInterceptor: TunnelRequestInterceptor?
+        ): SslTunnelDaemonArgs? {
             return SslTunnelDaemonArgs(
                 bindAddr = basic["bind_addr"],
                 bindPort = basic["ssl_bind_port"].asInt() ?: return null,
@@ -202,14 +208,19 @@ class Application : AbstractApplication(), OnTcpTunnelStateListener, OnHttpTunne
             val logFile = basic["log_file"]
             val logCount = basic["log_count"].asInt() ?: 3
             val logSize = basic["log_size"] ?: "1MB"
-            LoggerConfigure.configConsole(Level.OFF, names = arrayOf(
-                "io.netty",
-                "org.ini4j",
-                "org.slf4j",
-                "org.json",
-                "org.apache.commons.cli"
-            ))
-            LoggerConfigure.configConsole(level = logLevel, conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n")
+            LoggerConfigure.configConsole(
+                Level.OFF, names = arrayOf(
+                    "io.netty",
+                    "org.ini4j",
+                    "org.slf4j",
+                    "org.json",
+                    "org.apache.commons.cli"
+                )
+            )
+            LoggerConfigure.configConsole(
+                level = logLevel,
+                conversionPattern = "%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] %m%n"
+            )
             if (logFile != null) {
                 LoggerConfigure.configFile(
                     level = logLevel,

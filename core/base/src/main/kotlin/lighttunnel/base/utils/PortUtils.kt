@@ -1,6 +1,5 @@
 package lighttunnel.base.utils
 
-import java.io.IOException
 import java.net.ServerSocket
 import java.util.*
 
@@ -65,14 +64,6 @@ object PortUtils {
 
     @Synchronized
     fun isAvailablePort(port: Int): Boolean {
-        var serverSocket: ServerSocket? = null
-        return try {
-            serverSocket = ServerSocket(port)
-            true
-        } catch (e: IOException) {
-            false
-        } finally {
-            serverSocket?.close()
-        }
+        return kotlin.runCatching { ServerSocket(port).use {} }.isSuccess
     }
 }

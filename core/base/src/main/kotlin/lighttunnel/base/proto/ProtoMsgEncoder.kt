@@ -4,10 +4,10 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
 
-class ProtoMessageEncoder : MessageToByteEncoder<ProtoMessage>() {
+class ProtoMsgEncoder : MessageToByteEncoder<ProtoMsg>() {
 
     @Throws(Exception::class)
-    override fun encode(ctx: ChannelHandlerContext?, msg: ProtoMessage?, out: ByteBuf?) {
+    override fun encode(ctx: ChannelHandlerContext?, msg: ProtoMsg?, out: ByteBuf?) {
         msg ?: return
         out ?: return
         val totalLength = PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH +

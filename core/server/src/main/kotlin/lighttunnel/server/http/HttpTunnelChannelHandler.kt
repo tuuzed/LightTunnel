@@ -9,9 +9,9 @@ import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import lighttunnel.base.RemoteConnection
-import lighttunnel.base.proto.ProtoMessage
-import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.proto.ProtoMsg
 import lighttunnel.base.utils.byteBuf
+import lighttunnel.base.utils.emptyBytes
 import lighttunnel.base.utils.hostExcludePort
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.http.impl.HttpContextImpl
@@ -38,7 +38,7 @@ internal class HttpTunnelChannelHandler(
         if (httpHost != null && sessionId != null) {
             val httpFd = registry.getHttpFd(httpHost)
             httpFd?.tunnelChannel?.writeAndFlush(
-                ProtoMessage.REMOTE_DISCONNECT(
+                ProtoMsg.REMOTE_DISCONNECT(
                     httpFd.tunnelId,
                     sessionId,
                     RemoteConnection(ctx.channel().remoteAddress())
@@ -51,17 +51,14 @@ internal class HttpTunnelChannelHandler(
     }
 
     @Throws(Exception::class)
-    override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
+    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable?) {
         logger.trace("exceptionCaught: {}", ctx, cause)
-        ctx ?: return
         ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
     }
 
     @Throws(Exception::class)
-    override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
+    override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         logger.trace("channelRead0: {}", ctx)
-        ctx ?: return
-        msg ?: return
         val httpContext = ctx.channel().attr(AK_HTTP_CONTEXT).get()
             ?: HttpContextImpl(ctx).also { ctx.channel().attr(AK_HTTP_CONTEXT).set(it) }
         when (msg) {
@@ -96,14 +93,14 @@ internal class HttpTunnelChannelHandler(
                 val sessionId = httpFd.putChannel(ctx.channel())
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage.REMOTE_CONNECTED(
+                    ProtoMsg.REMOTE_CONNECTED(
                         httpFd.tunnelId,
                         sessionId,
                         RemoteConnection(ctx.channel().remoteAddress())
                     )
                 )
                 val data = ByteBufUtil.getBytes(msg.byteBuf) ?: emptyBytes
-                httpFd.tunnelChannel.writeAndFlush(ProtoMessage.TRANSFER(httpFd.tunnelId, sessionId, data))
+                httpFd.tunnelChannel.writeAndFlush(ProtoMsg.TRANSFER(httpFd.tunnelId, sessionId, data))
             }
             is HttpContent -> {
                 // 插件处理
@@ -130,7 +127,7 @@ internal class HttpTunnelChannelHandler(
                     return
                 }
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage.REMOTE_CONNECTED(
+                    ProtoMsg.REMOTE_CONNECTED(
                         httpFd.tunnelId,
                         sessionId,
                         RemoteConnection(ctx.channel().remoteAddress())
@@ -138,7 +135,7 @@ internal class HttpTunnelChannelHandler(
                 )
                 val data = ByteBufUtil.getBytes(msg.content() ?: Unpooled.EMPTY_BUFFER) ?: emptyBytes
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMessage.TRANSFER(httpFd.tunnelId, sessionId, data)
+                    ProtoMsg.TRANSFER(httpFd.tunnelId, sessionId, data)
                 )
             }
         }

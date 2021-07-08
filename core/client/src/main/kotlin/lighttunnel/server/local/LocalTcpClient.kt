@@ -75,12 +75,13 @@ internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {
 
     fun removeLocalChannel(tunnelId: Long, sessionId: Long): Channel? = removeCachedChannel(tunnelId, sessionId)
 
-    fun depose() = lock.write {
-        cachedChannels.values.forEach {
-            it.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+    fun depose() {
+        lock.write {
+            cachedChannels.values.forEach {
+                it.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
+            }
+            cachedChannels.clear()
         }
-        cachedChannels.clear()
-        Unit
     }
 
     private fun getCachedChannel(tunnelId: Long, sessionId: Long): Channel? {
@@ -98,7 +99,8 @@ internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {
         return lock.write { cachedChannels.remove(key) }
     }
 
-    private fun getCachedChannelKey(tunnelId: Long, sessionId: Long): String = "tunnelId:$tunnelId, sessionId:$sessionId"
+    private fun getCachedChannelKey(tunnelId: Long, sessionId: Long): String =
+        "tunnelId:$tunnelId, sessionId:$sessionId"
 
     interface OnArriveLocalChannelCallback {
         fun onArrived(localChannel: Channel)

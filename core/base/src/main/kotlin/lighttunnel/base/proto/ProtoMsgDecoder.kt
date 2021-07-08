@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 
-class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
+class ProtoMsgDecoder : LengthFieldBasedFrameDecoder(
     4 * 1024 * 1024,
     0,
     PROTO_MESSAGE_LENGTH_FIELD_LENGTH,
@@ -27,7 +27,7 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
                 val totalLength = rst.readInt()
                 if (rst.readableBytes() < totalLength) return null
                 // 开始解码数据
-                val type = ProtoMessageType.codeOf(rst.readByte())
+                val type = ProtoMsgType.codeOf(rst.readByte())
                 val headLength = rst.readInt()
                 val head = ByteArray(headLength)
                 rst.readBytes(head)
@@ -37,7 +37,7 @@ class ProtoMessageDecoder : LengthFieldBasedFrameDecoder(
                     headLength
                 val data = ByteArray(dataLength)
                 rst.readBytes(data)
-                return ProtoMessage.newInstance(type, head, data)
+                return ProtoMsg.newInstance(type, head, data)
             }
             else -> return rst
         }

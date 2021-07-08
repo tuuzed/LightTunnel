@@ -8,8 +8,8 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import lighttunnel.base.heartbeat.HeartbeatHandler
-import lighttunnel.base.proto.ProtoMessageDecoder
-import lighttunnel.base.proto.ProtoMessageEncoder
+import lighttunnel.base.proto.ProtoMsgDecoder
+import lighttunnel.base.proto.ProtoMsgEncoder
 import lighttunnel.base.utils.IncIds
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.args.HttpTunnelArgs
@@ -85,8 +85,8 @@ internal class TunnelServerDaemon(
                     ch.pipeline()
                         .addLast("traffic", TrafficHandler(onTrafficListener))
                         .addLast("heartbeat", HeartbeatHandler(15, 0))
-                        .addLast("decoder", ProtoMessageDecoder())
-                        .addLast("encoder", ProtoMessageEncoder())
+                        .addLast("decoder", ProtoMsgDecoder())
+                        .addLast("encoder", ProtoMsgEncoder())
                         .addLast("handler", newTunnelServerChannelHandler(args.tunnelRequestInterceptor))
                 }
             })
@@ -111,8 +111,8 @@ internal class TunnelServerDaemon(
                         .addFirst("ssl", args.sslContext.newHandler(ch.alloc()))
                         .addLast("traffic", TrafficHandler(onTrafficListener))
                         .addLast("heartbeat", HeartbeatHandler(15, 0))
-                        .addLast("decoder", ProtoMessageDecoder())
-                        .addLast("encoder", ProtoMessageEncoder())
+                        .addLast("decoder", ProtoMsgDecoder())
+                        .addLast("encoder", ProtoMsgEncoder())
                         .addLast("handler", newTunnelServerChannelHandler(args.tunnelRequestInterceptor))
                 }
             })

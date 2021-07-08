@@ -1,7 +1,7 @@
 package lighttunnel.base
 
 import lighttunnel.base.proto.ProtoException
-import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.utils.emptyBytes
 import lighttunnel.base.utils.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable

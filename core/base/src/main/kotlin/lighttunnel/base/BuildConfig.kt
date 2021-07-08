@@ -3,7 +3,7 @@
 package lighttunnel.base
 
 import lighttunnel.base.gen.GenBuildConfig
-import lighttunnel.base.utils.Base64Files
+import lighttunnel.base.utils.base64Decode
 
 object BuildConfig {
     const val PROTO_VERSION = lighttunnel.base.proto.PROTO_VERSION
@@ -12,9 +12,9 @@ object BuildConfig {
     const val LAST_COMMIT_SHA = GenBuildConfig.LAST_COMMIT_SHA
     const val LAST_COMMIT_DATE = GenBuildConfig.LAST_COMMIT_DATE
     const val BUILD_DATA = GenBuildConfig.BUILD_DATA
-    val SERVER_JKS_BYTES = Base64Files.decode(GenBuildConfig.SERVER_JKS_BASE64)
+    val SERVER_JKS_BYTES = base64Decode(GenBuildConfig.SERVER_JKS_BASE64)
     const val SERVER_JKS_STORE_PASSWORD = GenBuildConfig.SERVER_JKS_STORE_PASSWORD
     const val SERVER_JKS_KEY_PASSWORD = GenBuildConfig.SERVER_JKS_KEY_PASSWORD
-    val CLIENT_JKS_BYTES = Base64Files.decode(GenBuildConfig.CLIENT_JKS_BASE64)
+    val CLIENT_JKS_BYTES = base64Decode(GenBuildConfig.CLIENT_JKS_BASE64)
     const val CLIENT_JKS_STORE_PASSWORD = GenBuildConfig.CLIENT_JKS_STORE_PASSWORD
 }

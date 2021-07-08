@@ -5,7 +5,7 @@ import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.ssl.SslContext
 import lighttunnel.base.TunnelRequest
-import lighttunnel.base.proto.ProtoMessage
+import lighttunnel.base.proto.ProtoMsg
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.conn.TunnelConn
 import lighttunnel.server.utils.AK_TUNNEL_CONN
@@ -40,7 +40,7 @@ internal class TunnelConnImpl(
             .addListener(ChannelFutureListener { future ->
                 if (future.isSuccess) {
                     // 连接成功，向服务器发送请求建立隧道消息
-                    future.channel().writeAndFlush(ProtoMessage.REQUEST(tunnelRequest))
+                    future.channel().writeAndFlush(ProtoMsg.REQUEST(tunnelRequest))
                     future.channel().attr(AK_TUNNEL_CONN).set(this)
                 } else {
                     failure(this)

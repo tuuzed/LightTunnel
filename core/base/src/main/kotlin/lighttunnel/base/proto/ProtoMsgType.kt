@@ -1,6 +1,6 @@
 package lighttunnel.base.proto
 
-enum class ProtoMessageType(val code: Byte) {
+enum class ProtoMsgType(val code: Byte) {
     /**
      * 未知
      */
@@ -10,13 +10,13 @@ enum class ProtoMessageType(val code: Byte) {
      * 心跳消息 PING
      * 消息流向：Client <-> Server
      */
-    PING(0x01.toByte()),
+    HEARTBEAT_PING(0x01.toByte()),
 
     /**
      * 心跳消息 PONG
      * 消息流向：Client <-> Server
      */
-    PONG(0x02.toByte()),
+    HEARTBEAT_PONG(0x02.toByte()),
 
     /**
      * 建立隧道请求
