@@ -1,7 +1,4 @@
 package lighttunnel.base.proto
 
-class ProtoException constructor(
-    message: String,
-    cause: Throwable? = null
-) : Exception(message, cause)
+class ProtoException(message: String, cause: Throwable? = null) : Exception(message, cause)
 

@@ -76,7 +76,7 @@ enum class ProtoMessageType(val code: Byte) {
      * 强制下线回复
      * 消息流向：Client -> Server
      */
-    FORCE_OFF_REPLY(0x51.toByte())
+    FORCE_OFF_REPLY(0x51.toByte()),
     ;
 
     companion object {

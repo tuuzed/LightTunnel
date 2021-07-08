@@ -4,4 +4,4 @@ import lighttunnel.base.proto.ProtoMessage
 import lighttunnel.base.proto.ProtoMessageType
 import lighttunnel.base.proto.emptyBytes
 
-class ForceOffReplyMessage : ProtoMessage(ProtoMessageType.FORCE_OFF_REPLY, emptyBytes, emptyBytes)
+object ForceOffReplyMessage : ProtoMessage(ProtoMessageType.FORCE_OFF_REPLY, emptyBytes, emptyBytes)
