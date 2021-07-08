@@ -1,10 +1,10 @@
-package lighttunnel.ext.server
+package lighttunnel.cmd.server
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import lighttunnel.base.TunnelRequest
 import lighttunnel.base.utils.basicAuthorization
-import lighttunnel.ext.base.*
+import lighttunnel.cmd.*
 import lighttunnel.server.http.HttpContext
 import lighttunnel.server.http.HttpTunnelRequestInterceptor
 import java.net.InetSocketAddress
@@ -27,7 +27,11 @@ class HttpTunnelRequestInterceptorDefaultImpl : HttpTunnelRequestInterceptor {
         return tunnelRequest.enableBasicAuth && handleHttpBasicAuth(ctx, tunnelRequest, httpRequest)
     }
 
-    private fun handleHttpBasicAuth(chain: HttpContext, tunnelRequest: TunnelRequest, httpRequest: HttpRequest): Boolean {
+    private fun handleHttpBasicAuth(
+        chain: HttpContext,
+        tunnelRequest: TunnelRequest,
+        httpRequest: HttpRequest
+    ): Boolean {
         val account = httpRequest.basicAuthorization
         val username = tunnelRequest.basicAuthUsername
         val password = tunnelRequest.basicAuthPassword

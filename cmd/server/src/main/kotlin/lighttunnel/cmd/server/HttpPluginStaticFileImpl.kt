@@ -1,4 +1,4 @@
-package lighttunnel.ext.server
+package lighttunnel.cmd.server
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener

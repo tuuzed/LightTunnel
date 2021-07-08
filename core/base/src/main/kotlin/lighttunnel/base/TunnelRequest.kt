@@ -15,7 +15,7 @@ class TunnelRequest private constructor(
     private val data: JSONObject
 ) : Serializable {
 
-    companion object Factory {
+    companion object {
         private const val serialVersionUID = 1L
         private const val LOCAL_ADDR = "LOCAL_ADDR"
         private const val LOCAL_PORT = "LOCAL_PORT"

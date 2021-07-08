@@ -1,4 +1,4 @@
-package lighttunnel.ext.base
+package lighttunnel.cmd
 
 import org.apache.log4j.*
 

@@ -81,12 +81,13 @@ internal class TunnelClientDaemon(
         tunnelConnectionRegistry.unregister(conn)
     }
 
-    fun depose() = lock.withLock {
-        tunnelConnectionRegistry.depose()
-        cachedSslBootstraps.clear()
-        localTcpClient.depose()
-        workerGroup.shutdownGracefully()
-        Unit
+    fun depose() {
+        lock.withLock {
+            tunnelConnectionRegistry.depose()
+            cachedSslBootstraps.clear()
+            localTcpClient.depose()
+            workerGroup.shutdownGracefully()
+        }
     }
 
     private fun tryReconnect(conn: TunnelConnImpl, error: Boolean) {

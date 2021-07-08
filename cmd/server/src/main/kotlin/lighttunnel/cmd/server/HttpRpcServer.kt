@@ -1,6 +1,6 @@
 @file:Suppress("DuplicatedCode")
 
-package lighttunnel.ext.server
+package lighttunnel.cmd.server
 
 import com.jakewharton.picnic.table
 import io.netty.buffer.ByteBuf
@@ -9,8 +9,8 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
 import lighttunnel.base.BuildConfig
 import lighttunnel.base.utils.basicAuthorization
-import lighttunnel.ext.base.httpserver.HttpServer
-import lighttunnel.ext.base.name
+import lighttunnel.cmd.httpserver.HttpServer
+import lighttunnel.cmd.name
 import lighttunnel.server.TunnelServer
 import lighttunnel.server.http.HttpFd
 import lighttunnel.server.tcp.TcpFd
@@ -88,7 +88,8 @@ private val t = ThreadLocal<MutableMap<String, DateFormat>>()
 private fun getDateFormat(pattern: String) = t.getOrSet { hashMapOf() }[pattern]
     ?: SimpleDateFormat(pattern, Locale.getDefault()).also { t.get()[pattern] = it }
 
-private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? = this?.let { getDateFormat(pattern).format(this) }
+private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? =
+    this?.let { getDateFormat(pattern).format(this) }
 
 private fun toVersionJson() = JSONObject().apply {
     put("name", "lts")

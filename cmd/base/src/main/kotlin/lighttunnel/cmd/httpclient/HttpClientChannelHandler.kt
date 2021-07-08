@@ -1,4 +1,4 @@
-package lighttunnel.ext.base.httpclient
+package lighttunnel.cmd.httpclient
 
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler

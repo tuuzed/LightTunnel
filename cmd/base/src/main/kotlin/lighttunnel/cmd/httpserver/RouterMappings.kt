@@ -1,4 +1,4 @@
-package lighttunnel.ext.base.httpserver
+package lighttunnel.cmd.httpserver
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
@@ -28,9 +28,13 @@ class RouterMappings internal constructor() {
         }
     }
 
-    fun intercept(path: Regex, interceptor: (request: FullHttpRequest) -> FullHttpResponse?) = lock.write { interceptors[path] = interceptor }
+    fun intercept(
+        path: Regex, interceptor: (request: FullHttpRequest) -> FullHttpResponse?
+    ) = lock.write { interceptors[path] = interceptor }
 
-    fun route(path: Regex, handler: (request: FullHttpRequest) -> FullHttpResponse) = lock.write { handlers[path] = handler }
+    fun route(
+        path: Regex, handler: (request: FullHttpRequest) -> FullHttpResponse
+    ) = lock.write { handlers[path] = handler }
 
     @Throws(IOException::class)
     internal fun doHandle(request: FullHttpRequest): FullHttpResponse = lock.read {

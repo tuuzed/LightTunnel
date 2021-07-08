@@ -5,11 +5,6 @@ include ":core:base"
 include ":core:client"
 include ":core:server"
 
-// 扩展模块
-include ":ext:base"
-include ":ext:client"
-include ":ext:server"
-
 // 命令行模块
 include ":cmd:base"
 include ":cmd:client"

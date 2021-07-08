@@ -1,11 +1,11 @@
-package lighttunnel.ext.server
+package lighttunnel.cmd.server
 
 import lighttunnel.base.TunnelRequest
 import lighttunnel.base.TunnelType
 import lighttunnel.base.proto.ProtoException
 import lighttunnel.base.utils.PortUtils
 import lighttunnel.base.utils.loggerDelegate
-import lighttunnel.ext.base.authToken
+import lighttunnel.cmd.authToken
 import lighttunnel.server.TunnelRequestInterceptor
 
 class TunnelRequestInterceptorDefaultImpl(

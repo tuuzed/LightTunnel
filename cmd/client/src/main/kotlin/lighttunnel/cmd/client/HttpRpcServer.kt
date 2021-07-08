@@ -1,4 +1,4 @@
-package lighttunnel.ext.client
+package lighttunnel.cmd.client
 
 import com.jakewharton.picnic.table
 import io.netty.buffer.ByteBuf
@@ -7,8 +7,8 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
 import lighttunnel.base.BuildConfig
 import lighttunnel.base.utils.basicAuthorization
-import lighttunnel.ext.base.httpserver.HttpServer
-import lighttunnel.ext.base.name
+import lighttunnel.cmd.httpserver.HttpServer
+import lighttunnel.cmd.name
 import lighttunnel.server.TunnelClient
 import org.json.JSONArray
 import org.json.JSONObject
