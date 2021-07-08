@@ -80,7 +80,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
         val sslServerPort = basic["ssl_server_port"].asInt() ?: 5443
         ini.entries
             .filter { it.key != "basic" }
-            .map { Pair(it.value["ssl"]?.toUpperCase() == "TRUE", getTunnelRequest(basic, it.value)) }
+            .map { Pair(it.value["ssl"]?.uppercase() == "TRUE", getTunnelRequest(basic, it.value)) }
             .forEach {
                 val ssl = it.first
                 val tunnelRequest = it.second
@@ -140,7 +140,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
 
         private fun getTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
             val type = tunnel["type"] ?: "tcp"
-            return when (type.toUpperCase()) {
+            return when (type.uppercase()) {
                 "TCP" -> getTcpTunnelRequest(basic, tunnel)
                 "HTTP" -> getHttpOrHttpsTunnelRequest(basic, tunnel, false)
                 "HTTPS" -> getHttpOrHttpsTunnelRequest(basic, tunnel, true)
@@ -148,7 +148,7 @@ class Application : AbstractApplication(), OnTunnelConnectionListener, OnRemoteC
             }
         }
 
-        private fun getTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest? {
+        private fun getTcpTunnelRequest(basic: Profile.Section, tunnel: Profile.Section): TunnelRequest {
             return TunnelRequest.forTcp(
                 localAddr = tunnel["local_addr"] ?: localIpV4 ?: "127.0.0.1",
                 localPort = tunnel["local_port"].asInt() ?: 80,
