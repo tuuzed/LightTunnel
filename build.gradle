@@ -1,36 +1,28 @@
 buildscript {
-    ext.kotlin_version = "1.4.21"
+    ext.kotlin_version = "1.5.20"
     ext.jvm_version = "1.8"
-    ext.netty_version = "4.1.58.Final"
+    ext.netty_version = "4.1.65.Final"
     extensions.GitVcConfig = [
         ENABLE_BRANCH: true,
     ]
     repositories {
         maven { url 'https://jitpack.io' }
         maven { url "https://maven.aliyun.com/repository/public" }
-        maven { url "https://maven.aliyun.com/repository/google" }
-        maven { url "https://maven.aliyun.com/repository/jcenter" }
         maven { url "https://maven.aliyun.com/repository/gradle-plugin" }
         maven { url "https://plugins.gradle.org/m2/" }
         mavenCentral()
-        jcenter()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "edu.sc.seis.launch4j:launch4j:2.4.6"
         classpath "gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.8"
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
-        //
         classpath 'com.github.tuuzed:gitvc-gradle-plugin:1.1.0'
         classpath 'com.github.tuuzed:base64file-gradle-plugin:1.0.0'
     }
     allprojects {
         repositories {
             maven { url "https://maven.aliyun.com/repository/public" }
-            maven { url "https://maven.aliyun.com/repository/google" }
-            maven { url "https://maven.aliyun.com/repository/jcenter" }
             mavenCentral()
-            jcenter()
         }
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"

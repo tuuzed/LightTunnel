@@ -9,12 +9,11 @@ import java.net.InetSocketAddress
 import java.net.SocketAddress
 
 @Suppress("MemberVisibilityCanBePrivate")
-class RemoteConnection constructor(
+class RemoteConnection(
     val address: SocketAddress
 ) : Serializable {
 
     companion object {
-
         private const val serialVersionUID = 1L
 
         @JvmStatic
@@ -31,7 +30,6 @@ class RemoteConnection constructor(
             }
             return RemoteConnection(address)
         }
-
     }
 
     fun toBytes(): ByteArray {

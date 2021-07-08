@@ -2,6 +2,7 @@ package lighttunnel.ext.base
 
 import org.apache.log4j.*
 
+
 /*
  %p     输出日志信息的优先级，即DEBUG，INFO，WARN，ERROR，FATAL。
  %d     输出日志时间点的日期或时间，默认格式为ISO8601，也可以在其后指定格式，如：%d{yyyy/MM/dd HH:mm:ss,SSS}。

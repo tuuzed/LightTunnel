@@ -80,7 +80,7 @@ enum class ProtoMessageType(val code: Byte) {
     ;
 
     companion object {
-        private val mappings = values().map { it.code to it }.toMap()
+        private val mappings = values().associateBy { it.code }
 
         @JvmStatic
         fun codeOf(code: Byte) = mappings.getOrDefault(code, UNKNOWN)

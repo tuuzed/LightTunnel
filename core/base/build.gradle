@@ -1,6 +1,6 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "com.github.tuuzed.base64flie"
 apply plugin: "de.fuerstenau.buildconfig"
+apply plugin: "com.github.tuuzed.base64flie"
 
 group = "${rootProject.group}.core"
 version = rootProject.version
@@ -11,17 +11,18 @@ dependencies {
     // Kotlin
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     // Netty
-    compile "io.netty:netty-buffer:$netty_version"
-    compile "io.netty:netty-codec:$netty_version"
-    compile "io.netty:netty-codec-http:$netty_version"
-    compile "io.netty:netty-common:$netty_version"
-    compile "io.netty:netty-handler:$netty_version"
-    compile "io.netty:netty-resolver:$netty_version"
-    compile "io.netty:netty-transport:$netty_version"
+    // compile "io.netty:netty-buffer:$netty_version"
+    // compile "io.netty:netty-codec:$netty_version"
+    // compile "io.netty:netty-codec-http:$netty_version"
+    // compile "io.netty:netty-common:$netty_version"
+    // compile "io.netty:netty-handler:$netty_version"
+    // compile "io.netty:netty-resolver:$netty_version"
+    // compile "io.netty:netty-transport:$netty_version"
+    compile "io.netty:netty-all:$netty_version"
     // Logger
-    compile "org.slf4j:slf4j-api:1.7.25"
+    compile "org.slf4j:slf4j-api:1.7.31"
     // Json
-    compile "org.json:json:20190722"
+    compile "org.json:json:20210307"
     // 单元测试
     testCompile "junit:junit:4.12"
 }
@@ -50,4 +51,3 @@ buildConfig {
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath
 apply from: rootProject.file("./gradle/distjar.gradle").absolutePath
-apply from: rootProject.file("./gradle/publish.gradle").absolutePath

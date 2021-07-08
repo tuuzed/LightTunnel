@@ -155,7 +155,9 @@ class TunnelRequest private constructor(
 
 
     override fun toString(): String = toString("::")
+
     fun toString(serverAddr: String): String {
+        @Suppress("HttpUrlsUsage")
         return when (tunnelType) {
             TunnelType.TCP -> "tcp://$localAddr:$localPort<-tcp://$serverAddr:$remotePort"
             TunnelType.HTTP -> "http://$localAddr:$localPort<-http://$host"
@@ -164,7 +166,8 @@ class TunnelRequest private constructor(
         }
     }
 
-    fun toRawString(): String {
+    @Suppress("FunctionName")
+    fun toString_(): String {
         return "TunnelRequest(protoVersion=$protoVersion,tunnelType=$tunnelType, data=$data)"
     }
 

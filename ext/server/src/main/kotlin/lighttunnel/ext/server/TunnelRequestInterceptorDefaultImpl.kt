@@ -18,7 +18,7 @@ class TunnelRequestInterceptorDefaultImpl(
 
     @Throws(ProtoException::class)
     override fun intercept(tunnelRequest: TunnelRequest): TunnelRequest {
-        logger.debug("tunnelRequest: ${tunnelRequest.toRawString()}")
+        logger.debug("tunnelRequest: ${tunnelRequest.toString_()}")
         if (tunnelRequest.tunnelType == TunnelType.UNKNOWN) {
             throw ProtoException("TunnelRequest($tunnelRequest), tunnelType == UNKNOWN)")
         }
