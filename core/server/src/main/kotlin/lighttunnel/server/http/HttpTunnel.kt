@@ -11,7 +11,6 @@ import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslHandler
 import lighttunnel.base.proto.ProtoException
 import lighttunnel.base.utils.loggerDelegate
-import lighttunnel.server.http.impl.HttpFdImpl
 import lighttunnel.server.utils.SessionChannels
 
 
@@ -79,7 +78,7 @@ internal class HttpTunnel(
     }
 
     @Throws(Exception::class)
-    fun startTunnel(host: String, sessionChannels: SessionChannels): HttpFdImpl {
+    fun startTunnel(host: String, sessionChannels: SessionChannels): DefaultHttpFd {
         requireNotRegistered(host)
         return registry.register(isHttps, host, sessionChannels)
     }

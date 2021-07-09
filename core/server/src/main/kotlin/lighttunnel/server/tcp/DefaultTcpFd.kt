@@ -1,17 +1,16 @@
-package lighttunnel.server.tcp.impl
+package lighttunnel.server.tcp
 
 import io.netty.channel.Channel
-import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.utils.SessionChannels
 
-internal class TcpFdImpl(
+internal class DefaultTcpFd(
     val sessionChannels: SessionChannels,
     private val closeFuture: () -> Unit
 ) : TcpFd {
 
     override val tunnelRequest get() = sessionChannels.tunnelRequest
     override val connectionCount get() = sessionChannels.cachedChannelCount
-    override val trafficStats get() = sessionChannels.trafficStatsDefaultImpl
+    override val trafficStats get() = sessionChannels.trafficStats
 
     val tunnelId get() = sessionChannels.tunnelId
     val port get() = tunnelRequest.remotePort

@@ -16,15 +16,15 @@ import lighttunnel.server.args.HttpTunnelArgs
 import lighttunnel.server.args.HttpsTunnelArgs
 import lighttunnel.server.args.SslTunnelDaemonArgs
 import lighttunnel.server.args.TunnelDaemonArgs
+import lighttunnel.server.http.HttpFd
 import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.http.HttpTunnel
-import lighttunnel.server.http.impl.HttpFdImpl
 import lighttunnel.server.listener.OnHttpTunnelStateListener
 import lighttunnel.server.listener.OnTcpTunnelStateListener
 import lighttunnel.server.listener.OnTrafficListener
+import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
-import lighttunnel.server.tcp.impl.TcpFdImpl
 import lighttunnel.server.traffic.TrafficHandler
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -167,25 +167,25 @@ internal class TunnelServerDaemon(
         httpTunnel = httpTunnel,
         httpsTunnel = httpsTunnel,
         callback = object : TunnelServerDaemonChannelHandler.Callback {
-            override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdImpl?) {
+            override fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
                 if (tcpFd != null) {
                     onTcpTunnelStateListener?.onTcpTunnelConnected(tcpFd)
                 }
             }
 
-            override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdImpl?) {
+            override fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?) {
                 if (tcpFd != null) {
                     onTcpTunnelStateListener?.onTcpTunnelDisconnect(tcpFd)
                 }
             }
 
-            override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdImpl?) {
+            override fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
                 if (httpFd != null) {
                     onHttpTunnelStateListener?.onHttpTunnelConnected(httpFd)
                 }
             }
 
-            override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdImpl?) {
+            override fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?) {
                 if (httpFd != null) {
                     onHttpTunnelStateListener?.onHttpTunnelDisconnect(httpFd)
                 }

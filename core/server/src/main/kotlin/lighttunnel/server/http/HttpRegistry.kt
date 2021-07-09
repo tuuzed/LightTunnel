@@ -4,7 +4,6 @@ package lighttunnel.server.http
 
 import lighttunnel.base.proto.ProtoException
 import lighttunnel.base.utils.loggerDelegate
-import lighttunnel.server.http.impl.HttpFdImpl
 import lighttunnel.server.utils.SessionChannels
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -13,21 +12,21 @@ import kotlin.concurrent.write
 internal class HttpRegistry {
     private val logger by loggerDelegate()
 
-    private val hostHttpFds = hashMapOf<String, HttpFdImpl>()
+    private val hostHttpFds = hashMapOf<String, DefaultHttpFd>()
     private val lock = ReentrantReadWriteLock()
 
     @Throws(ProtoException::class)
-    fun register(isHttps: Boolean, host: String, sessionChannels: SessionChannels): HttpFdImpl {
+    fun register(isHttps: Boolean, host: String, sessionChannels: SessionChannels): DefaultHttpFd {
         if (isRegistered(host)) {
             throw ProtoException("host($host) already used")
         }
-        return HttpFdImpl(isHttps, sessionChannels).also { fd ->
+        return DefaultHttpFd(isHttps, sessionChannels).also { fd ->
             lock.write { hostHttpFds[host] = fd }
             logger.debug("Start Tunnel: {}, Extras", fd.tunnelRequest, fd.tunnelRequest.extras)
         }
     }
 
-    fun unregister(host: String?): HttpFdImpl? = lock.write {
+    fun unregister(host: String?): DefaultHttpFd? = lock.write {
         unsafeUnregister(host)
         hostHttpFds.remove(host)
     }
@@ -39,7 +38,7 @@ internal class HttpRegistry {
 
     fun isRegistered(host: String): Boolean = lock.read { hostHttpFds.contains(host) }
 
-    fun getHttpFd(host: String): HttpFdImpl? = lock.read { hostHttpFds[host] }
+    fun getHttpFd(host: String): DefaultHttpFd? = lock.read { hostHttpFds[host] }
 
     fun getHttpFdList() = lock.read { hostHttpFds.values.toList() }
 

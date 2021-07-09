@@ -1,17 +1,16 @@
-package lighttunnel.server.http.impl
+package lighttunnel.server.http
 
 import io.netty.channel.Channel
-import lighttunnel.server.http.HttpFd
 import lighttunnel.server.utils.SessionChannels
 
-internal class HttpFdImpl(
+internal class DefaultHttpFd(
     override val isHttps: Boolean,
     val sessionChannels: SessionChannels
 ) : HttpFd {
 
     override val tunnelRequest get() = sessionChannels.tunnelRequest
     override val connectionCount get() = sessionChannels.cachedChannelCount
-    override val trafficStats get() = sessionChannels.trafficStatsDefaultImpl
+    override val trafficStats get() = sessionChannels.trafficStats
 
     val tunnelId get() = sessionChannels.tunnelId
     val host get() = tunnelRequest.host

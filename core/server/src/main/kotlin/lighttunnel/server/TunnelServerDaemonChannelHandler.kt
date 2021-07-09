@@ -12,10 +12,10 @@ import lighttunnel.base.proto.ProtoMsgType
 import lighttunnel.base.proto.msg.*
 import lighttunnel.base.utils.IncIds
 import lighttunnel.base.utils.loggerDelegate
+import lighttunnel.server.http.HttpFd
 import lighttunnel.server.http.HttpTunnel
-import lighttunnel.server.http.impl.HttpFdImpl
+import lighttunnel.server.tcp.TcpFd
 import lighttunnel.server.tcp.TcpTunnel
-import lighttunnel.server.tcp.impl.TcpFdImpl
 import lighttunnel.server.utils.AK_SESSION_CHANNELS
 import lighttunnel.server.utils.SessionChannels
 
@@ -157,10 +157,10 @@ internal class TunnelServerDaemonChannelHandler(
     }
 
     internal interface Callback {
-        fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdImpl?)
-        fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdImpl?)
-        fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdImpl?)
-        fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFdImpl?)
+        fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFd?)
+        fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFd?)
+        fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFd?)
+        fun onChannelConnected(ctx: ChannelHandlerContext, httpFd: HttpFd?)
     }
 
 }

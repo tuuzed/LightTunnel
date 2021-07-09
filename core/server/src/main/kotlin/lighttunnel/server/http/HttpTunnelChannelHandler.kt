@@ -14,7 +14,6 @@ import lighttunnel.base.utils.byteBuf
 import lighttunnel.base.utils.emptyBytes
 import lighttunnel.base.utils.hostExcludePort
 import lighttunnel.base.utils.loggerDelegate
-import lighttunnel.server.http.impl.HttpContextImpl
 import lighttunnel.server.utils.*
 
 internal class HttpTunnelChannelHandler(
@@ -60,7 +59,7 @@ internal class HttpTunnelChannelHandler(
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
         logger.trace("channelRead0: {}", ctx)
         val httpContext = ctx.channel().attr(AK_HTTP_CONTEXT).get()
-            ?: HttpContextImpl(ctx).also { ctx.channel().attr(AK_HTTP_CONTEXT).set(it) }
+            ?: DefaultHttpContext(ctx).also { ctx.channel().attr(AK_HTTP_CONTEXT).set(it) }
         when (msg) {
             is HttpRequest -> {
                 // 插件处理

@@ -1,4 +1,4 @@
-package lighttunnel.server.http.impl
+package lighttunnel.server.http
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
@@ -7,10 +7,9 @@ import io.netty.handler.codec.http.*
 import io.netty.util.Attribute
 import io.netty.util.AttributeKey
 import lighttunnel.base.utils.byteBuf
-import lighttunnel.server.http.HttpContext
 import java.net.SocketAddress
 
-internal class HttpContextImpl(
+internal class DefaultHttpContext(
     private val ctx: ChannelHandlerContext
 ) : HttpContext {
 

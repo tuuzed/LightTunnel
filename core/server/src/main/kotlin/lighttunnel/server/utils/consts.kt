@@ -3,7 +3,7 @@
 package lighttunnel.server.utils
 
 import io.netty.util.AttributeKey
-import lighttunnel.server.http.impl.HttpContextImpl
+import lighttunnel.server.http.DefaultHttpContext
 
 private const val PREFIX = "\$lighttunnel.server"
 
@@ -17,4 +17,4 @@ internal val AK_IS_PLUGIN_HANDLE = AttributeKey.newInstance<Boolean?>("$PREFIX.i
 
 internal val AK_IS_INTERCEPTOR_HANDLE = AttributeKey.newInstance<Boolean?>("$PREFIX.isInterceptorHandle")
 
-internal val AK_HTTP_CONTEXT = AttributeKey.newInstance<HttpContextImpl?>("$PREFIX.HttpContext")
+internal val AK_HTTP_CONTEXT = AttributeKey.newInstance<DefaultHttpContext?>("$PREFIX.HttpContext")

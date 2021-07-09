@@ -7,12 +7,12 @@ import lighttunnel.server.args.HttpsTunnelArgs
 import lighttunnel.server.args.SslTunnelDaemonArgs
 import lighttunnel.server.args.TunnelDaemonArgs
 import lighttunnel.server.http.HttpFd
-import lighttunnel.server.http.impl.HttpFdImpl
+import lighttunnel.server.http.DefaultHttpFd
 import lighttunnel.server.listener.OnHttpTunnelStateListener
 import lighttunnel.server.listener.OnTcpTunnelStateListener
 import lighttunnel.server.listener.OnTrafficListener
 import lighttunnel.server.tcp.TcpFd
-import lighttunnel.server.tcp.impl.TcpFdImpl
+import lighttunnel.server.tcp.DefaultTcpFd
 
 class TunnelServer(
     bossThreads: Int = -1,
@@ -57,9 +57,9 @@ class TunnelServer(
     fun getTcpFdList(): List<TcpFd> = daemon.tcpRegistry.getTcpFdList()
     fun getHttpFdList(): List<HttpFd> = daemon.httpRegistry.getHttpFdList()
     fun getHttpsFdList(): List<HttpFd> = daemon.httpsRegistry.getHttpFdList()
-    fun forceOff(fd: TcpFd): TcpFd? = daemon.tcpRegistry.forceOff((fd as TcpFdImpl).port)
+    fun forceOff(fd: TcpFd): TcpFd? = daemon.tcpRegistry.forceOff((fd as DefaultTcpFd).port)
     fun forceOff(fd: HttpFd): HttpFd? =
-        (if (fd.isHttps) daemon.httpsRegistry else daemon.httpRegistry).forceOff((fd as HttpFdImpl).host)
+        (if (fd.isHttps) daemon.httpsRegistry else daemon.httpRegistry).forceOff((fd as DefaultHttpFd).host)
 
     fun isTcpRegistered(port: Int) = daemon.tcpRegistry.isRegistered(port)
     fun isHttpRegistered(host: String) = daemon.httpRegistry.isRegistered(host)
