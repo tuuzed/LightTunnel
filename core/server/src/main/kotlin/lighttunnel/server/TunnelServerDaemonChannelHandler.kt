@@ -86,15 +86,15 @@ internal class TunnelServerDaemonChannelHandler(
             when (finalTunnelRequest.tunnelType) {
                 TunnelType.TCP -> {
                     val tcpTunnel = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
-                    tcpTunnel.handleTcpRequestMessage(ctx, finalTunnelRequest)
+                    tcpTunnel.handleRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelType.HTTP -> {
                     val httpTunnel = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
-                    httpTunnel.handleHttpRequestMessage(ctx, finalTunnelRequest)
+                    httpTunnel.handleRequestMessage(ctx, finalTunnelRequest)
                 }
                 TunnelType.HTTPS -> {
                     val httpsTunnel = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
-                    httpsTunnel.handleHttpRequestMessage(ctx, finalTunnelRequest)
+                    httpsTunnel.handleRequestMessage(ctx, finalTunnelRequest)
                 }
                 else -> throw ProtoException("不支持的隧道类型")
             }
@@ -135,26 +135,28 @@ internal class TunnelServerDaemonChannelHandler(
     }
 
     @Throws(Exception::class)
-    private fun TcpTunnel.handleTcpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
+    private fun TcpTunnel.handleRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
         requireNotRegistered(tunnelRequest.remotePort)
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
-        callback.onChannelConnected(ctx, startTunnel(null, tunnelRequest.remotePort, sessionChannels))
+        val fd = startTunnel(null, tunnelRequest.remotePort, sessionChannels)
+        callback.onChannelConnected(ctx, fd)
         ctx.channel().writeAndFlush(ProtoMsg.RESPONSE_OK(tunnelId, tunnelRequest))
     }
 
     @Throws(Exception::class)
-    private fun HttpTunnel.handleHttpRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
+    private fun HttpTunnel.handleRequestMessage(ctx: ChannelHandlerContext, tunnelRequest: TunnelRequest) {
         requireNotRegistered(tunnelRequest.host)
         val tunnelId = tunnelIds.nextId
         val sessionChannels = SessionChannels(tunnelId, tunnelRequest, ctx.channel())
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
-        callback.onChannelConnected(ctx, startTunnel(tunnelRequest.host, sessionChannels))
+        val fd = startTunnel(tunnelRequest.host, sessionChannels)
+        callback.onChannelConnected(ctx, fd)
         ctx.channel().writeAndFlush(ProtoMsg.RESPONSE_OK(tunnelId, tunnelRequest))
     }
 
-    interface Callback {
+    internal interface Callback {
         fun onChannelInactive(ctx: ChannelHandlerContext, tcpFd: TcpFdImpl?)
         fun onChannelInactive(ctx: ChannelHandlerContext, httpFd: HttpFdImpl?)
         fun onChannelConnected(ctx: ChannelHandlerContext, tcpFd: TcpFdImpl?)
