@@ -2,9 +2,11 @@ package lighttunnel.base.proto
 
 import lighttunnel.base.RemoteConnection
 import lighttunnel.base.TunnelRequest
-import lighttunnel.base.proto.msg.*
+import lighttunnel.base.utils.asBytes
+import lighttunnel.base.utils.asLong
+import lighttunnel.base.utils.emptyBytes
 
-abstract class ProtoMsg internal constructor(
+sealed class ProtoMsg(
     val type: ProtoMsgType,
     val head: ByteArray,
     val data: ByteArray
@@ -53,7 +55,83 @@ abstract class ProtoMsg internal constructor(
     }
 
     override fun toString(): String {
-        return "ProtoMessage(type=$type, head.length=${head.size}, data.length=${data.size})"
+        return "ProtoMsg(type=$type, head.length=${head.size}, data.length=${data.size})"
     }
-
 }
+
+object UnknownMsg : ProtoMsg(ProtoMsgType.UNKNOWN, emptyBytes, emptyBytes)
+object ForceOffMsg : ProtoMsg(ProtoMsgType.FORCE_OFF, emptyBytes, emptyBytes)
+object ForceOffReplyMsg : ProtoMsg(ProtoMsgType.FORCE_OFF_REPLY, emptyBytes, emptyBytes)
+object HeartbeatPingMsg : ProtoMsg(ProtoMsgType.HEARTBEAT_PING, emptyBytes, emptyBytes)
+object HeartbeatPongMsg : ProtoMsg(ProtoMsgType.HEARTBEAT_PONG, emptyBytes, emptyBytes)
+
+class LocalConnectedMsg(
+    val tunnelId: Long,
+    val sessionId: Long
+) : ProtoMsg(ProtoMsgType.LOCAL_CONNECTED, longArrayOf(tunnelId, sessionId).asBytes(), emptyBytes) {
+    constructor(head: ByteArray) : this(head.asLong(0), head.asLong(8))
+}
+
+class LocalDisconnectMsg(
+    val tunnelId: Long,
+    val sessionId: Long
+) : ProtoMsg(ProtoMsgType.LOCAL_DISCONNECT, longArrayOf(tunnelId, sessionId).asBytes(), emptyBytes) {
+    constructor(head: ByteArray) : this(head.asLong(0), head.asLong(8))
+}
+
+class RemoteConnectedMsg(
+    val tunnelId: Long,
+    val sessionId: Long,
+    val conn: RemoteConnection
+) : ProtoMsg(ProtoMsgType.REMOTE_CONNECTED, longArrayOf(tunnelId, sessionId).asBytes(), conn.toBytes()) {
+    constructor(head: ByteArray, data: ByteArray) : this(
+        head.asLong(0),
+        head.asLong(8),
+        RemoteConnection.fromBytes(data)
+    )
+}
+
+class RemoteDisconnectMsg(
+    val tunnelId: Long,
+    val sessionId: Long,
+    val conn: RemoteConnection
+) : ProtoMsg(ProtoMsgType.REMOTE_DISCONNECT, longArrayOf(tunnelId, sessionId).asBytes(), conn.toBytes()) {
+    constructor(head: ByteArray, data: ByteArray) : this(
+        head.asLong(0),
+        head.asLong(8),
+        RemoteConnection.fromBytes(data)
+    )
+}
+
+class RequestMsg constructor(
+    val request: TunnelRequest
+) : ProtoMsg(ProtoMsgType.REQUEST, emptyBytes, request.toBytes()) {
+    constructor(data: ByteArray) : this(TunnelRequest.fromBytes(data))
+}
+
+class ResponseErrMsg(
+    val cause: Throwable
+) : ProtoMsg(ProtoMsgType.RESPONSE_ERR, emptyBytes, cause.message.toString().toByteArray()) {
+    constructor(data: ByteArray) : this(Throwable(String(data)))
+}
+
+class ResponseOkMsg(
+    val tunnelId: Long,
+    val request: TunnelRequest
+) : ProtoMsg(ProtoMsgType.RESPONSE_OK, tunnelId.asBytes(), request.toBytes()) {
+    constructor(head: ByteArray, data: ByteArray) : this(head.asLong(0), TunnelRequest.fromBytes(data))
+}
+
+class TransferMsg(
+    val tunnelId: Long,
+    val sessionId: Long,
+    data: ByteArray
+) : ProtoMsg(ProtoMsgType.TRANSFER, longArrayOf(tunnelId, sessionId).asBytes(), data) {
+    constructor(
+        head: ByteArray, data: ByteArray
+    ) : this(head.asLong(0), head.asLong(8), data)
+}
+
+
+
+

@@ -1,7 +1,7 @@
 buildscript {
-    ext.kotlin_version = "1.5.20"
+    ext.kotlin_version = "1.5.21"
     ext.jvm_version = "1.8"
-    ext.netty_version = "4.1.65.Final"
+    ext.netty_version = "4.1.66.Final"
     extensions.GitVcConfig = [
         ENABLE_BRANCH: true,
     ]

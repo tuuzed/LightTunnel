@@ -8,9 +8,7 @@ import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.RemoteConnection
 import lighttunnel.base.TunnelRequest
 import lighttunnel.base.TunnelType
-import lighttunnel.base.proto.ProtoMsg
-import lighttunnel.base.proto.ProtoMsgType
-import lighttunnel.base.proto.msg.*
+import lighttunnel.base.proto.*
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.conn.impl.TunnelConnImpl
 import lighttunnel.server.extra.ChannelInactiveExtra

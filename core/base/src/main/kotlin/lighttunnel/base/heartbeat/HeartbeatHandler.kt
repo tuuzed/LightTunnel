@@ -21,9 +21,9 @@ class HeartbeatHandler(
     private val logger by loggerDelegate()
 
     @Throws(Exception::class)
-    override fun channelIdle(ctx: ChannelHandlerContext?, evt: IdleStateEvent?) {
+    override fun channelIdle(ctx: ChannelHandlerContext, evt: IdleStateEvent) {
         logger.trace("channelIdle: {}, {}", ctx, evt)
-        ctx?.channel()?.writeAndFlush(ProtoMsg.HEARTBEAT_PING())
+        ctx.channel().writeAndFlush(ProtoMsg.HEARTBEAT_PING())
         super.channelIdle(ctx, evt)
     }
 
