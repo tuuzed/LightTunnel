@@ -4,7 +4,7 @@ import io.netty.handler.ssl.SslContext
 import lighttunnel.base.utils.SslContextUtils
 import lighttunnel.server.TunnelRequestInterceptor
 
-class SslTunnelDaemonArgs(
+data class SslTunnelDaemonArgs(
     val bindAddr: String? = null,
     val bindPort: Int = 5443,
     val tunnelRequestInterceptor: TunnelRequestInterceptor? = null,
