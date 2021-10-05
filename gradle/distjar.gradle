@@ -15,7 +15,7 @@ task distJars(
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.kotlin.srcDirs
-    classifier = "sources"
+    getArchiveClassifier().set("sources")
 }
 
 artifacts {

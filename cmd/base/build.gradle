@@ -4,12 +4,12 @@ group = "${rootProject.group}.cmd"
 version = rootProject.version
 
 dependencies {
-    api project(":core:base")
-    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    api "org.slf4j:slf4j-log4j12:1.7.31"
-    api "com.jakewharton.picnic:picnic:0.5.0"
-    api "org.ini4j:ini4j:0.5.4"
-    api "commons-cli:commons-cli:1.4"
+    compile project(":core:base")
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile "org.slf4j:slf4j-log4j12:1.7.31"
+    compile "com.jakewharton.picnic:picnic:0.5.0"
+    compile "org.ini4j:ini4j:0.5.4"
+    compile "commons-cli:commons-cli:1.4"
     // 单元测试
     testImplementation "junit:junit:4.12"
 }

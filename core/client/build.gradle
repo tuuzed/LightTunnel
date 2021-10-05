@@ -4,7 +4,7 @@ group = "${rootProject.group}.core"
 version = rootProject.version
 
 dependencies {
-    api project(":core:base")
+    compile project(":core:base")
     // 单元测试
     testImplementation "junit:junit:4.12"
 }
