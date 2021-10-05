@@ -40,11 +40,11 @@ buildConfig {
     buildConfigField "java.lang.String", "LAST_COMMIT_DATE", buildString(GitVc.LAST_COMMIT_DATE)
     buildConfigField "java.lang.String", "BUILD_DATA", buildString(GitVc.BUILD_DATE)
 
-    buildConfigField "java.lang.String[]", "BUILTIN_SERVER_JKS_BASE64", Base64File.from(rootProject.file("resources/lts.jks"))
+    buildConfigField "java.lang.String[]", "BUILTIN_SERVER_JKS_BASE64", Base64File.from(rootProject.file("resources/builtin_lts.jks"))
     buildConfigField "java.lang.String", "BUILTIN_SERVER_JKS_STORE_PASSWORD", buildString("ltspass")
     buildConfigField "java.lang.String", "BUILTIN_SERVER_JKS_KEY_PASSWORD", buildString("ltspass")
 
-    buildConfigField "java.lang.String[]", "BUILTIN_CLIENT_JKS_BASE64", Base64File.from(rootProject.file("resources/ltc.jks"))
+    buildConfigField "java.lang.String[]", "BUILTIN_CLIENT_JKS_BASE64", Base64File.from(rootProject.file("resources/builtin_ltc.jks"))
     buildConfigField "java.lang.String", "BUILTIN_CLIENT_JKS_STORE_PASSWORD", buildString("ltcpass")
 }
 
