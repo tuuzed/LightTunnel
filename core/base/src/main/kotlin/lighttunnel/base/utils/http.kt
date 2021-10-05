@@ -9,7 +9,7 @@ import io.netty.handler.codec.http.*
 import java.nio.charset.StandardCharsets
 
 private const val CRLF = "\r\n"
-private val CHARSET = StandardCharsets.UTF_8
+private val CHARSET = Charsets.UTF_8
 
 val HttpRequest.hostExcludePort: String?
     get() {

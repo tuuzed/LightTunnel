@@ -15,10 +15,10 @@ object SslContextUtils {
     @Throws(Exception::class)
     fun forBuiltinServer(): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
-        return ByteArrayInputStream(BuildConfig.SERVER_JKS_BYTES).use {
-            keyStore.load(it, BuildConfig.SERVER_JKS_STORE_PASSWORD.toCharArray())
+        return ByteArrayInputStream(BuildConfig.BUILTIN_SERVER_JKS_BYTES).use {
+            keyStore.load(it, BuildConfig.BUILTIN_SERVER_JKS_STORE_PASSWORD.toCharArray())
             val kmf = KeyManagerFactory.getInstance("SunX509")
-            kmf.init(keyStore, BuildConfig.SERVER_JKS_KEY_PASSWORD.toCharArray())
+            kmf.init(keyStore, BuildConfig.BUILTIN_SERVER_JKS_KEY_PASSWORD.toCharArray())
             SslContextBuilder.forServer(kmf).build()
         }
     }
@@ -27,8 +27,8 @@ object SslContextUtils {
     @Throws(Exception::class)
     fun forBuiltinClient(): SslContext {
         val keyStore = KeyStore.getInstance("JKS")
-        return ByteArrayInputStream(BuildConfig.CLIENT_JKS_BYTES).use {
-            keyStore.load(it, BuildConfig.CLIENT_JKS_STORE_PASSWORD.toCharArray())
+        return ByteArrayInputStream(BuildConfig.BUILTIN_CLIENT_JKS_BYTES).use {
+            keyStore.load(it, BuildConfig.BUILTIN_CLIENT_JKS_STORE_PASSWORD.toCharArray())
             val tmf = TrustManagerFactory.getInstance("SunX509")
             tmf.init(keyStore)
             SslContextBuilder.forClient().trustManager(tmf).build()

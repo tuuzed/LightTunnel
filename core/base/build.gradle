@@ -6,11 +6,9 @@ apply plugin: "com.github.tuuzed.base64flie"
 group = "${rootProject.group}.core"
 version = rootProject.version
 
-sourceCompatibility = rootProject.jvm_version
-
 dependencies {
     // Kotlin
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     // Netty
     // compile "io.netty:netty-buffer:$netty_version"
     // compile "io.netty:netty-codec:$netty_version"
@@ -19,13 +17,13 @@ dependencies {
     // compile "io.netty:netty-handler:$netty_version"
     // compile "io.netty:netty-resolver:$netty_version"
     // compile "io.netty:netty-transport:$netty_version"
-    compile "io.netty:netty-all:$netty_version"
+    api "io.netty:netty-all:$netty_version"
     // Logger
-    compile "org.slf4j:slf4j-api:1.7.31"
+    api "org.slf4j:slf4j-api:1.7.31"
     // Json
-    compile "org.json:json:20210307"
+    api "org.json:json:20210307"
     // 单元测试
-    testCompile "junit:junit:4.12"
+    testImplementation "junit:junit:4.12"
 }
 
 
@@ -42,12 +40,12 @@ buildConfig {
     buildConfigField "java.lang.String", "LAST_COMMIT_DATE", buildString(GitVc.LAST_COMMIT_DATE)
     buildConfigField "java.lang.String", "BUILD_DATA", buildString(GitVc.BUILD_DATE)
 
-    buildConfigField "java.lang.String[]", "SERVER_JKS_BASE64", Base64File.from(rootProject.file("resources/lts.jks"))
-    buildConfigField "java.lang.String", "SERVER_JKS_STORE_PASSWORD", buildString("ltspass")
-    buildConfigField "java.lang.String", "SERVER_JKS_KEY_PASSWORD", buildString("ltspass")
+    buildConfigField "java.lang.String[]", "BUILTIN_SERVER_JKS_BASE64", Base64File.from(rootProject.file("resources/lts.jks"))
+    buildConfigField "java.lang.String", "BUILTIN_SERVER_JKS_STORE_PASSWORD", buildString("ltspass")
+    buildConfigField "java.lang.String", "BUILTIN_SERVER_JKS_KEY_PASSWORD", buildString("ltspass")
 
-    buildConfigField "java.lang.String[]", "CLIENT_JKS_BASE64", Base64File.from(rootProject.file("resources/ltc.jks"))
-    buildConfigField "java.lang.String", "CLIENT_JKS_STORE_PASSWORD", buildString("ltcpass")
+    buildConfigField "java.lang.String[]", "BUILTIN_CLIENT_JKS_BASE64", Base64File.from(rootProject.file("resources/ltc.jks"))
+    buildConfigField "java.lang.String", "BUILTIN_CLIENT_JKS_STORE_PASSWORD", buildString("ltcpass")
 }
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath

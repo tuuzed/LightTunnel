@@ -1,16 +1,13 @@
 apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "org.jetbrains.kotlin.jvm"
 
 group = "${rootProject.group}.cmd"
 version = rootProject.version
 
-sourceCompatibility = rootProject.jvm_version
-
 dependencies {
-    compile project(":cmd:base")
-    compile project(":core:client")
+    implementation project(":cmd:base")
+    implementation project(":core:client")
     // 单元测试
-    testCompile "junit:junit:4.12"
+    testImplementation "junit:junit:4.12"
 }
 
 

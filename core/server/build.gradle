@@ -3,12 +3,11 @@ apply plugin: "org.jetbrains.kotlin.jvm"
 group = "${rootProject.group}.core"
 version = rootProject.version
 
-sourceCompatibility = rootProject.jvm_version
 
 dependencies {
-    compile project(":core:base")
+    api project(":core:base")
     // 单元测试
-    testCompile "junit:junit:4.12"
+    testImplementation "junit:junit:4.12"
 }
 
 apply from: rootProject.file("./gradle/common.gradle").absolutePath

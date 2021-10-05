@@ -3,13 +3,11 @@ apply plugin: "org.jetbrains.kotlin.jvm"
 group = "${rootProject.group}.cmd"
 version = rootProject.version
 
-sourceCompatibility = rootProject.jvm_version
-
 dependencies {
-    compile project(":cmd:base")
-    compile project(":core:server")
+    implementation project(":cmd:base")
+    implementation project(":core:server")
     // 单元测试
-    testCompile "junit:junit:4.12"
+    testImplementation "junit:junit:4.12"
 }
 
 project.ext.MainClass = "ltcmd.server.LauncherKt"

@@ -31,7 +31,7 @@ class LoggerConfigure private constructor(
     target: String = SYSTEM_ERR,
     // file
     file: String = "log4j.log",
-    maxFileSize: Long = 1024 * 1024,
+    maxFileSize: Long = 1024 * 1024L,
     maxBackupIndex: Int = 2,
     append: Boolean = true,
     vararg names: String
@@ -63,7 +63,7 @@ class LoggerConfigure private constructor(
             level: Level = Level.INFO,
             conversionPattern: String = defaultFilePattern,
             file: String = "log4j.log",
-            maxFileSize: Long = 1024 * 1024,
+            maxFileSize: Long = 1024 * 1024L,
             maxBackupIndex: Int = 2,
             append: Boolean = true,
             vararg names: String

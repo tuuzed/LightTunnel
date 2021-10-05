@@ -1,5 +1,3 @@
-@file:Suppress("HasPlatformType")
-
 package lighttunnel.base
 
 import lighttunnel.base.gen.GenBuildConfig
@@ -12,9 +10,9 @@ object BuildConfig {
     const val LAST_COMMIT_SHA = GenBuildConfig.LAST_COMMIT_SHA
     const val LAST_COMMIT_DATE = GenBuildConfig.LAST_COMMIT_DATE
     const val BUILD_DATA = GenBuildConfig.BUILD_DATA
-    val SERVER_JKS_BYTES = base64Decode(GenBuildConfig.SERVER_JKS_BASE64)
-    const val SERVER_JKS_STORE_PASSWORD = GenBuildConfig.SERVER_JKS_STORE_PASSWORD
-    const val SERVER_JKS_KEY_PASSWORD = GenBuildConfig.SERVER_JKS_KEY_PASSWORD
-    val CLIENT_JKS_BYTES = base64Decode(GenBuildConfig.CLIENT_JKS_BASE64)
-    const val CLIENT_JKS_STORE_PASSWORD = GenBuildConfig.CLIENT_JKS_STORE_PASSWORD
+    val BUILTIN_SERVER_JKS_BYTES = base64Decode(GenBuildConfig.BUILTIN_SERVER_JKS_BASE64)
+    const val BUILTIN_SERVER_JKS_STORE_PASSWORD = GenBuildConfig.BUILTIN_SERVER_JKS_STORE_PASSWORD
+    const val BUILTIN_SERVER_JKS_KEY_PASSWORD = GenBuildConfig.BUILTIN_SERVER_JKS_KEY_PASSWORD
+    val BUILTIN_CLIENT_JKS_BYTES = base64Decode(GenBuildConfig.BUILTIN_CLIENT_JKS_BASE64)
+    const val BUILTIN_CLIENT_JKS_STORE_PASSWORD = GenBuildConfig.BUILTIN_CLIENT_JKS_STORE_PASSWORD
 }
