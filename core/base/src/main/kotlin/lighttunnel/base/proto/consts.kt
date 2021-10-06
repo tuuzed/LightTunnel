@@ -2,6 +2,9 @@
 
 package lighttunnel.base.proto
 
+/** 空字节数组 */
+val emptyBytes = ByteArray(0)
+
 /** 协议版本 */
 internal const val PROTO_VERSION = 0x01.toByte()
 

@@ -7,7 +7,7 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.proto.ProtoMsg
-import lighttunnel.base.utils.emptyBytes
+import lighttunnel.base.proto.emptyBytes
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.utils.AK_NEXT_CHANNEL
 import lighttunnel.server.utils.AK_SESSION_ID

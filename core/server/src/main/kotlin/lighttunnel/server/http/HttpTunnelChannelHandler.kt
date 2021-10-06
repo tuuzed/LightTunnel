@@ -10,8 +10,8 @@ import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import lighttunnel.base.RemoteConnection
 import lighttunnel.base.proto.ProtoMsg
-import lighttunnel.base.utils.byteBuf
-import lighttunnel.base.utils.emptyBytes
+import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.utils.asByteBuf
 import lighttunnel.base.utils.hostExcludePort
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.utils.*
@@ -98,7 +98,7 @@ internal class HttpTunnelChannelHandler(
                         RemoteConnection(ctx.channel().remoteAddress())
                     )
                 )
-                val data = ByteBufUtil.getBytes(msg.byteBuf) ?: emptyBytes
+                val data = ByteBufUtil.getBytes(msg.asByteBuf) ?: emptyBytes
                 httpFd.tunnelChannel.writeAndFlush(ProtoMsg.TRANSFER(httpFd.tunnelId, sessionId, data))
             }
             is HttpContent -> {

@@ -20,8 +20,8 @@ class ProtoMsgDecoder : LengthFieldBasedFrameDecoder(
     }
 
     @Throws(Exception::class)
-    override fun decode(ctx: ChannelHandlerContext?, `in`: ByteBuf?): Any? {
-        when (val rst = super.decode(ctx, `in`)) {
+    override fun decode(ctx: ChannelHandlerContext?, input: ByteBuf?): Any? {
+        when (val rst = super.decode(ctx, input)) {
             is ByteBuf -> {
                 if (rst.readableBytes() < MIN_BYTES) return null
                 val totalLength = rst.readInt()

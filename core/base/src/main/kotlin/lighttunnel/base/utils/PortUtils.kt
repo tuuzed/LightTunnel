@@ -5,6 +5,8 @@ import java.util.*
 
 
 object PortUtils {
+    private val random = Random()
+
     /**
      * 判断端口是否在指定的端口规则内
      *
@@ -51,7 +53,6 @@ object PortUtils {
      */
     @Synchronized
     fun getAvailableTcpPort(portRange: String): Int {
-        val random = Random()
         while (true) {
             val port = random.nextInt(65535 - 1024) + 1024
             if (hasInPortRange(portRange, port)) {
