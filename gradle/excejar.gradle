@@ -14,6 +14,13 @@ buildscript {
 
 apply plugin: "edu.sc.seis.launch4j"
 
+configurations {
+    compile {
+        canBeConsumed = true
+        canBeResolved = true
+    }
+}
+
 jar {
     exclude "META-INF/**/**"
     exclude "META-INF/**"
@@ -91,7 +98,7 @@ task dists(
         if (!jarFile.exists()) {
             return
         }
-        
+
         def srcJar = new FileInputStream(jarFile)
         def srcStub = new FileInputStream(stubFile)
         def dst = new FileOutputStream(shFile)
