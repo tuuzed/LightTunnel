@@ -7,7 +7,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
-import lighttunnel.base.BuildConfig
+import lighttunnel.base.entity.BuildConfig
 import lighttunnel.base.utils.basicAuthorization
 import lighttunnel.cmd.httpserver.HttpServer
 import lighttunnel.cmd.name

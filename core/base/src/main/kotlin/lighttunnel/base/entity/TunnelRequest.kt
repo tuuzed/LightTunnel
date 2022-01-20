@@ -1,8 +1,7 @@
 @file:Suppress("unused", "DuplicatedCode")
 
-package lighttunnel.base
+package lighttunnel.base.entity
 
-import lighttunnel.base.proto.Proto
 import lighttunnel.base.proto.ProtoException
 import lighttunnel.base.utils.getOrDefault
 import org.json.JSONObject
@@ -42,7 +41,6 @@ class TunnelRequest private constructor(
             return TunnelRequest(
                 root = JSONObject()
             ).apply {
-                this.protoVersion = Proto.VERSION
                 this.tunnelType = TunnelType.TCP
                 this.localAddr = localAddr
                 this.localPort = localPort
@@ -62,7 +60,6 @@ class TunnelRequest private constructor(
             return TunnelRequest(
                 root = JSONObject()
             ).apply {
-                this.protoVersion = Proto.VERSION
                 this.tunnelType = if (https) TunnelType.HTTPS else TunnelType.HTTP
                 this.localAddr = localAddr
                 this.localPort = localPort
@@ -72,9 +69,6 @@ class TunnelRequest private constructor(
             }
         }
     }
-
-    var protoVersion = Proto.VERSION
-        private set
 
     var tunnelType: TunnelType
         get() = TunnelType.findTunnelType(root.getOrDefault(TUNNEL_TYPE, TunnelType.UNKNOWN.value))

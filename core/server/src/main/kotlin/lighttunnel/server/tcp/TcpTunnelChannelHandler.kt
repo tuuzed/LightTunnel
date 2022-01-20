@@ -6,7 +6,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.base.RemoteConnection
+import lighttunnel.base.entity.RemoteConnection
 import lighttunnel.base.proto.ProtoMsgRemoteConnected
 import lighttunnel.base.proto.ProtoMsgRemoteDisconnect
 import lighttunnel.base.proto.ProtoMsgTransfer

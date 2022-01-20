@@ -6,7 +6,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 
 class ProtoMsgDecoder : LengthFieldBasedFrameDecoder(
     1024 * 1024, // maxFrameLength
-    2, // lengthFieldOffset
+    3, // lengthFieldOffset
     4, // lengthFieldLength
 ) {
 
@@ -19,7 +19,7 @@ class ProtoMsgDecoder : LengthFieldBasedFrameDecoder(
     }
 
     private fun tryDecodeProtoMsg(frame: ByteBuf): ProtoMsg {
-        frame.skipBytes(6) // 1(HDR) + 1(VERSION) + 4(LENGTH)
+        frame.skipBytes(7) // 1(HDR) + 1(VERSION) + 1(FLAGS) + 4(LENGTH)
         val typeValue = frame.readByte()
         return when (ProtoMsg.findType(typeValue)) {
             ProtoMsg.Type.Unknown -> ProtoMsgUnknown

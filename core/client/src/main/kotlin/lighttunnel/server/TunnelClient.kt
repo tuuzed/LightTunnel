@@ -3,7 +3,7 @@
 package lighttunnel.server
 
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.server.conn.TunnelConn
 import lighttunnel.server.conn.impl.TunnelConnImpl
 import lighttunnel.server.listener.OnRemoteConnectionListener

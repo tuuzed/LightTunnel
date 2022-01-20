@@ -1,6 +1,6 @@
 @file:Suppress("MemberVisibilityCanBePrivate")
 
-package lighttunnel.base
+package lighttunnel.base.entity
 
 import lighttunnel.base.proto.ProtoException
 import lighttunnel.base.utils.getOrDefault

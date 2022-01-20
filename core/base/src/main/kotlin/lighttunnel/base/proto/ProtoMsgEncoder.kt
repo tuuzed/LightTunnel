@@ -12,7 +12,9 @@ class ProtoMsgEncoder : MessageToByteEncoder<ProtoMsg>() {
         out ?: return
         out.writeByte(Proto.HDR.toInt())
         out.writeByte(Proto.VERSION.toInt())
+        out.writeByte(0)
         out.writeInt(msg.size)
         msg.transmit(out)
     }
+
 }

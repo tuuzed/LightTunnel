@@ -1,6 +1,6 @@
 package lighttunnel.server
 
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.base.proto.ProtoException
 
 interface TunnelRequestInterceptor {

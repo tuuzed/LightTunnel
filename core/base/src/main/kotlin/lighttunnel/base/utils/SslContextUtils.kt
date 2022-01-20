@@ -2,7 +2,7 @@ package lighttunnel.base.utils
 
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.SslContextBuilder
-import lighttunnel.base.BuildConfig
+import lighttunnel.base.entity.BuildConfig
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.security.KeyStore

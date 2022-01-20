@@ -8,7 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
-import lighttunnel.base.RemoteConnection
+import lighttunnel.base.entity.RemoteConnection
 import lighttunnel.base.proto.ProtoMsgRemoteConnected
 import lighttunnel.base.proto.ProtoMsgRemoteDisconnect
 import lighttunnel.base.proto.ProtoMsgTransfer

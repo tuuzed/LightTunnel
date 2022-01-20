@@ -4,7 +4,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.base.proto.ProtoMsgRequest
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.conn.TunnelConn

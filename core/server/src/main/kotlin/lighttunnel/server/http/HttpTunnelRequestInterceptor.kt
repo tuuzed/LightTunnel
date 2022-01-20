@@ -2,7 +2,7 @@ package lighttunnel.server.http
 
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import java.io.IOException
 
 interface HttpTunnelRequestInterceptor {

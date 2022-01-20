@@ -1,7 +1,7 @@
 package lighttunnel.server.tcp
 
 import io.netty.channel.Channel
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.server.traffic.TrafficStats
 import lighttunnel.server.utils.SessionChannels
 

@@ -3,7 +3,7 @@
 package lighttunnel.cmd.server
 
 import io.netty.channel.nio.NioEventLoopGroup
-import lighttunnel.base.BuildConfig
+import lighttunnel.base.entity.BuildConfig
 import lighttunnel.base.utils.SslContextUtils
 import lighttunnel.base.utils.asInt
 import lighttunnel.base.utils.loggerDelegate

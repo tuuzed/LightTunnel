@@ -5,9 +5,9 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.base.RemoteConnection
-import lighttunnel.base.TunnelRequest
-import lighttunnel.base.TunnelType
+import lighttunnel.base.entity.RemoteConnection
+import lighttunnel.base.entity.TunnelRequest
+import lighttunnel.base.entity.TunnelType
 import lighttunnel.base.proto.*
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.conn.impl.TunnelConnImpl

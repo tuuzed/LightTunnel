@@ -2,7 +2,7 @@ package lighttunnel.cmd.server
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.base.utils.basicAuthorization
 import lighttunnel.cmd.*
 import lighttunnel.server.http.HttpContext

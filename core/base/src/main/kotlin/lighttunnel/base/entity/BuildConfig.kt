@@ -1,4 +1,4 @@
-package lighttunnel.base
+package lighttunnel.base.entity
 
 import lighttunnel.base.gen.GenBuildConfig
 import lighttunnel.base.utils.base64Decode

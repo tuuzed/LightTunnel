@@ -1,6 +1,6 @@
 package lighttunnel.server.listener
 
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 
 interface OnTrafficListener {
 

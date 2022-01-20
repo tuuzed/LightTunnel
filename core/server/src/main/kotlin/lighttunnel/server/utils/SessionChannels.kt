@@ -3,7 +3,7 @@ package lighttunnel.server.utils
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.base.proto.ProtoMsgForceOff
 import lighttunnel.base.utils.IncIds
 import lighttunnel.server.traffic.DefaultTrafficStats

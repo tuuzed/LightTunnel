@@ -2,9 +2,9 @@ package lighttunnel.cmd.client
 
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.ssl.SslContext
-import lighttunnel.base.BuildConfig
-import lighttunnel.base.RemoteConnection
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.BuildConfig
+import lighttunnel.base.entity.RemoteConnection
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.base.utils.SslContextUtils
 import lighttunnel.base.utils.asInt
 import lighttunnel.base.utils.loggerDelegate

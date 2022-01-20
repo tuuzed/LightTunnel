@@ -4,7 +4,7 @@ package lighttunnel.server.utils
 
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.server.conn.impl.TunnelConnImpl
 import lighttunnel.server.extra.ChannelInactiveExtra
 

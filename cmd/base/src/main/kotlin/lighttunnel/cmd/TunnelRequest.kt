@@ -1,6 +1,6 @@
 package lighttunnel.cmd
 
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import lighttunnel.base.utils.getOrNull
 import org.json.JSONObject
 

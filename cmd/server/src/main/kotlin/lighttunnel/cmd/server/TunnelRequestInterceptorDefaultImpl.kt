@@ -1,7 +1,7 @@
 package lighttunnel.cmd.server
 
-import lighttunnel.base.TunnelRequest
-import lighttunnel.base.TunnelType
+import lighttunnel.base.entity.TunnelRequest
+import lighttunnel.base.entity.TunnelType
 import lighttunnel.base.proto.ProtoException
 import lighttunnel.base.utils.PortUtils
 import lighttunnel.base.utils.loggerDelegate

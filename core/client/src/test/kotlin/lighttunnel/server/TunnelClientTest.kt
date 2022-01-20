@@ -1,6 +1,6 @@
 package lighttunnel.server
 
-import lighttunnel.base.TunnelRequest
+import lighttunnel.base.entity.TunnelRequest
 import org.junit.Before
 import org.junit.Test
 
