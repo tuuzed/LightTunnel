@@ -6,8 +6,10 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.base.proto.ProtoMsg
-import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.proto.ProtoMsgLocalConnected
+import lighttunnel.base.proto.ProtoMsgLocalDisconnect
+import lighttunnel.base.proto.ProtoMsgTransfer
+import lighttunnel.base.utils.emptyBytes
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.utils.AK_NEXT_CHANNEL
 import lighttunnel.server.utils.AK_SESSION_ID
@@ -26,7 +28,7 @@ internal class LocalTcpClientChannelHandler(
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
         val nextChannel = ctx.channel().attr(AK_NEXT_CHANNEL).get()
         if (tunnelId != null && sessionId != null && nextChannel != null) {
-            nextChannel.writeAndFlush(ProtoMsg.LOCAL_CONNECTED(tunnelId, sessionId))
+            nextChannel.writeAndFlush(ProtoMsgLocalConnected(tunnelId, sessionId))
         }
     }
 
@@ -40,7 +42,7 @@ internal class LocalTcpClientChannelHandler(
                 ?.writeAndFlush(Unpooled.EMPTY_BUFFER)
                 ?.addListener(ChannelFutureListener.CLOSE)
             ctx.channel().attr(AK_NEXT_CHANNEL).get()
-                ?.writeAndFlush(ProtoMsg.LOCAL_DISCONNECT(tunnelId, sessionId))
+                ?.writeAndFlush(ProtoMsgLocalDisconnect(tunnelId, sessionId))
         }
         super.channelInactive(ctx)
     }
@@ -62,7 +64,7 @@ internal class LocalTcpClientChannelHandler(
         val nextChannel = ctx.channel().attr(AK_NEXT_CHANNEL).get()
         if (tunnelId != null && sessionId != null && nextChannel != null) {
             val data = ByteBufUtil.getBytes(msg) ?: emptyBytes
-            nextChannel.writeAndFlush(ProtoMsg.TRANSFER(tunnelId, sessionId, data))
+            nextChannel.writeAndFlush(ProtoMsgTransfer(tunnelId, sessionId, data))
         }
     }
 

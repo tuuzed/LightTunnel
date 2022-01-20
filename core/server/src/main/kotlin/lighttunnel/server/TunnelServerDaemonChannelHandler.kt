@@ -52,83 +52,52 @@ internal class TunnelServerDaemonChannelHandler(
 
     @Throws(Exception::class)
     override fun channelRead0(ctx: ChannelHandlerContext, msg: ProtoMsg) {
-        logger.trace("channelRead0: {}", ctx)
-        when (msg.type) {
-            ProtoMsgType.HEARTBEAT_PING -> doHandlePingMessage(ctx, msg as HeartbeatPingMsg)
-            ProtoMsgType.REQUEST -> doHandleRequestMessage(ctx, msg as RequestMsg)
-            ProtoMsgType.TRANSFER -> doHandleTransferMessage(ctx, msg as TransferMsg)
-            ProtoMsgType.LOCAL_CONNECTED -> doHandleLocalConnectedMessage(ctx, msg as LocalConnectedMsg)
-            ProtoMsgType.LOCAL_DISCONNECT -> doHandleLocalDisconnectMessage(ctx, msg as LocalDisconnectMsg)
-            ProtoMsgType.FORCE_OFF_REPLY -> doHandleForceOffReplyMessage(ctx, msg as ForceOffReplyMsg)
-            else -> {
-                // Nothing
+        logger.trace("channelRead0: {}, {}", ctx, msg)
+        when (msg) {
+            ProtoMsgPing -> ctx.writeAndFlush(ProtoMsgPong)
+            ProtoMsgForceOff -> {
+                ctx.channel()?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
             }
-        }
-    }
-
-    @Throws(Exception::class)
-    private fun doHandlePingMessage(ctx: ChannelHandlerContext, msg: HeartbeatPingMsg) {
-        logger.trace("doHandlePingMessage# {}, {}", ctx, msg)
-        ctx.writeAndFlush(ProtoMsg.HEARTBEAT_PONG())
-    }
-
-    @Throws(Exception::class)
-    private fun doHandleRequestMessage(ctx: ChannelHandlerContext, msg: RequestMsg) {
-        logger.trace("doHandleRequestMessage# {}, {}", ctx, msg)
-        try {
-            val originalTunnelRequest = msg.request
-            val finalTunnelRequest = tunnelRequestInterceptor?.intercept(originalTunnelRequest)
-                ?: originalTunnelRequest
-            logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
-            when (finalTunnelRequest.tunnelType) {
-                TunnelType.TCP -> {
-                    val tcpTunnel = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
-                    tcpTunnel.handleRequestMessage(ctx, finalTunnelRequest)
+            is ProtoMsgRequest -> {
+                try {
+                    val originalTunnelRequest = TunnelRequest.fromJson(msg.payload)
+                    val finalTunnelRequest = tunnelRequestInterceptor?.intercept(originalTunnelRequest)
+                        ?: originalTunnelRequest
+                    logger.trace("TunnelRequest=> original: {}, final: {}", originalTunnelRequest, finalTunnelRequest)
+                    when (finalTunnelRequest.tunnelType) {
+                        TunnelType.TCP -> {
+                            val tcpTunnel = tcpTunnel ?: throw ProtoException("TCP协议隧道未开启")
+                            tcpTunnel.handleRequestMessage(ctx, finalTunnelRequest)
+                        }
+                        TunnelType.HTTP -> {
+                            val httpTunnel = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
+                            httpTunnel.handleRequestMessage(ctx, finalTunnelRequest)
+                        }
+                        TunnelType.HTTPS -> {
+                            val httpsTunnel = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
+                            httpsTunnel.handleRequestMessage(ctx, finalTunnelRequest)
+                        }
+                        else -> throw ProtoException("不支持的隧道类型")
+                    }
+                } catch (e: Exception) {
+                    ctx.channel().writeAndFlush(
+                        ProtoMsgResponse(false, 0, e.toString())
+                    ).addListener(ChannelFutureListener.CLOSE)
                 }
-                TunnelType.HTTP -> {
-                    val httpTunnel = httpTunnel ?: throw ProtoException("HTTP协议隧道未开启")
-                    httpTunnel.handleRequestMessage(ctx, finalTunnelRequest)
-                }
-                TunnelType.HTTPS -> {
-                    val httpsTunnel = httpsTunnel ?: throw ProtoException("HTTPS协议隧道未开启")
-                    httpsTunnel.handleRequestMessage(ctx, finalTunnelRequest)
-                }
-                else -> throw ProtoException("不支持的隧道类型")
             }
-        } catch (e: Exception) {
-            ctx.channel().writeAndFlush(
-                ProtoMsg.RESPONSE_ERR(e)
-            ).addListener(ChannelFutureListener.CLOSE)
+            is ProtoMsgTransfer -> {
+                val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
+                val sessionChannel = sessionChannels.getChannel(msg.sessionId)
+                sessionChannel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
+            }
+            is ProtoMsgRemoteDisconnect -> {
+                val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
+                val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
+                // 解决 HTTP/1.x 数据传输问题
+                sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
+            }
+            else -> {}
         }
-    }
-
-    @Throws(Exception::class)
-    private fun doHandleTransferMessage(ctx: ChannelHandlerContext, msg: TransferMsg) {
-        logger.trace("doHandleTransferMessage# {}, {}", ctx, msg)
-        val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
-        val sessionChannel = sessionChannels.getChannel(msg.sessionId)
-        sessionChannel?.writeAndFlush(Unpooled.wrappedBuffer(msg.data))
-    }
-
-    @Throws(Exception::class)
-    private fun doHandleLocalConnectedMessage(ctx: ChannelHandlerContext, msg: LocalConnectedMsg) {
-        logger.trace("doHandleLocalConnectedMessage# {}, {}", ctx, msg)
-        // 无须处理
-    }
-
-    @Throws(Exception::class)
-    private fun doHandleLocalDisconnectMessage(ctx: ChannelHandlerContext, msg: LocalDisconnectMsg) {
-        logger.trace("doHandleLocalDisconnectMessage# {}, {}", ctx, msg)
-        val sessionChannels = ctx.channel().attr(AK_SESSION_CHANNELS).get() ?: return
-        val sessionChannel = sessionChannels.removeChannel(msg.sessionId)
-        // 解决 HTTP/1.x 数据传输问题
-        sessionChannel?.writeAndFlush(Unpooled.EMPTY_BUFFER)?.addListener(ChannelFutureListener.CLOSE)
-    }
-
-    @Throws(Exception::class)
-    private fun doHandleForceOffReplyMessage(ctx: ChannelHandlerContext, msg: ForceOffReplyMsg) {
-        logger.trace("doHandleForceOffReplyMessage# {}, {}", ctx, msg)
-        ctx.channel()?.close()
     }
 
     @Throws(Exception::class)
@@ -139,7 +108,7 @@ internal class TunnelServerDaemonChannelHandler(
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
         val fd = startTunnel(null, tunnelRequest.remotePort, sessionChannels)
         callback.onChannelConnected(ctx, fd)
-        ctx.channel().writeAndFlush(ProtoMsg.RESPONSE_OK(tunnelId, tunnelRequest))
+        ctx.channel().writeAndFlush(ProtoMsgResponse(true, tunnelId, tunnelRequest.toJsonString()))
     }
 
     @Throws(Exception::class)
@@ -150,7 +119,7 @@ internal class TunnelServerDaemonChannelHandler(
         ctx.channel().attr(AK_SESSION_CHANNELS).set(sessionChannels)
         val fd = startTunnel(tunnelRequest.host, sessionChannels)
         callback.onChannelConnected(ctx, fd)
-        ctx.channel().writeAndFlush(ProtoMsg.RESPONSE_OK(tunnelId, tunnelRequest))
+        ctx.channel().writeAndFlush(ProtoMsgResponse(true, tunnelId, tunnelRequest.toJsonString()))
     }
 
     internal interface Callback {

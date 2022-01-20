@@ -4,7 +4,7 @@ import lighttunnel.base.gen.GenBuildConfig
 import lighttunnel.base.utils.base64Decode
 
 object BuildConfig {
-    const val PROTO_VERSION = lighttunnel.base.proto.PROTO_VERSION
+    const val PROTO_VERSION = lighttunnel.base.proto.Proto.VERSION
     const val VERSION_CODE = GenBuildConfig.VERSION_CODE
     const val VERSION_NAME = GenBuildConfig.VERSION_NAME
     const val LAST_COMMIT_SHA = GenBuildConfig.LAST_COMMIT_SHA

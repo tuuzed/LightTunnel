@@ -80,8 +80,7 @@ internal class TunnelServerDaemon(
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
             .childHandler(object : ChannelInitializer<SocketChannel>() {
-                override fun initChannel(ch: SocketChannel?) {
-                    ch ?: return
+                override fun initChannel(ch: SocketChannel) {
                     ch.pipeline()
                         .addLast("traffic", TrafficHandler(onTrafficListener))
                         .addLast("heartbeat", HeartbeatHandler(15, 0))
@@ -105,8 +104,7 @@ internal class TunnelServerDaemon(
             .childOption(ChannelOption.AUTO_READ, true)
             .childOption(ChannelOption.SO_KEEPALIVE, true)
             .childHandler(object : ChannelInitializer<SocketChannel>() {
-                override fun initChannel(ch: SocketChannel?) {
-                    ch ?: return
+                override fun initChannel(ch: SocketChannel) {
                     ch.pipeline()
                         .addFirst("ssl", args.sslContext.newHandler(ch.alloc()))
                         .addLast("traffic", TrafficHandler(onTrafficListener))

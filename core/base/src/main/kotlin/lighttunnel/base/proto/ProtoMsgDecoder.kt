@@ -5,29 +5,76 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 
 class ProtoMsgDecoder : LengthFieldBasedFrameDecoder(
-    1024 * 1024,
-    0,
-    4
+    1024 * 1024, // maxFrameLength
+    2, // lengthFieldOffset
+    4, // lengthFieldLength
 ) {
 
-    @Throws(Exception::class)
     override fun decode(ctx: ChannelHandlerContext?, `in`: ByteBuf?): Any? {
         val frame = super.decode(ctx, `in`)
         if (frame is ByteBuf) {
-            val totalLength = frame.readInt()
-            val type = ProtoMsgType.codeOf(frame.readByte())
-            val headLength = frame.readInt()
-            val head = ByteArray(headLength)
-            frame.readBytes(head)
-            val dataLength = totalLength -
-                PROTO_MESSAGE_TYPE_LENGTH -
-                PROTO_MESSAGE_HEAD_LENGTH_FIELD_LENGTH -
-                headLength
-            val data = ByteArray(dataLength)
-            frame.readBytes(data)
-            return ProtoMsg.newInstance(type, head, data)
+            return tryDecodeProtoMsg(frame)
         }
         return frame
     }
 
+    private fun tryDecodeProtoMsg(frame: ByteBuf): ProtoMsg {
+        frame.skipBytes(6) // 1(HDR) + 1(VERSION) + 4(LENGTH)
+        val typeValue = frame.readByte()
+        return when (ProtoMsg.findType(typeValue)) {
+            ProtoMsg.Type.Unknown -> ProtoMsgUnknown
+            ProtoMsg.Type.Ping -> ProtoMsgPing
+            ProtoMsg.Type.Pong -> ProtoMsgPong
+            ProtoMsg.Type.Request -> {
+                val dataSize = frame.readInt()
+                val data = ByteArray(dataSize)
+                frame.readBytes(data)
+                ProtoMsgRequest(String(data))
+            }
+            ProtoMsg.Type.Response -> {
+                val status = frame.readByte() == 1.toByte()
+                val tunnelId = frame.readLong()
+                val dataSize = frame.readInt()
+                val data = ByteArray(dataSize)
+                frame.readBytes(data)
+                ProtoMsgResponse(status, tunnelId, String(data))
+            }
+            ProtoMsg.Type.Transfer -> {
+                val tunnelId = frame.readLong()
+                val sessionId = frame.readLong()
+                val dataSize = frame.readInt()
+                val data = ByteArray(dataSize)
+                frame.readBytes(data)
+                ProtoMsgTransfer(tunnelId, sessionId, data)
+            }
+            ProtoMsg.Type.LocalConnected -> {
+                val tunnelId = frame.readLong()
+                val sessionId = frame.readLong()
+                ProtoMsgLocalConnected(tunnelId, sessionId)
+            }
+            ProtoMsg.Type.LocalDisconnect -> {
+                val tunnelId = frame.readLong()
+                val sessionId = frame.readLong()
+                ProtoMsgLocalDisconnect(tunnelId, sessionId)
+            }
+            ProtoMsg.Type.RemoteConnected -> {
+                val tunnelId = frame.readLong()
+                val sessionId = frame.readLong()
+                val dataSize = frame.readInt()
+                val data = ByteArray(dataSize)
+                ProtoMsgRemoteConnected(tunnelId, sessionId, String(data))
+            }
+            ProtoMsg.Type.RemoteDisconnect -> {
+                val tunnelId = frame.readLong()
+                val sessionId = frame.readLong()
+                val dataSize = frame.readInt()
+                val data = ByteArray(dataSize)
+                ProtoMsgRemoteDisconnect(tunnelId, sessionId, String(data))
+            }
+            ProtoMsg.Type.ForceOff -> ProtoMsgForceOff
+            ProtoMsg.Type.ForceOffReply -> ProtoMsgForceOffReply
+        }
+    }
+
 }
+

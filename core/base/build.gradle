@@ -19,7 +19,7 @@ dependencies {
     compile "io.netty:netty-transport:$netty_version"
     // compile "io.netty:netty-all:$netty_version"
     // Logger
-    compile "org.slf4j:slf4j-api:1.7.32"
+    compile "org.slf4j:slf4j-api:1.7.33"
     // Json
     compile "org.json:json:20211205"
     // 单元测试

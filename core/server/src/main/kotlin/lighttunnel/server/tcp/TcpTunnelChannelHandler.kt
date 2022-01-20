@@ -7,7 +7,9 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.base.RemoteConnection
-import lighttunnel.base.proto.ProtoMsg
+import lighttunnel.base.proto.ProtoMsgRemoteConnected
+import lighttunnel.base.proto.ProtoMsgRemoteDisconnect
+import lighttunnel.base.proto.ProtoMsgTransfer
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.utils.AK_SESSION_ID
 import java.net.InetSocketAddress
@@ -27,10 +29,10 @@ internal class TcpTunnelChannelHandler(
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
             }
             tcpFd.tunnelChannel.writeAndFlush(
-                ProtoMsg.REMOTE_CONNECTED(
+                ProtoMsgRemoteConnected(
                     tcpFd.tunnelId,
                     sessionId,
-                    RemoteConnection(ctx.channel().remoteAddress())
+                    RemoteConnection(ctx.channel().remoteAddress()).toJsonString() ?: ""
                 )
             )
         } else {
@@ -51,10 +53,10 @@ internal class TcpTunnelChannelHandler(
             }
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
                 tcpFd.tunnelChannel.writeAndFlush(
-                    ProtoMsg.REMOTE_DISCONNECT(
+                    ProtoMsgRemoteDisconnect(
                         tcpFd.tunnelId,
                         sessionId ?: 0,
-                        RemoteConnection(ctx.channel().remoteAddress())
+                        RemoteConnection(ctx.channel().remoteAddress()).toJsonString() ?: ""
                     )
                 )
             }
@@ -75,7 +77,7 @@ internal class TcpTunnelChannelHandler(
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get() ?: return
         val tcpFd = ctx.tcpFd ?: return
         val data = ByteBufUtil.getBytes(msg)
-        tcpFd.tunnelChannel.writeAndFlush(ProtoMsg.TRANSFER(tcpFd.tunnelId, sessionId, data))
+        tcpFd.tunnelChannel.writeAndFlush(ProtoMsgTransfer(tcpFd.tunnelId, sessionId, data))
     }
 
     private val ChannelHandlerContext?.tcpFd: DefaultTcpFd?

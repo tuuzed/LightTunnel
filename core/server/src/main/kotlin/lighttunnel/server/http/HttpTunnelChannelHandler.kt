@@ -9,9 +9,11 @@ import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import lighttunnel.base.RemoteConnection
-import lighttunnel.base.proto.ProtoMsg
-import lighttunnel.base.proto.emptyBytes
+import lighttunnel.base.proto.ProtoMsgRemoteConnected
+import lighttunnel.base.proto.ProtoMsgRemoteDisconnect
+import lighttunnel.base.proto.ProtoMsgTransfer
 import lighttunnel.base.utils.asByteBuf
+import lighttunnel.base.utils.emptyBytes
 import lighttunnel.base.utils.hostExcludePort
 import lighttunnel.base.utils.loggerDelegate
 import lighttunnel.server.utils.*
@@ -37,10 +39,10 @@ internal class HttpTunnelChannelHandler(
         if (httpHost != null && sessionId != null) {
             val httpFd = registry.getHttpFd(httpHost)
             httpFd?.tunnelChannel?.writeAndFlush(
-                ProtoMsg.REMOTE_DISCONNECT(
+                ProtoMsgRemoteDisconnect(
                     httpFd.tunnelId,
                     sessionId,
-                    RemoteConnection(ctx.channel().remoteAddress())
+                    RemoteConnection(ctx.channel().remoteAddress()).toJsonString() ?: ""
                 )
             )
             ctx.channel().attr(AK_HTTP_HOST).set(null)
@@ -92,14 +94,14 @@ internal class HttpTunnelChannelHandler(
                 val sessionId = httpFd.putChannel(ctx.channel())
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMsg.REMOTE_CONNECTED(
+                    ProtoMsgRemoteConnected(
                         httpFd.tunnelId,
                         sessionId,
-                        RemoteConnection(ctx.channel().remoteAddress())
+                        RemoteConnection(ctx.channel().remoteAddress()).toJsonString() ?: ""
                     )
                 )
                 val data = ByteBufUtil.getBytes(msg.asByteBuf) ?: emptyBytes
-                httpFd.tunnelChannel.writeAndFlush(ProtoMsg.TRANSFER(httpFd.tunnelId, sessionId, data))
+                httpFd.tunnelChannel.writeAndFlush(ProtoMsgTransfer(httpFd.tunnelId, sessionId, data))
             }
             is HttpContent -> {
                 // 插件处理
@@ -126,15 +128,15 @@ internal class HttpTunnelChannelHandler(
                     return
                 }
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMsg.REMOTE_CONNECTED(
+                    ProtoMsgRemoteConnected(
                         httpFd.tunnelId,
                         sessionId,
-                        RemoteConnection(ctx.channel().remoteAddress())
+                        RemoteConnection(ctx.channel().remoteAddress()).toJsonString() ?: ""
                     )
                 )
                 val data = ByteBufUtil.getBytes(msg.content() ?: Unpooled.EMPTY_BUFFER) ?: emptyBytes
                 httpFd.tunnelChannel.writeAndFlush(
-                    ProtoMsg.TRANSFER(httpFd.tunnelId, sessionId, data)
+                    ProtoMsgTransfer(httpFd.tunnelId, sessionId, data)
                 )
             }
         }

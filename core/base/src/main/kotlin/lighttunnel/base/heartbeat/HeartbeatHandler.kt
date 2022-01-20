@@ -3,7 +3,7 @@ package lighttunnel.base.heartbeat
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
-import lighttunnel.base.proto.ProtoMsg
+import lighttunnel.base.proto.ProtoMsgPing
 import lighttunnel.base.utils.loggerDelegate
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +23,7 @@ class HeartbeatHandler(
     @Throws(Exception::class)
     override fun channelIdle(ctx: ChannelHandlerContext, evt: IdleStateEvent) {
         logger.trace("channelIdle: {}, {}", ctx, evt)
-        ctx.channel().writeAndFlush(ProtoMsg.HEARTBEAT_PING())
+        ctx.channel().writeAndFlush(ProtoMsgPing)
         super.channelIdle(ctx, evt)
     }
 

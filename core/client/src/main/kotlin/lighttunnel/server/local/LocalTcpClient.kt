@@ -28,8 +28,7 @@ internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(object : ChannelInitializer<SocketChannel>() {
-                override fun initChannel(ch: SocketChannel?) {
-                    ch ?: return
+                override fun initChannel(ch: SocketChannel) {
                     ch.pipeline()
                         .addLast("handler", LocalTcpClientChannelHandler(this@LocalTcpClient))
                 }

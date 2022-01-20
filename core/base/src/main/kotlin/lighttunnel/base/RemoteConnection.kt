@@ -3,7 +3,6 @@
 package lighttunnel.base
 
 import lighttunnel.base.proto.ProtoException
-import lighttunnel.base.proto.emptyBytes
 import lighttunnel.base.utils.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
@@ -17,9 +16,9 @@ class RemoteConnection(val address: SocketAddress) : Serializable {
 
         @JvmStatic
         @Throws(ProtoException::class)
-        fun fromBytes(bytes: ByteArray): RemoteConnection {
+        fun fromJson(jsonStr: String): RemoteConnection {
             val address = try {
-                val json = JSONObject(String(bytes, Charsets.UTF_8))
+                val json = JSONObject(jsonStr)
                 InetSocketAddress(
                     json.getString("hostAddress"),
                     json.getOrDefault("port", -1)
@@ -31,16 +30,18 @@ class RemoteConnection(val address: SocketAddress) : Serializable {
         }
     }
 
-    fun toBytes(): ByteArray {
+    fun toJson(): JSONObject? {
         return if (address is InetSocketAddress) {
-            JSONObject().also {
+            return JSONObject().also {
                 it.put("hostAddress", address.address.hostAddress)
                 it.put("port", address.port)
-            }.toString().toByteArray(charset = Charsets.UTF_8)
+            }
         } else {
-            emptyBytes
+            null
         }
     }
+
+    fun toJsonString(): String? = toJson()?.toString()
 
     override fun toString(): String = address.toString()
 

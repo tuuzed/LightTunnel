@@ -122,8 +122,7 @@ internal class TunnelClientDaemon(
 
     private inner class InnerChannelInitializer(private val sslContext: SslContext?) :
         ChannelInitializer<SocketChannel>() {
-        override fun initChannel(ch: SocketChannel?) {
-            ch ?: return
+        override fun initChannel(ch: SocketChannel) {
             if (sslContext != null) {
                 ch.pipeline()
                     .addFirst("ssl", sslContext.newHandler(ch.alloc()))

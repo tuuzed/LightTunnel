@@ -1,6 +1,6 @@
 package lighttunnel.base
 
-enum class TunnelType(val code: Byte) {
+enum class TunnelType(val value: Byte) {
     UNKNOWN(0x00.toByte()),
     TCP(0x10.toByte()),
     HTTP(0x30.toByte()),
@@ -8,10 +8,10 @@ enum class TunnelType(val code: Byte) {
     ;
 
     companion object {
-        private val mappings = values().associateBy { it.code }
+        private val mappings = values().associateBy { it.value }
 
         @JvmStatic
-        fun codeOf(code: Byte) = mappings.getOrDefault(code, UNKNOWN)
+        fun findTunnelType(value: Byte) = mappings.getOrDefault(value, UNKNOWN)
     }
 
 }

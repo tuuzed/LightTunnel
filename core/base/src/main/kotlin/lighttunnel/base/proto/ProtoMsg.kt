@@ -1,137 +1,316 @@
-@file:Suppress("FunctionName")
+@file:Suppress("MemberVisibilityCanBePrivate", "CanBeParameter")
 
 package lighttunnel.base.proto
 
-import lighttunnel.base.RemoteConnection
-import lighttunnel.base.TunnelRequest
-import lighttunnel.base.utils.asBytes
-import lighttunnel.base.utils.asLong
+import io.netty.buffer.ByteBuf
+import lighttunnel.base.utils.contentToHexString
 
-sealed class ProtoMsg(
-    val type: ProtoMsgType,
-    val head: ByteArray,
-    val data: ByteArray
-) {
+sealed interface ProtoMsg {
+    val type: Type
+    val size: Int
+    fun transmit(out: ByteBuf)
+
     companion object {
-        private fun UNKNOWN() = UnknownMsg
-        fun HEARTBEAT_PING() = HeartbeatPingMsg
-        fun HEARTBEAT_PONG() = HeartbeatPongMsg
-        fun REQUEST(request: TunnelRequest) = RequestMsg(request)
-        fun RESPONSE_OK(tunnelId: Long, request: TunnelRequest) = ResponseOkMsg(tunnelId, request)
-        fun RESPONSE_ERR(cause: Throwable) = ResponseErrMsg(cause)
-        fun TRANSFER(tunnelId: Long, sessionId: Long, data: ByteArray) = TransferMsg(tunnelId, sessionId, data)
-        fun REMOTE_CONNECTED(
-            tunnelId: Long, sessionId: Long, conn: RemoteConnection
-        ) = RemoteConnectedMsg(tunnelId, sessionId, conn)
+        private val mappings = Type.values().associateBy { it.value }
 
-        fun REMOTE_DISCONNECT(
-            tunnelId: Long, sessionId: Long, conn: RemoteConnection
-        ) = RemoteDisconnectMsg(tunnelId, sessionId, conn)
+        fun findType(value: Byte): Type = mappings[value] ?: Type.Unknown
+    }
 
-        fun LOCAL_CONNECTED(tunnelId: Long, sessionId: Long) = LocalConnectedMsg(tunnelId, sessionId)
-        fun LOCAL_DISCONNECT(tunnelId: Long, sessionId: Long) = LocalDisconnectMsg(tunnelId, sessionId)
-        fun FORCE_OFF() = ForceOffMsg
-        fun FORCE_OFF_REPLY() = ForceOffReplyMsg
+    enum class Type(val value: Byte) {
+        /**
+         * 未知
+         */
+        Unknown(0x00),
 
-        @Throws(Exception::class)
-        internal fun newInstance(type: ProtoMsgType, head: ByteArray, data: ByteArray): ProtoMsg {
-            return when (type) {
-                ProtoMsgType.UNKNOWN -> UNKNOWN()
-                ProtoMsgType.HEARTBEAT_PING -> HEARTBEAT_PING()
-                ProtoMsgType.HEARTBEAT_PONG -> HEARTBEAT_PONG()
-                ProtoMsgType.REQUEST -> RequestMsg(data)
-                ProtoMsgType.RESPONSE_OK -> ResponseOkMsg(head, data)
-                ProtoMsgType.RESPONSE_ERR -> ResponseErrMsg(data)
-                ProtoMsgType.TRANSFER -> TransferMsg(head, data)
-                ProtoMsgType.REMOTE_CONNECTED -> RemoteConnectedMsg(head, data)
-                ProtoMsgType.REMOTE_DISCONNECT -> RemoteDisconnectMsg(head, data)
-                ProtoMsgType.LOCAL_CONNECTED -> LocalConnectedMsg(head)
-                ProtoMsgType.LOCAL_DISCONNECT -> LocalDisconnectMsg(head)
-                ProtoMsgType.FORCE_OFF -> FORCE_OFF()
-                ProtoMsgType.FORCE_OFF_REPLY -> FORCE_OFF_REPLY()
-            }
-        }
+        /**
+         * 心跳消息 PING
+         *
+         * 消息流向：Client <-> Server
+         */
+        Ping(0x10),
 
+        /**
+         * 心跳消息 PONG
+         *
+         * 消息流向：Client <-> Server
+         */
+        Pong(0x11),
+
+        /**
+         * 建立代理隧道请求
+         *
+         * 消息流向：Client -> Server
+         */
+        Request(0x20),
+
+        /**
+         * 建立代理隧道响应
+         *
+         * 消息流向：Client <- Server
+         */
+        Response(0x21),
+
+        /**
+         * 透传消息
+         *
+         * 消息流向：Client <-> Server
+         */
+        Transfer(0x30),
+
+        /**
+         * 本地连接成功
+         *
+         * 消息流向：Client -> Server
+         */
+        LocalConnected(0x40),
+
+        /**
+         * 本地连接断开
+         *
+         * 消息流向：Client -> Server
+         */
+        LocalDisconnect(0x41),
+
+        /**
+         * 远程连接成功
+         *
+         * 消息流向：Client <- Server
+         */
+        RemoteConnected(0x42),
+
+        /**
+         * 远程断开连接
+         *
+         * 消息流向：Client <- Server
+         */
+        RemoteDisconnect(0x43),
+
+        /**
+         * 强制下线
+         *
+         * 消息流向：Client <- Server
+         */
+        ForceOff(0x50),
+
+        /**
+         * 强制下线回复
+         *
+         * 消息流向：Client -> Server
+         */
+        ForceOffReply(0x51),
+    }
+}
+
+/**
+ * 未知
+ */
+object ProtoMsgUnknown : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Unknown
+    override val size: Int get() = 1
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+    }
+}
+
+/**
+ * 心跳消息 PING
+ *
+ * 消息流向：Client <-> Server
+ */
+object ProtoMsgPing : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Ping
+    override val size: Int get() = 1
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+    }
+}
+
+/**
+ * 心跳消息 PONG
+ *
+ * 消息流向：Client <-> Server
+ */
+object ProtoMsgPong : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Pong
+    override val size: Int get() = 1
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+    }
+}
+
+/**
+ * 建立代理隧道请求
+ *
+ * 消息流向：Client -> Server
+ */
+class ProtoMsgRequest(payload: String) : ProtoMsg {
+    private val data = payload.toByteArray()
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Request
+    override val size: Int get() = 1 + 4 + data.size
+    val payload: String by lazy { String(data) }
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeInt(data.size)
+        out.writeBytes(data)
     }
 
     override fun toString(): String {
-        return "ProtoMsg(type=$type, head.length=${head.size}, data.length=${data.size})"
+        return "ProtoMsgRequest(payload='$payload')"
+    }
+
+}
+
+/**
+ * 建立代理隧道响应
+ *
+ * 消息流向：Client <- Server
+ */
+class ProtoMsgResponse(val status: Boolean, val tunnelId: Long, payload: String) : ProtoMsg {
+    private val data = payload.toByteArray()
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Response
+    override val size: Int get() = 1 + 1 + 8 + 4 + data.size
+    val payload: String by lazy { String(data) }
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeByte(if (status) 1 else 0)
+        out.writeLong(tunnelId)
+        out.writeInt(data.size)
+        out.writeBytes(data)
+    }
+
+    override fun toString(): String {
+        return "ProtoMsgResponse(status=$status, tunnelId=$tunnelId, payload='$payload')"
+    }
+
+}
+
+/**
+ * 透传消息
+ *
+ * 消息流向：Client <-> Server
+ */
+class ProtoMsgTransfer(val tunnelId: Long, val sessionId: Long, val data: ByteArray) : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Transfer
+    override val size: Int get() = 1 + 8 + 8 + 4 + data.size
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeLong(tunnelId)
+        out.writeLong(sessionId)
+        out.writeInt(data.size)
+        out.writeBytes(data)
+    }
+
+    override fun toString(): String {
+        return "ProtoMsgTransfer(tunnelId=$tunnelId, sessionId=$sessionId, data=${data.contentToHexString()})"
     }
 }
 
-object UnknownMsg : ProtoMsg(ProtoMsgType.UNKNOWN, emptyBytes, emptyBytes)
-object ForceOffMsg : ProtoMsg(ProtoMsgType.FORCE_OFF, emptyBytes, emptyBytes)
-object ForceOffReplyMsg : ProtoMsg(ProtoMsgType.FORCE_OFF_REPLY, emptyBytes, emptyBytes)
-object HeartbeatPingMsg : ProtoMsg(ProtoMsgType.HEARTBEAT_PING, emptyBytes, emptyBytes)
-object HeartbeatPongMsg : ProtoMsg(ProtoMsgType.HEARTBEAT_PONG, emptyBytes, emptyBytes)
+/**
+ * 本地连接成功
+ *
+ * 消息流向：Client -> Server
+ */
+class ProtoMsgLocalConnected(val tunnelId: Long, val sessionId: Long) : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.LocalConnected
+    override val size: Int get() = 1 + 8 + 8
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeLong(tunnelId)
+        out.writeLong(sessionId)
+    }
 
-class LocalConnectedMsg(
-    val tunnelId: Long,
-    val sessionId: Long
-) : ProtoMsg(ProtoMsgType.LOCAL_CONNECTED, longArrayOf(tunnelId, sessionId).asBytes(), emptyBytes) {
-    constructor(head: ByteArray) : this(head.asLong(0), head.asLong(8))
+    override fun toString(): String {
+        return "ProtoMsgLocalConnected(tunnelId=$tunnelId, sessionId=$sessionId)"
+    }
 }
 
-class LocalDisconnectMsg(
-    val tunnelId: Long,
-    val sessionId: Long
-) : ProtoMsg(ProtoMsgType.LOCAL_DISCONNECT, longArrayOf(tunnelId, sessionId).asBytes(), emptyBytes) {
-    constructor(head: ByteArray) : this(head.asLong(0), head.asLong(8))
+/**
+ * 本地连接断开
+ *
+ * 消息流向：Client -> Server
+ */
+class ProtoMsgLocalDisconnect(val tunnelId: Long, val sessionId: Long) : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.LocalDisconnect
+    override val size: Int get() = 1 + 8 + 8
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeLong(tunnelId)
+        out.writeLong(sessionId)
+    }
+
+    override fun toString(): String {
+        return "ProtoMsgLocalDisconnect(tunnelId=$tunnelId, sessionId=$sessionId)"
+    }
 }
 
-class RemoteConnectedMsg(
-    val tunnelId: Long,
-    val sessionId: Long,
-    val conn: RemoteConnection
-) : ProtoMsg(ProtoMsgType.REMOTE_CONNECTED, longArrayOf(tunnelId, sessionId).asBytes(), conn.toBytes()) {
-    constructor(head: ByteArray, data: ByteArray) : this(
-        head.asLong(0),
-        head.asLong(8),
-        RemoteConnection.fromBytes(data)
-    )
+/**
+ * 远程连接成功
+ *
+ * 消息流向：Client <- Server
+ */
+class ProtoMsgRemoteConnected(val tunnelId: Long, val sessionId: Long, payload: String) : ProtoMsg {
+    private val data = payload.toByteArray()
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.RemoteConnected
+    override val size: Int get() = 1 + 8 + 8 + 4 + data.size
+    val payload: String by lazy { String(data) }
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeLong(tunnelId)
+        out.writeLong(sessionId)
+        out.writeInt(data.size)
+        out.writeBytes(data)
+    }
+
+    override fun toString(): String {
+        return "ProtoMsgRemoteConnected(tunnelId=$tunnelId, sessionId=$sessionId, payload='$payload')"
+    }
 }
 
-class RemoteDisconnectMsg(
-    val tunnelId: Long,
-    val sessionId: Long,
-    val conn: RemoteConnection
-) : ProtoMsg(ProtoMsgType.REMOTE_DISCONNECT, longArrayOf(tunnelId, sessionId).asBytes(), conn.toBytes()) {
-    constructor(head: ByteArray, data: ByteArray) : this(
-        head.asLong(0),
-        head.asLong(8),
-        RemoteConnection.fromBytes(data)
-    )
+/**
+ * 远程断开连接
+ *
+ * 消息流向：Client <- Server
+ */
+class ProtoMsgRemoteDisconnect(val tunnelId: Long, val sessionId: Long, payload: String) : ProtoMsg {
+    private val data = payload.toByteArray()
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.RemoteDisconnect
+    override val size: Int get() = 1 + 8 + 8 + 4 + data.size
+    val payload: String by lazy { String(data) }
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+        out.writeLong(tunnelId)
+        out.writeLong(sessionId)
+        out.writeInt(data.size)
+        out.writeBytes(data)
+    }
+
+    override fun toString(): String {
+        return "ProtoMsgRemoteDisconnect(tunnelId=$tunnelId, sessionId=$sessionId, payload='$payload')"
+    }
 }
 
-class RequestMsg constructor(
-    val request: TunnelRequest
-) : ProtoMsg(ProtoMsgType.REQUEST, emptyBytes, request.toBytes()) {
-    constructor(data: ByteArray) : this(TunnelRequest.fromBytes(data))
+/**
+ * 强制下线
+ *
+ * 消息流向：Client <- Server
+ */
+object ProtoMsgForceOff : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.ForceOff
+    override val size: Int get() = 1
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+    }
 }
 
-class ResponseErrMsg(
-    val cause: Throwable
-) : ProtoMsg(ProtoMsgType.RESPONSE_ERR, emptyBytes, cause.message.toString().toByteArray()) {
-    constructor(data: ByteArray) : this(Throwable(String(data)))
+/**
+ * 强制下线回复
+ *
+ * 消息流向：Client -> Server
+ */
+object ProtoMsgForceOffReply : ProtoMsg {
+    override val type: ProtoMsg.Type get() = ProtoMsg.Type.ForceOffReply
+    override val size: Int get() = 1
+    override fun transmit(out: ByteBuf) {
+        out.writeByte(type.value.toInt())
+    }
 }
-
-class ResponseOkMsg(
-    val tunnelId: Long,
-    val request: TunnelRequest
-) : ProtoMsg(ProtoMsgType.RESPONSE_OK, tunnelId.asBytes(), request.toBytes()) {
-    constructor(head: ByteArray, data: ByteArray) : this(head.asLong(0), TunnelRequest.fromBytes(data))
-}
-
-class TransferMsg(
-    val tunnelId: Long,
-    val sessionId: Long,
-    data: ByteArray
-) : ProtoMsg(ProtoMsgType.TRANSFER, longArrayOf(tunnelId, sessionId).asBytes(), data) {
-    constructor(
-        head: ByteArray, data: ByteArray
-    ) : this(head.asLong(0), head.asLong(8), data)
-}
-
-
-
-
