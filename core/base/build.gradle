@@ -30,8 +30,8 @@ dependencies {
 buildConfig {
     appName = "LightTunnel"
     version = project.version
-    clsName = "GenBuildConfig"
-    packageName = "${rootProject.group}.base.gen"
+    clsName = "GeneratedBuildConfig"
+    packageName = "${rootProject.group}.base.generated"
     charset = "UTF-8"
 
     buildConfigField "int", "VERSION_CODE", "${GitVc.VERSION_CODE}"
