@@ -1,20 +1,37 @@
-name: LightTunnel CI
+name: Krp CI
 
 on:
   push:
-    branches: [ master, beta ]
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Set up JDK 1.8
+      - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: '11'
+          distribution: 'adopt'
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build -x test
-          ./gradlew clean dists
+          ./gradlew clean publish
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dists-artifact
+          path: dists/
+
+#      - name: Download MinIO client
+#        run: wget -P bin/ https://dl.min.io/client/mc/release/linux-amd64/mc
+#
+#      - name: Grant execute permission for mc
+#        run: chmod +x ./bin/mc
+#
+#      - name: Setup MinIO client
+#        run: ./bin/mc alias set minio/ ${{ secrets.MINIO_URL }} ${{ secrets.MINIO_ACCESS_KEY }} ${{ secrets.MINIO_SECRET_KEY }}
+#
+#      - name: Upload product
+#        run: cd ./dists/ && ../bin/mc cp --recursive . minio/krp

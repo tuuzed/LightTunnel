@@ -1,0 +1,8 @@
+keytool -genkey -alias krpdalias -keysize 2048 -validity 3650 -keyalg RSA -dname "CN=Krp" -keypass krpdpass -storepass krpdpass -keystore krpd.jks
+keytool -genkey -alias krpalias   -keysize 2048 -validity 3650 -keyalg RSA -dname "CN=Krp" -keypass krdpass   -storepass krppass   -keystore krp.jks
+
+keytool -importkeystore -srckeystore krpd.jks -destkeystore krpd.jks -deststoretype pkcs12
+keytool -importkeystore -srckeystore krp.jks -destkeystore krp.jks -deststoretype pkcs12
+
+keytool -export -alias krpdalias -keystore krpd.jks -storepass krpdpass -file krpd.cer
+keytool -import -trustcacerts -alias krpdalias -file krpd.cer -storepass krppass -keystore krp.jks

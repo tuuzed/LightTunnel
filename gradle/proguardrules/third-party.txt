@@ -1,9 +1,0 @@
-### Netty
--keepnames class io.netty.** { *; }
--dontwarn io.netty.**
-
-### slf4j & log4j
--keepclasseswithmembernames class org.slf4j.** { *; }
--dontwarn org.slf4j.**
--keepclasseswithmembernames class org.apache.log4j.** { *; }
--dontwarn org.apache.log4j.**
