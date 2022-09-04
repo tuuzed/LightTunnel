@@ -2,7 +2,7 @@
 object Deps {
 
     object Common {
-        private const val netty_version = "4.1.79.Final"
+        private const val netty_version = "4.1.80.Final"
 
         /** NIO网络库 */
         const val netty_buffer = "io.netty:netty-buffer:$netty_version"
