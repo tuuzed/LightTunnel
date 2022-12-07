@@ -24,8 +24,8 @@ object Deps {
 
     /** 日志库 */
     object Logger {
-        const val slf4j_api = "org.slf4j:slf4j-api:1.7.33"
-        const val slf4j_log4j12 = "org.slf4j:slf4j-log4j12:1.7.33"
+        const val slf4j_api = "org.slf4j:slf4j-api:1.7.36"
+        const val slf4j_log4j12 = "org.slf4j:slf4j-log4j12:1.7.36"
     }
 
     object Config {
