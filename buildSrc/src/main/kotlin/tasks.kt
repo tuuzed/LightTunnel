@@ -6,13 +6,13 @@ import java.io.File
 
 open class FatJarTask : Jar() {
     init {
-        group = "krp"
+        group = "lighttunnel"
     }
 }
 
 open class R8JarTask : DefaultTask() {
     init {
-        group = "krp"
+        group = "lighttunnel"
     }
 
     @TaskAction
@@ -26,7 +26,7 @@ open class R8JarTask : DefaultTask() {
 
 open class BinaryJarTask : DefaultTask() {
     init {
-        group = "krp"
+        group = "lighttunnel"
     }
 
     @TaskAction
@@ -48,7 +48,7 @@ open class PublishTask : DefaultTask() {
     var appName: String = project.name
 
     init {
-        group = "krp"
+        group = "lighttunnel"
     }
 
     @TaskAction

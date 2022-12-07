@@ -14,4 +14,4 @@ build/
 /dists
 
 ### Generated resources
-**/resources/generated
+**/resources/**/generated

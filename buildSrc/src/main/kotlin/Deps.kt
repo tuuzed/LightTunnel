@@ -2,7 +2,7 @@
 object Deps {
 
     object Common {
-        private const val netty_version = "4.1.80.Final"
+        private const val netty_version = "4.1.85.Final"
 
         /** NIO网络库 */
         const val netty_buffer = "io.netty:netty-buffer:$netty_version"
@@ -14,12 +14,12 @@ object Deps {
         const val netty_transport = "io.netty:netty-transport:$netty_version"
 
         /** Json */
-        const val json = "org.json:json:20211205"
+        const val json = "org.json:json:20220924"
     }
 
     object Command {
         /** 命令行参数解析 */
-        const val clikt = "com.github.ajalt.clikt:clikt:3.4.0"
+        const val clikt = "com.github.ajalt.clikt:clikt:3.5.0"
     }
 
     /** 日志库 */

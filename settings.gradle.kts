@@ -1,5 +1,13 @@
-rootProject.name = "krp"
-include("common", "krp", "krpd", "http", "httpd")
-include("log-impl")
-include("extensions")
-include("krp-cli", "krpd-cli")
+rootProject.name = "LightTunnel"
+
+include("core:common")
+include("core:server")
+include("core:client")
+
+include("extras:httpclient")
+include("extras:httpserver")
+include("extras:extensions")
+include("extras:logimpl")
+
+include("impls:ltc")
+include("impls:lts")

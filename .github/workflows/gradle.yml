@@ -1,4 +1,4 @@
-name: Krp CI
+name: LightTunnel CI
 
 on:
   push:
@@ -34,4 +34,4 @@ jobs:
 #        run: ./bin/mc alias set minio/ ${{ secrets.MINIO_URL }} ${{ secrets.MINIO_ACCESS_KEY }} ${{ secrets.MINIO_SECRET_KEY }}
 #
 #      - name: Upload product
-#        run: cd ./dists/ && ../bin/mc cp --recursive . minio/krp
+#        run: cd ./dists/ && ../bin/mc cp --recursive . minio/LightTunnel
