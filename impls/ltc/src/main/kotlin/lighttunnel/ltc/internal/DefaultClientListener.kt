@@ -1,8 +1,8 @@
-package lighttunnel.ltc.cli.internal
+package lighttunnel.ltc.internal
 
 import lighttunnel.client.ClientListener
 import lighttunnel.client.conn.TunnelConn
-import lighttunnel.common.entity.RemoteConnection
+import lighttunnel.common.entity.RemoteConn
 import lighttunnel.common.exception.LightTunnelException
 import lighttunnel.common.utils.injectLogger
 
@@ -10,10 +10,10 @@ internal class DefaultClientListener : ClientListener {
 
     private val logger by injectLogger()
 
-    override fun onRemoteConnected(conn: RemoteConnection) =
+    override fun onRemoteConnected(conn: RemoteConn) =
         logger.info("onRemoteConnected: {}", conn)
 
-    override fun onRemoteDisconnect(conn: RemoteConnection) =
+    override fun onRemoteDisconnect(conn: RemoteConn) =
         logger.info("onRemoteDisconnect: {}", conn)
 
     override fun onTunnelConnecting(

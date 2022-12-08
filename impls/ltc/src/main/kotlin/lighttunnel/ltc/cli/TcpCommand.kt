@@ -7,13 +7,13 @@ import com.github.ajalt.clikt.core.requireObject
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import lighttunnel.client.Client
-import lighttunnel.ltc.cli.internal.DefaultClientListener
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.utils.ManifestUtils
-import lighttunnel.extensions.authToken
-import lighttunnel.extensions.name
-import lighttunnel.extensions.os
-import lighttunnel.extensions.version
+import lighttunnel.extras.authToken
+import lighttunnel.extras.name
+import lighttunnel.extras.os
+import lighttunnel.extras.version
+import lighttunnel.ltc.internal.DefaultClientListener
 import java.util.*
 import kotlin.experimental.or
 

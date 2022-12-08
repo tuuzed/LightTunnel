@@ -1,11 +1,11 @@
-package lighttunnel.lts.cli.internal
+package lighttunnel.lts.internal
 
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.entity.TunnelType
 import lighttunnel.common.exception.LightTunnelException
 import lighttunnel.common.utils.PortUtils
 import lighttunnel.common.utils.injectLogger
-import lighttunnel.extensions.authToken
+import lighttunnel.extras.*
 import lighttunnel.server.TunnelRequestInterceptor
 
 internal class DefaultTunnelRequestInterceptor(

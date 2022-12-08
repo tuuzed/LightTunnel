@@ -1,27 +1,26 @@
 @file:Suppress("DuplicatedCode")
 
-package lighttunnel.lts.cli.internal
+package lighttunnel.lts.internal
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
+import lighttunnel.common.utils.DateUtils
 import lighttunnel.common.utils.ManifestUtils
 import lighttunnel.common.utils.basicAuthorization
+import lighttunnel.httpserver.AuthProvider
 import lighttunnel.httpserver.HttpServer
 import org.json.JSONArray
 import org.json.JSONObject
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.concurrent.getOrSet
 
 internal class LtsOpenApi {
 
     fun start(
         bindIp: String?,
         bindPort: Int,
-        authProvider: ((username: String, password: String) -> Boolean)?
+        authProvider: AuthProvider?
     ) {
         HttpServer(
             name = "LtsOpenApi",
@@ -33,7 +32,7 @@ internal class LtsOpenApi {
             intercept("^/.*".toRegex()) {
                 val auth = authProvider ?: return@intercept null
                 val account = it.basicAuthorization
-                val next = if (account != null) auth(account.first, account.second) else false
+                val next = if (account != null) auth.invoke(account.first, account.second) else false
                 if (next) {
                     null
                 } else {
@@ -79,11 +78,11 @@ internal class LtsOpenApi {
                     put("conns", descriptor.connectionCount)
                     put("inbound", descriptor.trafficStats.inboundBytes)
                     put("outbound", descriptor.trafficStats.outboundBytes)
-                    put("createAt", descriptor.trafficStats.createAt.format())
-                    put("updateAt", descriptor.trafficStats.updateAt.format())
+                    put("createAt", DateUtils.format(descriptor.trafficStats.createAt))
+                    put("updateAt", DateUtils.format(descriptor.trafficStats.updateAt))
                 }
             }))
-            put("http", JSONArray(DataStore.httDescriptors.map { descriptor ->
+            put("http", JSONArray(DataStore.httpDescriptors.map { descriptor ->
                 JSONObject(linkedMapOf<String, Any>()).apply {
                     put("localIp", descriptor.tunnelRequest.localIp)
                     put("localPort", descriptor.tunnelRequest.localPort)
@@ -92,8 +91,8 @@ internal class LtsOpenApi {
                     put("conns", descriptor.connectionCount)
                     put("inbound", descriptor.trafficStats.inboundBytes)
                     put("outbound", descriptor.trafficStats.outboundBytes)
-                    put("createAt", descriptor.trafficStats.createAt.format())
-                    put("updateAt", descriptor.trafficStats.updateAt.format())
+                    put("createAt", DateUtils.format(descriptor.trafficStats.createAt))
+                    put("updateAt", DateUtils.format(descriptor.trafficStats.updateAt))
                 }
             }))
             put("https", JSONArray(DataStore.httpsDescriptors.map { descriptor ->
@@ -105,20 +104,12 @@ internal class LtsOpenApi {
                     put("conns", descriptor.connectionCount)
                     put("inbound", descriptor.trafficStats.inboundBytes)
                     put("outbound", descriptor.trafficStats.outboundBytes)
-                    put("createAt", descriptor.trafficStats.createAt.format())
-                    put("updateAt", descriptor.trafficStats.updateAt.format())
+                    put("createAt", DateUtils.format(descriptor.trafficStats.createAt))
+                    put("updateAt", DateUtils.format(descriptor.trafficStats.updateAt))
                 }
             }))
         }
 
-    private val cachedSdf = ThreadLocal<MutableMap<String, DateFormat>>()
-
-    private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? =
-        this?.let { getDateFormat(pattern).format(this) }
-
-    private fun getDateFormat(pattern: String) = cachedSdf.getOrSet { hashMapOf() }[pattern] ?: SimpleDateFormat(
-        pattern, Locale.getDefault()
-    ).also { cachedSdf.get()[pattern] = it }
 
     private fun ByteBuf.newFullHttpResponse(contentType: CharSequence) = DefaultFullHttpResponse(
         HttpVersion.HTTP_1_1, HttpResponseStatus.OK, this

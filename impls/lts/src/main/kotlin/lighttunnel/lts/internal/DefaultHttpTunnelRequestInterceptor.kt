@@ -1,10 +1,10 @@
-package lighttunnel.lts.cli.internal
+package lighttunnel.lts.internal
 
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.utils.basicAuthorization
-import lighttunnel.extensions.*
+import lighttunnel.extras.*
 import lighttunnel.server.http.HttpContext
 import lighttunnel.server.http.HttpTunnelRequestInterceptor
 import java.net.InetSocketAddress

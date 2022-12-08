@@ -8,7 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
-import lighttunnel.common.entity.RemoteConnection
+import lighttunnel.common.entity.RemoteConn
 import lighttunnel.common.proto.msg.ProtoMsgRemoteConnected
 import lighttunnel.common.proto.msg.ProtoMsgRemoteDisconnect
 import lighttunnel.common.proto.msg.ProtoMsgTransfer
@@ -39,7 +39,7 @@ internal class HttpTunnelChannelHandler(
             if (tunnelChannel != null) {
                 val aes128Key = tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData =
-                    (RemoteConnection(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
+                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
                         .tryGZip()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
@@ -105,7 +105,7 @@ internal class HttpTunnelChannelHandler(
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData1 =
-                    (RemoteConnection(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
+                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
                         .tryGZip()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
@@ -160,7 +160,7 @@ internal class HttpTunnelChannelHandler(
                 }
                 val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData1 =
-                    (RemoteConnection(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
+                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
                         .tryGZip()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second

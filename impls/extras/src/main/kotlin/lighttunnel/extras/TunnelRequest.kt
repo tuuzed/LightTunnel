@@ -1,4 +1,4 @@
-package lighttunnel.extensions
+package lighttunnel.extras
 
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.utils.getOrNull

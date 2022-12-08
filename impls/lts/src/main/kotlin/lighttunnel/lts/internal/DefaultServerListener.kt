@@ -1,10 +1,11 @@
-package lighttunnel.lts.cli.internal
+package lighttunnel.lts.internal
 
 import lighttunnel.common.utils.injectLogger
+import lighttunnel.server.ServerListener
 import lighttunnel.server.http.HttpDescriptor
 import lighttunnel.server.tcp.TcpDescriptor
 
-internal class DefaultServerListener : lighttunnel.server.ServerListener {
+internal class DefaultServerListener : ServerListener {
     private val logger by injectLogger()
 
     override fun onTcpTunnelConnected(descriptor: TcpDescriptor) {
@@ -18,12 +19,12 @@ internal class DefaultServerListener : lighttunnel.server.ServerListener {
     }
 
     override fun onHttpTunnelConnected(descriptor: HttpDescriptor) {
-        (if (descriptor.isHttps) DataStore.httpsDescriptors else DataStore.httDescriptors).add(descriptor)
+        (if (descriptor.isHttps) DataStore.httpsDescriptors else DataStore.httpDescriptors).add(descriptor)
         logger.info("onConnected: {}", descriptor)
     }
 
     override fun onHttpTunnelDisconnect(descriptor: HttpDescriptor) {
-        (if (descriptor.isHttps) DataStore.httpsDescriptors else DataStore.httDescriptors).remove(descriptor)
+        (if (descriptor.isHttps) DataStore.httpsDescriptors else DataStore.httpDescriptors).remove(descriptor)
         logger.info("onDisconnect: {}", descriptor)
     }
 

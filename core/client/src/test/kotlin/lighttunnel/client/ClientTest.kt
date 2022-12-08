@@ -1,6 +1,6 @@
 package lighttunnel.client
 
-import lighttunnel.logimpl.LoggerConfigure
+import lighttunnel.logger.LoggerConfigure
 import lighttunnel.common.entity.TunnelRequest
 import org.apache.log4j.Level
 import org.junit.After

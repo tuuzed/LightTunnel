@@ -1,4 +1,4 @@
-package lighttunnel.lts.cli.internal
+package lighttunnel.lts.internal
 
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener

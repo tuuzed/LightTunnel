@@ -1,6 +1,6 @@
 package lighttunnel.server
 
-import lighttunnel.logimpl.LoggerConfigure
+import lighttunnel.logger.LoggerConfigure
 import lighttunnel.server.args.HttpTunnelArgs
 import lighttunnel.server.args.HttpsTunnelArgs
 import lighttunnel.server.args.TunnelDaemonArgs

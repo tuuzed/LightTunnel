@@ -1,4 +1,4 @@
-package lighttunnel.logimpl
+package lighttunnel.logger
 
 import org.apache.log4j.*
 

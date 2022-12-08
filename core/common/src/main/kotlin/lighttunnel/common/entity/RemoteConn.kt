@@ -9,16 +9,14 @@ import java.io.Serializable
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
-class RemoteConnection(
-    val address: SocketAddress
-) : Serializable {
+class RemoteConn(val address: SocketAddress) : Serializable {
 
     companion object {
         private const val serialVersionUID = 1L
 
         @JvmStatic
         @Throws(LightTunnelException::class)
-        fun fromJson(jsonStr: String): RemoteConnection {
+        fun fromJson(jsonStr: String): RemoteConn {
             val address = try {
                 val json = JSONObject(jsonStr)
                 InetSocketAddress(
@@ -28,7 +26,7 @@ class RemoteConnection(
             } catch (e: Exception) {
                 throw LightTunnelException("解析失败，数据异常", e)
             }
-            return RemoteConnection(address)
+            return RemoteConn(address)
         }
     }
 

@@ -8,7 +8,7 @@ version = rootProject.version
 dependencies {
     implementation(kotlin("stdlib"))
     api(project(":core:common"))
-    testImplementation(project(":extras:logimpl"))
+    testImplementation(project(":extras:logger"))
     testImplementation(Deps.Test.junit)
 }
 

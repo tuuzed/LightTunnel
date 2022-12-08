@@ -9,7 +9,7 @@ import lighttunnel.client.conn.DefaultTunnelConn
 import lighttunnel.client.extra.ChannelInactiveExtra
 import lighttunnel.client.local.LocalTcpClient
 import lighttunnel.client.utils.*
-import lighttunnel.common.entity.RemoteConnection
+import lighttunnel.common.entity.RemoteConn
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.entity.TunnelType
 import lighttunnel.common.exception.LightTunnelException
@@ -137,7 +137,7 @@ internal class ClientTunnelDaemonChannelHandler(
             is ProtoMsgRemoteConnected -> {
                 ctx.channel().attr(AK_TUNNEL_ID).set(msg.tunnelId)
                 ctx.channel().attr(AK_SESSION_ID).set(msg.sessionId)
-                val conn = runCatching { RemoteConnection.fromJson(msg.payload) }.getOrNull()
+                val conn = runCatching { RemoteConn.fromJson(msg.payload) }.getOrNull()
                 if (conn != null) {
                     clientListener?.onRemoteConnected(conn)
                 }
@@ -150,7 +150,7 @@ internal class ClientTunnelDaemonChannelHandler(
             }
 
             is ProtoMsgRemoteDisconnect -> {
-                val conn = runCatching { RemoteConnection.fromJson(msg.payload) }.getOrNull()
+                val conn = runCatching { RemoteConn.fromJson(msg.payload) }.getOrNull()
                 if (conn != null) {
                     clientListener?.onRemoteDisconnect(conn)
                 }

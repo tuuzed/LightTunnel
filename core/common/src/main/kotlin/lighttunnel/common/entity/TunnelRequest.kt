@@ -32,7 +32,10 @@ class TunnelRequest private constructor(
         }
 
         fun forTcp(
-            localIp: String, localPort: Int, remotePort: Int, extFunc: (TunnelRequest.() -> Unit)? = null
+            localIp: String,
+            localPort: Int,
+            remotePort: Int,
+            extFunc: (TunnelRequest.() -> Unit)? = null
         ): TunnelRequest {
             return TunnelRequest(
                 root = JSONObject()

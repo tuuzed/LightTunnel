@@ -1,6 +1,4 @@
-@file:Suppress("DuplicatedCode")
-
-package lighttunnel.ltc.cli.internal
+package lighttunnel.ltc.internal
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -9,21 +7,19 @@ import io.netty.handler.codec.http.*
 import lighttunnel.client.Client
 import lighttunnel.common.utils.ManifestUtils
 import lighttunnel.common.utils.basicAuthorization
-import lighttunnel.extensions.name
+import lighttunnel.extras.name
+import lighttunnel.httpserver.AuthProvider
 import lighttunnel.httpserver.HttpServer
 import org.json.JSONArray
 import org.json.JSONObject
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.concurrent.getOrSet
 
 internal class LtcOpenApi(private val client: Client) {
 
     fun start(
         bindIp: String?,
         bindPort: Int,
-        authProvider: ((username: String, password: String) -> Boolean)?,
+        authProvider: AuthProvider?,
     ) {
         HttpServer(
             name = "LtcOpenApi",
@@ -35,7 +31,7 @@ internal class LtcOpenApi(private val client: Client) {
             intercept("^/.*".toRegex()) {
                 val auth = authProvider ?: return@intercept null
                 val account = it.basicAuthorization
-                val next = if (account != null) auth(account.first, account.second) else false
+                val next = if (account != null) auth.invoke(account.first, account.second) else false
                 if (next) {
                     null
                 } else {
@@ -78,15 +74,6 @@ internal class LtcOpenApi(private val client: Client) {
                 put("extras", it.tunnelRequest.extras)
             }
         })
-
-    private val cachedSdf = ThreadLocal<MutableMap<String, DateFormat>>()
-
-    private fun Date?.format(pattern: String = "yyyy-MM-dd HH:mm:ss"): String? =
-        this?.let { getDateFormat(pattern).format(this) }
-
-    private fun getDateFormat(pattern: String) = cachedSdf.getOrSet { hashMapOf() }[pattern] ?: SimpleDateFormat(
-        pattern, Locale.getDefault()
-    ).also { cachedSdf.get()[pattern] = it }
 
     private fun ByteBuf.newFullHttpResponse(contentType: CharSequence) = DefaultFullHttpResponse(
         HttpVersion.HTTP_1_1, HttpResponseStatus.OK, this
