@@ -16,7 +16,7 @@ class HeartbeatHandler(
     writerIdleTime: Long = 0L,
     allIdleTime: Long = 0L,
     unit: TimeUnit = TimeUnit.SECONDS,
-    private val checkHealth: ((ctx: ChannelHandlerContext, evt: IdleStateEvent) -> Boolean)? = null
+    private val callback: HeartbeatCallback? = null
 ) : IdleStateHandler(observeOutput, readerIdleTime, writerIdleTime, allIdleTime, unit) {
 
     private val logger by injectLogger()
@@ -24,7 +24,7 @@ class HeartbeatHandler(
     override fun channelIdle(ctx: ChannelHandlerContext, evt: IdleStateEvent) {
         logger.trace("channelIdle: {}, {}", ctx, evt)
         ctx.channel().writeAndFlush(ProtoMsgPing)
-        if (checkHealth?.invoke(ctx, evt) != true) {
+        if (callback?.invoke(ctx, evt) != true) {
             super.channelIdle(ctx, evt)
         }
     }

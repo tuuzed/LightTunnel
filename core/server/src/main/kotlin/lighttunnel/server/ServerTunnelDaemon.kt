@@ -8,9 +8,9 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.ssl.SslContext
-import io.netty.handler.timeout.IdleStateEvent
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.exception.LightTunnelException
+import lighttunnel.common.heartbeat.HeartbeatCallback
 import lighttunnel.common.heartbeat.HeartbeatHandler
 import lighttunnel.common.proto.ProtoMsgDecoder
 import lighttunnel.common.proto.ProtoMsgEncoder
@@ -87,7 +87,7 @@ internal class ServerTunnelDaemon(
             }
         }
     private val checkHealthTimeout = TimeUnit.SECONDS.toMillis(120)
-    private val checkHealthHandler = { ctx: ChannelHandlerContext, _: IdleStateEvent ->
+    private val heartbeatCallback = HeartbeatCallback { ctx, _ ->
         val watchdogTimeMillis = ctx.channel().attr(AK_WATCHDOG_TIME_MILLIS).get()
         if (watchdogTimeMillis != null && System.currentTimeMillis() - watchdogTimeMillis > checkHealthTimeout) {
             ctx.fireExceptionCaught(LightTunnelException("heartbeat timeout"))
@@ -147,7 +147,7 @@ internal class ServerTunnelDaemon(
                     }
                     ch.pipeline()
                         .addLast("traffic", TrafficHandler(trafficCallback))
-                        .addLast("heartbeat", HeartbeatHandler(allIdleTime = 15, checkHealth = checkHealthHandler))
+                        .addLast("heartbeat", HeartbeatHandler(allIdleTime = 15, callback = heartbeatCallback))
                         .addLast("decoder", ProtoMsgDecoder())
                         .addLast("encoder", ProtoMsgEncoder())
                         .addLast("handler", newServerTunnelDaemonChannelHandler(tunnelRequestInterceptor))
