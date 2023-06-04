@@ -5,7 +5,7 @@ object ManifestUtils {
     private val text: String?
         get() = this::class.java.getResourceAsStream("/lighttunnel/generated/MANIFEST.bin")
             ?.use { it.readBytes() }
-            ?.let { String(CompressUtils.unGZip(it)) }
+            ?.let { String(CompressUtils.decompress(it)) }
 
     private val infos: Map<String, String> by lazy {
         text?.lines()?.associate { it.split(": ").let { pair -> pair.first() to pair.last() } } ?: emptyMap()

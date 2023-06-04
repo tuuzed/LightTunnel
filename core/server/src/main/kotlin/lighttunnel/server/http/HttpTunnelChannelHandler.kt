@@ -1,6 +1,5 @@
 package lighttunnel.server.http
 
-import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
@@ -9,11 +8,12 @@ import io.netty.handler.codec.http.HttpContent
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import lighttunnel.common.entity.RemoteConn
+import lighttunnel.common.extensions.*
 import lighttunnel.common.proto.msg.ProtoMsgRemoteConnected
 import lighttunnel.common.proto.msg.ProtoMsgRemoteDisconnect
 import lighttunnel.common.proto.msg.ProtoMsgTransfer
 import lighttunnel.common.utils.*
-import lighttunnel.server.utils.*
+import lighttunnel.server.consts.*
 
 internal class HttpTunnelChannelHandler(
     private val registry: HttpRegistry,
@@ -34,13 +34,13 @@ internal class HttpTunnelChannelHandler(
         val httpHost = ctx.channel().attr(AK_HTTP_HOST).get()
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get()
         if (httpHost != null && sessionId != null) {
-            val descriptor = registry.getHttpDescriptor(httpHost)
+            val descriptor = registry.getDescriptor(httpHost)
             val tunnelChannel = descriptor?.tunnelChannel
             if (tunnelChannel != null) {
                 val aes128Key = tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData =
-                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
-                        .tryGZip()
+                    (RemoteConn(ctx.channel().remoteAddress()).toJsonString()?.toByteArray() ?: emptyBytes)
+                        .tryCompress()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                         }
@@ -88,7 +88,7 @@ internal class HttpTunnelChannelHandler(
                 }
                 ctx.channel().attr(AK_HTTP_HOST).set(httpHost)
                 // 是否注册过隧道
-                val descriptor = registry.getHttpDescriptor(httpHost)
+                val descriptor = registry.getDescriptor(httpHost)
                 if (descriptor == null) {
                     httpContext.writeTextHttpResponse(
                         status = HttpResponseStatus.FORBIDDEN, text = "Tunnel($httpHost)Not Registered!"
@@ -101,12 +101,12 @@ internal class HttpTunnelChannelHandler(
                 if (ctx.isInterceptorHandle) {
                     return
                 }
-                val sessionId = descriptor.putSessionChannel(ctx.channel())
+                val sessionId = descriptor.addSessionChannel(ctx.channel())
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
                 val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData1 =
-                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
-                        .tryGZip()
+                    (RemoteConn(ctx.channel().remoteAddress()).toJsonString()?.toByteArray() ?: emptyBytes)
+                        .tryCompress()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                         }
@@ -119,8 +119,8 @@ internal class HttpTunnelChannelHandler(
                         compressedAndData1.first,
                     )
                 )
-                val compressedAndData2 = (ByteBufUtil.getBytes(msg.asByteBuf) ?: emptyBytes)
-                    .tryGZip()
+                val compressedAndData2 = msg.toByteBuf().toByteArray()
+                    .tryCompress()
                     .let {
                         it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                     }
@@ -134,6 +134,7 @@ internal class HttpTunnelChannelHandler(
                     )
                 )
             }
+
             is HttpContent -> {
                 // 插件处理
                 if (ctx.isPluginHandle) {
@@ -147,7 +148,7 @@ internal class HttpTunnelChannelHandler(
                     return
                 }
                 // 是否注册过隧道
-                val descriptor = registry.getHttpDescriptor(httpHost) ?: return
+                val descriptor = registry.getDescriptor(httpHost) ?: return
                 // 拦截器处理
                 if (ctx.isInterceptorHandle) {
                     httpTunnelRequestInterceptor?.doHttpContent(httpContext, msg, descriptor.tunnelRequest)
@@ -160,8 +161,8 @@ internal class HttpTunnelChannelHandler(
                 }
                 val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData1 =
-                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
-                        .tryGZip()
+                    (RemoteConn(ctx.channel().remoteAddress()).toJsonString()?.toByteArray() ?: emptyBytes)
+                        .tryCompress()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                         }
@@ -174,12 +175,11 @@ internal class HttpTunnelChannelHandler(
                         compressedAndData1.first,
                     )
                 )
-                val compressedAndData2 =
-                    (ByteBufUtil.getBytes(msg.content() ?: Unpooled.EMPTY_BUFFER) ?: emptyBytes)
-                        .tryGZip()
-                        .let {
-                            it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
-                        }
+                val compressedAndData2 = msg.toByteBuf().toByteArray()
+                    .tryCompress()
+                    .let {
+                        it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
+                    }
                 descriptor.tunnelChannel.writeAndFlush(
                     ProtoMsgTransfer(
                         descriptor.tunnelId,

@@ -8,7 +8,9 @@ object Proto {
     const val HDR = 0xFA.toByte()
     const val VERSION = 0x01.toByte()
 
-    val AK_AES128_KEY = AttributeKey.newInstance<ByteArray?>("$PREFIX.AES128Key")!!
+    val AK_AES128_KEY: AttributeKey<ByteArray?> = AttributeKey.newInstance("$PREFIX.AES128Key")
+
+    const val FLAG_NONE = 0.toByte()
 
     /** GZIP 压缩 */
     const val FLAG_GZIP = (1 shl 7).toByte()

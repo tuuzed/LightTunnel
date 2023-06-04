@@ -3,18 +3,18 @@ package lighttunnel.common.proto.msg
 import io.netty.buffer.ByteBuf
 
 sealed interface ProtoMsg {
-    val flags: Byte
-    val type: Type
+    val flag: Byte
+    val cmd: Cmd
     val size: Int
     fun transmit(out: ByteBuf)
 
     companion object {
-        private val mappings = Type.values().associateBy { it.value }
+        private val mappings = Cmd.values().associateBy { it.value }
 
-        fun findType(value: Byte): Type = mappings[value] ?: Type.Unknown
+        fun findCmdByValue(value: Byte): Cmd = mappings[value] ?: Cmd.Unknown
     }
 
-    enum class Type(val value: Byte) {
+    enum class Cmd(val value: Byte) {
         /**
          * 未知
          */
@@ -104,4 +104,5 @@ sealed interface ProtoMsg {
          */
         ForceOffReply(0x51),
     }
+
 }

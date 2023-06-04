@@ -14,12 +14,12 @@ object Deps {
         const val netty_transport = "io.netty:netty-transport:$netty_version"
 
         /** Json */
-        const val json = "org.json:json:20220924"
+        const val json = "org.json:json:20230227"
     }
 
     object Command {
         /** 命令行参数解析 */
-        const val clikt = "com.github.ajalt.clikt:clikt:3.5.0"
+        const val clikt = "com.github.ajalt.clikt:clikt:3.5.2"
     }
 
     /** 日志库 */

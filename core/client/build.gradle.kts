@@ -8,7 +8,7 @@ version = rootProject.version
 dependencies {
     implementation(kotlin("stdlib"))
     api(project(":core:common"))
-    testImplementation(project(":extras:logger"))
+    testImplementation(project(":extra:logger"))
     testImplementation(Deps.Test.junit)
 }
 
@@ -16,14 +16,14 @@ tasks.named("jar").configure {
     val content = """
             app.name: lighttunnel.client
             build.version: ${project.version}
-            build.date: ${GitHelper.buildDate}
-            commit.date: ${GitHelper.commitDate}
-            commit.hash: ${GitHelper.commitHash}
-            jks.client.hex: ${rootProject.file("scaffold/certificates/ltc.jks").toHex}
+            build.date: ${BuildConfig.getBuildDate()}
+            commit.date: ${BuildConfig.getCommitDate(project)}
+            commit.hash: ${BuildConfig.getCommitHash(project)}
+            jks.client.hex: ${rootProject.file("scaffold/certificates/ltc.jks").toHexString()}
             jks.client.store: ltcpass
         """.trimIndent()
     project.file("src/main/resources/lighttunnel/generated/MANIFEST.bin").also {
         it.parentFile.mkdirs()
-        it.writeBytes(content.toZip)
+        it.writeBytes(content.compress())
     }
 }

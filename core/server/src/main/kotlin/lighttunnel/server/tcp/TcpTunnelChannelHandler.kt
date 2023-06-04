@@ -1,21 +1,17 @@
 package lighttunnel.server.tcp
 
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.common.entity.RemoteConn
+import lighttunnel.common.extensions.*
 import lighttunnel.common.proto.msg.ProtoMsgRemoteConnected
 import lighttunnel.common.proto.msg.ProtoMsgRemoteDisconnect
 import lighttunnel.common.proto.msg.ProtoMsgTransfer
-import lighttunnel.common.utils.emptyBytes
-import lighttunnel.common.utils.injectLogger
-import lighttunnel.common.utils.tryEncryptAES128
-import lighttunnel.common.utils.tryGZip
-import lighttunnel.server.utils.AK_AES128_KEY
-import lighttunnel.server.utils.AK_SESSION_ID
+import lighttunnel.server.consts.AK_AES128_KEY
+import lighttunnel.server.consts.AK_SESSION_ID
 import java.net.InetSocketAddress
 
 @Suppress("DuplicatedCode")
@@ -30,13 +26,13 @@ internal class TcpTunnelChannelHandler(
         if (descriptor != null) {
             var sessionId = ctx.channel().attr(AK_SESSION_ID).get()
             if (sessionId == null) {
-                sessionId = descriptor.putSessionChannel(ctx.channel())
+                sessionId = descriptor.addSessionChannel(ctx.channel())
                 ctx.channel().attr(AK_SESSION_ID).set(sessionId)
             }
             val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
             val compressedAndData =
-                (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
-                    .tryGZip()
+                (RemoteConn(ctx.channel().remoteAddress()).toJsonString()?.toByteArray() ?: emptyBytes)
+                    .tryCompress()
                     .let {
                         it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                     }
@@ -69,8 +65,8 @@ internal class TcpTunnelChannelHandler(
             ctx.channel().writeAndFlush(Unpooled.EMPTY_BUFFER).addListener {
                 val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
                 val compressedAndData =
-                    (RemoteConn(ctx.channel().remoteAddress()).asJsonString()?.toByteArray() ?: emptyBytes)
-                        .tryGZip()
+                    (RemoteConn(ctx.channel().remoteAddress()).toJsonString()?.toByteArray() ?: emptyBytes)
+                        .tryCompress()
                         .let {
                             it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                         }
@@ -101,8 +97,8 @@ internal class TcpTunnelChannelHandler(
         val sessionId = ctx.channel().attr(AK_SESSION_ID).get() ?: return
         val descriptor = ctx.descriptor ?: return
         val aes128Key = descriptor.tunnelChannel.attr(AK_AES128_KEY).get()
-        val compressedAndData = (ByteBufUtil.getBytes(msg) ?: emptyBytes)
-            .tryGZip()
+        val compressedAndData = msg.toByteArray()
+            .tryCompress()
             .let {
                 it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
             }
@@ -121,7 +117,7 @@ internal class TcpTunnelChannelHandler(
         get() {
             this ?: return null
             val sa = this.channel().localAddress()
-            return if (sa is InetSocketAddress) registry.getTcpDescriptor(sa.port) else null
+            return if (sa is InetSocketAddress) registry.getDescriptor(sa.port) else null
         }
 
 }

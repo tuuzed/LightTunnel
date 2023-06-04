@@ -3,15 +3,15 @@ package lighttunnel.client.conn
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
-import lighttunnel.client.utils.AK_RSA_PRI_KEY
-import lighttunnel.client.utils.AK_TUNNEL_CONN
-import lighttunnel.client.utils.AK_TUNNEL_REQUEST
+import lighttunnel.client.consts.AK_RSA_PRI_KEY
+import lighttunnel.client.consts.AK_TUNNEL_CONN
+import lighttunnel.client.consts.AK_TUNNEL_REQUEST
 import lighttunnel.common.entity.TunnelRequest
+import lighttunnel.common.extensions.emptyBytes
+import lighttunnel.common.extensions.injectLogger
+import lighttunnel.common.extensions.tryCompress
 import lighttunnel.common.proto.msg.ProtoMsgHandshake
 import lighttunnel.common.utils.CryptoUtils
-import lighttunnel.common.utils.emptyBytes
-import lighttunnel.common.utils.injectLogger
-import lighttunnel.common.utils.tryGZip
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class DefaultTunnelConn(
@@ -54,7 +54,7 @@ internal class DefaultTunnelConn(
                     val rsaPriKey = rsaPriAndPubKey.first
                     val rsaPubKey = rsaPriAndPubKey.second
                     channel.attr(AK_RSA_PRI_KEY).set(rsaPriKey)
-                    val compressedAndData = rsaPubKey.tryGZip()
+                    val compressedAndData = rsaPubKey.tryCompress()
                     channel.writeAndFlush(ProtoMsgHandshake(compressedAndData.second, compressedAndData.first))
                 } else {
                     channel.writeAndFlush(ProtoMsgHandshake(emptyBytes, false))

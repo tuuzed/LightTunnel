@@ -21,8 +21,8 @@ internal class SessionChannels(
     val trafficStats = DefaultTrafficStats()
     val cachedChannelCount: Int get() = cachedSessionIdChannels.count()
 
-    fun putSessionChannel(channel: Channel): Long {
-        val sessionId = ids.nextId
+    fun addSessionChannel(channel: Channel): Long {
+        val sessionId = ids.nextId()
         cachedSessionIdChannels[sessionId] = channel
         return sessionId
     }

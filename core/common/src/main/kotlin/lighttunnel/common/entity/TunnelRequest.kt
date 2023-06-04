@@ -3,11 +3,12 @@
 package lighttunnel.common.entity
 
 import lighttunnel.common.exception.LightTunnelException
-import lighttunnel.common.utils.getOrDefault
+import lighttunnel.common.extensions.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
 
-class TunnelRequest private constructor(
+@JvmInline
+value class TunnelRequest private constructor(
     private val root: JSONObject
 ) : Serializable {
 
@@ -19,7 +20,6 @@ class TunnelRequest private constructor(
         private const val REMOTE_PORT = "REMOTE_PORT"
         private const val VHOST = "VHOST"
         private const val EXTRAS = "EXTRAS"
-
 
         @Throws(LightTunnelException::class)
         fun internalFromJson(jsonStr: String): TunnelRequest {
@@ -120,7 +120,7 @@ class TunnelRequest private constructor(
         extFunc?.invoke(this)
     }
 
-    fun asJsonString(): String = root.toString()
+    fun toJsonString(): String = root.toString()
 
     override fun toString(): String = toString("::")
 

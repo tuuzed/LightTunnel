@@ -1,7 +1,7 @@
 package lighttunnel.server.tcp
 
 import lighttunnel.common.exception.LightTunnelException
-import lighttunnel.common.utils.injectLogger
+import lighttunnel.common.extensions.injectLogger
 import java.util.concurrent.ConcurrentHashMap
 
 internal class TcpRegistry {
@@ -30,11 +30,11 @@ internal class TcpRegistry {
 
     fun isRegistered(port: Int): Boolean = portTcpDescriptors.containsKey(port)
 
-    fun getTcpDescriptor(port: Int): DefaultTcpDescriptor? = portTcpDescriptors[port]
+    fun getDescriptor(port: Int): DefaultTcpDescriptor? = portTcpDescriptors[port]
 
-    fun getTcpDescriptorList() = portTcpDescriptors.values.toList()
+    fun getDescriptorSnapshot() = portTcpDescriptors.values.toList()
 
-    fun forceOff(port: Int) = getTcpDescriptor(port)?.apply { writeAndFlushForceOffMsg() }
+    fun forceOff(port: Int) = getDescriptor(port)?.apply { writeAndFlushForceOffMsg() }
 
     private fun unsafeUnregister(port: Int) {
         portTcpDescriptors[port]?.also {

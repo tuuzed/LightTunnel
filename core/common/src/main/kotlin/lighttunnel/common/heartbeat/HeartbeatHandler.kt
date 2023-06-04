@@ -3,8 +3,8 @@ package lighttunnel.common.heartbeat
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.timeout.IdleStateEvent
 import io.netty.handler.timeout.IdleStateHandler
+import lighttunnel.common.extensions.injectLogger
 import lighttunnel.common.proto.msg.ProtoMsgPing
-import lighttunnel.common.utils.injectLogger
 import java.util.concurrent.TimeUnit
 
 /**
@@ -16,7 +16,7 @@ class HeartbeatHandler(
     writerIdleTime: Long = 0L,
     allIdleTime: Long = 0L,
     unit: TimeUnit = TimeUnit.SECONDS,
-    private val callback: HeartbeatCallback? = null
+    private val callback: Callback? = null
 ) : IdleStateHandler(observeOutput, readerIdleTime, writerIdleTime, allIdleTime, unit) {
 
     private val logger by injectLogger()
@@ -24,8 +24,13 @@ class HeartbeatHandler(
     override fun channelIdle(ctx: ChannelHandlerContext, evt: IdleStateEvent) {
         logger.trace("channelIdle: {}, {}", ctx, evt)
         ctx.channel().writeAndFlush(ProtoMsgPing)
-        if (callback?.invoke(ctx, evt) != true) {
+        if (callback?.onHeartbeat(ctx, evt) != true) {
             super.channelIdle(ctx, evt)
         }
     }
+
+    fun interface Callback {
+        fun onHeartbeat(ctx: ChannelHandlerContext, evt: IdleStateEvent): Boolean
+    }
+
 }

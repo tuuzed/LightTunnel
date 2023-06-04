@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import io.netty.handler.ssl.SslContext
+import lighttunnel.common.extensions.asInt
 import lighttunnel.common.utils.*
 import lighttunnel.logger.LoggerConfigure
 import lighttunnel.lts.internal.*

@@ -1,6 +1,7 @@
 package lighttunnel.common.entity
 
 enum class TunnelType(val value: Int) {
+
     UNKNOWN(0x00),
     TCP(0x01),
     HTTP(0x02),

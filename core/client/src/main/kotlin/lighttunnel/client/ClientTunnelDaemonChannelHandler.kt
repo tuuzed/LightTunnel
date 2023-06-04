@@ -6,18 +6,18 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import lighttunnel.client.conn.DefaultTunnelConn
+import lighttunnel.client.consts.*
 import lighttunnel.client.extra.ChannelInactiveExtra
 import lighttunnel.client.local.LocalTcpClient
-import lighttunnel.client.utils.*
 import lighttunnel.common.entity.RemoteConn
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.entity.TunnelType
 import lighttunnel.common.exception.LightTunnelException
+import lighttunnel.common.extensions.injectLogger
+import lighttunnel.common.extensions.tryCompress
+import lighttunnel.common.extensions.tryEncryptAES128
 import lighttunnel.common.proto.msg.*
 import lighttunnel.common.utils.CryptoUtils
-import lighttunnel.common.utils.injectLogger
-import lighttunnel.common.utils.tryEncryptAES128
-import lighttunnel.common.utils.tryGZip
 
 internal class ClientTunnelDaemonChannelHandler(
     private val localTcpClient: LocalTcpClient,
@@ -69,15 +69,15 @@ internal class ClientTunnelDaemonChannelHandler(
                     if (rsaPriKey != null) {
                         val aes128Key = CryptoUtils.decryptRSA(msg.rawBytes, rsaPriKey)
                         ctx.channel().attr(AK_AES128_KEY).set(aes128Key)
-                        val compressedAndData = tunnelRequest.asJsonString()
+                        val compressedAndData = tunnelRequest.toJsonString()
                             .toByteArray()
-                            .tryGZip()
+                            .tryCompress()
                             .let { it.first to it.second.tryEncryptAES128(aes128Key) }
                         ProtoMsgRequest(compressedAndData.second, aes128Key, compressedAndData.first)
                     } else {
-                        val compressedAndData = tunnelRequest.asJsonString()
+                        val compressedAndData = tunnelRequest.toJsonString()
                             .toByteArray()
-                            .tryGZip()
+                            .tryCompress()
                         ProtoMsgRequest(compressedAndData.second, null, compressedAndData.first)
                     }
                 )

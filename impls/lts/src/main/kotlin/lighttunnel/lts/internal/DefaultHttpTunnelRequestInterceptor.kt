@@ -3,7 +3,7 @@ package lighttunnel.lts.internal
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.*
 import lighttunnel.common.entity.TunnelRequest
-import lighttunnel.common.utils.basicAuthorization
+import lighttunnel.common.extensions.basicAuthorization
 import lighttunnel.extras.*
 import lighttunnel.server.http.HttpContext
 import lighttunnel.server.http.HttpTunnelRequestInterceptor

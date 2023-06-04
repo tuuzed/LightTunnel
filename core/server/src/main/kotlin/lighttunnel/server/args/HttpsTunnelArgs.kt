@@ -5,7 +5,7 @@ import lighttunnel.common.utils.SslContextUtils
 import lighttunnel.server.http.HttpPlugin
 import lighttunnel.server.http.HttpTunnelRequestInterceptor
 
-class HttpsTunnelArgs(
+data class HttpsTunnelArgs(
     val bindIp: String? = null,
     val bindPort: Int = 443,
     val httpPlugin: HttpPlugin? = null,

@@ -4,7 +4,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
-import lighttunnel.common.utils.hostExcludePort
+import lighttunnel.common.extensions.hostExcludePort
 import lighttunnel.server.http.HttpContext
 import lighttunnel.server.http.HttpPlugin
 import java.io.File

@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package lighttunnel.common.utils
 
 import io.netty.handler.ssl.SslContext
@@ -22,8 +20,10 @@ object SslContextUtils {
     )
 
     @Throws(Exception::class)
-    fun forBuiltinClient(): SslContext =
-        forClient(ByteArrayInputStream(hexStringToBytes(ManifestUtils.jksClientHex)), ManifestUtils.jksClientStore)
+    fun forBuiltinClient(): SslContext = forClient(
+        ByteArrayInputStream(hexStringToBytes(ManifestUtils.jksClientHex)),
+        ManifestUtils.jksClientStore
+    )
 
     @Throws(Exception::class)
     fun forServer(jks: String, storePassword: String, keyPassword: String): SslContext = forServer(

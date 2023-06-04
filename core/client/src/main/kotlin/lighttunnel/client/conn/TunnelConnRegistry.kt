@@ -18,6 +18,6 @@ internal class TunnelConnRegistry {
         cached.clear()
     }
 
-    val tunnelConnectionList: List<DefaultTunnelConn> get() = lock.read { listOf(*cached.toTypedArray()) }
+    val tunnelConnectionSnapshot: List<DefaultTunnelConn> get() = lock.read { listOf(*cached.toTypedArray()) }
 
 }

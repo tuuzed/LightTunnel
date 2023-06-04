@@ -5,8 +5,8 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
 import lighttunnel.client.Client
+import lighttunnel.common.extensions.basicAuthorization
 import lighttunnel.common.utils.ManifestUtils
-import lighttunnel.common.utils.basicAuthorization
 import lighttunnel.extras.name
 import lighttunnel.httpserver.AuthProvider
 import lighttunnel.httpserver.HttpServer
@@ -47,12 +47,14 @@ internal class LtcOpenApi(private val client: Client) {
                 }
             }
             route("^/version".toRegex()) {
-                Unpooled.copiedBuffer(version.toString(2), Charsets.UTF_8)
-                    .newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
+                Unpooled.copiedBuffer(
+                    version.toString(2), Charsets.UTF_8
+                ).newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
             }
             route("^/snapshot".toRegex()) {
-                Unpooled.copiedBuffer(snapshot.toString(2), Charsets.UTF_8)
-                    .newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
+                Unpooled.copiedBuffer(
+                    snapshot.toString(2), Charsets.UTF_8
+                ).newFullHttpResponse(HttpHeaderValues.APPLICATION_JSON)
             }
         }.start()
     }
@@ -75,10 +77,13 @@ internal class LtcOpenApi(private val client: Client) {
             }
         })
 
-    private fun ByteBuf.newFullHttpResponse(contentType: CharSequence) = DefaultFullHttpResponse(
-        HttpVersion.HTTP_1_1, HttpResponseStatus.OK, this
-    ).apply {
-        headers().set(HttpHeaderNames.CONTENT_TYPE, contentType)
-            .set(HttpHeaderNames.CONTENT_LENGTH, this@newFullHttpResponse.readableBytes())
+    private fun ByteBuf.newFullHttpResponse(contentType: CharSequence): FullHttpResponse {
+        return DefaultFullHttpResponse(
+            HttpVersion.HTTP_1_1, HttpResponseStatus.OK, this
+        ).apply {
+            headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, contentType)
+                .set(HttpHeaderNames.CONTENT_LENGTH, this@newFullHttpResponse.readableBytes())
+        }
     }
 }

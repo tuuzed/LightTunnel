@@ -13,8 +13,8 @@ class CryptoUtilsTest {
     @Test
     fun randomRSAKeyPair() {
         val keyPair = CryptoUtils.randomRSAKeyPair()
-        System.err.println(keyPair.first.contentToHexString())
-        System.err.println(keyPair.second.contentToHexString())
+        System.err.println(HexStringUtils.bytesToHexString(keyPair.first))
+        System.err.println(HexStringUtils.bytesToHexString(keyPair.second))
     }
 
     @Test

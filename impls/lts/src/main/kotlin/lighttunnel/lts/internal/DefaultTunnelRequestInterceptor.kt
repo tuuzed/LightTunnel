@@ -4,7 +4,7 @@ import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.entity.TunnelType
 import lighttunnel.common.exception.LightTunnelException
 import lighttunnel.common.utils.PortUtils
-import lighttunnel.common.utils.injectLogger
+import lighttunnel.common.extensions.injectLogger
 import lighttunnel.extras.*
 import lighttunnel.server.TunnelRequestInterceptor
 
@@ -17,8 +17,8 @@ internal class DefaultTunnelRequestInterceptor(
     private val logger by injectLogger()
 
     @Throws(LightTunnelException::class)
-    override fun intercept(tunnelRequest: TunnelRequest): TunnelRequest {
-        logger.debug("tunnelRequest: ${tunnelRequest.asJsonString()}")
+    override fun onIntercept(tunnelRequest: TunnelRequest): TunnelRequest {
+        logger.debug("tunnelRequest: ${tunnelRequest.toJsonString()}")
         if (tunnelRequest.tunnelType == TunnelType.UNKNOWN) {
             throw LightTunnelException("TunnelRequest($tunnelRequest), tunnelType == UNKNOWN)")
         }

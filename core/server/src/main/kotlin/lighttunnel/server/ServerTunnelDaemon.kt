@@ -10,16 +10,16 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.ssl.SslContext
 import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.exception.LightTunnelException
-import lighttunnel.common.heartbeat.HeartbeatCallback
+import lighttunnel.common.extensions.injectLogger
 import lighttunnel.common.heartbeat.HeartbeatHandler
 import lighttunnel.common.proto.ProtoMsgDecoder
 import lighttunnel.common.proto.ProtoMsgEncoder
 import lighttunnel.common.utils.IncIds
-import lighttunnel.common.utils.injectLogger
 import lighttunnel.server.args.HttpTunnelArgs
 import lighttunnel.server.args.HttpsTunnelArgs
 import lighttunnel.server.args.TunnelDaemonArgs
 import lighttunnel.server.args.TunnelSslDaemonArgs
+import lighttunnel.server.consts.AK_WATCHDOG_TIME_MILLIS
 import lighttunnel.server.http.HttpDescriptor
 import lighttunnel.server.http.HttpRegistry
 import lighttunnel.server.http.HttpTunnel
@@ -27,7 +27,6 @@ import lighttunnel.server.tcp.TcpDescriptor
 import lighttunnel.server.tcp.TcpRegistry
 import lighttunnel.server.tcp.TcpTunnel
 import lighttunnel.server.traffic.TrafficHandler
-import lighttunnel.server.utils.AK_WATCHDOG_TIME_MILLIS
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -87,7 +86,7 @@ internal class ServerTunnelDaemon(
             }
         }
     private val checkHealthTimeout = TimeUnit.SECONDS.toMillis(120)
-    private val heartbeatCallback = HeartbeatCallback { ctx, _ ->
+    private val heartbeatCallback = HeartbeatHandler.Callback { ctx, _ ->
         val watchdogTimeMillis = ctx.channel().attr(AK_WATCHDOG_TIME_MILLIS).get()
         if (watchdogTimeMillis != null && System.currentTimeMillis() - watchdogTimeMillis > checkHealthTimeout) {
             ctx.fireExceptionCaught(LightTunnelException("heartbeat timeout"))

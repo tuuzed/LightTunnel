@@ -18,7 +18,7 @@ import lighttunnel.common.entity.TunnelRequest
 import lighttunnel.common.heartbeat.HeartbeatHandler
 import lighttunnel.common.proto.ProtoMsgDecoder
 import lighttunnel.common.proto.ProtoMsgEncoder
-import lighttunnel.common.utils.injectLogger
+import lighttunnel.common.extensions.injectLogger
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -63,7 +63,7 @@ internal class ClientTunnelDaemon(
     }
     private val tunnelConnectionRegistry = TunnelConnRegistry()
 
-    val tunnelConnectionList get() = tunnelConnectionRegistry.tunnelConnectionList
+    val tunnelConnectionSnapshot get() = tunnelConnectionRegistry.tunnelConnectionSnapshot
 
     fun connect(
         serverIp: String,

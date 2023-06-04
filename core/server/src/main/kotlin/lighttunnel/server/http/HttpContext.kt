@@ -6,7 +6,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import io.netty.util.Attribute
 import io.netty.util.AttributeKey
-import lighttunnel.common.utils.asByteBuf
+import lighttunnel.common.extensions.toByteBuf
 import java.net.SocketAddress
 
 sealed interface HttpContext {
@@ -29,9 +29,9 @@ internal class DefaultHttpContext(
 
     override fun write(response: HttpResponse, flush: Boolean, listener: ChannelFutureListener?) {
         val channelFuture = if (flush) {
-            ctx.write(response.asByteBuf)
+            ctx.write(response.toByteBuf())
         } else {
-            ctx.writeAndFlush(response.asByteBuf)
+            ctx.writeAndFlush(response.toByteBuf())
         }
         if (listener != null) {
             channelFuture.addListener(listener)
@@ -40,9 +40,9 @@ internal class DefaultHttpContext(
 
     override fun write(content: HttpContent, flush: Boolean, listener: ChannelFutureListener?) {
         val channelFuture = if (flush) {
-            ctx.write(content.asByteBuf)
+            ctx.write(content.toByteBuf())
         } else {
-            ctx.writeAndFlush(content.asByteBuf)
+            ctx.writeAndFlush(content.toByteBuf())
         }
         if (listener != null) {
             channelFuture.addListener(listener)

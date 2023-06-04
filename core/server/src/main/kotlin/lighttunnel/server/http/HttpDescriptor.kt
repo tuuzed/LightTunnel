@@ -27,7 +27,7 @@ internal class DefaultHttpDescriptor(
     val tunnelId get() = sessionChannels.tunnelId
     val tunnelChannel get() = sessionChannels.tunnelChannel
 
-    fun putSessionChannel(channel: Channel) = sessionChannels.putSessionChannel(channel)
+    fun addSessionChannel(channel: Channel) = sessionChannels.addSessionChannel(channel)
 
     fun writeAndFlushForceOffMsg() = sessionChannels.writeAndFlushForceOffMsg()
 

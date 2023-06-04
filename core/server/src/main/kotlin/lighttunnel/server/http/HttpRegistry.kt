@@ -1,7 +1,7 @@
 package lighttunnel.server.http
 
 import lighttunnel.common.exception.LightTunnelException
-import lighttunnel.common.utils.injectLogger
+import lighttunnel.common.extensions.injectLogger
 import lighttunnel.server.SessionChannels
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,11 +33,11 @@ internal class HttpRegistry {
 
     fun isRegistered(vhost: String): Boolean = vhostHttpDescriptors.containsKey(vhost)
 
-    fun getHttpDescriptor(vhost: String): DefaultHttpDescriptor? = vhostHttpDescriptors[vhost]
+    fun getDescriptor(vhost: String): DefaultHttpDescriptor? = vhostHttpDescriptors[vhost]
 
-    fun getHttpDescriptorList() = vhostHttpDescriptors.values.toList()
+    fun getDescriptorSnapshot() = vhostHttpDescriptors.values.toList()
 
-    fun forceOff(vhost: String) = getHttpDescriptor(vhost)?.apply { writeAndFlushForceOffMsg() }
+    fun forceOff(vhost: String) = getDescriptor(vhost)?.apply { writeAndFlushForceOffMsg() }
 
     private fun unsafeUnregister(vhost: String?) {
         vhost ?: return

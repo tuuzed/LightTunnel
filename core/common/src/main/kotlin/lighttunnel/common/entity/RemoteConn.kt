@@ -3,13 +3,14 @@
 package lighttunnel.common.entity
 
 import lighttunnel.common.exception.LightTunnelException
-import lighttunnel.common.utils.getOrDefault
+import lighttunnel.common.extensions.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 
-class RemoteConn(val address: SocketAddress) : Serializable {
+@JvmInline
+value class RemoteConn(val address: SocketAddress) : Serializable {
 
     companion object {
         private const val serialVersionUID = 1L
@@ -20,7 +21,7 @@ class RemoteConn(val address: SocketAddress) : Serializable {
             val address = try {
                 val json = JSONObject(jsonStr)
                 InetSocketAddress(
-                    json.getString("hostAddress"),
+                    json.getOrDefault<String?>("host", null),
                     json.getOrDefault("port", -1)
                 )
             } catch (e: Exception) {
@@ -33,7 +34,7 @@ class RemoteConn(val address: SocketAddress) : Serializable {
     fun toJson(): JSONObject? {
         return if (address is InetSocketAddress) {
             return JSONObject().also {
-                it.put("hostAddress", address.address.hostAddress)
+                it.put("host", address.address.hostAddress)
                 it.put("port", address.port)
             }
         } else {
@@ -41,7 +42,7 @@ class RemoteConn(val address: SocketAddress) : Serializable {
         }
     }
 
-    fun asJsonString(): String? = toJson()?.toString()
+    fun toJsonString(): String? = toJson()?.toString()
 
     override fun toString(): String = address.toString()
 

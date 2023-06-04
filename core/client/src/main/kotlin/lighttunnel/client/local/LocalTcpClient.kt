@@ -9,9 +9,9 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
-import lighttunnel.client.utils.AK_NEXT_CHANNEL
-import lighttunnel.client.utils.AK_SESSION_ID
-import lighttunnel.client.utils.AK_TUNNEL_ID
+import lighttunnel.client.consts.AK_NEXT_CHANNEL
+import lighttunnel.client.consts.AK_SESSION_ID
+import lighttunnel.client.consts.AK_TUNNEL_ID
 import java.util.concurrent.ConcurrentHashMap
 
 internal class LocalTcpClient(workerGroup: NioEventLoopGroup) {

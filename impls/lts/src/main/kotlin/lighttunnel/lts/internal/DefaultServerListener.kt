@@ -1,6 +1,6 @@
 package lighttunnel.lts.internal
 
-import lighttunnel.common.utils.injectLogger
+import lighttunnel.common.extensions.injectLogger
 import lighttunnel.server.ServerListener
 import lighttunnel.server.http.HttpDescriptor
 import lighttunnel.server.tcp.TcpDescriptor

@@ -10,7 +10,7 @@ import java.util.zip.GZIPOutputStream
 object CompressUtils {
 
     @Throws(IOException::class)
-    fun gzip(data: ByteArray): ByteArray {
+    fun compress(data: ByteArray): ByteArray {
         val buffer = ByteArrayOutputStream()
         val zipStream = GZIPOutputStream(buffer)
         zipStream.write(data)
@@ -19,7 +19,7 @@ object CompressUtils {
     }
 
     @Throws(IOException::class)
-    fun unGZip(data: ByteArray): ByteArray {
+    fun decompress(data: ByteArray): ByteArray {
         val buffer = ByteArrayOutputStream()
         val unzip = GZIPInputStream(ByteArrayInputStream(data))
         val buf = ByteArray(256)

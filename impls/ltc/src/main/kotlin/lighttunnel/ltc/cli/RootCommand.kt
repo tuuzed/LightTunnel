@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import lighttunnel.client.Client
 import lighttunnel.common.entity.TunnelRequest
+import lighttunnel.common.extensions.asInt
 import lighttunnel.common.utils.*
 import lighttunnel.extras.*
 import lighttunnel.logger.LoggerConfigure
@@ -113,9 +114,6 @@ internal class RootCommand : CliktCommand(name = ManifestUtils.appName, invokeWi
                 storePassword = basic["ssl_store_password"] ?: "ltcpass",
             )
         }.getOrNull() ?: SslContextUtils.forBuiltinClient()
-        val httpApiBindAddr = basic["bind_http_api_addr"]?.let { IpUtils.parseAddr(it) }
-        val httpApiUsername = basic["http_api_username"]
-        val httpApiPassword = basic["http_api_password"]
         val client = Client(
             workerThreads = workerThreads,
             retryConnectPolicy = Client.RETRY_CONNECT_POLICY_LOSE or Client.RETRY_CONNECT_POLICY_ERROR,
@@ -145,6 +143,10 @@ internal class RootCommand : CliktCommand(name = ManifestUtils.appName, invokeWi
                 }
             }
         }
+
+        val httpApiBindAddr = basic["bind_http_api_addr"]?.let { IpUtils.parseAddr(it) }
+        val httpApiUsername = basic["http_api_username"]
+        val httpApiPassword = basic["http_api_password"]
         if (httpApiBindAddr != null) {
             LtcOpenApi(client).start(
                 bindIp = httpApiBindAddr.first,

@@ -6,6 +6,6 @@ import lighttunnel.common.exception.LightTunnelException
 interface TunnelRequestInterceptor {
 
     @Throws(LightTunnelException::class)
-    fun intercept(tunnelRequest: TunnelRequest): TunnelRequest = tunnelRequest
+    fun onIntercept(tunnelRequest: TunnelRequest): TunnelRequest = tunnelRequest
 
 }

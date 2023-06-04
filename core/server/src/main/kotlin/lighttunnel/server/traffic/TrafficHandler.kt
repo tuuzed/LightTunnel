@@ -5,7 +5,7 @@ import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
 import lighttunnel.common.entity.TunnelRequest
-import lighttunnel.server.utils.AK_SESSION_CHANNELS
+import lighttunnel.server.consts.AK_SESSION_CHANNELS
 
 internal class TrafficHandler(
     private val callback: Callback?

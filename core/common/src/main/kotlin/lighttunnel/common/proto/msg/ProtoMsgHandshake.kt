@@ -1,7 +1,8 @@
 package lighttunnel.common.proto.msg
 
 import io.netty.buffer.ByteBuf
-import lighttunnel.common.proto.Proto
+import lighttunnel.common.proto.Proto.FLAG_GZIP
+import lighttunnel.common.proto.Proto.FLAG_NONE
 import lighttunnel.common.utils.CompressUtils
 
 /**
@@ -15,15 +16,15 @@ class ProtoMsgHandshake(
 ) : ProtoMsg {
 
     val rawBytes: ByteArray by lazy {
-        if (compressed) CompressUtils.unGZip(data) else data
+        if (compressed) CompressUtils.decompress(data) else data
     }
 
-    override val flags: Byte = (if (compressed) Proto.FLAG_GZIP else 0)
-    override val type: ProtoMsg.Type get() = ProtoMsg.Type.Handshake
+    override val flag: Byte = (if (compressed) FLAG_GZIP else FLAG_NONE)
+    override val cmd: ProtoMsg.Cmd get() = ProtoMsg.Cmd.Handshake
     override val size: Int get() = 1 + 4 + data.size
 
     override fun transmit(out: ByteBuf) {
-        out.writeByte(type.value.toInt())
+        out.writeByte(cmd.value.toInt())
         out.writeInt(data.size)
         out.writeBytes(data)
     }

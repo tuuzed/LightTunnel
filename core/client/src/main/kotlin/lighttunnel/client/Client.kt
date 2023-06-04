@@ -40,7 +40,7 @@ class Client(
 
     fun close(conn: TunnelConn) = daemon.close((conn as DefaultTunnelConn))
 
-    fun getTunnelConnectionList(): List<TunnelConn> = daemon.tunnelConnectionList
+    fun getTunnelConnectionList(): List<TunnelConn> = daemon.tunnelConnectionSnapshot
 
     fun depose() = daemon.depose()
 

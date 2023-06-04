@@ -1,22 +1,18 @@
 package lighttunnel.client.local
 
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import lighttunnel.client.utils.AK_AES128_KEY
-import lighttunnel.client.utils.AK_NEXT_CHANNEL
-import lighttunnel.client.utils.AK_SESSION_ID
-import lighttunnel.client.utils.AK_TUNNEL_ID
+import lighttunnel.client.consts.AK_AES128_KEY
+import lighttunnel.client.consts.AK_NEXT_CHANNEL
+import lighttunnel.client.consts.AK_SESSION_ID
+import lighttunnel.client.consts.AK_TUNNEL_ID
+import lighttunnel.common.extensions.*
 import lighttunnel.common.proto.msg.ProtoMsgLocalConnected
 import lighttunnel.common.proto.msg.ProtoMsgLocalDisconnect
 import lighttunnel.common.proto.msg.ProtoMsgTransfer
-import lighttunnel.common.utils.emptyBytes
-import lighttunnel.common.utils.injectLogger
-import lighttunnel.common.utils.tryEncryptAES128
-import lighttunnel.common.utils.tryGZip
 
 internal class LocalTcpClientChannelHandler(
     private val localTcpClient: LocalTcpClient
@@ -65,8 +61,8 @@ internal class LocalTcpClientChannelHandler(
         val nextChannel = ctx.channel().attr(AK_NEXT_CHANNEL).get()
         if (tunnelId != null && sessionId != null && nextChannel != null) {
             val aes128Key = nextChannel.attr(AK_AES128_KEY).get()
-            val compressedAndData = (ByteBufUtil.getBytes(msg) ?: emptyBytes)
-                .tryGZip()
+            val compressedAndData = msg.toByteArray()
+                .tryCompress()
                 .let {
                     it.first to if (it.second.isNotEmpty() && aes128Key != null) it.second.tryEncryptAES128(aes128Key) else it.second
                 }
