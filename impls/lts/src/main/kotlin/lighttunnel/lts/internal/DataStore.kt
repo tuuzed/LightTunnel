@@ -6,7 +6,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal object DataStore {
-    val tcpDescriptors: MutableSet<TcpDescriptor> = Collections.newSetFromMap(ConcurrentHashMap())
-    val httpDescriptors: MutableSet<HttpDescriptor> = Collections.newSetFromMap(ConcurrentHashMap())
-    val httpsDescriptors: MutableSet<HttpDescriptor> = Collections.newSetFromMap(ConcurrentHashMap())
+    val tcp: MutableSet<TcpDescriptor> = Collections.newSetFromMap(ConcurrentHashMap())
+    val http: MutableSet<HttpDescriptor> = Collections.newSetFromMap(ConcurrentHashMap())
+    val https: MutableSet<HttpDescriptor> = Collections.newSetFromMap(ConcurrentHashMap())
 }

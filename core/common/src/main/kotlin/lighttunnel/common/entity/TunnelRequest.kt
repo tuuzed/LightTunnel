@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package lighttunnel.common.entity
 
 import lighttunnel.common.exception.LightTunnelException
@@ -13,6 +11,7 @@ value class TunnelRequest private constructor(
 ) : Serializable {
 
     companion object {
+        @Suppress("ConstPropertyName")
         private const val serialVersionUID = 1L
         private const val TUNNEL_TYPE = "TUNNEL_TYPE"
         private const val LOCAL_IP = "LOCAL_IP"
@@ -35,7 +34,7 @@ value class TunnelRequest private constructor(
             localIp: String,
             localPort: Int,
             remotePort: Int,
-            extFunc: (TunnelRequest.() -> Unit)? = null
+            extFn: (TunnelRequest.() -> Unit)? = null
         ): TunnelRequest {
             return TunnelRequest(
                 root = JSONObject()
@@ -45,7 +44,7 @@ value class TunnelRequest private constructor(
                 this.localPort = localPort
                 this.remotePort = remotePort
                 this.extras = JSONObject()
-                extFunc?.invoke(this)
+                extFn?.invoke(this)
             }
         }
 
@@ -54,7 +53,7 @@ value class TunnelRequest private constructor(
             localIp: String,
             localPort: Int,
             vhost: String,
-            extFunc: (TunnelRequest.() -> Unit)? = null
+            extFn: (TunnelRequest.() -> Unit)? = null
         ): TunnelRequest {
             return TunnelRequest(
                 root = JSONObject()
@@ -64,7 +63,7 @@ value class TunnelRequest private constructor(
                 this.localPort = localPort
                 this.vhost = vhost
                 this.extras = JSONObject()
-                extFunc?.invoke(this)
+                extFn?.invoke(this)
             }
         }
     }
@@ -97,13 +96,13 @@ value class TunnelRequest private constructor(
         localIp: String = this.localIp,
         localPort: Int = this.localPort,
         remotePort: Int = this.remotePort,
-        extFunc: (TunnelRequest.() -> Unit)? = null
+        extFn: (TunnelRequest.() -> Unit)? = null
     ) = TunnelRequest(this.root).apply {
         this.tunnelType = TunnelType.TCP
         this.localIp = localIp
         this.localPort = localPort
         this.remotePort = remotePort
-        extFunc?.invoke(this)
+        extFn?.invoke(this)
     }
 
     fun copyHttp(
@@ -111,13 +110,13 @@ value class TunnelRequest private constructor(
         localIp: String = this.localIp,
         localPort: Int = this.localPort,
         vhost: String = this.vhost,
-        extFunc: (TunnelRequest.() -> Unit)? = null
+        extFn: (TunnelRequest.() -> Unit)? = null
     ) = TunnelRequest(this.root).apply {
         this.tunnelType = if (https) TunnelType.HTTPS else TunnelType.HTTP
         this.localIp = localIp
         this.localPort = localPort
         this.vhost = vhost
-        extFunc?.invoke(this)
+        extFn?.invoke(this)
     }
 
     fun toJsonString(): String = root.toString()

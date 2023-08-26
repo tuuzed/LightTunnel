@@ -2,9 +2,6 @@ plugins {
     kotlin("jvm")
 }
 
-group = rootProject.group
-version = rootProject.version
-
 project.ext.set("app.name", "lts")
 
 dependencies {
@@ -13,9 +10,9 @@ dependencies {
     api(project(":extra:httpserver"))
     api(project(":extra:logger"))
     api(project(":impls:extra"))
-    api(Deps.Command.clikt)
-    api(Deps.Config.ini4j)
-    testImplementation(Deps.Test.junit)
+    api(Libs.clikt)
+    api(Libs.ini4j)
+    testImplementation(Libs.junit)
 }
 
 tasks.register("fatJar", FatJarTask::class) {

@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package lighttunnel.common.extensions
 
 import io.netty.buffer.ByteBuf

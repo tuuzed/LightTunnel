@@ -64,6 +64,7 @@ internal class ClientTunnelDaemonChannelHandler(
             is ProtoMsgHandshake -> {
                 // 发送连接请求
                 val tunnelRequest = ctx.channel().attr(AK_TUNNEL_REQUEST).get()
+                    ?: throw NullPointerException("tunnelRequest == null!")
                 val rsaPriKey = ctx.channel().attr(AK_RSA_PRI_KEY).get()
                 ctx.channel().writeAndFlush(
                     if (rsaPriKey != null) {

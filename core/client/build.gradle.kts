@@ -2,23 +2,20 @@ plugins {
     kotlin("jvm")
 }
 
-group = rootProject.group
-version = rootProject.version
-
 dependencies {
     implementation(kotlin("stdlib"))
     api(project(":core:common"))
     testImplementation(project(":extra:logger"))
-    testImplementation(Deps.Test.junit)
+    testImplementation(Libs.junit)
 }
 
 tasks.named("jar").configure {
     val content = """
             app.name: lighttunnel.client
             build.version: ${project.version}
-            build.date: ${BuildConfig.getBuildDate()}
-            commit.date: ${BuildConfig.getCommitDate(project)}
-            commit.hash: ${BuildConfig.getCommitHash(project)}
+            build.date: ${Builds.getBuildDate()}
+            commit.date: ${Builds.getCommitDate(project)}
+            commit.hash: ${Builds.getCommitHash(project)}
             jks.client.hex: ${rootProject.file("scaffold/certificates/ltc.jks").toHexString()}
             jks.client.store: ltcpass
         """.trimIndent()

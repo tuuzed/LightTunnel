@@ -1,8 +1,9 @@
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("MemberVisibilityCanBePrivate", "ConstPropertyName")
 
 package lighttunnel.common.entity
 
 import lighttunnel.common.exception.LightTunnelException
+import lighttunnel.common.extensions.JSONObjectOf
 import lighttunnel.common.extensions.getOrDefault
 import org.json.JSONObject
 import java.io.Serializable
@@ -33,10 +34,10 @@ value class RemoteConn(val address: SocketAddress) : Serializable {
 
     fun toJson(): JSONObject? {
         return if (address is InetSocketAddress) {
-            return JSONObject().also {
-                it.put("host", address.address.hostAddress)
-                it.put("port", address.port)
-            }
+            JSONObjectOf(
+                "host" to address.address.hostAddress,
+                "port" to address.port,
+            )
         } else {
             null
         }

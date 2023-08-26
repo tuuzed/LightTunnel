@@ -1,18 +1,16 @@
-@file:Suppress("DuplicatedCode")
-
 package lighttunnel.lts.internal
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.handler.codec.http.*
+import lighttunnel.common.extensions.JSONArrayOf
+import lighttunnel.common.extensions.JSONObjectOf
+import lighttunnel.common.extensions.basicAuthorization
 import lighttunnel.common.utils.DateUtils
 import lighttunnel.common.utils.ManifestUtils
-import lighttunnel.common.extensions.basicAuthorization
 import lighttunnel.httpserver.AuthProvider
 import lighttunnel.httpserver.HttpServer
-import org.json.JSONArray
-import org.json.JSONObject
 import java.util.*
 
 internal class LtsOpenApi {
@@ -32,19 +30,20 @@ internal class LtsOpenApi {
             intercept("^/.*".toRegex()) {
                 val auth = authProvider ?: return@intercept null
                 val account = it.basicAuthorization
-                val next = if (account != null) auth.invoke(account.first, account.second) else false
-                if (next) {
-                    null
-                } else {
-                    val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray()
-                    DefaultFullHttpResponse(it.protocolVersion(), HttpResponseStatus.UNAUTHORIZED).apply {
-                        headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=.")
-                        headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
-                        headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
-                        headers().add(HttpHeaderNames.DATE, Date().toString())
-                        headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
-                        content().writeBytes(content)
+                if (account != null) {
+                    val (username, password) = account
+                    if (auth.invoke(username, password)) {
+                        return@intercept null
                     }
+                }
+                val content = HttpResponseStatus.UNAUTHORIZED.toString().toByteArray()
+                DefaultFullHttpResponse(it.protocolVersion(), HttpResponseStatus.UNAUTHORIZED).apply {
+                    headers().add(HttpHeaderNames.WWW_AUTHENTICATE, "Basic realm=.")
+                    headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE)
+                    headers().add(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES)
+                    headers().add(HttpHeaderNames.DATE, Date().toString())
+                    headers().add(HttpHeaderNames.CONTENT_LENGTH, content.size)
+                    content().writeBytes(content)
                 }
             }
             route("^/version".toRegex()) {
@@ -61,57 +60,62 @@ internal class LtsOpenApi {
     }
 
     private val version
-        get() = JSONObject(linkedMapOf<String, Any>()).apply {
-            put("appName", ManifestUtils.appName)
-            put("version", ManifestUtils.version)
-            put("buildDate", ManifestUtils.buildDate)
-            put("commitHash", ManifestUtils.commitHash)
-            put("commitDate", ManifestUtils.commitDate)
-        }
+        get() = JSONObjectOf(
+            "appName" to ManifestUtils.appName,
+            "version" to ManifestUtils.version,
+            "buildDate" to ManifestUtils.buildDate,
+            "commitHash" to ManifestUtils.commitHash,
+            "commitDate" to ManifestUtils.commitDate,
+        )
 
     private val snapshot
-        get() = JSONObject(linkedMapOf<String, Any>()).apply {
-            put("tcp", JSONArray(DataStore.tcpDescriptors.map { descriptor ->
-                JSONObject(linkedMapOf<String, Any>()).apply {
-                    put("localIp", descriptor.tunnelRequest.localIp)
-                    put("localPort", descriptor.tunnelRequest.localPort)
-                    put("remotePort", descriptor.tunnelRequest.remotePort)
-                    put("extras", descriptor.tunnelRequest.extras)
-                    put("conns", descriptor.connectionCount)
-                    put("inbound", descriptor.trafficStats.inboundBytes)
-                    put("outbound", descriptor.trafficStats.outboundBytes)
-                    put("createAt", DateUtils.format(descriptor.trafficStats.createAt))
-                    put("updateAt", DateUtils.format(descriptor.trafficStats.updateAt))
+        get() = JSONObjectOf(
+            "tcp" to JSONArrayOf(
+                DataStore.tcp.map {
+                    JSONObjectOf(
+                        "localIp" to it.tunnelRequest.localIp,
+                        "localPort" to it.tunnelRequest.localPort,
+                        "remotePort" to it.tunnelRequest.remotePort,
+                        "extras" to it.tunnelRequest.extras,
+                        "conns" to it.connectionCount,
+                        "inbound" to it.trafficStats.inboundBytes,
+                        "outbound" to it.trafficStats.outboundBytes,
+                        "createAt" to DateUtils.format(it.trafficStats.createAt),
+                        "updateAt" to DateUtils.format(it.trafficStats.updateAt),
+                    )
                 }
-            }))
-            put("http", JSONArray(DataStore.httpDescriptors.map { descriptor ->
-                JSONObject(linkedMapOf<String, Any>()).apply {
-                    put("localIp", descriptor.tunnelRequest.localIp)
-                    put("localPort", descriptor.tunnelRequest.localPort)
-                    put("vhost", descriptor.tunnelRequest.vhost)
-                    put("extras", descriptor.tunnelRequest.extras)
-                    put("conns", descriptor.connectionCount)
-                    put("inbound", descriptor.trafficStats.inboundBytes)
-                    put("outbound", descriptor.trafficStats.outboundBytes)
-                    put("createAt", DateUtils.format(descriptor.trafficStats.createAt))
-                    put("updateAt", DateUtils.format(descriptor.trafficStats.updateAt))
+            ),
+            "http" to JSONArrayOf(
+                DataStore.http.map {
+                    JSONObjectOf(
+                        "localIp" to it.tunnelRequest.localIp,
+                        "localPort" to it.tunnelRequest.localPort,
+                        "remotePort" to it.tunnelRequest.remotePort,
+                        "extras" to it.tunnelRequest.extras,
+                        "conns" to it.connectionCount,
+                        "inbound" to it.trafficStats.inboundBytes,
+                        "outbound" to it.trafficStats.outboundBytes,
+                        "createAt" to DateUtils.format(it.trafficStats.createAt),
+                        "updateAt" to DateUtils.format(it.trafficStats.updateAt),
+                    )
                 }
-            }))
-            put("https", JSONArray(DataStore.httpsDescriptors.map { descriptor ->
-                JSONObject(linkedMapOf<String, Any>()).apply {
-                    put("localIp", descriptor.tunnelRequest.localIp)
-                    put("localPort", descriptor.tunnelRequest.localPort)
-                    put("vhost", descriptor.tunnelRequest.vhost)
-                    put("extras", descriptor.tunnelRequest.extras)
-                    put("conns", descriptor.connectionCount)
-                    put("inbound", descriptor.trafficStats.inboundBytes)
-                    put("outbound", descriptor.trafficStats.outboundBytes)
-                    put("createAt", DateUtils.format(descriptor.trafficStats.createAt))
-                    put("updateAt", DateUtils.format(descriptor.trafficStats.updateAt))
+            ),
+            "https" to JSONArrayOf(
+                DataStore.https.map {
+                    JSONObjectOf(
+                        "localIp" to it.tunnelRequest.localIp,
+                        "localPort" to it.tunnelRequest.localPort,
+                        "remotePort" to it.tunnelRequest.remotePort,
+                        "extras" to it.tunnelRequest.extras,
+                        "conns" to it.connectionCount,
+                        "inbound" to it.trafficStats.inboundBytes,
+                        "outbound" to it.trafficStats.outboundBytes,
+                        "createAt" to DateUtils.format(it.trafficStats.createAt),
+                        "updateAt" to DateUtils.format(it.trafficStats.updateAt),
+                    )
                 }
-            }))
-        }
-
+            )
+        )
 
     private fun ByteBuf.newFullHttpResponse(contentType: CharSequence): FullHttpResponse {
         return DefaultFullHttpResponse(

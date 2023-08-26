@@ -20,6 +20,7 @@ class ProtoMsgDecoder : LengthFieldBasedFrameDecoder(
     failFast
 ) {
 
+    @Suppress("ConstPropertyName")
     private companion object {
         private const val maxFrameLength = 1024 * 1024
         private const val lengthFieldOffset = 3
