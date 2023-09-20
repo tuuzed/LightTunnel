@@ -31,7 +31,7 @@ open class BinaryJarTask : DefaultTask() {
 
     @TaskAction
     fun entry() {
-        val stub = project.rootProject.file("scaffold/stub.sh")
+        val stub = project.rootProject.file(".scaffold/stub.sh")
         val r8Jar = File(project.buildDir, "libs/${project.name}-${project.version}-r8.jar")
         val binaryJar = File(project.buildDir, "libs/${project.name}-${project.version}-binary.jar")
         stub.copyTo(binaryJar, overwrite = true)

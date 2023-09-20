@@ -20,9 +20,6 @@ object Libs {
     const val slf4j_api = "org.slf4j:slf4j-api:1.7.36"
     const val slf4j_log4j12 = "org.slf4j:slf4j-log4j12:1.7.36"
 
-    /** ini配置文件解析 */
-    const val ini4j = "org.ini4j:ini4j:0.5.4"
-
     /** 单元测试 */
     const val junit = "junit:junit:4.13.2"
 }
