@@ -1,0 +1,60 @@
+{
+  "worker_threads": -1,
+  "auth_token": "tk123456",
+  "server_addr": "127.0.0.1:8080",
+  "server_ssl_addr": "127.0.0.1:7443",
+  "ssl_jks": "ltc.jks",
+  "ssl_store_password": "ltcpass",
+  "bind_http_api_addr": "0.0.0.0:7082",
+  "http_api_username": "guest",
+  "http_api_password": "guest",
+  "log_level": "INFO",
+  "log_file": "./logs/ltc.log",
+  "log_count": 3,
+  "log_size": "1MB",
+  "tunnels": [
+    {
+      "type": "tcp",
+      "name": "tcp",
+      "ssl": true,
+      "local_ip": "192.168.1.1",
+      "local_port": 80,
+      "remote_port": 10080,
+      "use_encryption": true
+    },
+    {
+      "type": "tcp",
+      "name": "tcp_random",
+      "ssl": true,
+      "local_ip": "192.168.1.1",
+      "local_port": 80,
+      "remote_port": 0
+    },
+    {
+      "type": "http",
+      "name": "http",
+      "ssl": true,
+      "local_ip": "192.168.1.1",
+      "local_port": 80,
+      "vhost": "t1.tunnel.lo",
+      "pxy_header_set_X-Real-IP": "$remote_addr",
+      "pxy_header_add_X-User-Agent": "LightTunnel",
+      "auth_realm": ".",
+      "auth_username": "guest",
+      "auth_password": "guest"
+    },
+    {
+      "type": "https",
+      "name": "https",
+      "ssl": true,
+      "local_ip": "192.168.1.1",
+      "local_port": 80,
+      "vhost": "t1.tunnel.lo",
+      "pxy_header_set_X-Real-IP": "$remote_addr",
+      "pxy_header_add_X-User-Agent": "LightTunnel",
+      "auth_realm": ".",
+      "auth_username": "guest",
+      "auth_password": "guest"
+    }
+  ]
+}

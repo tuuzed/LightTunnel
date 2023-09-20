@@ -1,0 +1,12 @@
+{
+  "server_addr": "127.0.0.1:8080",
+  "tunnels": [
+    {
+      "type": "tcp",
+      "name": "tcp",
+      "local_ip": "192.168.1.1",
+      "local_port": 80,
+      "remote_port": 10080
+    }
+  ]
+}

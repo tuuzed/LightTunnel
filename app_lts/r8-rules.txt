@@ -1,0 +1,40 @@
+# -dontshrink
+# -dontoptimize
+# -dontobfuscate
+
+# 混淆时不使用大小写混合，混淆后的类名为小写
+# -dontusemixedcaseclassnames
+
+-keepattributes SourceFile, LineNumberTable
+-keepattributes EnclosingMethod
+-keepattributes *Annotation*
+-keepattributes Signature, InnerClasses
+
+-dontwarn sun.**
+
+#############
+### Netty ###
+#############
+-keepnames class io.netty.** { *; }
+-keepclassmembers class io.netty.channel.socket.nio.** {
+  <init>();
+}
+-dontwarn io.netty.**
+
+#####################
+### slf4j & log4j ###
+#####################
+-keepclasseswithmembers class org.slf4j.** { *; }
+-dontwarn org.slf4j.**
+-keepclasseswithmembers class org.apache.log4j.** { *; }
+-dontwarn org.apache.log4j.**
+
+###########
+### LightTunnel ###
+###########
+# -keep class lighttunnel.** { *; }
+
+-keep class lighttunnel.generated.** { *; }
+-keep class lighttunnel.lts.MainKt {
+    public static void main(java.lang.String[]);
+}

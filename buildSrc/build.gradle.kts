@@ -9,6 +9,6 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("com.android.tools:r8:3.0.73")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:5.13.1.202206130422-r")
+    implementation("com.android.tools:r8:8.3.37")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:6.7.0.202309050840-r")
 }
